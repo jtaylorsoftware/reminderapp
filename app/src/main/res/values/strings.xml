@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">ReminderApp</string>
+    <string name="overview_fab_description">Add Reminder Button</string>
 </resources>
