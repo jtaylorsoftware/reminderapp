@@ -6,7 +6,7 @@
     <data>
         <variable
             name="reminder"
-            type="com.example.reminderapp.data.domain.Reminder" />
+            type="com.github.jeremyt135.reminderapp.data.domain.Reminder" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout

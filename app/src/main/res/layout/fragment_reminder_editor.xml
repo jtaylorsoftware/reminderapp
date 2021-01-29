@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+        <variable
+            name="viewModel"
+            type="com.github.jeremyt135.reminderapp.screens.reminder.editor.ReminderEditorViewModel" />
+    </data>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:context=".reminderapp.screens.reminder.editor.ReminderEditorFragment">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:text="@{`Reminder No. ` + viewModel.reminder.id + `: ` + viewModel.reminder.description}" />
+
+    </FrameLayout>
+</layout>

@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.reminderapp">
+    package="com.github.jeremyt135">
 
     <application
-        android:allowBackup="true"
-        android:name=".ReminderApplication"
+        android:allowBackup="false"
+        android:name="com.github.jeremyt135.reminderapp.ReminderApplication"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.ReminderApp">
-        <activity android:name=".MainActivity">
+        <activity android:name="com.github.jeremyt135.reminderapp.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

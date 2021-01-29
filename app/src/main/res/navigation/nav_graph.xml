@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/fragment_reminder_overview">
+
+    <fragment
+        android:id="@+id/fragment_reminder_overview"
+        android:name="com.github.jeremyt135.reminderapp.screens.reminder.overview.ReminderOverviewFragment"
+        android:label="OverviewFragment"
+        tools:layout="@layout/fragment_reminder_overview">
+        <action
+            android:id="@+id/action_fragment_reminder_overview_to_fragment_reminder_editor"
+            app:destination="@id/fragment_reminder_editor" >
+            <argument
+                android:name="reminderId"
+                android:defaultValue="0L" />
+        </action>
+    </fragment>
+    <fragment
+        android:id="@+id/fragment_reminder_editor"
+        android:name="com.github.jeremyt135.reminderapp.screens.reminder.editor.ReminderEditorFragment"
+        android:label="ReminderEditorFragment"
+        tools:layout="@layout/fragment_reminder_editor" >
+        <argument
+            android:name="reminderId"
+            app:argType="long" />
+    </fragment>
+</navigation>
