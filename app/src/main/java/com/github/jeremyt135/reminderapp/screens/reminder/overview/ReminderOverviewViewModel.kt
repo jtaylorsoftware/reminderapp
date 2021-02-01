@@ -16,18 +16,19 @@ import javax.inject.Inject
 class ReminderOverviewViewModel @Inject constructor(private val reminderRepository: ReminderRepository) :
     ViewModel() {
 
-    val reminders: LiveData<List<Reminder>> = reminderRepository.getAll().asLiveData()
+    val reminders: LiveData<List<Reminder>> =
+        reminderRepository.getAll().asLiveData(viewModelScope.coroutineContext)
 
     private val _navigateToEditor = MutableSharedFlow<Reminder?>(replay = 0)
     val navigateToEditor: SharedFlow<Reminder?> = _navigateToEditor
 
     fun addReminder() {
-       viewModelScope.launch {
-           _navigateToEditor.emit(null)
-       }
+        viewModelScope.launch {
+            _navigateToEditor.emit(null)
+        }
     }
 
-    fun editReminder(reminder: Reminder){
+    fun editReminder(reminder: Reminder) {
         viewModelScope.launch {
             _navigateToEditor.emit(reminder)
         }
