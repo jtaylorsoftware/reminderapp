@@ -18,7 +18,7 @@ class ReminderEditorViewModel @Inject constructor(
     ViewModel() {
 
     private val _reminder = MutableStateFlow(emptyReminder())
-    val reminder: LiveData<Reminder> = _reminder.asLiveData()
+    val reminder: LiveData<Reminder> = _reminder.asLiveData(viewModelScope.coroutineContext)
 
     private val reminderId: Long = savedStateHandle.get("reminderId")!!
     private val isEditing: Boolean = reminderId != 0L

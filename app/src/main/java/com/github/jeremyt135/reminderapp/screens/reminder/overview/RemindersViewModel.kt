@@ -13,7 +13,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class ReminderOverviewViewModel @Inject constructor(private val reminderRepository: ReminderRepository) :
+class RemindersViewModel @Inject constructor(private val reminderRepository: ReminderRepository) :
     ViewModel() {
 
     val reminders: LiveData<List<Reminder>> =

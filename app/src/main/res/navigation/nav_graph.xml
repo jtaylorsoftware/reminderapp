@@ -3,15 +3,15 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
-    app:startDestination="@id/fragment_reminder_overview">
+    app:startDestination="@id/fragment_reminders">
 
     <fragment
-        android:id="@+id/fragment_reminder_overview"
-        android:name="com.github.jeremyt135.reminderapp.screens.reminder.overview.ReminderOverviewFragment"
+        android:id="@+id/fragment_reminders"
+        android:name="com.github.jeremyt135.reminderapp.screens.reminder.overview.RemindersFragment"
         android:label="OverviewFragment"
-        tools:layout="@layout/fragment_reminder_overview">
+        tools:layout="@layout/fragment_reminders">
         <action
-            android:id="@+id/action_fragment_reminder_overview_to_fragment_reminder_editor"
+            android:id="@+id/action_fragment_reminders_to_fragment_reminder_editor"
             app:destination="@id/fragment_reminder_editor" >
             <argument
                 android:name="reminderId"

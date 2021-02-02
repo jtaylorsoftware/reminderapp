@@ -8,20 +8,20 @@ import android.view.ViewGroup
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.asLiveData
 import androidx.navigation.fragment.findNavController
-import com.github.jeremyt135.databinding.FragmentReminderOverviewBinding
+import com.github.jeremyt135.databinding.FragmentRemindersBinding
 import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
 
 @AndroidEntryPoint
-class ReminderOverviewFragment : Fragment() {
-    private val viewModel: ReminderOverviewViewModel by viewModels()
-    private lateinit var binding: FragmentReminderOverviewBinding
+class RemindersFragment : Fragment() {
+    private val viewModel: RemindersViewModel by viewModels()
+    private lateinit var binding: FragmentRemindersBinding
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        binding = FragmentReminderOverviewBinding.inflate(inflater)
+        binding = FragmentRemindersBinding.inflate(inflater)
         return binding.root
     }
 
@@ -33,20 +33,20 @@ class ReminderOverviewFragment : Fragment() {
         })
 
         binding.apply {
-            recyclerOverviewReminderList.adapter = reminderListAdapter
+            recyclerRemindersList.adapter = reminderListAdapter
 
             lifecycleOwner = viewLifecycleOwner
-            viewModel = this@ReminderOverviewFragment.viewModel
+            viewModel = this@RemindersFragment.viewModel
 
-            fabOverviewAdd.setOnClickListener {
-                this@ReminderOverviewFragment.viewModel.addReminder()
+            fabRemindersAdd.setOnClickListener {
+                this@RemindersFragment.viewModel.addReminder()
             }
         }
 
         viewModel.navigateToEditor.asLiveData().observe(viewLifecycleOwner) { reminder ->
             Timber.d("navigateToEditor received reminder: $reminder")
             findNavController().navigate(
-                ReminderOverviewFragmentDirections.actionFragmentReminderOverviewToFragmentReminderEditor(
+                RemindersFragmentDirections.actionFragmentRemindersToFragmentReminderEditor(
                     reminder?.id ?: 0L
                 )
             )
