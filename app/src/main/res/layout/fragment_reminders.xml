@@ -10,11 +10,9 @@
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/constraint_layout_reminders_root"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         tools:context=".reminderapp.screens.reminder.overview.RemindersFragment">
-
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recycler_reminders_list"
