@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <dimen name="margin_overview_small">16dp</dimen>
+    <dimen name="margin_editor_small">16dp</dimen>
+    <dimen name="dateToggleSize_editor">36dp</dimen>
+    <dimen name="margin_editor_medium">32dp</dimen>
 </resources>

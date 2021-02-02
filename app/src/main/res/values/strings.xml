@@ -1,4 +1,18 @@
 <resources>
     <string name="app_name">ReminderApp</string>
     <string name="overview_fab_description">Add Reminder Button</string>
+    <string name="editor_descriptionEdit_hint">Edit reminder text</string>
+    <string name="editor_saturday_abbrev">S</string>
+    <string name="editor_sunday_abbrev">S</string>
+    <string name="editor_monday_abbrev">M</string>
+    <string name="editor_tuesday_abbrev">T</string>
+    <string name="editor_wednesday_abbrev">W</string>
+    <string name="editor_thursday_abbrev">T</string>
+    <string name="editor_friday_abbrev">F</string>
+    <string name="editor_switch_skip">Can skip</string>
+    <string name="editor_cancel">Cancel</string>
+    <string name="editor_save">Save</string>
+    <string name="editor_scheduleLabel">Every %s</string>
+    <string name="editor_heading">Edit Reminder</string>
+    <string name="editor_switch_vibrate">Vibrate</string>
 </resources>

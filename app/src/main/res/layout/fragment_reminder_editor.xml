@@ -1,22 +1,207 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools">
 
     <data>
+
         <variable
             name="viewModel"
             type="com.github.jeremyt135.reminderapp.screens.reminder.editor.ReminderEditorViewModel" />
     </data>
 
-    <FrameLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         tools:context=".reminderapp.screens.reminder.editor.ReminderEditorFragment">
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:text="@{`Reminder No. ` + viewModel.reminder.id + `: ` + viewModel.reminder.description}" />
+        <TimePicker
+            android:id="@+id/timePicker_editor"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:timePickerMode="spinner"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.445"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/text_editor_heading" />
 
-    </FrameLayout>
+        <EditText
+            android:id="@+id/edit_editor_description"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:hint="@string/editor_descriptionEdit_hint"
+            android:importantForAutofill="no"
+            android:inputType="text"
+            android:text="@{viewModel.reminder.description}"
+            android:textSize="16sp"
+            app:layout_constraintStart_toStartOf="@+id/text_editor_scheduleLabel"
+            app:layout_constraintTop_toBottomOf="@+id/timePicker_editor"
+            tools:text="Reminder text" />
+
+        <ToggleButton
+            android:id="@+id/toggle_editor_sunday"
+            android:layout_width="@dimen/dateToggleSize_editor"
+            android:layout_height="@dimen/dateToggleSize_editor"
+            android:layout_marginStart="@dimen/margin_editor_small"
+            android:layout_marginTop="@dimen/margin_editor_small"
+            android:background="@drawable/ic_toggle_36"
+            android:checked="false"
+            android:textOff="@string/editor_sunday_abbrev"
+            android:textOn="@string/editor_sunday_abbrev"
+            app:layout_constraintEnd_toStartOf="@+id/toggle_editor_monday"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/text_editor_scheduleLabel" />
+
+        <ToggleButton
+            android:id="@+id/toggle_editor_monday"
+            android:layout_width="@dimen/dateToggleSize_editor"
+            android:layout_height="@dimen/dateToggleSize_editor"
+            android:background="@drawable/ic_toggle_36"
+            android:checked="false"
+            android:textOff="@string/editor_monday_abbrev"
+            android:textOn="@string/editor_monday_abbrev"
+            app:layout_constraintBottom_toBottomOf="@+id/toggle_editor_sunday"
+            app:layout_constraintEnd_toStartOf="@+id/toggle_editor_tuesday"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toEndOf="@+id/toggle_editor_sunday"
+            app:layout_constraintTop_toTopOf="@+id/toggle_editor_sunday" />
+
+        <ToggleButton
+            android:id="@+id/toggle_editor_tuesday"
+            android:layout_width="@dimen/dateToggleSize_editor"
+            android:layout_height="@dimen/dateToggleSize_editor"
+            android:background="@drawable/ic_toggle_36"
+            android:checked="false"
+            android:textOff="@string/editor_tuesday_abbrev"
+            android:textOn="@string/editor_tuesday_abbrev"
+            app:layout_constraintBottom_toBottomOf="@+id/toggle_editor_monday"
+            app:layout_constraintEnd_toStartOf="@+id/toggle_editor_wednesday"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toEndOf="@+id/toggle_editor_monday"
+            app:layout_constraintTop_toTopOf="@+id/toggle_editor_monday" />
+
+        <ToggleButton
+            android:id="@+id/toggle_editor_wednesday"
+            android:layout_width="@dimen/dateToggleSize_editor"
+            android:layout_height="@dimen/dateToggleSize_editor"
+            android:background="@drawable/ic_toggle_36"
+            android:checked="false"
+            android:textOff="@string/editor_wednesday_abbrev"
+            android:textOn="@string/editor_wednesday_abbrev"
+            app:layout_constraintBottom_toBottomOf="@+id/toggle_editor_tuesday"
+            app:layout_constraintEnd_toStartOf="@+id/toggle_editor_thursday"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toEndOf="@+id/toggle_editor_tuesday"
+            app:layout_constraintTop_toTopOf="@+id/toggle_editor_tuesday" />
+
+        <ToggleButton
+            android:id="@+id/toggle_editor_thursday"
+            android:layout_width="@dimen/dateToggleSize_editor"
+            android:layout_height="@dimen/dateToggleSize_editor"
+            android:background="@drawable/ic_toggle_36"
+            android:checked="false"
+            android:textOff="@string/editor_thursday_abbrev"
+            android:textOn="@string/editor_thursday_abbrev"
+            app:layout_constraintBottom_toBottomOf="@+id/toggle_editor_wednesday"
+            app:layout_constraintEnd_toStartOf="@+id/toggle_editor_friday"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toEndOf="@+id/toggle_editor_wednesday"
+            app:layout_constraintTop_toTopOf="@+id/toggle_editor_wednesday" />
+
+        <ToggleButton
+            android:id="@+id/toggle_editor_friday"
+            android:layout_width="@dimen/dateToggleSize_editor"
+            android:layout_height="@dimen/dateToggleSize_editor"
+            android:background="@drawable/ic_toggle_36"
+            android:checked="false"
+            android:textOff="@string/editor_friday_abbrev"
+            android:textOn="@string/editor_friday_abbrev"
+            app:layout_constraintBottom_toBottomOf="@+id/toggle_editor_thursday"
+            app:layout_constraintEnd_toStartOf="@+id/toggle_editor_saturday"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toEndOf="@+id/toggle_editor_thursday"
+            app:layout_constraintTop_toTopOf="@+id/toggle_editor_thursday" />
+
+        <ToggleButton
+            android:id="@+id/toggle_editor_saturday"
+            android:layout_width="@dimen/dateToggleSize_editor"
+            android:layout_height="@dimen/dateToggleSize_editor"
+            android:layout_marginEnd="@dimen/margin_editor_small"
+            android:background="@drawable/ic_toggle_36"
+            android:checked="false"
+            android:textOff="@string/editor_saturday_abbrev"
+            android:textOn="@string/editor_saturday_abbrev"
+            app:layout_constraintBottom_toBottomOf="@+id/toggle_editor_friday"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toEndOf="@+id/toggle_editor_friday"
+            app:layout_constraintTop_toTopOf="@+id/toggle_editor_friday" />
+
+        <TextView
+            android:id="@+id/text_editor_scheduleLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/margin_editor_small"
+            android:text="@{@string/editor_scheduleLabel(viewModel.reminder.description)}"
+            app:layout_constraintStart_toStartOf="@+id/toggle_editor_sunday"
+            app:layout_constraintTop_toBottomOf="@+id/edit_editor_description"
+            tools:text="Every day"/>
+
+        <TextView
+            android:id="@+id/text_editor_heading"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/margin_editor_small"
+            android:text="@string/editor_heading"
+            android:textSize="24sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <com.google.android.material.switchmaterial.SwitchMaterial
+            android:id="@+id/switch_editor_skip"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/margin_editor_small"
+            android:text="@string/editor_switch_skip"
+            app:layout_constraintBottom_toTopOf="@+id/switch_editor_vibrate"
+            app:layout_constraintStart_toStartOf="@+id/toggle_editor_sunday"
+            app:layout_constraintTop_toBottomOf="@+id/toggle_editor_sunday"
+            app:layout_constraintVertical_bias="0.0"
+            app:layout_constraintVertical_chainStyle="packed" />
+
+        <com.google.android.material.switchmaterial.SwitchMaterial
+            android:id="@+id/switch_editor_vibrate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/margin_editor_small"
+            android:text="@string/editor_switch_vibrate"
+            app:layout_constraintBottom_toTopOf="@+id/button_editor_cancel"
+            app:layout_constraintStart_toStartOf="@+id/switch_editor_skip"
+            app:layout_constraintTop_toBottomOf="@+id/switch_editor_skip" />
+
+        <Button
+            android:id="@+id/button_editor_cancel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/margin_editor_small"
+            android:text="@string/editor_cancel"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/button_editor_save"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintHorizontal_chainStyle="spread_inside"
+            app:layout_constraintStart_toStartOf="@+id/switch_editor_vibrate" />
+
+        <Button
+            android:id="@+id/button_editor_save"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/editor_save"
+            app:layout_constraintBottom_toBottomOf="@+id/button_editor_cancel"
+            app:layout_constraintEnd_toEndOf="@+id/toggle_editor_saturday"
+            app:layout_constraintStart_toEndOf="@+id/button_editor_cancel" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+
 </layout>
