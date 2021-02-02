@@ -61,11 +61,6 @@ class ReminderEditorFragmentTest {
     }
 
     @Test
-    fun fragment_launches() {
-        launchFragmentInHiltContainer<ReminderEditorFragment>()
-    }
-
-    @Test
     fun withNoId_displaysEmptyReminder() {
         val args = bundleOf(
             Pair("reminderId", 0L)
