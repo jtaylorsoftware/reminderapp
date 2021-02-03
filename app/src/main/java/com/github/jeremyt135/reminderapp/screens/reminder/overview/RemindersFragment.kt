@@ -8,22 +8,14 @@ import android.view.ViewGroup
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.asLiveData
 import androidx.navigation.fragment.findNavController
+import com.github.jeremyt135.R
 import com.github.jeremyt135.databinding.FragmentRemindersBinding
 import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
 
 @AndroidEntryPoint
-class RemindersFragment : Fragment() {
+class RemindersFragment : Fragment(R.layout.fragment_reminders) {
     private val viewModel: RemindersViewModel by viewModels()
-    private lateinit var binding: FragmentRemindersBinding
-
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        binding = FragmentRemindersBinding.inflate(inflater)
-        return binding.root
-    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -32,7 +24,7 @@ class RemindersFragment : Fragment() {
             viewModel.editReminder(it)
         })
 
-        binding.apply {
+        FragmentRemindersBinding.bind(view).apply {
             recyclerRemindersList.adapter = reminderListAdapter
 
             lifecycleOwner = viewLifecycleOwner
