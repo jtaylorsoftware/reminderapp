@@ -38,7 +38,7 @@ class ReminderDaoTest {
             Reminder(
                 "Reminder $i",
                 ReminderStatus.COMPLETED,
-                i.toLong()
+                id = i.toLong()
             ).asEntity()
         }
         reminders.forEach {
@@ -52,7 +52,7 @@ class ReminderDaoTest {
 
     @Test
     fun findById_returnsInsertedReminder() = runBlockingTest {
-        val reminder = Reminder("Reminder 1", ReminderStatus.SKIPPED, 1).asEntity()
+        val reminder = Reminder("Reminder 1", ReminderStatus.SKIPPED, id =1).asEntity()
          reminderDao.insert(reminder)
 
         val dbReminder = reminderDao.findById(reminder.id)

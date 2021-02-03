@@ -38,7 +38,7 @@ class ReminderLocalDataSourceTest {
             Reminder(
                 "Reminder $i",
                 ReminderStatus.COMPLETED,
-                i.toLong()
+                id = i.toLong()
             )
         }
         reminders.forEach {
@@ -52,7 +52,7 @@ class ReminderLocalDataSourceTest {
 
     @Test
     fun findById_returnsSavedReminder() = runBlockingTest{
-        val reminder = Reminder("My reminder", ReminderStatus.COMPLETED, 1)
+        val reminder = Reminder("My reminder", ReminderStatus.COMPLETED, id =1)
 
         localDataSource.save(reminder)
 

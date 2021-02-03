@@ -10,6 +10,7 @@ import org.junit.Test
 import androidx.test.espresso.action.ViewActions.*
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.ViewMatchers.*
+import androidx.test.platform.app.InstrumentationRegistry
 import com.github.jeremyt135.R
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
@@ -30,7 +31,7 @@ class RemindersActivityTest {
     lateinit var repository: ReminderRepository
 
     private val reminders =
-        (1..3).map { Reminder("My Reminder", ReminderStatus.PENDING, it.toLong()) }
+        (1..3).map { Reminder("My Reminder", ReminderStatus.PENDING, id = it.toLong()) }
 
     @Before
     fun setup() {
@@ -56,15 +57,19 @@ class RemindersActivityTest {
 
     @Test
     fun fab_NavigatesToEditorWithEmptyReminder() = runBlocking {
-        val reminder = emptyReminder()
         withActivityScenario(RemindersActivity::class.java) {
             onView(withId(R.id.fab_reminders_add)).perform(click())
 
-            onView(withText("Reminder No. ${reminder.id}: ${reminder.description}")).check(
-                matches(
-                    isDisplayed()
-                )
-            )
+            val context = InstrumentationRegistry.getInstrumentation().targetContext
+            val hintString = context.getString(R.string.editor_descriptionEdit_hint)
+            onView(withId(R.id.edit_editor_description)).check(matches(withHint(hintString)))
+
+            onView(withId(R.id.switch_editor_skip)).check(matches(isNotChecked()))
+            onView(withId(R.id.switch_editor_vibrate)).check(matches(isNotChecked()))
+
+            /**
+             * TODO?: Add test for time == currentTime
+             */
         }
     }
 }

@@ -20,8 +20,8 @@ class RemindersViewModelTest {
     private lateinit var fakeReminderRepository: ReminderRepository
     private lateinit var viewModel: RemindersViewModel
     private val reminders = listOf(
-        Reminder("1", ReminderStatus.PENDING, 1),
-        Reminder("2", ReminderStatus.COMPLETED, 2)
+        Reminder("1", ReminderStatus.PENDING, id = 1),
+        Reminder("2", ReminderStatus.COMPLETED, id = 2)
     )
 
     @get:Rule

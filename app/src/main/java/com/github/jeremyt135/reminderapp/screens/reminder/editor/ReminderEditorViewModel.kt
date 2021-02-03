@@ -5,6 +5,7 @@ import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.emptyReminder
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -16,12 +17,14 @@ class ReminderEditorViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle
 ) :
     ViewModel() {
-
     private val _reminder = MutableStateFlow(emptyReminder())
     val reminder: LiveData<Reminder> = _reminder.asLiveData(viewModelScope.coroutineContext)
 
+    private val _navigateToReminders = MutableSharedFlow<Unit>(replay = 0)
+    val navigateToReminders = _navigateToReminders
+
     private val reminderId: Long = savedStateHandle.get("reminderId")!!
-    private val isEditing: Boolean = reminderId != 0L
+    val isEditing: Boolean = reminderId != 0L
 
     init {
         Timber.d("reminderId = $reminderId")
@@ -33,5 +36,13 @@ class ReminderEditorViewModel @Inject constructor(
             }
         }
     }
+
+    fun saveReminder() {
+        viewModelScope.launch {
+            reminderRepository.save(_reminder.value)
+            navigateToReminders.emit(Unit)
+        }
+    }
+
 }
 

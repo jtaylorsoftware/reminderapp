@@ -16,8 +16,8 @@ class ReminderRepositoryTest {
     private lateinit var fakeLocalDataSource: ReminderDataSource
 
     private val localReminders = listOf(
-        Reminder("Reminder 1", ReminderStatus.COMPLETED, 1),
-        Reminder("Reminder 2", ReminderStatus.COMPLETED, 2)
+        Reminder("Reminder 1", ReminderStatus.COMPLETED, id = 1),
+        Reminder("Reminder 2", ReminderStatus.COMPLETED, id = 2)
     )
 
     @Before
@@ -45,7 +45,7 @@ class ReminderRepositoryTest {
 
     @Test
     fun save_addsReminderToLocalDataSource() = runBlockingTest {
-        val reminder = Reminder("Reminder 3",  ReminderStatus.PENDING, 3)
+        val reminder = Reminder("Reminder 3",  ReminderStatus.PENDING, id =3)
 
         repository.save(reminder)
 

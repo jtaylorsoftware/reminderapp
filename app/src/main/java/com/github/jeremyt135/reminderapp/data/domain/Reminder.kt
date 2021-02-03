@@ -1,5 +1,8 @@
 package com.github.jeremyt135.reminderapp.data.domain
 
+import androidx.databinding.BaseObservable
+import androidx.databinding.Bindable
+import com.github.jeremyt135.BR
 import com.github.jeremyt135.reminderapp.data.local.ReminderEntity
 
 enum class ReminderStatus {
@@ -9,10 +12,78 @@ enum class ReminderStatus {
 /**
  * Domain class for Reminders that are created and displayed in the application
  */
-data class Reminder(val description: String, val status: ReminderStatus, val id: Long = 0L)
+class Reminder(
+    description: String,
+    var status: ReminderStatus,
+    canSkip: Boolean = false,
+    vibrate: Boolean = false,
+    val id: Long = 0L
+) : BaseObservable() {
+    var description: String = description
+        @Bindable get() = field
+        set(value) {
+            if (field != value) {
+                field = value
+                notifyPropertyChanged(BR.reminder)
+            }
+        }
+
+    var canSkip: Boolean = canSkip
+        @Bindable get() = field
+        set(value) {
+            if (field != value) {
+                field = value
+                notifyPropertyChanged(BR.reminder)
+            }
+        }
+
+    var vibrate: Boolean = vibrate
+        @Bindable get() = field
+        set(value) {
+            if (field != value) {
+                field = value
+                notifyPropertyChanged(BR.reminder)
+            }
+        }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as Reminder
+
+        if (status != other.status) return false
+        if (id != other.id) return false
+        if (description != other.description) return false
+        if (canSkip != other.canSkip) return false
+        if (vibrate != other.vibrate) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = status.hashCode()
+        result = 31 * result + id.hashCode()
+        result = 31 * result + description.hashCode()
+        result = 31 * result + canSkip.hashCode()
+        result = 31 * result + vibrate.hashCode()
+        return result
+    }
+
+    override fun toString(): String {
+        return "Reminder(status=$status, id=$id, description='$description', skippable=$canSkip, vibrate=$vibrate)"
+    }
+
+}
 
 fun Reminder.asEntity(): ReminderEntity =
-    ReminderEntity(id = this.id, description = this.description, status = this.status.toString())
+    ReminderEntity(
+        id = this.id,
+        description = this.description,
+        status = this.status.toString(),
+        canSkip = this.canSkip,
+        vibrate = this.vibrate
+    )
 
 fun List<Reminder>.asEntity(): List<ReminderEntity> = map {
     it.asEntity()

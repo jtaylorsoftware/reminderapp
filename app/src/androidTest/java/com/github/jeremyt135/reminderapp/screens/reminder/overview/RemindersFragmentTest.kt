@@ -46,7 +46,7 @@ class RemindersFragmentTest {
     lateinit var repository: ReminderRepository
 
     private val reminders =
-        (1..3).map { Reminder("My Reminder", ReminderStatus.PENDING, it.toLong()) }
+        (1..3).map { Reminder("My Reminder", ReminderStatus.PENDING, id = it.toLong()) }
 
     @Before
     fun setup() {
