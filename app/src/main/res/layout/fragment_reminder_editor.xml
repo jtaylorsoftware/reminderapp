@@ -6,7 +6,7 @@
     <data>
 
         <variable
-            name="viewModel"
+            name="model"
             type="com.github.jeremyt135.reminderapp.screens.reminder.editor.ReminderEditorViewModel" />
     </data>
 
@@ -33,7 +33,7 @@
             android:importantForAutofill="no"
             android:imeOptions="actionDone"
             android:inputType="text"
-            android:text="@={viewModel.reminder.description}"
+            android:text="@={model.reminder.description}"
             android:textSize="16sp"
             app:layout_constraintStart_toStartOf="@+id/text_editor_scheduleLabel"
             app:layout_constraintTop_toBottomOf="@+id/timePicker_editor"
@@ -143,7 +143,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/margin_editor_small"
-            android:text="@{@string/editor_scheduleLabel(viewModel.reminder.description)}"
+            android:text="@{@string/editor_scheduleLabel(model.reminder.description)}"
             app:layout_constraintStart_toStartOf="@+id/toggle_editor_sunday"
             app:layout_constraintTop_toBottomOf="@+id/edit_editor_description"
             tools:text="Every day" />
@@ -164,7 +164,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/margin_editor_small"
-            android:checked="@={viewModel.reminder.canSkip}"
+            android:checked="@={model.reminder.canSkip}"
             android:text="@string/editor_switch_skip"
             app:layout_constraintBottom_toTopOf="@+id/switch_editor_vibrate"
             app:layout_constraintStart_toStartOf="@+id/toggle_editor_sunday"
@@ -177,7 +177,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/margin_editor_small"
-            android:checked="@={viewModel.reminder.vibrate}"
+            android:checked="@={model.reminder.vibrate}"
             android:text="@string/editor_switch_vibrate"
             app:layout_constraintBottom_toTopOf="@+id/button_editor_cancel"
             app:layout_constraintStart_toStartOf="@+id/switch_editor_skip"

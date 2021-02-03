@@ -7,6 +7,7 @@ import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.action.ViewActions.replaceText
 import androidx.test.espresso.assertion.ViewAssertions.matches
+import androidx.test.espresso.contrib.PickerActions
 import androidx.test.espresso.matcher.ViewMatchers.*
 import androidx.test.filters.MediumTest
 import androidx.test.platform.app.InstrumentationRegistry
@@ -15,18 +16,18 @@ import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.ReminderStatus
 import com.github.jeremyt135.reminderapp.launchFragmentInHiltContainer
+import com.github.jeremyt135.reminderapp.util.withTime
 import com.google.common.truth.Truth.assertThat
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
+import java.time.LocalTime
 import javax.inject.Inject
 
 /**
@@ -66,12 +67,13 @@ class ReminderEditorFragmentTest {
         val args = bundleOf(
             Pair("reminderId", 0L)
         )
+        val time = LocalTime.now()
         launchFragmentInHiltContainer<ReminderEditorFragment>(args)
 
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val hintString = context.getString(R.string.editor_descriptionEdit_hint)
         onView(withId(R.id.edit_editor_description)).check(matches(withHint(hintString)))
-
+        onView(withId(R.id.timePicker_editor)).check(matches(withTime(time)))
         onView(withId(R.id.switch_editor_skip)).check(matches(isNotChecked()))
         onView(withId(R.id.switch_editor_vibrate)).check(matches(isNotChecked()))
     }
@@ -92,13 +94,16 @@ class ReminderEditorFragmentTest {
         // Verify switches by programmatically determining the correct matcher based on
         // the reminder value
         val getCheckMatcher = { value: Boolean ->
-            when(value){
+            when (value) {
                 true -> ::isChecked
-                false  -> ::isNotChecked
+                false -> ::isNotChecked
             }
         }
         onView(withId(R.id.switch_editor_skip)).check(matches(getCheckMatcher(reminder.canSkip)()))
         onView(withId(R.id.switch_editor_vibrate)).check(matches(getCheckMatcher(reminder.vibrate)()))
+        onView(withId(R.id.timePicker_editor)).check(
+            matches(withTime(LocalTime.of(reminder.hour, reminder.minute)))
+        )
     }
 
     @Test
@@ -148,7 +153,7 @@ class ReminderEditorFragmentTest {
             Pair("reminderId", id.toLong())
         )
 
-        launchFragmentInHiltContainer<ReminderEditorFragment>(args){
+        launchFragmentInHiltContainer<ReminderEditorFragment>(args) {
             Navigation.setViewNavController(requireView(), mock(NavController::class.java))
         }
 
@@ -158,6 +163,7 @@ class ReminderEditorFragmentTest {
         val editedReminder = Reminder(
             reminder.description + "edited",
             reminder.status,
+            time = LocalTime.of(reminder.hour, reminder.minute).plusHours(12),
             canSkip = true,
             vibrate = true,
             id = reminder.id
@@ -167,6 +173,9 @@ class ReminderEditorFragmentTest {
         onView(withId(R.id.edit_editor_description)).perform(replaceText(editedReminder.description))
         onView(withId(R.id.switch_editor_skip)).perform(click())
         onView(withId(R.id.switch_editor_vibrate)).perform(click())
+        onView(withId(R.id.timePicker_editor)).perform(
+            PickerActions.setTime(editedReminder.hour, editedReminder.minute)
+        )
 
         // Save changes
         onView(withId(R.id.button_editor_save)).perform(click())

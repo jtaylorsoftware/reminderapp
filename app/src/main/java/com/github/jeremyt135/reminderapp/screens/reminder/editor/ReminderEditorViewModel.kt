@@ -44,5 +44,11 @@ class ReminderEditorViewModel @Inject constructor(
         }
     }
 
+    fun onTimeChanged(newHour: Int, newMinute: Int) {
+        _reminder.value.apply {
+            hour = newHour
+            minute = newMinute
+        }
+    }
 }
 
