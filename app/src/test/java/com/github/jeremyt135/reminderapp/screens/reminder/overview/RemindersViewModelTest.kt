@@ -55,4 +55,19 @@ class RemindersViewModelTest {
         viewModel.addReminder()
         assertThat(events).hasSize(1)
     }
+
+    @Test
+    fun editReminder_emitsNavigateToEditorWithSameReminder() = runBlockingTest {
+        val events = mutableListOf<Reminder?>()
+        launch {
+            viewModel.navigateToEditor.collect {
+                events.add(it)
+                cancel()
+            }
+        }
+        val reminder = reminders[0]
+        viewModel.editReminder(reminder)
+        assertThat(events).hasSize(1)
+        assertThat(events[0]).isEqualTo(reminder)
+    }
 }
