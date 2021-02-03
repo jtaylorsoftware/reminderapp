@@ -16,8 +16,10 @@ import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.ReminderStatus
 import com.github.jeremyt135.reminderapp.data.domain.emptyReminder
+import com.github.jeremyt135.reminderapp.util.withTime
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
+import java.time.LocalTime
 import javax.inject.Inject
 
 @HiltAndroidTest
@@ -58,6 +60,7 @@ class RemindersActivityTest {
     @Test
     fun fab_NavigatesToEditorWithEmptyReminder() = runBlocking {
         withActivityScenario(RemindersActivity::class.java) {
+            val time = LocalTime.now()
             onView(withId(R.id.fab_reminders_add)).perform(click())
 
             val context = InstrumentationRegistry.getInstrumentation().targetContext
@@ -67,9 +70,7 @@ class RemindersActivityTest {
             onView(withId(R.id.switch_editor_skip)).check(matches(isNotChecked()))
             onView(withId(R.id.switch_editor_vibrate)).check(matches(isNotChecked()))
 
-            /**
-             * TODO?: Add test for time == currentTime
-             */
+            onView(withId(R.id.timePicker_editor)).check(matches(withTime(time)))
         }
     }
 }
