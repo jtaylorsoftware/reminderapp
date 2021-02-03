@@ -5,6 +5,7 @@ import androidx.navigation.Navigation
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.assertion.ViewAssertions.matches
+import androidx.test.espresso.contrib.RecyclerViewActions
 import androidx.test.espresso.matcher.ViewMatchers.*
 import androidx.test.filters.MediumTest
 import com.github.jeremyt135.R
@@ -81,6 +82,32 @@ class RemindersFragmentTest {
         verify(navController).navigate(
             RemindersFragmentDirections.actionFragmentRemindersToFragmentReminderEditor(
                 0L
+            )
+        )
+    }
+
+    @Test
+    fun clickRecyclerItem_navigatesToEditor() {
+        val navController = mock(NavController::class.java)
+        launchFragmentInHiltContainer<RemindersFragment>() {
+            Navigation.setViewNavController(requireView(), navController)
+        }
+
+        val reminder = reminders[0]
+
+        // Click item with reminder.description and reminder.id
+        onView(withId(R.id.recycler_reminders_list)).perform(
+            RecyclerViewActions.actionOnItem<ReminderListAdapter.ReminderViewHolder>(
+                // TODO: This string will have to change later when item_reminder is updated
+                hasDescendant(withText("Reminder No. ${reminder.id}: ${reminder.description}")),
+                click()
+            )
+        )
+
+        // Verify the navigation happened with that reminder
+        verify(navController).navigate(
+            RemindersFragmentDirections.actionFragmentRemindersToFragmentReminderEditor(
+                reminder.id
             )
         )
     }
