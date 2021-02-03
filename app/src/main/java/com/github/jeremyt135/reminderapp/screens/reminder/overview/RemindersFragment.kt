@@ -28,10 +28,10 @@ class RemindersFragment : Fragment(R.layout.fragment_reminders) {
             recyclerRemindersList.adapter = reminderListAdapter
 
             lifecycleOwner = viewLifecycleOwner
-            viewModel = this@RemindersFragment.viewModel
+            model = viewModel
 
             fabRemindersAdd.setOnClickListener {
-                this@RemindersFragment.viewModel.addReminder()
+               viewModel.addReminder()
             }
         }
 

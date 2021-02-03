@@ -5,7 +5,7 @@
 
     <data>
         <variable
-            name="viewModel"
+            name="model"
             type="com.github.jeremyt135.reminderapp.screens.reminder.overview.RemindersViewModel" />
     </data>
 
@@ -19,7 +19,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-            app:reminderListData="@{viewModel.reminders}"
+            app:reminderListData="@{model.reminders}"
             tools:layout_editor_absoluteX="142dp"
             tools:layout_editor_absoluteY="75dp"
             tools:listitem="@layout/item_reminder"/>
