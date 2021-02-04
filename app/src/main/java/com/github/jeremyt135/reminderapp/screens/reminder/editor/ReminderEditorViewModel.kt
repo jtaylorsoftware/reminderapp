@@ -7,8 +7,10 @@ import com.github.jeremyt135.reminderapp.data.domain.emptyReminder
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import java.time.DayOfWeek
 import javax.inject.Inject
 
 @HiltViewModel
@@ -19,6 +21,10 @@ class ReminderEditorViewModel @Inject constructor(
     ViewModel() {
     private val _reminder = MutableStateFlow(emptyReminder())
     val reminder: LiveData<Reminder> = _reminder.asLiveData(viewModelScope.coroutineContext)
+
+    private val _reminderDatesDisplay = MutableStateFlow(_reminder.value.datesDisplay)
+    val reminderDatesDisplay: LiveData<String> =
+        _reminderDatesDisplay.asLiveData(viewModelScope.coroutineContext)
 
     private val _navigateToReminders = MutableSharedFlow<Unit>(replay = 0)
     val navigateToReminders = _navigateToReminders
@@ -32,8 +38,24 @@ class ReminderEditorViewModel @Inject constructor(
             viewModelScope.launch {
                 reminderRepository.findById(reminderId)?.let {
                     _reminder.value = it
+                    _reminderDatesDisplay.value = it.datesDisplay
                 }
             }
+        }
+    }
+
+    fun toggleDay(dayString: String) {
+        Timber.d("Clicked $dayString")
+        val day = DayOfWeek.valueOf(dayString)
+        _reminder.value.apply {
+            if (daysOfWeek.contains(day)) {
+                daysOfWeek.remove(day)
+            } else {
+                daysOfWeek.add(day)
+            }
+        }.also {
+            Timber.d("datesDisplay is now ${it.datesDisplay}")
+            _reminderDatesDisplay.value = it.datesDisplay
         }
     }
 

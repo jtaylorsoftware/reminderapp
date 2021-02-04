@@ -27,6 +27,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
+import java.time.DayOfWeek
 import java.time.LocalTime
 import javax.inject.Inject
 
@@ -54,11 +55,21 @@ class ReminderEditorFragmentTest {
     lateinit var repository: ReminderRepository
 
     private val reminders =
-        (1..3).map { Reminder("My Reminder", ReminderStatus.PENDING, id = it.toLong()) }
+        listOf(
+            Reminder(id = 1),
+            Reminder(
+                "My Reminder", ReminderStatus.PENDING,
+                daysOfWeek = mutableSetOf(DayOfWeek.MONDAY, DayOfWeek.TUESDAY),
+                canSkip = false,
+                vibrate = true,
+                id = 2
+            ),
+        )
 
     @Before
     fun setup() {
         hiltRule.inject()
+
         runBlocking { reminders.forEach { repository.save(it) } }
     }
 
@@ -80,30 +91,23 @@ class ReminderEditorFragmentTest {
 
     @Test
     fun withReminderId_displaysAssociatedReminder() {
-        val id = 1
+        val reminder = reminders[1]
+        val id = reminder.id
 
         val args = bundleOf(
-            Pair("reminderId", id.toLong())
+            Pair("reminderId", id)
         )
         launchFragmentInHiltContainer<ReminderEditorFragment>(args)
 
-        val reminder = reminders[id - 1]
-
         onView(withText(reminder.description)).check(matches(isDisplayed()))
-
-        // Verify switches by programmatically determining the correct matcher based on
-        // the reminder value
-        val getCheckMatcher = { value: Boolean ->
-            when (value) {
-                true -> ::isChecked
-                false -> ::isNotChecked
-            }
-        }
-        onView(withId(R.id.switch_editor_skip)).check(matches(getCheckMatcher(reminder.canSkip)()))
-        onView(withId(R.id.switch_editor_vibrate)).check(matches(getCheckMatcher(reminder.vibrate)()))
+        onView(withId(R.id.switch_editor_skip)).check(matches(isNotChecked()))
+        onView(withId(R.id.switch_editor_vibrate)).check(matches(isChecked()))
         onView(withId(R.id.timePicker_editor)).check(
             matches(withTime(LocalTime.of(reminder.hour, reminder.minute)))
         )
+
+        onView(withId(R.id.toggle_editor_monday)).check(matches(isChecked()))
+        onView(withId(R.id.toggle_editor_tuesday)).check(matches(isChecked()))
     }
 
     @Test
@@ -147,10 +151,11 @@ class ReminderEditorFragmentTest {
 
     @Test
     fun save_savesReminderEdits() {
-        // Launch fragment with reminders[0] with id = 1
-        val id = 1
+        // Load reminder with defaults
+        val reminder = reminders[0]
+        val id = reminder.id
         val args = bundleOf(
-            Pair("reminderId", id.toLong())
+            Pair("reminderId", id)
         )
 
         launchFragmentInHiltContainer<ReminderEditorFragment>(args) {
@@ -159,11 +164,11 @@ class ReminderEditorFragmentTest {
 
 
         // Create a new reminder that edits fields of current repo version
-        val reminder = reminders[id - 1]
         val editedReminder = Reminder(
             reminder.description + "edited",
             reminder.status,
             time = LocalTime.of(reminder.hour, reminder.minute).plusHours(12),
+            daysOfWeek = mutableSetOf(DayOfWeek.MONDAY, DayOfWeek.TUESDAY),
             canSkip = true,
             vibrate = true,
             id = reminder.id
@@ -173,6 +178,8 @@ class ReminderEditorFragmentTest {
         onView(withId(R.id.edit_editor_description)).perform(replaceText(editedReminder.description))
         onView(withId(R.id.switch_editor_skip)).perform(click())
         onView(withId(R.id.switch_editor_vibrate)).perform(click())
+        onView(withId(R.id.toggle_editor_monday)).perform(click())
+        onView(withId(R.id.toggle_editor_tuesday)).perform(click())
         onView(withId(R.id.timePicker_editor)).perform(
             PickerActions.setTime(editedReminder.hour, editedReminder.minute)
         )
@@ -183,7 +190,7 @@ class ReminderEditorFragmentTest {
         // Verify save happened
         lateinit var savedReminder: Reminder
         runBlocking {
-            savedReminder = repository.findById(id.toLong())!!
+            savedReminder = repository.findById(id)!!
         }
         assertThat(savedReminder).isEqualTo(editedReminder)
     }
