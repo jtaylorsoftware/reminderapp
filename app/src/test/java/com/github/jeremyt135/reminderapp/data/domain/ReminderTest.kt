@@ -50,7 +50,7 @@ class ReminderTest {
             "Description",
             daysOfWeek = mutableSetOf(DayOfWeek.MONDAY)
         )
-        assertThat(reminder.datesDisplay)
+        assertThat(reminder.getDaysDisplayString())
             .isEqualTo("Every ${DayOfWeek.MONDAY.getFullLocaleDisplay()}")
     }
 
@@ -60,7 +60,7 @@ class ReminderTest {
             "Description",
             daysOfWeek = mutableSetOf()
         )
-        assertThat(reminder.datesDisplay)
+        assertThat(reminder.getDaysDisplayString())
             .isEqualTo("Today")
     }
 
@@ -70,7 +70,7 @@ class ReminderTest {
             "Description",
             daysOfWeek = DayOfWeek.values().toMutableSet()
         )
-        assertThat(reminder.datesDisplay)
+        assertThat(reminder.getDaysDisplayString())
             .isEqualTo("Every day")
     }
 }

@@ -68,20 +68,19 @@ class Reminder(
             }
         }
 
-    val datesDisplay: String
-        get() =
-            when (daysOfWeek.size) {
-                // TODO: Actually return Today's date?, disallow schedules that don't repeat?
-                0 -> "Today"
-                in 1..6 ->
-                    ("Every " + daysOfWeek.sortedBy {
-                        // As per docs for DayOfWeek, MONDAY=1, SUNDAY=7, range=(1..7)
-                        // So this puts Sunday first, Saturday last
-                        it.value % it.range(ChronoField.DAY_OF_WEEK).maximum
-                    }.joinToString { it.getFullLocaleDisplay() })
-                7 -> "Every day"
-                else -> throw IllegalArgumentException("daysOfWeek has more than 7 entries")
-            }
+    fun getDaysDisplayString() =
+        when (daysOfWeek.size) {
+            // TODO: Actually return Today's date?, disallow schedules that don't repeat?
+            0 -> "Today"
+            in 1..6 ->
+                ("Every " + daysOfWeek.sortedBy {
+                    // As per docs for DayOfWeek, MONDAY=1, SUNDAY=7, range=(1..7)
+                    // So this puts Sunday first, Saturday last
+                    it.value % it.range(ChronoField.DAY_OF_WEEK).maximum
+                }.joinToString { it.getFullLocaleDisplay() })
+            7 -> "Every day"
+            else -> throw IllegalArgumentException("daysOfWeek has more than 7 entries")
+        }
 
 
     fun dayIsChecked(dayString: String) = dayIsChecked(DayOfWeek.valueOf(dayString))

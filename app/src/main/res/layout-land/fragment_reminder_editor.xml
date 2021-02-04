@@ -149,7 +149,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/margin_editor_small"
                 android:scrollHorizontally="false"
-                android:text="@{model.reminderDatesDisplay}"
+                android:text="@{model.reminderDaysDisplayString}"
                 app:layout_constraintEnd_toEndOf="@+id/toggle_editor_saturday"
                 app:layout_constraintStart_toStartOf="@+id/toggle_editor_sunday"
                 app:layout_constraintTop_toBottomOf="@+id/edit_editor_description"

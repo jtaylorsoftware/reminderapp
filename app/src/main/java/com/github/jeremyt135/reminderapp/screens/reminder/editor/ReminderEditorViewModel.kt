@@ -22,8 +22,8 @@ class ReminderEditorViewModel @Inject constructor(
     private val _reminder = MutableStateFlow(emptyReminder())
     val reminder: LiveData<Reminder> = _reminder.asLiveData(viewModelScope.coroutineContext)
 
-    private val _reminderDatesDisplay = MutableStateFlow(_reminder.value.datesDisplay)
-    val reminderDatesDisplay: LiveData<String> =
+    private val _reminderDatesDisplay = MutableStateFlow(_reminder.value.getDaysDisplayString())
+    val reminderDaysDisplayString: LiveData<String> =
         _reminderDatesDisplay.asLiveData(viewModelScope.coroutineContext)
 
     private val _navigateToReminders = MutableSharedFlow<Unit>(replay = 0)
@@ -38,7 +38,7 @@ class ReminderEditorViewModel @Inject constructor(
             viewModelScope.launch {
                 reminderRepository.findById(reminderId)?.let {
                     _reminder.value = it
-                    _reminderDatesDisplay.value = it.datesDisplay
+                    _reminderDatesDisplay.value = it.getDaysDisplayString()
                 }
             }
         }
@@ -54,8 +54,8 @@ class ReminderEditorViewModel @Inject constructor(
                 daysOfWeek.add(day)
             }
         }.also {
-            Timber.d("datesDisplay is now ${it.datesDisplay}")
-            _reminderDatesDisplay.value = it.datesDisplay
+            Timber.d("datesDisplay is now ${it.getDaysDisplayString()}")
+            _reminderDatesDisplay.value = it.getDaysDisplayString()
         }
     }
 
