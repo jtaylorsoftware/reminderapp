@@ -1,24 +1,23 @@
 package com.github.jeremyt135.reminderapp
 
 import androidx.test.espresso.Espresso.onView
-import androidx.test.filters.LargeTest
-import com.github.jeremyt135.reminderapp.util.withActivityScenario
-import dagger.hilt.android.testing.HiltAndroidRule
-import dagger.hilt.android.testing.HiltAndroidTest
-import org.junit.Rule
-import org.junit.Test
-import androidx.test.espresso.action.ViewActions.*
+import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.ViewMatchers.*
+import androidx.test.filters.LargeTest
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.jeremyt135.R
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.ReminderStatus
-import com.github.jeremyt135.reminderapp.data.domain.emptyReminder
+import com.github.jeremyt135.reminderapp.util.withActivityScenario
 import com.github.jeremyt135.reminderapp.util.withTime
+import dagger.hilt.android.testing.HiltAndroidRule
+import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
+import org.junit.Rule
+import org.junit.Test
 import java.time.LocalTime
 import javax.inject.Inject
 

@@ -2,13 +2,16 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.github.jeremyt135">
 
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <uses-permission android:name="android.permission.VIBRATE" />
+
     <application
         android:name=".reminderapp.ReminderApplication"
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
-        android:supportsRtl="true"
         android:theme="@style/Theme.ReminderApp">
         <activity
             android:name=".reminderapp.RemindersActivity"
@@ -22,6 +25,25 @@
         <activity
             android:name=".reminderapp.HiltTestActivity"
             android:exported="false" />
+        <activity
+            android:name=".reminderapp.AlarmActivity"
+            android:exported="true"
+            android:theme="@style/Theme.ReminderApp.Alarm" />
+
+        <receiver
+            android:name=".reminderapp.broadcast.AlarmTriggerReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="@string/action_alarm_start" />
+            </intent-filter>
+        </receiver>
+        <receiver
+            android:name=".reminderapp.broadcast.AlarmBootScheduler"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>

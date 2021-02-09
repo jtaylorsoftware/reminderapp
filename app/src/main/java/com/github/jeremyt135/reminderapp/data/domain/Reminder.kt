@@ -5,10 +5,15 @@ import androidx.databinding.Bindable
 import com.github.jeremyt135.BR
 import com.github.jeremyt135.reminderapp.data.local.ReminderEntity
 import com.github.jeremyt135.reminderapp.util.getFullLocaleDisplay
-import java.lang.IllegalArgumentException
+import timber.log.Timber
 import java.time.DayOfWeek
+import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.temporal.ChronoField
+import java.time.temporal.ChronoUnit
+import java.time.temporal.TemporalAdjusters
+import java.util.*
 
 enum class ReminderStatus {
     COMPLETED, SKIPPED, PENDING
@@ -21,10 +26,10 @@ class Reminder(
     description: String = "",
     var status: ReminderStatus = ReminderStatus.PENDING,
     time: LocalTime = LocalTime.now(),
-    val daysOfWeek: MutableSet<DayOfWeek> = mutableSetOf(),
+    val daysOfWeek: SortedSet<DayOfWeek> = sortedSetOf(),
     canSkip: Boolean = false,
     vibrate: Boolean = false,
-    val id: Long = 0L
+    var id: Long = 0L,
 ) : BaseObservable() {
     var description: String = description
         @Bindable get() = field
@@ -68,14 +73,57 @@ class Reminder(
             }
         }
 
+    val isComplete: Boolean
+        get() = status != ReminderStatus.PENDING
+
+    // True if this Reminder was scheduled for the same day as it was created.
+    val isOneOff: Boolean = daysOfWeek.isEmpty()
+
+    /**
+     * Returns the next LocalDateTime that this Reminder could have an alarm scheduled,
+     * or null if the Reminder is complete or in the past and cannot be scheduled.
+     */
+    fun getNextTimeForAlarm(today: DayOfWeek): LocalDateTime? {
+        if (isComplete) {
+            return null
+        }
+
+        val nextDayOfWeek = daysOfWeek.firstOrNull { it >= today } ?: LocalDate.now().dayOfWeek
+
+        val reminderTimeToday =
+            LocalDateTime.of(LocalDate.now(), LocalTime.of(hour, minute))
+        val timeIsInPast =
+            LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES).isAfter(reminderTimeToday)
+        return if (isOneOff) {
+            if (timeIsInPast) {
+                Timber.d("One-off Alarm for today was in the past")
+                null
+            } else {
+                reminderTimeToday
+            }
+        } else {
+            if (timeIsInPast) {
+                reminderTimeToday.with(TemporalAdjusters.next(nextDayOfWeek))
+            } else {
+                reminderTimeToday.with(TemporalAdjusters.nextOrSame(nextDayOfWeek))
+            }
+        }
+
+    }
+
+    fun alarmCanBeSetToday(today: DayOfWeek): Boolean =
+        !isComplete && (this.isOneOff || daysOfWeek.contains(today))
+
     fun getDaysDisplayString() =
         when (daysOfWeek.size) {
-            // TODO: Actually return Today's date?, disallow schedules that don't repeat?
+            // TODO: Actually return Today's date?
             0 -> "Today"
             in 1..6 ->
+                // Sort for timezones with days of week similarly to the US, with Sunday first
+                // TODO: do sort correctly for any local timezone (would need to also display the date toggles similarly)
                 ("Every " + daysOfWeek.sortedBy {
-                    // As per docs for DayOfWeek, MONDAY=1, SUNDAY=7, range=(1..7)
-                    // So this puts Sunday first, Saturday last
+
+                    // Convert from 1..7 to 0..6
                     it.value % it.range(ChronoField.DAY_OF_WEEK).maximum
                 }.joinToString { it.getFullLocaleDisplay() })
             7 -> "Every day"
@@ -119,18 +167,27 @@ class Reminder(
 
     override fun toString(): String {
         return "Reminder(" +
+                "status=$status, " +
+                "daysOfWeek=$daysOfWeek, " +
                 "id=$id, " +
                 "description='$description', " +
-                "status=$status, " +
                 "canSkip=$canSkip, " +
                 "vibrate=$vibrate, " +
-                "daysOfWeek=$daysOfWeek, " +
                 "hour=$hour, " +
                 "minute=$minute" +
                 ")"
     }
 
 
+    fun copy(
+        description: String = this.description,
+        status: ReminderStatus = this.status,
+        time: LocalTime = LocalTime.of(this.hour, this.minute),
+        daysOfWeek: SortedSet<DayOfWeek> = this.daysOfWeek.toSortedSet(),
+        canSkip: Boolean = this.canSkip,
+        vibrate: Boolean = this.vibrate,
+        id: Long = this.id,
+    ) = Reminder(description, status, time, daysOfWeek, canSkip, vibrate, id)
 }
 
 fun Reminder.asEntity(): ReminderEntity =
@@ -138,8 +195,8 @@ fun Reminder.asEntity(): ReminderEntity =
         id = this.id,
         description = this.description,
         time = LocalTime.of(hour, minute),
-        daysOfWeek = this.daysOfWeek.toSet(),
-        status = this.status.toString(),
+        daysOfWeek = this.daysOfWeek.toSortedSet(),
+        status = this.status.name,
         canSkip = this.canSkip,
         vibrate = this.vibrate
     )
@@ -147,10 +204,3 @@ fun Reminder.asEntity(): ReminderEntity =
 fun List<Reminder>.asEntity(): List<ReminderEntity> = map {
     it.asEntity()
 }
-
-/**
- * Returns a Reminder with String properties initialized to the empty string "" and ReminderStatus
- * set to PENDING.
- * TODO: Factor out, Reminder now has all default arguments
- */
-fun emptyReminder() = Reminder()

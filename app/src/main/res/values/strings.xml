@@ -1,5 +1,9 @@
 <resources>
     <string name="app_name">ReminderApp</string>
+    <string name="action_alarm_start">com.github.jeremyt135.reminderapp.broadcast.ALARM_START</string>
+    <string name="alarm_notification_channel_name">Alarms</string>
+    <string name="alarm_notification_channel_id">Alarms</string>
+    <string name="alarm_notification_channel_description">Alarms for reminders</string>
     <string name="overview_fab_description">Add Reminder Button</string>
     <string name="editor_descriptionEdit_hint">Edit reminder text</string>
     <string name="editor_saturday_abbrev">S</string>

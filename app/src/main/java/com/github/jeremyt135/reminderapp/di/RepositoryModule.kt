@@ -1,5 +1,7 @@
 package com.github.jeremyt135.reminderapp.di
 
+import com.github.jeremyt135.reminderapp.data.AlarmRepository
+import com.github.jeremyt135.reminderapp.data.AlarmRepositoryImpl
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepositoryImpl
 import dagger.Binds
@@ -14,4 +16,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindReminderRepository(reminderRepositoryImpl: ReminderRepositoryImpl): ReminderRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindAlarmRepository(alarmRepositoryImpl: AlarmRepositoryImpl): AlarmRepository
 }

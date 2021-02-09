@@ -52,12 +52,13 @@ class ReminderDaoTest {
 
     @Test
     fun findById_returnsInsertedReminder() = runBlockingTest {
-        val reminder = Reminder("Reminder 1", ReminderStatus.SKIPPED, id =1).asEntity()
-         reminderDao.insert(reminder)
+        val reminder = Reminder("Reminder 1", ReminderStatus.SKIPPED).asEntity()
 
-        val dbReminder = reminderDao.findById(reminder.id)
+        val id = reminderDao.insert(reminder)
 
-        assertThat(dbReminder).isEqualTo(reminder)
+        val dbReminder = reminderDao.findById(id)
+
+        assertThat(dbReminder).isEqualTo(reminder.copy(id=id))
     }
 
     @Test

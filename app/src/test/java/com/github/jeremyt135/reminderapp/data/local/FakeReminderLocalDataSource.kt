@@ -13,7 +13,10 @@ class FakeReminderLocalDataSource(private val cache: MutableList<Reminder> = mut
 
     override suspend fun findById(id: Long): Reminder? = cache.find { it.id == id }
 
-    override suspend fun save(reminder: Reminder) {
-        cache.add(reminder)
+    override suspend fun save(reminder: Reminder): Long{
+        val nextId = cache.size.toLong() + 1
+        val savedReminder = reminder.copy(id = nextId)
+        cache.add(savedReminder)
+        return nextId
     }
 }

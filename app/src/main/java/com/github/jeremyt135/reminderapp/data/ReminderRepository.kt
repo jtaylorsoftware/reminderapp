@@ -9,7 +9,7 @@ import javax.inject.Singleton
 
 interface ReminderRepository {
     fun getAll(): Flow<List<Reminder>>
-    suspend fun save(reminder: Reminder)
+    suspend fun save(reminder: Reminder): Long
     suspend fun findById(id: Long): Reminder?
 }
 

@@ -20,7 +20,7 @@ import com.github.jeremyt135.reminderapp.util.withTime
 import com.google.common.truth.Truth.assertThat
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Rule
@@ -59,10 +59,14 @@ class ReminderEditorFragmentTest {
             Reminder(id = 1),
             Reminder(
                 "My Reminder", ReminderStatus.PENDING,
-                daysOfWeek = mutableSetOf(DayOfWeek.MONDAY, DayOfWeek.TUESDAY),
+                daysOfWeek = sortedSetOf(DayOfWeek.MONDAY, DayOfWeek.TUESDAY),
                 canSkip = false,
                 vibrate = true,
                 id = 2
+            ),
+            Reminder(
+                id = 3,
+                time = LocalTime.now().plusHours(1).plusMinutes(10),
             ),
         )
 
@@ -136,9 +140,10 @@ class ReminderEditorFragmentTest {
     @Test
     fun save_navigatesUp() {
         val args = bundleOf(
-            Pair("reminderId", 0L)
+            Pair("reminderId", 3L)
         )
         val navController = mock(NavController::class.java)
+
         launchFragmentInHiltContainer<ReminderEditorFragment>(args) {
             Navigation.setViewNavController(requireView(), navController)
         }
@@ -168,7 +173,7 @@ class ReminderEditorFragmentTest {
             reminder.description + "edited",
             reminder.status,
             time = LocalTime.of(reminder.hour, reminder.minute).plusHours(12),
-            daysOfWeek = mutableSetOf(DayOfWeek.MONDAY, DayOfWeek.TUESDAY),
+            daysOfWeek = sortedSetOf(DayOfWeek.MONDAY, DayOfWeek.TUESDAY),
             canSkip = true,
             vibrate = true,
             id = reminder.id

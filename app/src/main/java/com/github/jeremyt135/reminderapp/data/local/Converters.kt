@@ -3,6 +3,7 @@ package com.github.jeremyt135.reminderapp.data.local
 import androidx.room.TypeConverter
 import java.time.DayOfWeek
 import java.time.LocalTime
+import java.util.*
 
 class Converters {
     @TypeConverter
@@ -21,11 +22,11 @@ class Converters {
     }
 
     @TypeConverter
-    fun daysOfWeekFromString(value: String): Set<DayOfWeek> {
-        if (value.isBlank()){
-            return setOf()
+    fun daysOfWeekFromString(value: String): SortedSet<DayOfWeek> {
+        if (value.isBlank()) {
+            return sortedSetOf()
         }
         val days = """,\s+""".toRegex().split(value)
-        return days.map { DayOfWeek.valueOf(it) }.toSet()
+        return days.map { DayOfWeek.valueOf(it) }.toSortedSet()
     }
 }

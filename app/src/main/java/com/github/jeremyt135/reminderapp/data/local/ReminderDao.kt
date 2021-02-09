@@ -13,5 +13,5 @@ interface ReminderDao {
     suspend fun findById(id: Long): Reminder?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(reminder: Reminder)
+    suspend fun insert(reminder: Reminder): Long
 }

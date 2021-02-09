@@ -52,11 +52,11 @@ class ReminderLocalDataSourceTest {
 
     @Test
     fun findById_returnsSavedReminder() = runBlockingTest{
-        val reminder = Reminder("My reminder", ReminderStatus.COMPLETED, id =1)
+        val reminder = Reminder("My reminder", ReminderStatus.COMPLETED)
 
-        localDataSource.save(reminder)
-
-        val savedReminder = localDataSource.findById(reminder.id)
+        val id = localDataSource.save(reminder)
+        reminder.id = id
+        val savedReminder = localDataSource.findById(id)
 
         assertThat(savedReminder).isEqualTo(reminder)
     }

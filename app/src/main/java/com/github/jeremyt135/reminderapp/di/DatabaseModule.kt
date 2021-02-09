@@ -27,5 +27,8 @@ object DatabaseModule {
 
     @Provides
     fun provideReminderDao(appDatabase: AppDatabase) = appDatabase.reminderDao()
+
+    @Provides
+    fun provideAlarmDao(appDatabase: AppDatabase) = appDatabase.alarmDao()
 }
 

@@ -6,5 +6,5 @@ import kotlinx.coroutines.flow.Flow
 interface ReminderDataSource {
     fun getAll(): Flow<List<Reminder>>
     suspend fun findById(id: Long): Reminder?
-    suspend fun save(reminder: Reminder)
+    suspend fun save(reminder: Reminder): Long
 }
