@@ -60,7 +60,6 @@ class ReminderEditorFragmentTest {
             Reminder(
                 "My Reminder", ReminderStatus.PENDING,
                 daysOfWeek = sortedSetOf(DayOfWeek.MONDAY, DayOfWeek.TUESDAY),
-                canSkip = false,
                 vibrate = true,
                 id = 2
             ),
@@ -89,7 +88,6 @@ class ReminderEditorFragmentTest {
         val hintString = context.getString(R.string.editor_descriptionEdit_hint)
         onView(withId(R.id.edit_editor_description)).check(matches(withHint(hintString)))
         onView(withId(R.id.timePicker_editor)).check(matches(withTime(time)))
-        onView(withId(R.id.switch_editor_skip)).check(matches(isNotChecked()))
         onView(withId(R.id.switch_editor_vibrate)).check(matches(isNotChecked()))
     }
 
@@ -104,7 +102,6 @@ class ReminderEditorFragmentTest {
         launchFragmentInHiltContainer<ReminderEditorFragment>(args)
 
         onView(withText(reminder.description)).check(matches(isDisplayed()))
-        onView(withId(R.id.switch_editor_skip)).check(matches(isNotChecked()))
         onView(withId(R.id.switch_editor_vibrate)).check(matches(isChecked()))
         onView(withId(R.id.timePicker_editor)).check(
             matches(withTime(LocalTime.of(reminder.hour, reminder.minute)))
@@ -174,14 +171,12 @@ class ReminderEditorFragmentTest {
             reminder.status,
             time = LocalTime.of(reminder.hour, reminder.minute).plusHours(12),
             daysOfWeek = sortedSetOf(DayOfWeek.MONDAY, DayOfWeek.TUESDAY),
-            canSkip = true,
             vibrate = true,
             id = reminder.id
         )
 
         // Apply edits
         onView(withId(R.id.edit_editor_description)).perform(replaceText(editedReminder.description))
-        onView(withId(R.id.switch_editor_skip)).perform(click())
         onView(withId(R.id.switch_editor_vibrate)).perform(click())
         onView(withId(R.id.toggle_editor_monday)).perform(click())
         onView(withId(R.id.toggle_editor_tuesday)).perform(click())

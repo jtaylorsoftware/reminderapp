@@ -16,7 +16,6 @@ data class ReminderEntity(
     val time: LocalTime = LocalTime.now(),
     val daysOfWeek: SortedSet<DayOfWeek> = sortedSetOf(),
     val status: String = ReminderStatus.PENDING.name,
-    val canSkip: Boolean = false,
     val vibrate: Boolean = false
 )
 
@@ -27,7 +26,6 @@ fun ReminderEntity.asDomainModel(): Reminder =
         time = this.time,
         daysOfWeek = this.daysOfWeek.toSortedSet(),
         status = enumValueOf(this.status),
-        canSkip = this.canSkip,
         vibrate = this.vibrate
     )
 

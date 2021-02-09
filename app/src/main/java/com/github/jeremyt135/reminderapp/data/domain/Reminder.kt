@@ -27,20 +27,10 @@ class Reminder(
     var status: ReminderStatus = ReminderStatus.PENDING,
     time: LocalTime = LocalTime.now(),
     val daysOfWeek: SortedSet<DayOfWeek> = sortedSetOf(),
-    canSkip: Boolean = false,
     vibrate: Boolean = false,
     var id: Long = 0L,
 ) : BaseObservable() {
     var description: String = description
-        @Bindable get() = field
-        set(value) {
-            if (field != value) {
-                field = value
-                notifyPropertyChanged(BR.reminder)
-            }
-        }
-
-    var canSkip: Boolean = canSkip
         @Bindable get() = field
         set(value) {
             if (field != value) {
@@ -145,7 +135,6 @@ class Reminder(
         if (daysOfWeek != other.daysOfWeek) return false
         if (id != other.id) return false
         if (description != other.description) return false
-        if (canSkip != other.canSkip) return false
         if (vibrate != other.vibrate) return false
         if (hour != other.hour) return false
         if (minute != other.minute) return false
@@ -158,7 +147,6 @@ class Reminder(
         result = 31 * result + daysOfWeek.hashCode()
         result = 31 * result + id.hashCode()
         result = 31 * result + description.hashCode()
-        result = 31 * result + canSkip.hashCode()
         result = 31 * result + vibrate.hashCode()
         result = 31 * result + hour
         result = 31 * result + minute
@@ -171,7 +159,6 @@ class Reminder(
                 "daysOfWeek=$daysOfWeek, " +
                 "id=$id, " +
                 "description='$description', " +
-                "canSkip=$canSkip, " +
                 "vibrate=$vibrate, " +
                 "hour=$hour, " +
                 "minute=$minute" +
@@ -184,10 +171,9 @@ class Reminder(
         status: ReminderStatus = this.status,
         time: LocalTime = LocalTime.of(this.hour, this.minute),
         daysOfWeek: SortedSet<DayOfWeek> = this.daysOfWeek.toSortedSet(),
-        canSkip: Boolean = this.canSkip,
         vibrate: Boolean = this.vibrate,
         id: Long = this.id,
-    ) = Reminder(description, status, time, daysOfWeek, canSkip, vibrate, id)
+    ) = Reminder(description, status, time, daysOfWeek, vibrate, id)
 }
 
 fun Reminder.asEntity(): ReminderEntity =
@@ -197,7 +183,6 @@ fun Reminder.asEntity(): ReminderEntity =
         time = LocalTime.of(hour, minute),
         daysOfWeek = this.daysOfWeek.toSortedSet(),
         status = this.status.name,
-        canSkip = this.canSkip,
         vibrate = this.vibrate
     )
 

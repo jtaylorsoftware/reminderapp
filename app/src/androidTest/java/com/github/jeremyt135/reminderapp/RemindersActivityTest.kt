@@ -66,7 +66,6 @@ class RemindersActivityTest {
             val hintString = context.getString(R.string.editor_descriptionEdit_hint)
             onView(withId(R.id.edit_editor_description)).check(matches(withHint(hintString)))
 
-            onView(withId(R.id.switch_editor_skip)).check(matches(isNotChecked()))
             onView(withId(R.id.switch_editor_vibrate)).check(matches(isNotChecked()))
 
             onView(withId(R.id.timePicker_editor)).check(matches(withTime(time)))
