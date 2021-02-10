@@ -11,6 +11,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import java.time.LocalDate
+import java.time.LocalDateTime
 
 
 /**
@@ -26,7 +28,8 @@ class AlarmTriggerReceiver : AlarmReceiver(ACTION_ALARM_START) {
 
             Timber.d("AlarmTriggerReceiver for alarm with reminder ${alarm.reminderId}")
 
-            if (alarmShouldTriggerNow(reminder, alarm)) {
+            val now = LocalDateTime.now()
+            if (alarmShouldTriggerNow(reminder, alarm, now)) {
                 Timber.d("Alarms for reminder ${reminder.id} should fire soon")
                 triggerNotification(context, reminder)
 

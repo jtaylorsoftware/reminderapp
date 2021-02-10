@@ -40,9 +40,9 @@ val VIBRATION_PATTERN: LongArray by lazy {
 }
 
 /**
- * Schedules an alarm to be received by AlarmReceiver. Client should pass in a new Alarm that
- * has everything but its triggerAt field set.
- * Returns the alarm with its triggerAt updated or null if it could not be scheduled due to timing constraints.
+ * Schedules an alarm to trigger at the next available time and date for the reminder, starting
+ * from today.
+ * Returns the scheduled Alarm, or null if it can't be scheduled.
  */
 fun scheduleAlarmForReminder(
     context: Context,
@@ -62,6 +62,9 @@ fun scheduleAlarmForReminder(
     alarm
 }
 
+/**
+ * Schedules an existing alarm.
+ */
 fun scheduleAlarm(context: Context, alarm: Alarm) {
     val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
     val intent = getIntentForAlarmReceiver(context, alarm.reminderId)
@@ -114,15 +117,15 @@ fun makeSnoozeToast(context: Context) {
  * the reminder is not complete. If the reminder and alarm are not paired, returns false without
  * evaluating the time.
  */
-fun alarmShouldTriggerNow(reminder: Reminder, alarm: Alarm): Boolean {
+fun alarmShouldTriggerNow(reminder: Reminder, alarm: Alarm, now: LocalDateTime): Boolean {
     if (reminder.id != alarm.reminderId) {
         return false
     }
 
-    val today = LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES)
     val alarmDateTime = alarm.triggerAt.toLocalDateTime()
 
-    return reminder.alarmCanBeSetToday(today.dayOfWeek) && today.isEqual(alarmDateTime)
+    return reminder.alarmCanBeSetToday(now.dayOfWeek) &&
+            now.truncatedTo(ChronoUnit.MINUTES).isEqual(alarmDateTime)
 }
 
 
@@ -130,16 +133,32 @@ fun alarmShouldTriggerNow(reminder: Reminder, alarm: Alarm): Boolean {
  * Creates and immediately fires a fullscreen alarm notification for the Reminder.
  */
 fun triggerNotification(context: Context, reminder: Reminder) {
-    val notification = Intent(context, AlarmActivity::class.java).run {
-        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
-        PendingIntent.getActivity(context, 0, this, PendingIntent.FLAG_UPDATE_CURRENT)
-    }.let {
+    val notification = getIntentForAlarmActivity(context, reminder.id).let {
         buildNotificationForAlarmIntent(context, it, reminder)
     }
     with(NotificationManagerCompat.from(context)) {
         notify(reminder.id.toInt(), notification)
     }
 }
+
+@VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+fun getIntentForAlarmActivity(context: Context, reminderId: Long) =
+    Intent(context, AlarmActivity::class.java).run {
+        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
+        PendingIntent.getActivity(
+            context,
+            reminderId.toInt(),
+            this,
+            PendingIntent.FLAG_UPDATE_CURRENT
+        )
+    }
+
+@VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+fun getCreatedIntentForAlarmActivity(context: Context, reminderId: Long) =
+    Intent(context, AlarmActivity::class.java).run {
+        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
+        PendingIntent.getActivity(context, reminderId.toInt(), this, PendingIntent.FLAG_NO_CREATE)
+    }
 
 @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
 fun getIntentForAlarmReceiver(context: Context, reminderId: Long): PendingIntent =

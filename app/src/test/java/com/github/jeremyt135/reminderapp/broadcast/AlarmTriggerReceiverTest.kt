@@ -17,6 +17,7 @@ import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import java.time.LocalDateTime
 
 @ExperimentalCoroutinesApi
 class AlarmTriggerReceiverTest {
@@ -69,7 +70,8 @@ class AlarmTriggerReceiverTest {
         coEvery { mockReminderRepository.getReminderAndAlarm(alarm.reminderId) } returns reminderAndAlarm
 
         mockkStatic(::alarmShouldTriggerNow)
-        every { alarmShouldTriggerNow(reminder, alarm) } returns false
+
+        every { alarmShouldTriggerNow(reminder, alarm, any()) } returns false
 
         val intent = mockk<Intent>()
         every { intent.action } returns ACTION_ALARM_START
@@ -79,7 +81,7 @@ class AlarmTriggerReceiverTest {
 
         coVerifyAll {
             mockReminderRepository.getReminderAndAlarm(alarm.reminderId)
-            alarmShouldTriggerNow(reminder, alarm)
+            alarmShouldTriggerNow(reminder, alarm, any())
         }
     }
 
@@ -92,7 +94,8 @@ class AlarmTriggerReceiverTest {
         coEvery { mockReminderRepository.getReminderAndAlarm(alarm.reminderId) } returns reminderAndAlarm
 
         mockkStatic(::alarmShouldTriggerNow, ::triggerNotification)
-        every { alarmShouldTriggerNow(reminder, alarm) } returns true
+
+        every { alarmShouldTriggerNow(reminder, alarm, any()) } returns true
         every { triggerNotification(mockContext, reminder) } returns Unit
 
         val vibrator = mockk<Vibrator>()
@@ -107,7 +110,7 @@ class AlarmTriggerReceiverTest {
 
         coVerifyAll {
             mockReminderRepository.getReminderAndAlarm(alarm.reminderId)
-            alarmShouldTriggerNow(reminder, alarm)
+            alarmShouldTriggerNow(reminder, alarm, any())
             triggerNotification(mockContext, reminder)
         }
     }
