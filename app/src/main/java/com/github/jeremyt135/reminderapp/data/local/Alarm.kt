@@ -7,6 +7,13 @@ import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
 import kotlinx.parcelize.Parcelize
 
+/**
+ * Parcelable entity for persisting Alarms.
+ *
+ * Do not use in putExtra with Intents wrapped in PendingIntent.getBroadcast because
+ * it apparently does not work on Android N and later :)
+ * https://stackoverflow.com/questions/39478422/pendingintent-getbroadcast-lost-parcelable-data
+ */
 @Parcelize
 @Entity(
     foreignKeys = [

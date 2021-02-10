@@ -11,14 +11,12 @@ import com.github.jeremyt135.reminderapp.data.local.ReminderEntity
 import com.github.jeremyt135.reminderapp.data.local.asDomainModel
 import io.mockk.*
 import io.mockk.impl.annotations.MockK
-import io.mockk.impl.annotations.SpyK
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import java.time.DayOfWeek
 import java.time.LocalDate
 
 @ExperimentalCoroutinesApi
@@ -26,8 +24,7 @@ class AlarmBootSchedulerTest {
     @get:Rule
     var mainCoroutineRule = MainCoroutineRule()
 
-    @SpyK
-    var receiver: AlarmBootScheduler = AlarmBootScheduler()
+    lateinit var receiver: AlarmBootScheduler
 
     @MockK
     lateinit var mockReminderRepository: ReminderRepository
@@ -38,13 +35,11 @@ class AlarmBootSchedulerTest {
     @MockK
     lateinit var mockContext: Context
 
-    companion object {
-        const val ACTION_ALARM_START = "ALARM_START"
-    }
-
     @Before
     fun setup() {
         MockKAnnotations.init(this)
+
+        receiver = spyk(AlarmBootScheduler())
         receiver.alarmRepository = mockAlarmRepository
         receiver.reminderRepository = mockReminderRepository
 
@@ -58,8 +53,6 @@ class AlarmBootSchedulerTest {
         val intent = mockk<Intent>()
         every { intent.action } returns ACTION_ALARM_START
 
-        coEvery { mockAlarmRepository.deleteAll() } returns Unit
-
         receiver.onReceive(mockContext, intent)
 
         // Verify that no other methods will be called
@@ -70,9 +63,6 @@ class AlarmBootSchedulerTest {
 
     @Test
     fun intentAction_isBootCompleted_schedulesAlarms() = mainCoroutineRule.runBlockingTest {
-        val intent = mockk<Intent>()
-        every { intent.action } returns Intent.ACTION_BOOT_COMPLETED
-
         val reminders = listOf(
             ReminderEntity(id = 1),
             ReminderEntity(id = 2)
@@ -86,16 +76,16 @@ class AlarmBootSchedulerTest {
         mockkStatic(::scheduleAlarmForReminder)
         every { scheduleAlarmForReminder(mockContext, reminder = any(), today) } returnsMany alarms
 
-        coEvery { mockAlarmRepository.deleteAll() } returns Unit
         coEvery { mockAlarmRepository.save(alarm = any()) } returnsMany listOf(1,2)
         coEvery { mockReminderRepository.getAll() } returns flowOf(reminders)
+
+        val intent = mockk<Intent>()
+        every { intent.action } returns Intent.ACTION_BOOT_COMPLETED
+        every { intent.getLongExtra(EXTRA_REMINDER_ID, any()) } returnsMany listOf(1,2)
 
         receiver.onReceive(mockContext, intent)
 
         coVerifyOrder {
-            // Verify previous were deleted
-            mockAlarmRepository.deleteAll()
-
             // Verify that 2 reminders were scheduled
             scheduleAlarmForReminder(mockContext, reminders[0], today)
             mockAlarmRepository.save(alarms[0])

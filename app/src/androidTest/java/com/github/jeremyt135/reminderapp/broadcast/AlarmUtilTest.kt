@@ -60,7 +60,7 @@ class AlarmUtilTest {
         assertThat(scheduleAlarmForReminder(context, reminder, today)).isNotNull()
 
         // Verify that AlarmManager did set the alarm with the correct intent
-        val intent = getIntentForAlarmReceiverTest(context, alarm)
+        val intent = getCreatedIntentForAlarmReceiver(context, alarm.reminderId)
         assertThat(intent).isNotNull()
     }
 }

@@ -3,10 +3,12 @@ package com.github.jeremyt135.reminderapp.screens.reminder.editor
 import android.app.Application
 import androidx.lifecycle.*
 import com.github.jeremyt135.reminderapp.broadcast.cancelAlarm
+import com.github.jeremyt135.reminderapp.broadcast.scheduleAlarm
 import com.github.jeremyt135.reminderapp.broadcast.scheduleAlarmForReminder
 import com.github.jeremyt135.reminderapp.data.AlarmRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
+import com.github.jeremyt135.reminderapp.data.local.Alarm
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -75,15 +77,19 @@ class ReminderEditorViewModel @Inject constructor(
 
             val context = getApplication<Application>().applicationContext
 
-            // Cancel previous alarm for this reminder if it exists
+            // Cancel previous alarm
             alarmRepository.findByReminderId(id)?.let {
                 Timber.d("Cancelling previous alarm")
-//                cancelAlarm(context, it)
+                cancelAlarm(context, it)
                 alarmRepository.delete(it)
             }
 
             val today = LocalDate.now().dayOfWeek
-            scheduleAlarmForReminder(context, _reminder.value.copy(), today)?.let {
+            scheduleAlarmForReminder(
+                context,
+                _reminder.value.copy(),
+                today
+            )?.let {
                 alarmRepository.save(it)
             }
 

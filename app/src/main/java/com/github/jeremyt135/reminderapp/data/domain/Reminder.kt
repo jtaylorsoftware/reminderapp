@@ -3,6 +3,8 @@ package com.github.jeremyt135.reminderapp.data.domain
 import androidx.databinding.BaseObservable
 import androidx.databinding.Bindable
 import com.github.jeremyt135.BR
+import com.github.jeremyt135.reminderapp.data.local.Alarm
+import com.github.jeremyt135.reminderapp.data.local.ReminderAndAlarmEntity
 import com.github.jeremyt135.reminderapp.data.local.ReminderEntity
 import com.github.jeremyt135.reminderapp.util.getFullLocaleDisplay
 import timber.log.Timber
@@ -189,3 +191,11 @@ fun Reminder.asEntity(): ReminderEntity =
 fun List<Reminder>.asEntity(): List<ReminderEntity> = map {
     it.asEntity()
 }
+
+data class ReminderAndAlarm(val reminder: Reminder, val alarm: Alarm)
+
+fun ReminderAndAlarm.asEntity(): ReminderAndAlarmEntity =
+    ReminderAndAlarmEntity(
+        reminder = this.reminder.asEntity(),
+        alarm = this.alarm
+    )

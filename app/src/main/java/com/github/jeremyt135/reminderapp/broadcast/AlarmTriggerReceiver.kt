@@ -7,10 +7,9 @@ import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
 import com.github.jeremyt135.BuildConfig
-import com.github.jeremyt135.R
-import com.github.jeremyt135.reminderapp.data.local.Alarm
-import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import timber.log.Timber
 
 
@@ -18,28 +17,18 @@ import timber.log.Timber
  * Receives app ALARM_START for an individual Reminder in order to immediately create the full-screen
  * notification for it
  */
-@AndroidEntryPoint
-class AlarmTriggerReceiver : AlarmReceiver() {
+class AlarmTriggerReceiver : AlarmReceiver(ACTION_ALARM_START) {
 
-    private val coroutineScope = MainScope() + CoroutineName("AlarmTriggerReceiver")
-
-    override fun onReceive(context: Context, intent: Intent) {
-        super.onReceive(context, intent)
-
-        if (intent.action != context.getString(R.string.action_alarm_start)) {
-            return
-        }
-        val alarm = requireNotNull(intent.getParcelableExtra<Alarm>("alarm"))
-
+    override fun doReceive(context: Context, intent: Intent) {
         val pendingResult = goAsync()
         coroutineScope.launch {
-            Timber.d("AlarmTriggerReceiver for alarm with reminder ${alarm.reminderId}")
+            val (reminder, alarm) = requireNotNull(reminderRepository.getReminderAndAlarm(reminderId))
 
-            val reminder = requireNotNull(reminderRepository.findById(alarm.reminderId))
+            Timber.d("AlarmTriggerReceiver for alarm with reminder ${alarm.reminderId}")
 
             if (alarmShouldTriggerNow(reminder, alarm)) {
                 Timber.d("Alarms for reminder ${reminder.id} should fire soon")
-                triggerNotification(context, alarm, reminder)
+                triggerNotification(context, reminder)
 
                 val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
                 if (reminder.vibrate && vibrator.hasVibrator()) {

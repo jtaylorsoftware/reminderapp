@@ -34,7 +34,28 @@
             android:name=".reminderapp.broadcast.AlarmTriggerReceiver"
             android:exported="false">
             <intent-filter>
-                <action android:name="@string/action_alarm_start" />
+                <action android:name="com.github.jeremyt135.reminderapp.ACTION_ALARM_START" />
+            </intent-filter>
+        </receiver>
+        <receiver
+            android:name=".reminderapp.broadcast.AlarmSnoozeReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.github.jeremyt135.reminderapp.ACTION_ALARM_SNOOZE" />
+            </intent-filter>
+        </receiver>
+        <receiver
+            android:name=".reminderapp.broadcast.AlarmSkipReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.github.jeremyt135.reminderapp.ACTION_ALARM_SKIP" />
+            </intent-filter>
+        </receiver>
+        <receiver
+            android:name=".reminderapp.broadcast.AlarmCompleteReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.github.jeremyt135.reminderapp.ACTION_ALARM_COMPLETE" />
             </intent-filter>
         </receiver>
         <receiver

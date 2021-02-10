@@ -1,8 +1,11 @@
 package com.github.jeremyt135.reminderapp.data.local
 
+import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import androidx.room.Relation
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
+import com.github.jeremyt135.reminderapp.data.domain.ReminderAndAlarm
 import com.github.jeremyt135.reminderapp.data.domain.ReminderStatus
 import java.time.DayOfWeek
 import java.time.LocalTime
@@ -32,3 +35,18 @@ fun ReminderEntity.asDomainModel(): Reminder =
 fun List<ReminderEntity>.asDomainModel(): List<Reminder> = map {
     it.asDomainModel()
 }
+
+data class ReminderAndAlarmEntity(
+    @Embedded val reminder: ReminderEntity,
+    @Relation(
+        parentColumn = "id",
+        entityColumn = "reminder_id"
+    )
+    val alarm: Alarm
+)
+
+fun ReminderAndAlarmEntity.asDomainModel(): ReminderAndAlarm =
+    ReminderAndAlarm(
+        reminder = this.reminder.asDomainModel(),
+        alarm = this.alarm
+    )
