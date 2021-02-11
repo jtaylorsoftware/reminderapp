@@ -64,7 +64,7 @@ class AlarmViewModelTest {
     private fun <T> verifyFlowEmitted(flow: SharedFlow<T>, coroutineScope: CoroutineScope, action: () -> Unit) {
         var eventEmitted = false
         coroutineScope.launch {
-            viewModel.finished.collect {
+           flow.collect {
                 eventEmitted = true
                 cancel()
             }
