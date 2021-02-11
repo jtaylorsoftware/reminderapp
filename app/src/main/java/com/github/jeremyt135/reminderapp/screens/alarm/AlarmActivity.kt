@@ -65,4 +65,14 @@ class AlarmActivity : AppCompatActivity() {
 
         NotificationManagerCompat.from(this).cancelAll()
     }
+
+    override fun onStop() {
+        super.onStop()
+
+        // Snooze alarm if the user didn't press a button themselves
+        if (!isFinishing){
+            viewModel.snooze()
+        }
+    }
+
 }
