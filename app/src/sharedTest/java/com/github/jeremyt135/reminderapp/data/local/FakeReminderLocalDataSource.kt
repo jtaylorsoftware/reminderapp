@@ -6,31 +6,31 @@ import com.github.jeremyt135.reminderapp.data.domain.ReminderAndAlarm
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
-class FakeReminderLocalDataSource(private val cache: MutableList<Reminder> = mutableListOf()):
-    ReminderDataSource {
-    private var nextAlarmId = 1L
+class FakeReminderLocalDataSource(
+    private val reminderCache: MutableList<Reminder> = mutableListOf(),
+    private val alarmCache: List<Alarm> = listOf()
+) : ReminderDataSource {
 
     override fun getAll(): Flow<List<Reminder>> = flow {
-        emit(cache)
+        emit(reminderCache)
     }
 
     override suspend fun getReminderAndAlarm(reminderId: Long): ReminderAndAlarm? {
-        return findById(reminderId)?.let{
-            val alarmId = nextAlarmId
-            nextAlarmId += 1
+        return findById(reminderId)?.let {
+            val alarm = alarmCache.first { it.reminderId == reminderId }
             ReminderAndAlarm(
                 it,
-                Alarm(id = alarmId, reminderId = it.id, triggerAt = 0)
+                alarm
             )
         }
     }
 
-    override suspend fun findById(id: Long): Reminder? = cache.find { it.id == id }
+    override suspend fun findById(id: Long): Reminder? = reminderCache.find { it.id == id }
 
-    override suspend fun save(reminder: Reminder): Long{
-        val nextId = cache.size.toLong() + 1
+    override suspend fun save(reminder: Reminder): Long {
+        val nextId = reminderCache.size.toLong() + 1
         val savedReminder = reminder.copy(id = nextId)
-        cache.add(savedReminder)
+        reminderCache.add(savedReminder)
         return nextId
     }
 }

@@ -2,6 +2,7 @@ package com.github.jeremyt135.reminderapp.data
 
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.ReminderStatus
+import com.github.jeremyt135.reminderapp.data.local.Alarm
 import com.github.jeremyt135.reminderapp.data.local.FakeReminderLocalDataSource
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -20,9 +21,13 @@ class ReminderRepositoryTest {
         Reminder("Reminder 2", ReminderStatus.COMPLETED, id = 2)
     )
 
+    private val alarms = localReminders.mapIndexed { i, reminder ->
+        Alarm(id = i.toLong() + 1, reminderId = reminder.id, triggerAt = 0)
+    }
+
     @Before
     fun setup() {
-        fakeLocalDataSource = FakeReminderLocalDataSource(localReminders.toMutableList())
+        fakeLocalDataSource = FakeReminderLocalDataSource(localReminders.toMutableList(), alarms)
         repository = ReminderRepositoryImpl(
             fakeLocalDataSource
         )
@@ -52,5 +57,12 @@ class ReminderRepositoryTest {
         val savedReminder = fakeLocalDataSource.findById(reminder.id)
 
         assertThat(savedReminder).isNotNull()
+    }
+
+    @Test
+    fun getReminderAndAlarm_returnsReminderWithAlarm() = runBlockingTest {
+        val (reminder, alarm) = repository.getReminderAndAlarm(localReminders[0].id)!!
+        assertThat(reminder).isEqualTo(localReminders[0])
+        assertThat(alarm).isEqualTo(alarms[0])
     }
 }
