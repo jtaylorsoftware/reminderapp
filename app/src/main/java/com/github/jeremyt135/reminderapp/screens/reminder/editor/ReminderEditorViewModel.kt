@@ -12,6 +12,7 @@ import com.github.jeremyt135.reminderapp.data.local.Alarm
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.time.DayOfWeek
@@ -34,7 +35,7 @@ class ReminderEditorViewModel @Inject constructor(
         _reminderDatesDisplay.asLiveData(viewModelScope.coroutineContext)
 
     private val _navigateToReminders = MutableSharedFlow<Unit>(replay = 0)
-    val navigateToReminders = _navigateToReminders
+    val navigateToReminders: SharedFlow<Unit> = _navigateToReminders
 
     private val reminderId: Long = requireNotNull(savedStateHandle.get("reminderId"))
     val isEditing: Boolean = reminderId != 0L
@@ -93,7 +94,7 @@ class ReminderEditorViewModel @Inject constructor(
                 alarmRepository.save(it)
             }
 
-            navigateToReminders.emit(Unit)
+            _navigateToReminders.emit(Unit)
         }
     }
 
