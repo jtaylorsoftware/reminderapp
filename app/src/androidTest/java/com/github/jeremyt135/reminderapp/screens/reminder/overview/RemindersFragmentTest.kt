@@ -9,12 +9,23 @@ import androidx.test.espresso.contrib.RecyclerViewActions
 import androidx.test.espresso.matcher.ViewMatchers.*
 import androidx.test.filters.MediumTest
 import com.github.jeremyt135.R
+import com.github.jeremyt135.reminderapp.data.AlarmRepository
+import com.github.jeremyt135.reminderapp.data.FakeAlarmRepository
+import com.github.jeremyt135.reminderapp.data.FakeReminderRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.ReminderStatus
+import com.github.jeremyt135.reminderapp.data.local.Alarm
+import com.github.jeremyt135.reminderapp.di.DatabaseModule
+import com.github.jeremyt135.reminderapp.di.RepositoryModule
 import com.github.jeremyt135.reminderapp.launchFragmentInHiltContainer
+import dagger.Module
+import dagger.Provides
+import dagger.hilt.InstallIn
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
+import dagger.hilt.android.testing.UninstallModules
+import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Rule
@@ -22,23 +33,36 @@ import org.junit.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 import javax.inject.Inject
+import javax.inject.Singleton
 
 /**
- * TODO: when network data source is implemented, use @UninstallModules here
- * to replace it with a fake or mock.
- *
- * This test is mainly concerned about testing fragment->local persistence and
- * that buttons work as expected (by mocking Navigation). It should only access local persistence to
- * keep it fast.
+ * TODO: when network data source is implemented add to uninstall
  */
+@UninstallModules(DatabaseModule::class, RepositoryModule::class)
 @HiltAndroidTest
 @MediumTest
 class RemindersFragmentTest {
 
     /**
-     * TODO: whe network data source is implemented, create the test module
-     * for the fake or mock network data source here
+     * TODO: when network data source is implemented, add fake here
      */
+    @InstallIn(SingletonComponent::class)
+    @Module
+    object TestModule {
+        private val reminderCache: MutableList<Reminder> = mutableListOf()
+        private val alarmCache: MutableList<Alarm> = mutableListOf()
+
+        @Provides
+        @Singleton
+        fun provideReminderRepository(): ReminderRepository =
+            FakeReminderRepository(reminderCache, alarmCache)
+
+
+        @Provides
+        @Singleton
+        fun provideAlarmRepository(): AlarmRepository = FakeAlarmRepository(alarmCache)
+    }
+
 
     @get:Rule
     var hiltRule = HiltAndroidRule(this)
