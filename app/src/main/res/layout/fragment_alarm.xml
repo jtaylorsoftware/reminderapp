@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+        <variable
+            name="model"
+            type="com.github.jeremyt135.reminderapp.screens.alarm.AlarmViewModel" />
+    </data>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <TextView
+            android:id="@+id/text_alarm_heading"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="32dp"
+            android:text="@string/alarm_heading"
+            android:textSize="32sp"
+            app:layout_constraintBottom_toTopOf="@+id/text_alarm_time"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_chainStyle="spread_inside" />
+
+        <TextView
+            android:id="@+id/text_alarm_description"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@{model.reminder.description}"
+            android:textSize="16sp"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            app:layout_constraintBottom_toTopOf="@+id/button_alarm_snooze"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/text_alarm_time"
+            tools:text="Reminder description" />
+
+        <TextView
+            android:id="@+id/text_alarm_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@{model.time}"
+            android:textSize="32sp"
+            app:layout_constraintBottom_toTopOf="@+id/text_alarm_description"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/text_alarm_heading"
+            tools:text="11:10 am" />
+
+        <Button
+            android:id="@+id/button_alarm_snooze"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="32dp"
+            android:text="@string/alarm_snooze"
+            android:onClick="@{() -> model.snooze()}"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/button_alarm_skip"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/text_alarm_description" />
+
+        <Button
+            android:id="@+id/button_alarm_skip"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/alarm_skip"
+            android:onClick="@{() -> model.skip()}"
+            app:layout_constraintEnd_toStartOf="@+id/buttom_alarm_complete"
+            app:layout_constraintStart_toEndOf="@+id/button_alarm_snooze"
+            app:layout_constraintTop_toTopOf="@+id/button_alarm_snooze" />
+
+        <Button
+            android:id="@+id/buttom_alarm_complete"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/alarm_complete"
+            android:onClick="@{() -> model.complete()}"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/button_alarm_skip"
+            app:layout_constraintTop_toTopOf="@+id/button_alarm_skip" />
+
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>

@@ -11,7 +11,7 @@ import androidx.core.app.AlarmManagerCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.github.jeremyt135.R
-import com.github.jeremyt135.reminderapp.AlarmActivity
+import com.github.jeremyt135.reminderapp.screens.alarm.AlarmActivity
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.local.Alarm
 import com.github.jeremyt135.reminderapp.util.toEpochMilli
@@ -142,9 +142,11 @@ fun triggerNotification(context: Context, reminder: Reminder) {
 }
 
 @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-fun getIntentForAlarmActivity(context: Context, reminderId: Long) =
+fun getIntentForAlarmActivity(context: Context, reminderId: Long): PendingIntent =
     Intent(context, AlarmActivity::class.java).run {
-        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
+//        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
+        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_HISTORY
+        putExtra(EXTRA_REMINDER_ID, reminderId)
         PendingIntent.getActivity(
             context,
             reminderId.toInt(),
@@ -154,10 +156,17 @@ fun getIntentForAlarmActivity(context: Context, reminderId: Long) =
     }
 
 @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-fun getCreatedIntentForAlarmActivity(context: Context, reminderId: Long) =
+fun getCreatedIntentForAlarmActivity(context: Context, reminderId: Long): PendingIntent? =
     Intent(context, AlarmActivity::class.java).run {
-        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
-        PendingIntent.getActivity(context, reminderId.toInt(), this, PendingIntent.FLAG_NO_CREATE)
+//        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
+        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_HISTORY
+        putExtra(EXTRA_REMINDER_ID, reminderId)
+        PendingIntent.getActivity(
+            context,
+            reminderId.toInt(),
+            this,
+            PendingIntent.FLAG_NO_CREATE
+        )
     }
 
 @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
