@@ -4,7 +4,10 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
-import com.github.jeremyt135.reminderapp.broadcast.*
+import com.github.jeremyt135.reminderapp.broadcast.SNOOZE_TIME_MIN
+import com.github.jeremyt135.reminderapp.broadcast.cancelAlarm
+import com.github.jeremyt135.reminderapp.broadcast.makeSnoozeToast
+import com.github.jeremyt135.reminderapp.broadcast.scheduleAlarm
 import com.github.jeremyt135.reminderapp.data.AlarmRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
@@ -18,7 +21,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.launch
 import timber.log.Timber
-import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import javax.inject.Inject
@@ -65,6 +67,8 @@ class AlarmViewModel @Inject constructor(
      * Snoozes the alarm and emits finished
      */
     fun snooze() {
+        Timber.d("Snoozing alarm")
+
         val context = getApplication<Application>().applicationContext
 
         val prevAlarm = _alarm.value
@@ -79,7 +83,7 @@ class AlarmViewModel @Inject constructor(
             alarmRepository.save(nextAlarm)
             scheduleAlarm(context, nextAlarm)
             makeSnoozeToast(context)
-            _finished.emit(Unit)
+            onAction()
         }
     }
 
@@ -87,9 +91,11 @@ class AlarmViewModel @Inject constructor(
      * Skips the alarm and emits finished
      */
     fun skip() {
+        Timber.d("Skipping alarm")
+
         viewModelScope.launch {
             reminderRepository.save(_reminder.value.copy(status = ReminderStatus.SKIPPED))
-            _finished.emit(Unit)
+            onAction()
         }
     }
 
@@ -97,9 +103,15 @@ class AlarmViewModel @Inject constructor(
      * Completes the alarm and emits finished
      */
     fun complete() {
+        Timber.d("Completing alarm")
+
         viewModelScope.launch {
             reminderRepository.save(_reminder.value.copy(status = ReminderStatus.COMPLETED))
-            _finished.emit(Unit)
+            onAction()
         }
+    }
+
+    private suspend fun onAction() {
+        _finished.emit(Unit)
     }
 }
