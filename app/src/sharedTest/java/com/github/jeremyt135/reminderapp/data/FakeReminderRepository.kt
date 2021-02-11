@@ -2,13 +2,20 @@ package com.github.jeremyt135.reminderapp.data
 
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.ReminderAndAlarm
+import com.github.jeremyt135.reminderapp.data.local.Alarm
 import com.github.jeremyt135.reminderapp.data.local.FakeReminderLocalDataSource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class FakeReminderRepository(private val cache: MutableList<Reminder> = mutableListOf()) :
+@Singleton
+class FakeReminderRepository @Inject constructor(
+    private val cache: MutableList<Reminder>,
+    alarmCache: MutableList<Alarm>
+) :
     ReminderRepository {
-    private val fakeLocalDataSource = FakeReminderLocalDataSource(cache)
+    private val fakeLocalDataSource = FakeReminderLocalDataSource(cache, alarmCache)
 
     override fun getAll(): Flow<List<Reminder>> = flow {
         emit(cache)

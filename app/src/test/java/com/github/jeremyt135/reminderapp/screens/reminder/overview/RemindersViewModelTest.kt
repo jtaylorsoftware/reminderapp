@@ -6,10 +6,13 @@ import com.github.jeremyt135.reminderapp.data.FakeReminderRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.ReminderStatus
+import com.github.jeremyt135.reminderapp.data.local.Alarm
 import com.github.jeremyt135.reminderapp.getOrAwaitValue
 import com.google.common.truth.Truth.assertThat
-import kotlinx.coroutines.*
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
 import org.junit.Rule
@@ -23,6 +26,7 @@ class RemindersViewModelTest {
         Reminder("1", ReminderStatus.PENDING, id = 1),
         Reminder("2", ReminderStatus.COMPLETED, id = 2)
     )
+    private val alarms = listOf<Alarm>()
 
     @get:Rule
     var mainCoroutineRule = MainCoroutineRule()
@@ -33,7 +37,7 @@ class RemindersViewModelTest {
     @Before
     fun setup() {
         fakeReminderRepository =
-            FakeReminderRepository(reminders.toMutableList())
+            FakeReminderRepository(reminders.toMutableList(), alarms.toMutableList())
         viewModel = RemindersViewModel(fakeReminderRepository)
     }
 
