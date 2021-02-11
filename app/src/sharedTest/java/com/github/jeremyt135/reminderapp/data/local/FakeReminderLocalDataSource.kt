@@ -6,7 +6,8 @@ import com.github.jeremyt135.reminderapp.data.domain.ReminderAndAlarm
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
-class FakeReminderLocalDataSource(private val cache: MutableList<Reminder> = mutableListOf()): ReminderDataSource {
+class FakeReminderLocalDataSource(private val cache: MutableList<Reminder> = mutableListOf()):
+    ReminderDataSource {
     private var nextAlarmId = 1L
 
     override fun getAll(): Flow<List<Reminder>> = flow {
