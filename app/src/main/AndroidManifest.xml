@@ -31,6 +31,8 @@
         <activity
             android:name=".reminderapp.screens.alarm.AlarmActivity"
             android:exported="true"
+            android:configChanges="orientation"
+            android:screenOrientation="portrait"
             android:theme="@style/Theme.ReminderApp.Alarm" />
 
         <receiver
