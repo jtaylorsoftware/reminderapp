@@ -65,4 +65,13 @@ class ReminderRepositoryTest {
         assertThat(reminder).isEqualTo(localReminders[0])
         assertThat(alarm).isEqualTo(alarms[0])
     }
+
+    @Test
+    fun delete_removesReminder() = runBlockingTest {
+        val reminder = localReminders[0]
+
+        repository.delete(reminder)
+
+        assertThat(repository.findById(reminder.id)).isNull()
+    }
 }

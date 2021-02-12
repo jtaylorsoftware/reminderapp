@@ -60,4 +60,16 @@ class ReminderLocalDataSourceTest {
 
         assertThat(savedReminder).isEqualTo(reminder)
     }
+
+    @Test
+    fun delete_then_findReturnsNull() = runBlockingTest {
+        val reminder = Reminder("My reminder", ReminderStatus.COMPLETED)
+
+        val id = localDataSource.save(reminder)
+        reminder.id = id
+
+        localDataSource.delete(reminder)
+
+        assertThat(localDataSource.findById(reminder.id)).isNull()
+    }
 }

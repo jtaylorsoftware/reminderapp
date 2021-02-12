@@ -23,4 +23,6 @@ class ReminderLocalDataSource @Inject constructor(private val reminderDao: Remin
         reminderDao.getReminderAndAlarm(reminderId)?.asDomainModel()
 
     override suspend fun save(reminder: Reminder) = reminderDao.insert(reminder.asEntity())
+
+    override suspend fun delete(reminder: Reminder) = reminderDao.delete(reminder.asEntity())
 }

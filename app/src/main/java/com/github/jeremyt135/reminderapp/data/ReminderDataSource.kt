@@ -9,4 +9,5 @@ interface ReminderDataSource {
     suspend fun findById(id: Long): Reminder?
     suspend fun getReminderAndAlarm(reminderId: Long): ReminderAndAlarm?
     suspend fun save(reminder: Reminder): Long
+    suspend fun delete(reminder: Reminder)
 }

@@ -19,4 +19,7 @@ interface ReminderDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(reminder: Reminder): Long
+
+    @Delete
+    suspend fun delete(reminder: Reminder)
 }

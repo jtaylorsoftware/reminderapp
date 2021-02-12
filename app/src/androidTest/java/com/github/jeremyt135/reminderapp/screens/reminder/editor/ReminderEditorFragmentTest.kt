@@ -6,6 +6,7 @@ import androidx.navigation.Navigation
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.action.ViewActions.replaceText
+import androidx.test.espresso.assertion.ViewAssertions.doesNotExist
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.contrib.PickerActions
 import androidx.test.espresso.matcher.ViewMatchers.*
@@ -33,6 +34,7 @@ import dagger.hilt.android.testing.UninstallModules
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import org.hamcrest.Matchers.not
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -76,7 +78,10 @@ class ReminderEditorFragmentTest {
     var hiltRule = HiltAndroidRule(this)
 
     @Inject
-    lateinit var repository: ReminderRepository
+    lateinit var reminderRepository: ReminderRepository
+
+    @Inject
+    lateinit var alarmRepository: AlarmRepository
 
     private val reminders =
         listOf(
@@ -97,7 +102,7 @@ class ReminderEditorFragmentTest {
     fun setup() {
         hiltRule.inject()
 
-        runBlocking { reminders.forEach { repository.save(it) } }
+        runBlocking { reminders.forEach { reminderRepository.save(it) } }
     }
 
     @Test
@@ -137,7 +142,7 @@ class ReminderEditorFragmentTest {
 
     @Test
     fun cancel_navigatesUpWithoutSaving() = runBlocking {
-        val initialReminders = repository.getAll().first()
+        val initialReminders = reminderRepository.getAll().first()
 
         // Open with an empty Reminder by passing 0L
         val args = bundleOf(
@@ -154,7 +159,7 @@ class ReminderEditorFragmentTest {
         verify(navController).navigateUp()
 
         // Assert that the size hasn't changed during this test
-        val finalReminders = repository.getAll().first()
+        val finalReminders = reminderRepository.getAll().first()
         assertThat(finalReminders).hasSize(initialReminders.size)
     }
 
@@ -214,8 +219,42 @@ class ReminderEditorFragmentTest {
         // Verify save happened
         lateinit var savedReminder: Reminder
         runBlocking {
-            savedReminder = repository.findById(id)!!
+            savedReminder = reminderRepository.findById(id)!!
         }
         assertThat(savedReminder).isEqualTo(editedReminder)
+    }
+
+    @Test
+    fun deleteButton_notEditing_isNotVisible(){
+        val args = bundleOf(
+            Pair("reminderId", 0L)
+        )
+
+        launchFragmentInHiltContainer<ReminderEditorFragment>(args) {
+            Navigation.setViewNavController(requireView(), mock(NavController::class.java))
+        }
+
+        onView(withText("Delete")).check(matches(not(isDisplayed())))
+    }
+
+    @Test
+    fun deleteButton_editing_deletesReminderAndAlarm() = runBlocking {
+        val reminder = Reminder(id=reminderRepository.save(Reminder()))
+        val alarm = Alarm(id=1,reminderId = reminder.id, triggerAt = 0)
+        alarmRepository.save(alarm)
+
+        val args = bundleOf(
+            Pair("reminderId", reminder.id)
+        )
+
+        launchFragmentInHiltContainer<ReminderEditorFragment>(args) {
+            Navigation.setViewNavController(requireView(), mock(NavController::class.java))
+        }
+
+        onView(withId(R.id.button_editor_delete)).check(matches(isDisplayed()))
+        onView(withId(R.id.button_editor_delete)).perform(click())
+
+        assertThat(reminderRepository.findById(reminder.id)).isNull()
+        assertThat(alarmRepository.findById(reminder.id)).isNull()
     }
 }

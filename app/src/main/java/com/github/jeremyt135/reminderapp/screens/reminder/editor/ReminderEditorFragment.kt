@@ -30,9 +30,6 @@ class ReminderEditorFragment : Fragment(R.layout.fragment_reminder_editor) {
             buttonEditorCancel.setOnClickListener {
                 goToReminders()
             }
-            buttonEditorSave.setOnClickListener {
-                viewModel.saveReminder()
-            }
         }
 
         /**

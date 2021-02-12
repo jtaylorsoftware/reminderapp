@@ -71,6 +71,18 @@ class ReminderDaoTest {
     }
 
     @Test
+    fun delete_then_findReturnsNull() = runBlockingTest {
+        val reminder = Reminder(id=1).asEntity()
+        reminderDao.insert(reminder)
+
+        assertThat(reminderDao.findById(reminder.id)).isNotNull()
+
+        reminderDao.delete(reminder)
+
+        assertThat(reminderDao.findById(reminder.id)).isNull()
+    }
+
+    @Test
     fun getReminderAndAlarm() = runBlockingTest {
         val reminder = Reminder(id=1).asEntity()
         reminderDao.insert(reminder)

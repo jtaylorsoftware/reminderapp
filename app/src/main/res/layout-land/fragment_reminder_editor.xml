@@ -37,7 +37,7 @@
                 android:hint="@string/editor_descriptionEdit_hint"
                 android:importantForAutofill="no"
                 android:inputType="text"
-                android:text="@{`Reminder No. ` + model.reminder.id + `: ` + model.reminder.description}"
+                android:text="@={model.reminder.description}"
                 android:textSize="16sp"
                 app:layout_constraintStart_toStartOf="@+id/text_editor_scheduleLabel"
                 app:layout_constraintTop_toBottomOf="@+id/timePicker_editor"
@@ -160,11 +160,12 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/margin_editor_small"
-                android:text="@string/editor_heading"
+                android:text="@{model.editing ? @string/editor_heading_edit : @string/editor_heading_add}"
                 android:textSize="24sp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                app:layout_constraintTop_toTopOf="parent"
+                tools:text="@string/editor_heading_add" />
 
             <com.google.android.material.switchmaterial.SwitchMaterial
                 android:id="@+id/switch_editor_vibrate"
@@ -180,22 +181,35 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/margin_editor_medium"
+                android:layout_marginBottom="@dimen/margin_editor_medium"
                 android:text="@string/editor_cancel"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@+id/button_editor_save"
+                app:layout_constraintEnd_toStartOf="@+id/button_editor_delete"
                 app:layout_constraintHorizontal_chainStyle="spread_inside"
                 app:layout_constraintStart_toStartOf="@+id/switch_editor_vibrate"
                 app:layout_constraintTop_toBottomOf="@+id/switch_editor_vibrate" />
 
             <Button
+                android:id="@+id/button_editor_delete"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:onClick="@{() -> model.deleteReminder()}"
+                android:text="@string/editor_delete"
+                android:visibility="@{model.editing ? View.VISIBLE : View.GONE}"
+                app:layout_constraintEnd_toStartOf="@+id/button_editor_save"
+                app:layout_constraintHorizontal_bias="0.5"
+                app:layout_constraintStart_toEndOf="@+id/button_editor_cancel"
+                app:layout_constraintTop_toTopOf="@+id/button_editor_cancel" />
+
+            <Button
                 android:id="@+id/button_editor_save"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:onClick="@{() -> model.saveReminder()}"
                 android:text="@string/editor_save"
-                app:layout_constraintBottom_toBottomOf="@+id/button_editor_cancel"
                 app:layout_constraintEnd_toEndOf="@+id/toggle_editor_saturday"
-                app:layout_constraintHorizontal_bias="0.5"
-                app:layout_constraintStart_toEndOf="@+id/button_editor_cancel" />
+                app:layout_constraintStart_toEndOf="@+id/button_editor_delete"
+                app:layout_constraintTop_toTopOf="@+id/button_editor_delete" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 

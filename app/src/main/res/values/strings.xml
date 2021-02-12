@@ -17,9 +17,11 @@
     <string name="editor_friday_abbrev">F</string>
     <string name="editor_switch_skip">Can skip</string>
     <string name="editor_cancel">Cancel</string>
+    <string name="editor_delete">Delete</string>
     <string name="editor_save">Save</string>
     <string name="editor_scheduleLabel">Every %s</string>
-    <string name="editor_heading">Edit Reminder</string>
+    <string name="editor_heading_add">Add Reminder</string>
+    <string name="editor_heading_edit">Edit Reminder</string>
     <string name="editor_switch_vibrate">Vibrate</string>
     <string name="alarm_heading">Alarm</string>
     <string name="alarm_skip">Skip</string>
