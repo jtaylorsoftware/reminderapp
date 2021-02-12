@@ -32,7 +32,7 @@ class RemindersActivityTest {
     lateinit var repository: ReminderRepository
 
     private val reminders =
-        (1..3).map { Reminder("My Reminder", ReminderStatus.PENDING, id = it.toLong()) }
+        (1..3).map { Reminder("My Reminder $it", ReminderStatus.PENDING, id = it.toLong()) }
 
     @Before
     fun setup() {
@@ -50,7 +50,7 @@ class RemindersActivityTest {
         val reminder = reminders[0]
 
         withActivityScenario(RemindersActivity::class.java) {
-            onView(withText("Reminder No. ${reminder.id}: ${reminder.description}")).check(
+            onView(withText(reminder.description)).check(
                 matches(isDisplayed())
             )
         }

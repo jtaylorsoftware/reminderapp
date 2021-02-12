@@ -4,4 +4,5 @@
     <dimen name="margin_editor_small">16dp</dimen>
     <dimen name="dateToggleSize_editor">36dp</dimen>
     <dimen name="margin_editor_medium">32dp</dimen>
+    <dimen name="textSize_item_reminder_date">14sp</dimen>
 </resources>

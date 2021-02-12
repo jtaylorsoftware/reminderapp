@@ -71,7 +71,7 @@ class RemindersFragmentTest {
     lateinit var repository: ReminderRepository
 
     private val reminders =
-        (1..3).map { Reminder("My Reminder", ReminderStatus.PENDING, id = it.toLong()) }
+        (1..3).map { Reminder("My Reminder $it", ReminderStatus.PENDING, id = it.toLong()) }
 
     @Before
     fun setup() {
@@ -88,7 +88,7 @@ class RemindersFragmentTest {
     fun recycler_displaysLocalReminders() {
         launchFragmentInHiltContainer<RemindersFragment>()
         reminders.forEach { reminder ->
-            onView(withText("Reminder No. ${reminder.id}: ${reminder.description}")).check(
+            onView(withText(reminder.description)).check(
                 matches(isDisplayed())
             )
         }
@@ -122,8 +122,7 @@ class RemindersFragmentTest {
         // Click item with reminder.description and reminder.id
         onView(withId(R.id.recycler_reminders_list)).perform(
             RecyclerViewActions.actionOnItem<ReminderListAdapter.ReminderViewHolder>(
-                // TODO: This string will have to change later when item_reminder is updated
-                hasDescendant(withText("Reminder No. ${reminder.id}: ${reminder.description}")),
+                hasDescendant(withText(reminder.description)),
                 click()
             )
         )

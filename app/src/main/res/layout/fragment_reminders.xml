@@ -19,10 +19,12 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
             app:reminderListData="@{model.reminders}"
-            tools:layout_editor_absoluteX="142dp"
-            tools:layout_editor_absoluteY="75dp"
-            tools:listitem="@layout/item_reminder"/>
+            tools:listitem="@layout/item_reminder" />
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/fab_reminders_add"

@@ -8,12 +8,19 @@ import androidx.recyclerview.widget.RecyclerView
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.databinding.ItemReminderBinding
 
-class ReminderListAdapter(private val clickListener: OnClickListener) : ListAdapter<Reminder, ReminderListAdapter.ReminderViewHolder>(
-    ReminderDiffCallback
-) {
+class ReminderListAdapter(private val clickListener: OnClickListener) :
+    ListAdapter<Reminder, ReminderListAdapter.ReminderViewHolder>(
+        ReminderDiffCallback
+    ) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ReminderViewHolder {
-        return ReminderViewHolder(ItemReminderBinding.inflate(LayoutInflater.from(parent.context)))
+        return ReminderViewHolder(
+            ItemReminderBinding.inflate(
+                LayoutInflater.from(parent.context),
+                parent,
+                false
+            )
+        )
     }
 
     override fun onBindViewHolder(holder: ReminderViewHolder, position: Int) {
@@ -41,7 +48,7 @@ class ReminderListAdapter(private val clickListener: OnClickListener) : ListAdap
         override fun areContentsTheSame(oldItem: Reminder, newItem: Reminder) = oldItem == newItem
     }
 
-    class OnClickListener(val clickListener: (reminder: Reminder) -> Unit){
+    class OnClickListener(val clickListener: (reminder: Reminder) -> Unit) {
         fun onClick(reminder: Reminder) = clickListener(reminder)
     }
 }

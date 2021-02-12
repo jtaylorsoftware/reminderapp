@@ -12,6 +12,8 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 import java.time.temporal.ChronoField
 import java.time.temporal.ChronoUnit
 import java.time.temporal.TemporalAdjusters
@@ -71,6 +73,9 @@ class Reminder(
     // True if this Reminder was scheduled for the same day as it was created.
     val isOneOff: Boolean = daysOfWeek.isEmpty()
 
+    // True if this Reminder runs every day.
+    val isEveryDay: Boolean = daysOfWeek.size == 7
+
     /**
      * Returns the next LocalDateTime that this Reminder could have an alarm scheduled,
      * or null if the Reminder is complete or in the past and cannot be scheduled.
@@ -122,6 +127,9 @@ class Reminder(
             else -> throw IllegalArgumentException("daysOfWeek has more than 7 entries")
         }
 
+    fun getTimeDisplayString() = LocalDateTime.now().withHour(hour).withMinute(minute).format(
+        DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)
+    )
 
     fun dayIsChecked(dayString: String) = dayIsChecked(DayOfWeek.valueOf(dayString))
 
