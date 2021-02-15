@@ -5,11 +5,14 @@ import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import com.github.jeremyt135.reminderapp.data.HistoryRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 @HiltViewModel
 class HistoryViewModel @Inject constructor(private val historyRepository: HistoryRepository) :
     ViewModel() {
 
-        val historyEntries = historyRepository.getAll().asLiveData(viewModelScope.coroutineContext)
+    val historyEntries = historyRepository.getAll().map { historyList ->
+        historyList.sortedByDescending { history -> history.id }
+    }.asLiveData(viewModelScope.coroutineContext)
 }
