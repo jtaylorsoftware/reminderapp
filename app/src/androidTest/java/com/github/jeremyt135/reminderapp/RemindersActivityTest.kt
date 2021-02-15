@@ -46,7 +46,7 @@ class RemindersActivityTest {
     }
 
     @Test
-    fun activity_opensToRemindersList() = runBlocking {
+    fun activity_opensToRemindersList() {
         val reminder = reminders[0]
 
         withActivityScenario(RemindersActivity::class.java) {
@@ -57,7 +57,7 @@ class RemindersActivityTest {
     }
 
     @Test
-    fun fab_NavigatesToEditorWithEmptyReminder() = runBlocking {
+    fun fab_NavigatesToEditorWithEmptyReminder() {
         withActivityScenario(RemindersActivity::class.java) {
             val time = LocalTime.now()
             onView(withId(R.id.fab_reminders_add)).perform(click())

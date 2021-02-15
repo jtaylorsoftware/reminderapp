@@ -19,8 +19,24 @@ import java.time.temporal.ChronoUnit
 import java.time.temporal.TemporalAdjusters
 import java.util.*
 
+/**
+ * Completion status of a Reminder.
+ */
 enum class ReminderStatus {
-    COMPLETED, SKIPPED, PENDING
+    /**
+     * The Reminder is completed for today.
+     */
+    COMPLETED,
+
+    /**
+     * The Reminder is skipped for today.
+     */
+    SKIPPED,
+
+    /**
+     * The Reminder is scheduled for an alarm for today that has not yet gone off.
+     */
+    PENDING
 }
 
 /**
@@ -28,14 +44,20 @@ enum class ReminderStatus {
  */
 class Reminder(
     description: String = "",
+    /**
+     * The status for this Reminder as it pertains to scheduling. For one-off Reminder,
+     * SKIPPED or COMPLETED will cause it to not be rescheduled. Usually PENDING if the
+     * alarm for this has not gone off yet or if the Reminder is repeating.
+     */
     var status: ReminderStatus = ReminderStatus.PENDING,
     time: LocalTime = LocalTime.now(),
     val daysOfWeek: SortedSet<DayOfWeek> = sortedSetOf(),
     vibrate: Boolean = false,
     var id: Long = 0L,
+    completionStatus: ReminderStatus = ReminderStatus.PENDING
 ) : BaseObservable() {
+    @get:Bindable
     var description: String = description
-        @Bindable get() = field
         set(value) {
             if (field != value) {
                 field = value
@@ -43,9 +65,23 @@ class Reminder(
             }
         }
 
+    @get:Bindable
     var vibrate: Boolean = vibrate
-        @Bindable get() = field
         set(value) {
+            if (field != value) {
+                field = value
+                notifyPropertyChanged(BR.reminder)
+            }
+        }
+
+    /**
+     * The status for this Reminder as it pertains to history and daily completion. For a one-off
+     * Reminder, completionStatus should match this.status. Otherwise, the value is set based on
+     * today's History for this Reminder.
+     */
+    @get:Bindable
+    var completionStatus: ReminderStatus = completionStatus
+        set(value){
             if (field != value) {
                 field = value
                 notifyPropertyChanged(BR.reminder)
@@ -56,7 +92,6 @@ class Reminder(
         set(value) {
             if (field != value) {
                 field = value
-                notifyPropertyChanged(BR.reminder)
             }
         }
 
@@ -70,11 +105,11 @@ class Reminder(
     val isComplete: Boolean
         get() = status != ReminderStatus.PENDING
 
-    // True if this Reminder was scheduled for the same day as it was created.
+    // True if this Reminder was scheduled for the same day as it was created and does not repeat.
     val isOneOff: Boolean = daysOfWeek.isEmpty()
 
     // True if this Reminder runs every day.
-    val isEveryDay: Boolean = daysOfWeek.size == 7
+    val isEveryDay: Boolean = daysOfWeek.size == ChronoField.DAY_OF_WEEK.range().maximum.toInt()
 
     /**
      * Returns the next LocalDateTime that this Reminder could have an alarm scheduled,
@@ -127,7 +162,7 @@ class Reminder(
             else -> throw IllegalArgumentException("daysOfWeek has more than 7 entries")
         }
 
-    fun getTimeDisplayString() = LocalDateTime.now().withHour(hour).withMinute(minute).format(
+    fun getTimeDisplayString(): String = LocalDateTime.now().withHour(hour).withMinute(minute).format(
         DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)
     )
 
@@ -193,7 +228,8 @@ fun Reminder.asEntity(): ReminderEntity =
         time = LocalTime.of(hour, minute),
         daysOfWeek = this.daysOfWeek.toSortedSet(),
         status = this.status.name,
-        vibrate = this.vibrate
+        vibrate = this.vibrate,
+        completionStatus = this.completionStatus.name
     )
 
 fun List<Reminder>.asEntity(): List<ReminderEntity> = map {
@@ -201,9 +237,3 @@ fun List<Reminder>.asEntity(): List<ReminderEntity> = map {
 }
 
 data class ReminderAndAlarm(val reminder: Reminder, val alarm: Alarm)
-
-fun ReminderAndAlarm.asEntity(): ReminderAndAlarmEntity =
-    ReminderAndAlarmEntity(
-        reminder = this.reminder.asEntity(),
-        alarm = this.alarm
-    )

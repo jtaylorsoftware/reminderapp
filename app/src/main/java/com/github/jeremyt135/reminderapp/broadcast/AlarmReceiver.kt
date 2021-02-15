@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationManagerCompat
 import com.github.jeremyt135.reminderapp.data.AlarmRepository
+import com.github.jeremyt135.reminderapp.data.HistoryRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineName
@@ -21,6 +22,9 @@ abstract class AlarmReceiver(private val action: String): BroadcastReceiver() {
 
     @Inject
     lateinit var alarmRepository: AlarmRepository
+
+    @Inject
+    lateinit var historyRepository: HistoryRepository
 
     /**
      * A MainScope for use with launching coroutines and PendingResult.finish.

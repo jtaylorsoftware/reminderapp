@@ -29,4 +29,6 @@
     <string name="alarm_complete">Complete</string>
     <string name="every_day">Every day</string>
     <string name="today">Today</string>
+    <string name="reminder_menu_history">History</string>
+    <string name="notification_icon_description">Reminder status icon</string>
 </resources>

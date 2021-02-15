@@ -9,6 +9,7 @@ import com.github.jeremyt135.reminderapp.broadcast.cancelAlarm
 import com.github.jeremyt135.reminderapp.broadcast.makeSnoozeToast
 import com.github.jeremyt135.reminderapp.broadcast.scheduleAlarm
 import com.github.jeremyt135.reminderapp.data.AlarmRepository
+import com.github.jeremyt135.reminderapp.data.HistoryRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.ReminderAndAlarm
@@ -43,6 +44,9 @@ class AlarmViewModelTest {
     lateinit var mockAlarmRepo: AlarmRepository
 
     @MockK
+    lateinit var mockHistoryRepository: HistoryRepository
+
+    @MockK
     lateinit var mockApplication: ReminderApplication
 
     @MockK
@@ -61,10 +65,14 @@ class AlarmViewModelTest {
     lateinit var alarm: Alarm
     lateinit var reminderAndAlarm: ReminderAndAlarm
 
-    private fun <T> verifyFlowEmitted(flow: SharedFlow<T>, coroutineScope: CoroutineScope, action: () -> Unit) {
+    private fun <T> verifyFlowEmitted(
+        flow: SharedFlow<T>,
+        coroutineScope: CoroutineScope,
+        action: () -> Unit
+    ) {
         var eventEmitted = false
         coroutineScope.launch {
-           flow.collect {
+            flow.collect {
                 eventEmitted = true
                 cancel()
             }
@@ -83,7 +91,8 @@ class AlarmViewModelTest {
         alarm = Alarm(id = 1, reminderId = reminder.id, triggerAt = time.toEpochMilli())
         reminderAndAlarm = ReminderAndAlarm(reminder, alarm)
 
-        viewModel = AlarmViewModel(mockApplication, mockReminderRepo, mockAlarmRepo)
+        viewModel =
+            AlarmViewModel(mockApplication, mockReminderRepo, mockAlarmRepo, mockHistoryRepository)
 
         coEvery { mockReminderRepo.getReminderAndAlarm(reminder.id) } returns reminderAndAlarm
         every { mockApplication.applicationContext } returns mockContext
@@ -147,6 +156,7 @@ class AlarmViewModelTest {
         val skippedReminder = reminder.copy(status = ReminderStatus.SKIPPED)
 
         coEvery { mockReminderRepo.save(skippedReminder) } returns skippedReminder.id
+        coEvery { mockHistoryRepository.save(any()) } returns 1L
 
         verifyFlowEmitted(viewModel.finished, this) {
             viewModel.skip()
@@ -165,6 +175,7 @@ class AlarmViewModelTest {
         val completedReminder = reminder.copy(status = ReminderStatus.COMPLETED)
 
         coEvery { mockReminderRepo.save(completedReminder) } returns completedReminder.id
+        coEvery { mockHistoryRepository.save(any()) } returns 1L
 
         verifyFlowEmitted(viewModel.finished, this) {
             viewModel.complete()

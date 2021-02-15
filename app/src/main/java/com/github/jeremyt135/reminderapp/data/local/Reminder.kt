@@ -1,9 +1,6 @@
 package com.github.jeremyt135.reminderapp.data.local
 
-import androidx.room.Embedded
-import androidx.room.Entity
-import androidx.room.PrimaryKey
-import androidx.room.Relation
+import androidx.room.*
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.ReminderAndAlarm
 import com.github.jeremyt135.reminderapp.data.domain.ReminderStatus
@@ -19,7 +16,9 @@ data class ReminderEntity(
     val time: LocalTime = LocalTime.now(),
     val daysOfWeek: SortedSet<DayOfWeek> = sortedSetOf(),
     val status: String = ReminderStatus.PENDING.name,
-    val vibrate: Boolean = false
+    val vibrate: Boolean = false,
+    @ColumnInfo(name = "completion_status")
+    val completionStatus: String = ReminderStatus.PENDING.name
 )
 
 fun ReminderEntity.asDomainModel(): Reminder =
@@ -29,7 +28,8 @@ fun ReminderEntity.asDomainModel(): Reminder =
         time = this.time,
         daysOfWeek = this.daysOfWeek.toSortedSet(),
         status = enumValueOf(this.status),
-        vibrate = this.vibrate
+        vibrate = this.vibrate,
+        completionStatus = enumValueOf(this.completionStatus)
     )
 
 fun List<ReminderEntity>.asDomainModel(): List<Reminder> = map {

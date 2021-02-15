@@ -13,13 +13,12 @@ import androidx.test.espresso.matcher.ViewMatchers.*
 import androidx.test.filters.MediumTest
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.jeremyt135.R
-import com.github.jeremyt135.reminderapp.data.AlarmRepository
-import com.github.jeremyt135.reminderapp.data.FakeAlarmRepository
-import com.github.jeremyt135.reminderapp.data.FakeReminderRepository
-import com.github.jeremyt135.reminderapp.data.ReminderRepository
+import com.github.jeremyt135.reminderapp.data.*
+import com.github.jeremyt135.reminderapp.data.domain.History
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.ReminderStatus
 import com.github.jeremyt135.reminderapp.data.local.Alarm
+import com.github.jeremyt135.reminderapp.data.local.FakeHistoryLocalDataSource
 import com.github.jeremyt135.reminderapp.di.DatabaseModule
 import com.github.jeremyt135.reminderapp.di.RepositoryModule
 import com.github.jeremyt135.reminderapp.launchFragmentInHiltContainer
@@ -71,6 +70,14 @@ class ReminderEditorFragmentTest {
         @Provides
         @Singleton
         fun provideAlarmRepository(): AlarmRepository = FakeAlarmRepository(alarmCache)
+
+        private val historyCache = mutableListOf<History>()
+
+        @Provides
+        @Singleton
+        fun provideHistoryRepository(): HistoryRepository = FakeHistoryRepository(
+            FakeHistoryLocalDataSource(historyCache)
+        )
     }
 
 

@@ -17,7 +17,8 @@ class FakeReminderLocalDataSource(
 
     override suspend fun getReminderAndAlarm(reminderId: Long): ReminderAndAlarm? {
         return findById(reminderId)?.let {
-            val alarm = alarmCache.first { alarm -> alarm.reminderId == reminderId }
+            val alarm = alarmCache.firstOrNull { alarm -> alarm.reminderId == reminderId }
+                ?: Alarm(reminderId = reminderId, triggerAt = 0)
             ReminderAndAlarm(
                 it,
                 alarm

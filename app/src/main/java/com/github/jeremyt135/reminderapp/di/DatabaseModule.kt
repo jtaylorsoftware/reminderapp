@@ -30,5 +30,8 @@ object DatabaseModule {
 
     @Provides
     fun provideAlarmDao(appDatabase: AppDatabase) = appDatabase.alarmDao()
+
+    @Provides
+    fun provideHistoryDao(appDatabase: AppDatabase) = appDatabase.historyDao()
 }
 
