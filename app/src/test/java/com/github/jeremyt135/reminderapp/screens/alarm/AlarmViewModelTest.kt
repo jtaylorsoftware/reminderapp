@@ -4,20 +4,17 @@ import android.content.Context
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.github.jeremyt135.reminderapp.MainCoroutineRule
 import com.github.jeremyt135.reminderapp.ReminderApplication
-import com.github.jeremyt135.reminderapp.broadcast.SNOOZE_TIME_MIN
-import com.github.jeremyt135.reminderapp.broadcast.cancelAlarm
-import com.github.jeremyt135.reminderapp.broadcast.makeSnoozeToast
-import com.github.jeremyt135.reminderapp.broadcast.scheduleAlarm
+import com.github.jeremyt135.reminderapp.broadcast.scheduleCompleteAlarm
+import com.github.jeremyt135.reminderapp.broadcast.scheduleSkipAlarm
+import com.github.jeremyt135.reminderapp.broadcast.scheduleSnoozeAlarm
 import com.github.jeremyt135.reminderapp.data.AlarmRepository
 import com.github.jeremyt135.reminderapp.data.HistoryRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.ReminderAndAlarm
-import com.github.jeremyt135.reminderapp.data.domain.ReminderStatus
 import com.github.jeremyt135.reminderapp.data.local.Alarm
 import com.github.jeremyt135.reminderapp.getOrAwaitValue
 import com.github.jeremyt135.reminderapp.util.toEpochMilli
-import com.github.jeremyt135.reminderapp.util.toLocalDateTime
 import com.google.common.truth.Truth.assertThat
 import io.mockk.*
 import io.mockk.impl.annotations.MockK
@@ -92,7 +89,7 @@ class AlarmViewModelTest {
         reminderAndAlarm = ReminderAndAlarm(reminder, alarm)
 
         viewModel =
-            AlarmViewModel(mockApplication, mockReminderRepo, mockAlarmRepo, mockHistoryRepository)
+            AlarmViewModel(mockApplication, mockReminderRepo)
 
         coEvery { mockReminderRepo.getReminderAndAlarm(reminder.id) } returns reminderAndAlarm
         every { mockApplication.applicationContext } returns mockContext
@@ -120,69 +117,51 @@ class AlarmViewModelTest {
     }
 
     @Test
-    fun snooze_cancelsAndSchedulesNewAlarm() = mainCoroutineRule.runBlockingTest {
+    fun snooze_callsScheduleSnoozeAlarm() = mainCoroutineRule.runBlockingTest {
         viewModel.loadReminderData(reminder.id)
 
-
-        val nextAlarmTime =
-            alarm.triggerAt.toLocalDateTime().plusMinutes(SNOOZE_TIME_MIN).toEpochMilli()
-        val nextAlarm = alarm.copy(triggerAt = nextAlarmTime)
-
-        coEvery { mockAlarmRepo.save(nextAlarm) } returns nextAlarm.id
-
-        mockkStatic(::cancelAlarm, ::scheduleAlarm, ::makeSnoozeToast)
-        every { makeSnoozeToast(mockContext) } returns Unit
-        every { cancelAlarm(mockContext, alarm) } returns Unit
-        every { scheduleAlarm(mockContext, nextAlarm) } returns Unit
+        mockkStatic(::scheduleSnoozeAlarm)
+        every { scheduleSnoozeAlarm(mockContext, any())} returns Unit
 
         verifyFlowEmitted(viewModel.finished, this) {
             viewModel.snooze()
         }
 
         // Verify the snooze happened
-        coVerifyOrder {
-            cancelAlarm(mockContext, alarm)
-            mockAlarmRepo.save(nextAlarm)
-            scheduleAlarm(mockContext, nextAlarm)
-            makeSnoozeToast(mockContext)
+        verify {
+            scheduleSnoozeAlarm(mockContext, any())
         }
-
     }
 
     @Test
-    fun skip_savesReminderWithStatusSkipped() = mainCoroutineRule.runBlockingTest {
+    fun skip_callsScheduleSkipAlarm() = mainCoroutineRule.runBlockingTest {
         viewModel.loadReminderData(reminder.id)
 
-        val skippedReminder = reminder.copy(status = ReminderStatus.SKIPPED)
-
-        coEvery { mockReminderRepo.save(skippedReminder) } returns skippedReminder.id
-        coEvery { mockHistoryRepository.save(any()) } returns 1L
+        mockkStatic(::scheduleSkipAlarm)
+        every { scheduleSkipAlarm(mockContext, any()) } returns Unit
 
         verifyFlowEmitted(viewModel.finished, this) {
             viewModel.skip()
         }
 
-        coVerify {
-            mockReminderRepo.save(skippedReminder)
+        verify {
+            scheduleSkipAlarm(mockContext, any())
         }
-
     }
 
     @Test
-    fun complete_savesReminderWithStatusCompleted() = mainCoroutineRule.runBlockingTest {
+    fun complete_callsScheduleCompleteAlarm() = mainCoroutineRule.runBlockingTest {
         viewModel.loadReminderData(reminder.id)
 
-        val completedReminder = reminder.copy(status = ReminderStatus.COMPLETED)
-
-        coEvery { mockReminderRepo.save(completedReminder) } returns completedReminder.id
-        coEvery { mockHistoryRepository.save(any()) } returns 1L
+        mockkStatic(::scheduleCompleteAlarm)
+        every { scheduleCompleteAlarm(mockContext, any()) } returns Unit
 
         verifyFlowEmitted(viewModel.finished, this) {
             viewModel.complete()
         }
 
-        coVerify {
-            mockReminderRepo.save(completedReminder)
+        verify {
+            scheduleCompleteAlarm(mockContext, any())
         }
     }
 

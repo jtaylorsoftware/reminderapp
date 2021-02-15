@@ -7,22 +7,19 @@ import androidx.fragment.app.commit
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.Espresso.onView
-import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.assertion.ViewAssertions.matches
-import androidx.test.espresso.matcher.ViewMatchers.*
+import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
+import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.filters.MediumTest
 import com.github.jeremyt135.reminderapp.broadcast.EXTRA_REMINDER_ID
 import com.github.jeremyt135.reminderapp.data.*
 import com.github.jeremyt135.reminderapp.data.domain.History
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
-import com.github.jeremyt135.reminderapp.data.domain.ReminderStatus
 import com.github.jeremyt135.reminderapp.data.local.Alarm
 import com.github.jeremyt135.reminderapp.data.local.FakeHistoryLocalDataSource
 import com.github.jeremyt135.reminderapp.di.DatabaseModule
 import com.github.jeremyt135.reminderapp.di.RepositoryModule
 import com.github.jeremyt135.reminderapp.util.toEpochMilli
-import com.github.jeremyt135.reminderapp.util.toLocalDateTime
-import com.google.common.truth.Truth.*
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -31,9 +28,7 @@ import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.UninstallModules
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -41,7 +36,6 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
-import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -142,43 +136,5 @@ class AlarmFragmentTest {
         onView(withText(time.format(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)))).check(
             matches(isDisplayed())
         )
-    }
-
-    @Test
-    fun skipButton_addsHistoryEntry() = runBlockingTest {
-        launchAlarmFragmentWithReminder(reminder.id)
-
-        onView(withText("Skip")).perform(click())
-
-        val historyEntries = historyRepository.getAll().first()
-        val history =
-            historyEntries.find {
-                it.reminderId == reminder.id
-                        && it.completionStatus == ReminderStatus.SKIPPED
-                        && (
-                        it.completedAt.toLocalDateTime() == LocalDateTime.now()
-                            .truncatedTo(ChronoUnit.MINUTES)
-                        )
-            }
-        assertThat(history).isNotNull()
-    }
-
-    @Test
-    fun completeButton_addsHistoryEntry() = runBlockingTest {
-        launchAlarmFragmentWithReminder(reminder.id)
-
-        onView(withText("Complete")).perform(click())
-
-        val historyEntries = historyRepository.getAll().first()
-        val history =
-            historyEntries.find {
-                it.reminderId == reminder.id
-                        && it.completionStatus == ReminderStatus.COMPLETED
-                        && (
-                        it.completedAt.toLocalDateTime() == LocalDateTime.now()
-                            .truncatedTo(ChronoUnit.MINUTES)
-                        )
-            }
-        assertThat(history).isNotNull()
     }
 }

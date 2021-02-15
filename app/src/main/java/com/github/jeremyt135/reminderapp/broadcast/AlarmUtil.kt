@@ -11,9 +11,9 @@ import androidx.core.app.AlarmManagerCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.github.jeremyt135.R
-import com.github.jeremyt135.reminderapp.screens.alarm.AlarmActivity
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.local.Alarm
+import com.github.jeremyt135.reminderapp.screens.alarm.AlarmActivity
 import com.github.jeremyt135.reminderapp.util.toEpochMilli
 import com.github.jeremyt135.reminderapp.util.toLocalDateTime
 import timber.log.Timber
@@ -68,6 +68,36 @@ fun scheduleAlarmForReminder(
 fun scheduleAlarm(context: Context, alarm: Alarm) {
     val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
     val intent = getIntentForAlarmReceiver(context, alarm.reminderId)
+
+    AlarmManagerCompat.setExactAndAllowWhileIdle(
+        alarmManager, AlarmManager.RTC_WAKEUP,
+        alarm.triggerAt, intent
+    )
+}
+
+fun scheduleSnoozeAlarm(context: Context, alarm: Alarm){
+    val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+    val intent = getIntentForSnoozeReceiver(context, alarm.reminderId)
+
+    AlarmManagerCompat.setExactAndAllowWhileIdle(
+        alarmManager, AlarmManager.RTC_WAKEUP,
+        alarm.triggerAt, intent
+    )
+}
+
+fun scheduleSkipAlarm(context: Context, alarm: Alarm){
+    val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+    val intent = getIntentForSkipReceiver(context, alarm.reminderId)
+
+    AlarmManagerCompat.setExactAndAllowWhileIdle(
+        alarmManager, AlarmManager.RTC_WAKEUP,
+        alarm.triggerAt, intent
+    )
+}
+
+fun scheduleCompleteAlarm(context: Context, alarm: Alarm){
+    val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+    val intent = getIntentForCompleteReceiver(context, alarm.reminderId)
 
     AlarmManagerCompat.setExactAndAllowWhileIdle(
         alarmManager, AlarmManager.RTC_WAKEUP,
@@ -197,7 +227,6 @@ fun getCreatedIntentForAlarmReceiver(context: Context, reminderId: Long): Pendin
         )
     }
 
-@VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
 fun getIntentForSkipReceiver(context: Context, reminderId: Long): PendingIntent =
     Intent(context, AlarmSkipReceiver::class.java).run {
         flags = Intent.FLAG_RECEIVER_REPLACE_PENDING
@@ -226,7 +255,6 @@ fun getCreatedIntentForSkipReceiver(context: Context, reminderId: Long): Pending
     }
 
 
-@VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
 fun getIntentForSnoozeReceiver(context: Context, reminderId: Long): PendingIntent =
     Intent(context, AlarmSnoozeReceiver::class.java).run {
         flags = Intent.FLAG_RECEIVER_REPLACE_PENDING
@@ -254,7 +282,6 @@ fun getCreatedIntentForSnoozeReceiver(context: Context, reminderId: Long): Pendi
         )
     }
 
-@VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
 fun getIntentForCompleteReceiver(context: Context, reminderId: Long): PendingIntent =
     Intent(context, AlarmCompleteReceiver::class.java).run {
         flags = Intent.FLAG_RECEIVER_REPLACE_PENDING
