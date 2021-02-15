@@ -9,11 +9,16 @@ import com.github.jeremyt135.reminderapp.data.local.ReminderAndAlarmEntity as Re
 interface ReminderDao {
     @Query(
         """
-SELECT *,
+SELECT reminder.*,
     CASE WHEN
         DATE('now') = DATE(IFNULL(hs.completed_at, 0)/1000, 'unixepoch')
         THEN hs.completion_status ELSE "PENDING"
-    END AS completion_status FROM reminder LEFT OUTER JOIN history AS hs ON reminder.id = hs.reminder_id
+    END AS completion_status FROM reminder 
+    LEFT OUTER JOIN history AS hs 
+        ON reminder.id = hs.reminder_id
+        AND hs.history_id = ( 
+            SELECT MAX(history_id) FROM history WHERE reminder_id = reminder.id
+        )
     """
     )
     fun getAll(): Flow<List<Reminder>>
