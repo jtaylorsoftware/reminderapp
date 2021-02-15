@@ -181,6 +181,7 @@ class Reminder(
         if (id != other.id) return false
         if (description != other.description) return false
         if (vibrate != other.vibrate) return false
+        if (completionStatus != other.completionStatus) return false
         if (hour != other.hour) return false
         if (minute != other.minute) return false
 
@@ -193,6 +194,7 @@ class Reminder(
         result = 31 * result + id.hashCode()
         result = 31 * result + description.hashCode()
         result = 31 * result + vibrate.hashCode()
+        result = 31 * result + completionStatus.hashCode()
         result = 31 * result + hour
         result = 31 * result + minute
         return result
@@ -205,11 +207,11 @@ class Reminder(
                 "id=$id, " +
                 "description='$description', " +
                 "vibrate=$vibrate, " +
+                "completionStatus=$completionStatus, " +
                 "hour=$hour, " +
                 "minute=$minute" +
                 ")"
     }
-
 
     fun copy(
         description: String = this.description,
@@ -218,7 +220,8 @@ class Reminder(
         daysOfWeek: SortedSet<DayOfWeek> = this.daysOfWeek.toSortedSet(),
         vibrate: Boolean = this.vibrate,
         id: Long = this.id,
-    ) = Reminder(description, status, time, daysOfWeek, vibrate, id)
+        completionStatus: ReminderStatus = this.completionStatus
+    ) = Reminder(description, status, time, daysOfWeek, vibrate, id, completionStatus)
 }
 
 fun Reminder.asEntity(): ReminderEntity =
