@@ -23,12 +23,13 @@ fun bindHistoryRecyclerView(recyclerView: RecyclerView, data: List<History>?) {
 
 @BindingAdapter("statusForIcon")
 fun bindReminderStatusIcon(imageView: ImageView, history: History?) {
-    history?.let {
-        val resId = when (it.completionStatus) {
+    val resId = history?.let {
+        when (it.completionStatus) {
             ReminderStatus.PENDING -> R.drawable.ic_notification_pending
             ReminderStatus.SKIPPED -> R.drawable.ic_notification_skip
             ReminderStatus.COMPLETED -> R.drawable.ic_notification_complete
         }
-        imageView.setImageResource(resId)
-    } ?: imageView.setImageResource(R.drawable.ic_notification_pending)
+    } ?: R.drawable.ic_notification_pending
+    imageView.setImageResource(resId)
+    imageView.tag = resId
 }
