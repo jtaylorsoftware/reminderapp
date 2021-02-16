@@ -14,10 +14,14 @@ import com.github.jeremyt135.reminderapp.data.AlarmRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.Alarm
+import com.github.jeremyt135.reminderapp.data.local.AlarmDao
+import com.github.jeremyt135.reminderapp.data.local.AppDatabase
+import com.github.jeremyt135.reminderapp.data.local.ReminderDao
 import com.github.jeremyt135.reminderapp.util.toEpochMilli
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.runBlocking
+import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -36,6 +40,9 @@ class AlarmActivityTest {
     @Inject
     lateinit var alarmRepository: AlarmRepository
 
+    @Inject
+    lateinit var database: AppDatabase
+
     val time: LocalDateTime = LocalDateTime.now().plusHours(2)
     val reminder = Reminder(id = 1, time = time.toLocalTime(), description = "My Reminder")
     val alarm = Alarm(id = 1, reminderId = reminder.id, triggerAt = time.toEpochMilli())
@@ -47,6 +54,15 @@ class AlarmActivityTest {
         runBlocking {
             reminderRepository.save(reminder)
             alarmRepository.save(alarm)
+        }
+    }
+
+    @After
+    fun teardown() {
+        runBlocking {
+            database.alarmDao().clearTable()
+            database.historyDao().clearTable()
+            database.reminderDao().clearTable()
         }
     }
 

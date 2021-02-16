@@ -1,17 +1,17 @@
 package com.github.jeremyt135.reminderapp.data.local
 
 import com.github.jeremyt135.reminderapp.data.ReminderDataSource
-import com.github.jeremyt135.reminderapp.data.domain.Alarm
-import com.github.jeremyt135.reminderapp.data.domain.Reminder
-import com.github.jeremyt135.reminderapp.data.domain.ReminderAndAlarm
-import com.github.jeremyt135.reminderapp.data.domain.ReminderAndHistory
+import com.github.jeremyt135.reminderapp.data.domain.*
+import com.github.jeremyt135.reminderapp.util.toLocalDateTime
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import java.time.LocalDate
 
 class FakeReminderLocalDataSource(
     private val reminderCache: MutableList<Reminder> = mutableListOf(),
-    private val alarmCache: List<Alarm> = listOf()
+    private val alarmCache: List<Alarm> = listOf(),
+    private val historyCache: List<History> = listOf()
 ) : ReminderDataSource {
 
     override fun getAll(): Flow<List<Reminder>> = flow {
@@ -21,10 +21,14 @@ class FakeReminderLocalDataSource(
     override fun getAllWithTodayHistory(): Flow<List<ReminderAndHistory>> = flow {
         emit(reminderCache)
     }.map { reminders ->
-        reminders.map {
+        reminders.map { reminder ->
             ReminderAndHistory(
-                reminder = it.copy(),
-                history = null,
+                reminder = reminder.copy(),
+                history = historyCache.firstOrNull { history ->
+                    history.reminderId == reminder.id &&
+                    history.id == historyCache.maxOfOrNull { it.id } ?: 0L
+                    history.completedAt.toLocalDateTime().dayOfWeek == LocalDate.now().dayOfWeek
+                },
             )
         }
     }

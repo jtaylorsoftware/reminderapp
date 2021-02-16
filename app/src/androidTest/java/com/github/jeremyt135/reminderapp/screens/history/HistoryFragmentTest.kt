@@ -56,7 +56,7 @@ class HistoryFragmentTest {
         @Provides
         @Singleton
         fun provideReminderRepository(): ReminderRepository =
-            FakeReminderRepository(reminderCache, alarmCache)
+            FakeReminderRepository(reminderCache, alarmCache, historyCache)
 
 
         @Provides

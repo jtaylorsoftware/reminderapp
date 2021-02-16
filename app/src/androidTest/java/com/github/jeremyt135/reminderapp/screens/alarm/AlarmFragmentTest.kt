@@ -57,18 +57,17 @@ class AlarmFragmentTest {
     object TestModule {
         private val reminderCache: MutableList<Reminder> = mutableListOf()
         private val alarmCache: MutableList<Alarm> = mutableListOf()
+        private val historyCache: MutableList<History> = mutableListOf()
 
         @Provides
         @Singleton
         fun provideReminderRepository(): ReminderRepository =
-            FakeReminderRepository(reminderCache, alarmCache)
+            FakeReminderRepository(reminderCache, alarmCache, historyCache)
 
 
         @Provides
         @Singleton
         fun provideAlarmRepository(): AlarmRepository = FakeAlarmRepository(alarmCache)
-
-        private val historyCache = mutableListOf<History>()
 
         @Provides
         @Singleton

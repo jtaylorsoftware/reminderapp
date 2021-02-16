@@ -1,5 +1,8 @@
 package com.github.jeremyt135.reminderapp
 
+import android.content.Context
+import androidx.core.app.NotificationManagerCompat
+import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.assertion.ViewAssertions.matches
@@ -10,11 +13,15 @@ import com.github.jeremyt135.R
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.ReminderStatus
+import com.github.jeremyt135.reminderapp.data.local.AlarmDao
+import com.github.jeremyt135.reminderapp.data.local.AppDatabase
+import com.github.jeremyt135.reminderapp.data.local.ReminderDao
 import com.github.jeremyt135.reminderapp.util.withActivityScenario
 import com.github.jeremyt135.reminderapp.util.withTime
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.runBlocking
+import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -24,12 +31,16 @@ import javax.inject.Inject
 @HiltAndroidTest
 @LargeTest
 class RemindersActivityTest {
-
     @get:Rule
     var hiltRule = HiltAndroidRule(this)
 
+    lateinit var context: Context
+
     @Inject
     lateinit var repository: ReminderRepository
+
+    @Inject
+    lateinit var database: AppDatabase
 
     private val reminders =
         (1..3).map { Reminder("My Reminder $it", ReminderStatus.PENDING, id = it.toLong()) }
@@ -38,6 +49,18 @@ class RemindersActivityTest {
     fun setup() {
         hiltRule.inject()
         runBlocking { reminders.forEach { repository.save(it) } }
+        context = ApplicationProvider.getApplicationContext()
+    }
+
+    @After
+    fun teardown() {
+        runBlocking {
+            database.alarmDao().clearTable()
+            database.historyDao().clearTable()
+            database.reminderDao().clearTable()
+        }
+
+        NotificationManagerCompat.from(context).cancelAll()
     }
 
     @Test
