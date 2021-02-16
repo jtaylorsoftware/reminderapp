@@ -220,7 +220,7 @@
                 android:textColor="?android:attr/textColorSecondary"
                 android:textSize="18sp"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@+id/imageView"
+                app:layout_constraintEnd_toStartOf="@+id/image_item_reminder_status"
                 app:layout_constraintHorizontal_bias="0.5"
                 app:layout_constraintStart_toEndOf="@+id/divider_item_reminder"
                 app:layout_constraintTop_toTopOf="parent"
@@ -228,7 +228,7 @@
                 tools:text="6:15 AM" />
 
             <ImageView
-                android:id="@+id/imageView"
+                android:id="@+id/image_item_reminder_status"
                 android:layout_width="wrap_content"
                 android:layout_height="0dp"
                 android:contentDescription="@string/notification_icon_description"
