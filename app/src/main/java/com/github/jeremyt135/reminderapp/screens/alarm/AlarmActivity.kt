@@ -46,7 +46,9 @@ class AlarmActivity : AppCompatActivity() {
          * Initialize the viewModel data - the reminderId must be nonzero for the Activity to be valid.
          */
         val reminderId = intent.getLongExtra(EXTRA_REMINDER_ID, 0L)
-        Timber.e("Received 0 for EXTRA_REMINDER_ID")
+        if (reminderId == 0L) {
+            Timber.e("Received 0 for EXTRA_REMINDER_ID")
+        }
         viewModel.loadReminderData(reminderId)
 
         /**
@@ -62,14 +64,18 @@ class AlarmActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        Timber.d("Resuming AlarmActivity")
 
         NotificationManagerCompat.from(this).cancelAll()
     }
 
     override fun onStop() {
         super.onStop()
+        Timber.d("Stopping AlarmActivity")
 
-        viewModel.snooze()
+        if (isFinishing) {
+            viewModel.snooze()
+        }
     }
 
 }

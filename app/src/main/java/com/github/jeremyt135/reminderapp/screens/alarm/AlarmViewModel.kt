@@ -35,6 +35,8 @@ class AlarmViewModel @Inject constructor(
     private val _time = MutableStateFlow("")
     val time = _time.asLiveData(viewModelScope.coroutineContext)
 
+    private var tookAction: Boolean = false
+
     private val _finished = MutableSharedFlow<Unit>(replay = 0)
     val finished: SharedFlow<Unit> = _finished
 
@@ -62,6 +64,9 @@ class AlarmViewModel @Inject constructor(
      * Snoozes the alarm and emits finished
      */
     fun snooze() {
+        if (tookAction){
+            return
+        }
         Timber.d("Snoozing alarm")
 
         val context = getApplication<Application>().applicationContext
@@ -77,6 +82,9 @@ class AlarmViewModel @Inject constructor(
      * Skips the alarm and emits finished
      */
     fun skip() {
+        if (tookAction){
+            return
+        }
         Timber.d("Skipping alarm")
 
         val context = getApplication<Application>().applicationContext
@@ -91,6 +99,9 @@ class AlarmViewModel @Inject constructor(
      * Completes the alarm and emits finished
      */
     fun complete() {
+        if (tookAction){
+            return
+        }
         Timber.d("Completing alarm")
 
         val context = getApplication<Application>().applicationContext
@@ -102,6 +113,7 @@ class AlarmViewModel @Inject constructor(
     }
 
     private suspend fun onAction() {
+        tookAction = true
         _finished.emit(Unit)
     }
 }
