@@ -2,25 +2,35 @@ package com.github.jeremyt135.reminderapp
 
 import android.content.Context
 import androidx.core.app.NotificationManagerCompat
+import androidx.navigation.NavController
+import androidx.navigation.Navigation
+import androidx.navigation.findNavController
+import androidx.navigation.testing.TestNavHostController
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.click
+import androidx.test.espresso.action.ViewActions.replaceText
 import androidx.test.espresso.assertion.ViewAssertions.matches
+import androidx.test.espresso.contrib.PickerActions.setTime
+import androidx.test.espresso.contrib.RecyclerViewActions
 import androidx.test.espresso.matcher.ViewMatchers.*
 import androidx.test.filters.LargeTest
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.jeremyt135.R
+import com.github.jeremyt135.reminderapp.broadcast.getCreatedIntentForAlarmReceiver
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.ReminderStatus
-import com.github.jeremyt135.reminderapp.data.local.AlarmDao
 import com.github.jeremyt135.reminderapp.data.local.AppDatabase
-import com.github.jeremyt135.reminderapp.data.local.ReminderDao
+import com.github.jeremyt135.reminderapp.screens.reminder.overview.ReminderListAdapter
 import com.github.jeremyt135.reminderapp.util.withActivityScenario
 import com.github.jeremyt135.reminderapp.util.withTime
+import com.google.common.truth.Truth.*
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import org.hamcrest.CoreMatchers.equalTo
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -48,7 +58,6 @@ class RemindersActivityTest {
     @Before
     fun setup() {
         hiltRule.inject()
-        runBlocking { reminders.forEach { repository.save(it) } }
         context = ApplicationProvider.getApplicationContext()
     }
 
@@ -70,6 +79,8 @@ class RemindersActivityTest {
 
     @Test
     fun activity_opensToRemindersList() {
+        runBlocking { reminders.forEach { repository.save(it) } }
+
         val reminder = reminders[0]
 
         withActivityScenario(RemindersActivity::class.java) {
@@ -94,4 +105,120 @@ class RemindersActivityTest {
             onView(withId(R.id.timePicker_editor)).check(matches(withTime(time)))
         }
     }
+
+    @Test
+    fun openEditor_andSaveNewReminder_schedulesAlarm() {
+        val hours = 10
+        val minutes = 15
+        val description = "My New Reminder"
+
+        withActivityScenario(RemindersActivity::class.java) {
+            /**
+             * Open editor
+             */
+            onView(withId(R.id.fab_reminders_add)).perform(click())
+
+            /**
+             * Set reminder fields
+             */
+            onView(withId(R.id.timePicker_editor)).perform(setTime(hours, minutes))
+            onView(withId(R.id.edit_editor_description)).perform(replaceText(description))
+
+            onView(withId(R.id.toggle_editor_monday)).perform(click())
+            onView(withId(R.id.toggle_editor_wednesday)).perform(click())
+
+            onView(withId(R.id.switch_editor_vibrate)).perform(click())
+
+            /**
+             * Save
+             */
+            onView(withId(R.id.button_editor_save)).perform(click())
+
+            /**
+             * Verify on Reminders overview that the Reminder is added
+             */
+            onView(withText(description)).check(matches(isDisplayed()))
+
+            val time = Reminder(time = LocalTime.of(hours, minutes)).getTimeDisplayString()
+            onView(withText(time)).check(matches(isDisplayed()))
+
+            onView(withTagValue(equalTo(R.drawable.ic_notification_pending))).check(
+                matches(isDisplayed())
+            )
+
+            onView(withId(R.id.text_item_reminder_monday))
+                .check(matches(isDisplayed()))
+                .check(matches(hasTextColor(R.color.color_primary)))
+            onView(withId(R.id.text_item_reminder_wednesday))
+                .check(matches(isDisplayed()))
+                .check(matches(hasTextColor(R.color.color_primary)))
+
+            /**
+             * Verify the alarm was scheduled
+             */
+            val reminderId = runBlocking {
+                repository.getAll().first().first { it.description == description }
+            }.id
+            val alarmIntent = getCreatedIntentForAlarmReceiver(context, reminderId)
+            assertThat(alarmIntent).isNotNull()
+            alarmIntent?.cancel()
+        }
+    }
+
+
+    @Test
+    fun tapReminder_navigatesToEditor_canDelete() {
+        val reminder = reminders[0]
+
+        runBlocking {
+            reminder.id = repository.save(reminder)
+        }
+
+        withActivityScenario(RemindersActivity::class.java) {
+            lateinit var navController: NavController
+            onActivity {
+                navController = it.findNavController(R.id.nav_host_fragment)
+            }
+
+
+            onView(withId(R.id.recycler_reminders_list)).perform(
+                RecyclerViewActions.actionOnItem<ReminderListAdapter.ReminderViewHolder>(
+                    hasDescendant(withText(reminder.description)),
+                    click()
+                )
+            )
+
+            /**
+             * Verify editor has opened
+             */
+            assertThat(navController.currentDestination?.id).isEqualTo(R.id.fragment_reminder_editor)
+            onView(withId(R.id.edit_editor_description))
+                .check(matches(isDisplayed()))
+                .check(
+                    matches(
+                        withText(reminder.description)
+                    )
+                )
+
+            /**
+             * Press delete
+             */
+            onView(withId(R.id.button_editor_delete))
+                .check(matches(isDisplayed()))
+                .perform(click())
+
+            /**
+             * Verify back on reminders list
+             */
+            assertThat(navController.currentDestination?.id).isEqualTo(R.id.fragment_reminders)
+
+            /**
+             * Verify that reminder has been deleted
+             */
+            runBlocking {
+                assertThat(repository.findById(reminder.id)).isNull()
+            }
+        }
+    }
+
 }
