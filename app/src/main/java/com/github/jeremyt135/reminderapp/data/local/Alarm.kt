@@ -1,10 +1,9 @@
 package com.github.jeremyt135.reminderapp.data.local
 
 import android.os.Parcelable
-import androidx.room.ColumnInfo
-import androidx.room.Entity
-import androidx.room.ForeignKey
-import androidx.room.PrimaryKey
+import androidx.room.*
+import com.github.jeremyt135.reminderapp.data.DataModel
+import com.github.jeremyt135.reminderapp.data.domain.Alarm
 import kotlinx.parcelize.Parcelize
 
 /**
@@ -16,14 +15,19 @@ import kotlinx.parcelize.Parcelize
  */
 @Parcelize
 @Entity(
+    tableName = "alarm",
     foreignKeys = [
-    ForeignKey(
-        entity = ReminderEntity::class,
-        parentColumns = ["id"],
-        childColumns = ["reminder_id"]
-    )
-])
-data class Alarm(
+        ForeignKey(
+            entity = ReminderEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["reminder_id"]
+        )
+    ],
+    indices = [
+        Index(value = ["reminder_id"])
+    ]
+)
+data class AlarmEntity(
     @PrimaryKey(autoGenerate = true)
     var id: Long = 0L,
 
@@ -32,4 +36,10 @@ data class Alarm(
 
     @ColumnInfo(name = "trigger_at")
     val triggerAt: Long,
-): Parcelable
+) : Parcelable, DataModel<Alarm> {
+    override fun asDomainModel(): Alarm = Alarm(
+        id = this.id,
+        reminderId = this.reminderId,
+        triggerAt = this.triggerAt
+    )
+}

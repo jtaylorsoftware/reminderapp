@@ -8,9 +8,9 @@ import com.github.jeremyt135.reminderapp.broadcast.cancelNotification
 import com.github.jeremyt135.reminderapp.broadcast.scheduleAlarmForReminder
 import com.github.jeremyt135.reminderapp.data.AlarmRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
+import com.github.jeremyt135.reminderapp.data.domain.Alarm
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.ReminderStatus
-import com.github.jeremyt135.reminderapp.data.local.Alarm
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -103,8 +103,8 @@ class ReminderEditorViewModel @Inject constructor(
         }
     }
 
-    fun deleteReminder(){
-        if (!isEditing){
+    fun deleteReminder() {
+        if (!isEditing) {
             return
         }
 
@@ -128,7 +128,7 @@ class ReminderEditorViewModel @Inject constructor(
         }
     }
 
-    private suspend fun removeAlarm(context: Context, alarm: Alarm){
+    private suspend fun removeAlarm(context: Context, alarm: Alarm) {
         Timber.d("Cancelling previous alarm")
         cancelNotification(context, alarm.reminderId)
         cancelAlarm(context, alarm)

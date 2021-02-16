@@ -3,10 +3,9 @@ package com.github.jeremyt135.reminderapp.data.local
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.test.filters.SmallTest
 import com.github.jeremyt135.reminderapp.data.domain.History
-import com.github.jeremyt135.reminderapp.util.InMemoryDatabaseRule
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.ReminderStatus
-import com.github.jeremyt135.reminderapp.data.domain.asEntity
+import com.github.jeremyt135.reminderapp.util.InMemoryDatabaseRule
 import com.github.jeremyt135.reminderapp.util.toEpochMilli
 import com.google.common.truth.Truth.assertThat
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -41,13 +40,13 @@ class ReminderDaoTest {
     }
 
     @Test
-    fun getAll_calculatesCompletionStatus_returnsAllReminders() = runBlockingTest {
+    fun getAllWithHistory_calculatesCompletionStatus_returnsAllReminders() = runBlockingTest {
         val reminders = (1..5).map { i ->
             Reminder(
                 "Reminder $i",
                 status = if (i >= 2) ReminderStatus.COMPLETED else ReminderStatus.PENDING,
                 id = i.toLong()
-            ).asEntity()
+            ).asDataModel()
         }
         reminders.forEach {
             reminderDao.insert(it)
@@ -58,25 +57,47 @@ class ReminderDaoTest {
                 reminderId = reminders[i - 1].id,
                 description = reminders[i - 1].description,
                 completionStatus = ReminderStatus.COMPLETED,
-                completedAt =  LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES).toEpochMilli()
-            ).asEntity()
+                completedAt = LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES).toEpochMilli()
+            ).asDataModel()
         }
         historyEntries.forEach {
             historyDao.insert(it)
         }
-        val dbReminders = reminderDao.getAll().first()
+        val dbReminders = reminderDao.getAllWithTodayHistory().first()
 
-        dbReminders.forEach { reminder ->
-            val history = historyEntries.firstOrNull { it.reminderId == reminder.id }
-            if (history!=null) {
-                assertThat(reminder.completionStatus).isEqualTo(history.completionStatus)
+        assertThat(dbReminders).hasSize(reminders.size)
+
+        dbReminders.forEach {
+            val history =
+                historyEntries.firstOrNull { history -> history.reminderId == it.history?.reminderId }
+            if (history != null) {
+                assertThat(it.history?.completionStatus).isEqualTo(history.completionStatus)
             }
         }
     }
 
     @Test
+    fun getAll_returnsAllReminders() = runBlockingTest {
+        val reminders = (1..5).map { i ->
+            Reminder(
+                "Reminder $i",
+                status = if (i >= 2) ReminderStatus.COMPLETED else ReminderStatus.PENDING,
+                id = i.toLong()
+            ).asDataModel()
+        }
+        reminders.forEach {
+            reminderDao.insert(it)
+        }
+
+        val dbReminders = reminderDao.getAll().first()
+
+        assertThat(dbReminders).hasSize(reminders.size)
+        assertThat(dbReminders).containsExactlyElementsIn(reminders)
+    }
+
+    @Test
     fun findById_returnsInsertedReminder() = runBlockingTest {
-        val reminder = Reminder("Reminder 1", ReminderStatus.SKIPPED).asEntity()
+        val reminder = Reminder("Reminder 1", ReminderStatus.SKIPPED).asDataModel()
 
         val id = reminderDao.insert(reminder)
 
@@ -94,7 +115,7 @@ class ReminderDaoTest {
 
     @Test
     fun delete_then_findReturnsNull() = runBlockingTest {
-        val reminder = Reminder(id = 1).asEntity()
+        val reminder = Reminder(id = 1).asDataModel()
         reminderDao.insert(reminder)
 
         assertThat(reminderDao.findById(reminder.id)).isNotNull()
@@ -106,10 +127,10 @@ class ReminderDaoTest {
 
     @Test
     fun getReminderAndAlarm() = runBlockingTest {
-        val reminder = Reminder(id = 1).asEntity()
+        val reminder = Reminder(id = 1).asDataModel()
         reminderDao.insert(reminder)
 
-        val alarm = Alarm(id = 1, reminderId = 1, triggerAt = 0)
+        val alarm = AlarmEntity(id = 1, reminderId = 1, triggerAt = 0)
         alarmDao.insert(alarm)
 
         val reminderAndAlarm = reminderDao.getReminderAndAlarm(reminder.id)

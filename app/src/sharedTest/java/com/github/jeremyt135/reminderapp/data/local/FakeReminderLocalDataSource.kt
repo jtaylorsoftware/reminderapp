@@ -1,10 +1,13 @@
 package com.github.jeremyt135.reminderapp.data.local
 
 import com.github.jeremyt135.reminderapp.data.ReminderDataSource
+import com.github.jeremyt135.reminderapp.data.domain.Alarm
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.ReminderAndAlarm
+import com.github.jeremyt135.reminderapp.data.domain.ReminderAndHistory
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 
 class FakeReminderLocalDataSource(
     private val reminderCache: MutableList<Reminder> = mutableListOf(),
@@ -13,6 +16,17 @@ class FakeReminderLocalDataSource(
 
     override fun getAll(): Flow<List<Reminder>> = flow {
         emit(reminderCache)
+    }
+
+    override fun getAllWithTodayHistory(): Flow<List<ReminderAndHistory>> = flow {
+        emit(reminderCache)
+    }.map { reminders ->
+        reminders.map {
+            ReminderAndHistory(
+                reminder = it.copy(),
+                history = null,
+            )
+        }
     }
 
     override suspend fun getReminderAndAlarm(reminderId: Long): ReminderAndAlarm? {

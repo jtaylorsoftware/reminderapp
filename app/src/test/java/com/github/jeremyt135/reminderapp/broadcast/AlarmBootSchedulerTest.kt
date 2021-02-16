@@ -6,9 +6,9 @@ import android.content.Intent
 import com.github.jeremyt135.reminderapp.MainCoroutineRule
 import com.github.jeremyt135.reminderapp.data.AlarmRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
-import com.github.jeremyt135.reminderapp.data.local.Alarm
+import com.github.jeremyt135.reminderapp.data.asDomainModel
+import com.github.jeremyt135.reminderapp.data.domain.Alarm
 import com.github.jeremyt135.reminderapp.data.local.ReminderEntity
-import com.github.jeremyt135.reminderapp.data.local.asDomainModel
 import io.mockk.*
 import io.mockk.impl.annotations.MockK
 import kotlinx.coroutines.ExperimentalCoroutinesApi

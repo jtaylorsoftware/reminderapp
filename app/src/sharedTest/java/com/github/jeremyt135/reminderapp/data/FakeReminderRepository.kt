@@ -1,11 +1,13 @@
 package com.github.jeremyt135.reminderapp.data
 
+import com.github.jeremyt135.reminderapp.data.domain.Alarm
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.ReminderAndAlarm
-import com.github.jeremyt135.reminderapp.data.local.Alarm
+import com.github.jeremyt135.reminderapp.data.domain.ReminderAndHistory
 import com.github.jeremyt135.reminderapp.data.local.FakeReminderLocalDataSource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -19,6 +21,17 @@ class FakeReminderRepository @Inject constructor(
 
     override fun getAll(): Flow<List<Reminder>> = flow {
         emit(cache)
+    }
+
+    override fun getAllWithTodayHistory(): Flow<List<ReminderAndHistory>> = flow {
+        emit(cache)
+    }.map { reminders ->
+        reminders.map {
+            ReminderAndHistory(
+                reminder = it.copy(),
+                history = null,
+            )
+        }
     }
 
     override suspend fun getReminderAndAlarm(reminderId: Long): ReminderAndAlarm? {

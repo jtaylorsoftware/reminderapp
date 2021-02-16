@@ -4,9 +4,10 @@ import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.github.jeremyt135.reminderapp.MainCoroutineRule
 import com.github.jeremyt135.reminderapp.data.FakeReminderRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
+import com.github.jeremyt135.reminderapp.data.domain.Alarm
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
+import com.github.jeremyt135.reminderapp.data.domain.ReminderAndHistory
 import com.github.jeremyt135.reminderapp.data.domain.ReminderStatus
-import com.github.jeremyt135.reminderapp.data.local.Alarm
 import com.github.jeremyt135.reminderapp.getOrAwaitValue
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -44,7 +45,13 @@ class RemindersViewModelTest {
     @Test
     fun reminders_returnsRepoRemindersAsLiveData() = runBlockingTest(mainCoroutineRule.dispatcher)
     {
-        assertThat(viewModel.reminders.getOrAwaitValue()).containsExactlyElementsIn(reminders)
+        val remindersWithNoHistory = reminders.map {
+            ReminderAndHistory(
+                reminder = it.copy(),
+                history = null
+            )
+        }
+        assertThat(viewModel.reminders.getOrAwaitValue()).containsExactlyElementsIn(remindersWithNoHistory)
     }
 
     @Test

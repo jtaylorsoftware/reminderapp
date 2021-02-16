@@ -10,8 +10,8 @@
         <import type="android.view.View" />
 
         <variable
-            name="reminder"
-            type="com.github.jeremyt135.reminderapp.data.domain.Reminder" />
+            name="data"
+            type="com.github.jeremyt135.reminderapp.data.domain.ReminderAndHistory" />
     </data>
 
     <com.google.android.material.card.MaterialCardView
@@ -35,7 +35,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:padding="2dp"
-                android:text="@{reminder.description}"
+                android:text="@{data.reminder.description}"
                 android:textColor="?android:attr/textColorPrimary"
                 android:textSize="16sp"
                 app:layout_constraintBottom_toTopOf="@+id/text_item_reminder_sunday"
@@ -57,7 +57,7 @@
                 android:text="@string/today"
                 android:textColor="@color/text_secondary"
                 android:textSize="@dimen/textSize_item_reminder_date"
-                android:visibility="@{reminder.oneOff ? View.VISIBLE : View.GONE}"
+                android:visibility="@{data.reminder.oneOff ? View.VISIBLE : View.GONE}"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/text_item_reminder_description" />
 
@@ -73,7 +73,7 @@
                 android:text="@string/every_day"
                 android:textColor="@color/text_secondary"
                 android:textSize="@dimen/textSize_item_reminder_date"
-                android:visibility="@{reminder.everyDay ? View.VISIBLE : View.GONE}"
+                android:visibility="@{data.reminder.everyDay ? View.VISIBLE : View.GONE}"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/text_item_reminder_description" />
@@ -89,9 +89,9 @@
                 android:paddingEnd="2dp"
                 android:paddingBottom="1dp"
                 android:text="@string/sunday_abbrev"
-                android:textColor="@{reminder.dayIsChecked(DayOfWeek.SUNDAY) ? @color/color_primary : @color/text_secondary}"
+                android:textColor="@{data.reminder.dayIsChecked(DayOfWeek.SUNDAY) ? @color/color_primary : @color/text_secondary}"
                 android:textSize="@dimen/textSize_item_reminder_date"
-                android:visibility="@{!reminder.oneOff &amp;&amp; !reminder.everyDay ? View.VISIBLE : View.INVISIBLE}"
+                android:visibility="@{!data.reminder.oneOff &amp;&amp; !data.reminder.everyDay ? View.VISIBLE : View.INVISIBLE}"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toStartOf="@+id/text_item_reminder_monday"
                 app:layout_constraintHorizontal_bias="0.5"
@@ -109,9 +109,9 @@
                 android:paddingEnd="2dp"
                 android:paddingBottom="1dp"
                 android:text="@string/monday_abbrev"
-                android:textColor="@{reminder.dayIsChecked(DayOfWeek.MONDAY) ? @color/color_primary : @color/text_secondary}"
+                android:textColor="@{data.reminder.dayIsChecked(DayOfWeek.MONDAY) ? @color/color_primary : @color/text_secondary}"
                 android:textSize="@dimen/textSize_item_reminder_date"
-                android:visibility="@{!reminder.oneOff &amp;&amp; !reminder.everyDay ? View.VISIBLE : View.INVISIBLE}"
+                android:visibility="@{!data.reminder.oneOff &amp;&amp; !data.reminder.everyDay ? View.VISIBLE : View.INVISIBLE}"
                 app:layout_constraintBottom_toBottomOf="@+id/text_item_reminder_sunday"
                 app:layout_constraintEnd_toStartOf="@+id/text_item_reminder_tuesday"
                 app:layout_constraintHorizontal_bias="0.5"
@@ -126,9 +126,9 @@
                 android:paddingEnd="2dp"
                 android:paddingBottom="1dp"
                 android:text="@string/tuesday_abbrev"
-                android:textColor="@{reminder.dayIsChecked(DayOfWeek.TUESDAY) ? @color/color_primary : @color/text_secondary}"
+                android:textColor="@{data.reminder.dayIsChecked(DayOfWeek.TUESDAY) ? @color/color_primary : @color/text_secondary}"
                 android:textSize="@dimen/textSize_item_reminder_date"
-                android:visibility="@{!reminder.oneOff &amp;&amp; !reminder.everyDay ? View.VISIBLE : View.INVISIBLE}"
+                android:visibility="@{!data.reminder.oneOff &amp;&amp; !data.reminder.everyDay ? View.VISIBLE : View.INVISIBLE}"
                 app:layout_constraintBottom_toBottomOf="@+id/text_item_reminder_monday"
                 app:layout_constraintEnd_toStartOf="@+id/text_item_reminder_wednesday"
                 app:layout_constraintHorizontal_bias="0.5"
@@ -143,9 +143,9 @@
                 android:paddingEnd="2dp"
                 android:paddingBottom="1dp"
                 android:text="@string/wednesday_abbrev"
-                android:textColor="@{reminder.dayIsChecked(DayOfWeek.WEDNESDAY) ? @color/color_primary : @color/text_secondary}"
+                android:textColor="@{data.reminder.dayIsChecked(DayOfWeek.WEDNESDAY) ? @color/color_primary : @color/text_secondary}"
                 android:textSize="@dimen/textSize_item_reminder_date"
-                android:visibility="@{!reminder.oneOff &amp;&amp; !reminder.everyDay ? View.VISIBLE : View.INVISIBLE}"
+                android:visibility="@{!data.reminder.oneOff &amp;&amp; !data.reminder.everyDay ? View.VISIBLE : View.INVISIBLE}"
                 app:layout_constraintBottom_toBottomOf="@+id/text_item_reminder_tuesday"
                 app:layout_constraintEnd_toStartOf="@+id/text_item_reminder_thursday"
                 app:layout_constraintHorizontal_bias="0.5"
@@ -160,9 +160,9 @@
                 android:paddingEnd="2dp"
                 android:paddingBottom="1dp"
                 android:text="@string/thursday_abbrev"
-                android:textColor="@{reminder.dayIsChecked(DayOfWeek.THURSDAY) ? @color/color_primary : @color/text_secondary}"
+                android:textColor="@{data.reminder.dayIsChecked(DayOfWeek.THURSDAY) ? @color/color_primary : @color/text_secondary}"
                 android:textSize="@dimen/textSize_item_reminder_date"
-                android:visibility="@{!reminder.oneOff &amp;&amp; !reminder.everyDay ? View.VISIBLE : View.INVISIBLE}"
+                android:visibility="@{!data.reminder.oneOff &amp;&amp; !data.reminder.everyDay ? View.VISIBLE : View.INVISIBLE}"
                 app:layout_constraintBottom_toBottomOf="@+id/text_item_reminder_wednesday"
                 app:layout_constraintEnd_toStartOf="@+id/text_item_reminder_friday"
                 app:layout_constraintHorizontal_bias="0.5"
@@ -177,9 +177,9 @@
                 android:paddingEnd="2dp"
                 android:paddingBottom="1dp"
                 android:text="@string/friday_abbrev"
-                android:textColor="@{reminder.dayIsChecked(DayOfWeek.FRIDAY) ? @color/color_primary : @color/text_secondary}"
+                android:textColor="@{data.reminder.dayIsChecked(DayOfWeek.FRIDAY) ? @color/color_primary : @color/text_secondary}"
                 android:textSize="@dimen/textSize_item_reminder_date"
-                android:visibility="@{!reminder.oneOff &amp;&amp; !reminder.everyDay ? View.VISIBLE : View.INVISIBLE}"
+                android:visibility="@{!data.reminder.oneOff &amp;&amp; !data.reminder.everyDay ? View.VISIBLE : View.INVISIBLE}"
                 app:layout_constraintBottom_toBottomOf="@+id/text_item_reminder_thursday"
                 app:layout_constraintEnd_toStartOf="@+id/text_item_reminder_saturday"
                 app:layout_constraintHorizontal_bias="0.5"
@@ -194,9 +194,9 @@
                 android:paddingEnd="2dp"
                 android:paddingBottom="1dp"
                 android:text="@string/saturday_abbrev"
-                android:textColor="@{reminder.dayIsChecked(DayOfWeek.SATURDAY) ? @color/color_primary : @color/text_secondary}"
+                android:textColor="@{data.reminder.dayIsChecked(DayOfWeek.SATURDAY) ? @color/color_primary : @color/text_secondary}"
                 android:textSize="@dimen/textSize_item_reminder_date"
-                android:visibility="@{!reminder.oneOff &amp;&amp; !reminder.everyDay ? View.VISIBLE : View.INVISIBLE}"
+                android:visibility="@{!data.reminder.oneOff &amp;&amp; !data.reminder.everyDay ? View.VISIBLE : View.INVISIBLE}"
                 app:layout_constraintBottom_toBottomOf="@+id/text_item_reminder_friday"
                 app:layout_constraintStart_toEndOf="@+id/text_item_reminder_friday" />
 
@@ -216,7 +216,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="11dp"
                 android:padding="2dp"
-                android:text="@{reminder.timeDisplayString}"
+                android:text="@{data.reminder.timeDisplayString}"
                 android:textColor="?android:attr/textColorSecondary"
                 android:textSize="18sp"
                 app:layout_constraintBottom_toBottomOf="parent"
@@ -237,7 +237,7 @@
                 app:layout_constraintHorizontal_bias="0.5"
                 app:layout_constraintStart_toEndOf="@+id/text_item_reminder_time"
                 app:layout_constraintTop_toTopOf="@+id/text_item_reminder_time"
-                app:statusForIcon="@{reminder.completionStatus}"
+                app:statusForIcon="@{data.history}"
                 tools:srcCompat="@drawable/ic_notification_pending"/>
 
         </androidx.constraintlayout.widget.ConstraintLayout>

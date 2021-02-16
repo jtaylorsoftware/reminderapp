@@ -1,8 +1,13 @@
 package com.github.jeremyt135.reminderapp.data.local
 
-import androidx.room.*
+import androidx.room.Embedded
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+import androidx.room.Relation
+import com.github.jeremyt135.reminderapp.data.DataModel
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.ReminderAndAlarm
+import com.github.jeremyt135.reminderapp.data.domain.ReminderAndHistory
 import com.github.jeremyt135.reminderapp.data.domain.ReminderStatus
 import java.time.DayOfWeek
 import java.time.LocalTime
@@ -17,23 +22,16 @@ data class ReminderEntity(
     val daysOfWeek: SortedSet<DayOfWeek> = sortedSetOf(),
     val status: String = ReminderStatus.PENDING.name,
     val vibrate: Boolean = false,
-    @ColumnInfo(name = "completion_status")
-    val completionStatus: String = ReminderStatus.PENDING.name
-)
-
-fun ReminderEntity.asDomainModel(): Reminder =
-    Reminder(
-        id = this.id,
-        description = this.description,
-        time = this.time,
-        daysOfWeek = this.daysOfWeek.toSortedSet(),
-        status = enumValueOf(this.status),
-        vibrate = this.vibrate,
-        completionStatus = enumValueOf(this.completionStatus)
-    )
-
-fun List<ReminderEntity>.asDomainModel(): List<Reminder> = map {
-    it.asDomainModel()
+) : DataModel<Reminder> {
+    override fun asDomainModel(): Reminder =
+        Reminder(
+            id = this.id,
+            description = this.description,
+            time = this.time,
+            daysOfWeek = this.daysOfWeek.toSortedSet(),
+            status = enumValueOf(this.status),
+            vibrate = this.vibrate,
+        )
 }
 
 data class ReminderAndAlarmEntity(
@@ -42,11 +40,22 @@ data class ReminderAndAlarmEntity(
         parentColumn = "id",
         entityColumn = "reminder_id"
     )
-    val alarm: Alarm
-)
+    val alarm: AlarmEntity
+) : DataModel<ReminderAndAlarm> {
+    override fun asDomainModel(): ReminderAndAlarm =
+        ReminderAndAlarm(
+            reminder = this.reminder.asDomainModel(),
+            alarm = this.alarm.asDomainModel()
+        )
+}
 
-fun ReminderAndAlarmEntity.asDomainModel(): ReminderAndAlarm =
-    ReminderAndAlarm(
-        reminder = this.reminder.asDomainModel(),
-        alarm = this.alarm
-    )
+data class ReminderAndHistoryEntity(
+    @Embedded val reminder: ReminderEntity,
+    @Embedded val history: HistoryEntity?
+) : DataModel<ReminderAndHistory> {
+    override fun asDomainModel(): ReminderAndHistory =
+        ReminderAndHistory(
+            reminder = this.reminder.asDomainModel(),
+            history = this.history?.asDomainModel()
+        )
+}

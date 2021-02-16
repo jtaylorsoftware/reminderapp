@@ -29,7 +29,7 @@ class RemindersFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         val reminderListAdapter = ReminderListAdapter(ReminderListAdapter.OnClickListener {
-            viewModel.editReminder(it)
+            viewModel.editReminder(it.reminder)
         })
 
         FragmentRemindersBinding.bind(view).apply {

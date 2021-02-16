@@ -3,8 +3,9 @@ package com.github.jeremyt135.reminderapp.data.domain
 import androidx.databinding.BaseObservable
 import androidx.databinding.Bindable
 import com.github.jeremyt135.BR
-import com.github.jeremyt135.reminderapp.data.local.Alarm
+import com.github.jeremyt135.reminderapp.data.DomainModel
 import com.github.jeremyt135.reminderapp.data.local.ReminderAndAlarmEntity
+import com.github.jeremyt135.reminderapp.data.local.ReminderAndHistoryEntity
 import com.github.jeremyt135.reminderapp.data.local.ReminderEntity
 import com.github.jeremyt135.reminderapp.util.getFullLocaleDisplay
 import timber.log.Timber
@@ -53,15 +54,14 @@ class Reminder(
     time: LocalTime = LocalTime.now(),
     val daysOfWeek: SortedSet<DayOfWeek> = sortedSetOf(),
     vibrate: Boolean = false,
-    var id: Long = 0L,
-    completionStatus: ReminderStatus = ReminderStatus.PENDING
-) : BaseObservable() {
+    var id: Long = 0L
+) : BaseObservable(), DomainModel<ReminderEntity> {
     @get:Bindable
     var description: String = description
         set(value) {
             if (field != value) {
                 field = value
-                notifyPropertyChanged(BR.reminder)
+                notifyPropertyChanged(BR.description)
             }
         }
 
@@ -70,21 +70,7 @@ class Reminder(
         set(value) {
             if (field != value) {
                 field = value
-                notifyPropertyChanged(BR.reminder)
-            }
-        }
-
-    /**
-     * The status for this Reminder as it pertains to history and daily completion. For a one-off
-     * Reminder, completionStatus should match this.status. Otherwise, the value is set based on
-     * today's History for this Reminder.
-     */
-    @get:Bindable
-    var completionStatus: ReminderStatus = completionStatus
-        set(value){
-            if (field != value) {
-                field = value
-                notifyPropertyChanged(BR.reminder)
+                notifyPropertyChanged(BR.vibrate)
             }
         }
 
@@ -162,9 +148,10 @@ class Reminder(
             else -> throw IllegalArgumentException("daysOfWeek has more than 7 entries")
         }
 
-    fun getTimeDisplayString(): String = LocalDateTime.now().withHour(hour).withMinute(minute).format(
-        DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)
-    )
+    fun getTimeDisplayString(): String =
+        LocalDateTime.now().withHour(hour).withMinute(minute).format(
+            DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)
+        )
 
     fun dayIsChecked(dayString: String) = dayIsChecked(DayOfWeek.valueOf(dayString))
 
@@ -181,7 +168,6 @@ class Reminder(
         if (id != other.id) return false
         if (description != other.description) return false
         if (vibrate != other.vibrate) return false
-        if (completionStatus != other.completionStatus) return false
         if (hour != other.hour) return false
         if (minute != other.minute) return false
 
@@ -194,7 +180,6 @@ class Reminder(
         result = 31 * result + id.hashCode()
         result = 31 * result + description.hashCode()
         result = 31 * result + vibrate.hashCode()
-        result = 31 * result + completionStatus.hashCode()
         result = 31 * result + hour
         result = 31 * result + minute
         return result
@@ -207,7 +192,6 @@ class Reminder(
                 "id=$id, " +
                 "description='$description', " +
                 "vibrate=$vibrate, " +
-                "completionStatus=$completionStatus, " +
                 "hour=$hour, " +
                 "minute=$minute" +
                 ")"
@@ -220,23 +204,46 @@ class Reminder(
         daysOfWeek: SortedSet<DayOfWeek> = this.daysOfWeek.toSortedSet(),
         vibrate: Boolean = this.vibrate,
         id: Long = this.id,
-        completionStatus: ReminderStatus = this.completionStatus
-    ) = Reminder(description, status, time, daysOfWeek, vibrate, id, completionStatus)
+    ) = Reminder(description, status, time, daysOfWeek, vibrate, id)
+
+    override fun asDataModel(): ReminderEntity =
+        ReminderEntity(
+            id = this.id,
+            description = this.description,
+            time = LocalTime.of(hour, minute),
+            daysOfWeek = this.daysOfWeek.toSortedSet(),
+            status = this.status.name,
+            vibrate = this.vibrate,
+        )
+
 }
 
-fun Reminder.asEntity(): ReminderEntity =
-    ReminderEntity(
-        id = this.id,
-        description = this.description,
-        time = LocalTime.of(hour, minute),
-        daysOfWeek = this.daysOfWeek.toSortedSet(),
-        status = this.status.name,
-        vibrate = this.vibrate,
-        completionStatus = this.completionStatus.name
+data class ReminderAndAlarm(val reminder: Reminder, val alarm: Alarm) :
+    DomainModel<ReminderAndAlarmEntity> {
+    override fun asDataModel() = ReminderAndAlarmEntity(
+        reminder = this.reminder.asDataModel(),
+        alarm = this.alarm.asDataModel()
     )
-
-fun List<Reminder>.asEntity(): List<ReminderEntity> = map {
-    it.asEntity()
 }
 
-data class ReminderAndAlarm(val reminder: Reminder, val alarm: Alarm)
+data class ReminderAndHistory(val reminder: Reminder, val history: History?) : BaseObservable(),
+    DomainModel<ReminderAndHistoryEntity> {
+    /**
+     * The status for this Reminder as it pertains to history and daily completion. For a one-off
+     * Reminder, completionStatus should match this.status. Otherwise, the value is set based on
+     * today's History for this Reminder.
+     */
+    @get:Bindable
+    var completionStatus: ReminderStatus = history?.completionStatus ?: ReminderStatus.PENDING
+        set(value) {
+            if (field != value) {
+                field = value
+                notifyPropertyChanged(BR.completionStatus)
+            }
+        }
+
+    override fun asDataModel() = ReminderAndHistoryEntity(
+        reminder = this.reminder.asDataModel(),
+        history = this.history?.asDataModel()
+    )
+}

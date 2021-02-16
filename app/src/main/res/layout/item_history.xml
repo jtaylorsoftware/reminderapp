@@ -92,7 +92,7 @@
                 app:layout_constraintHorizontal_bias="0.5"
                 app:layout_constraintStart_toEndOf="@+id/text_item_history_completionTime"
                 app:layout_constraintTop_toTopOf="@+id/text_item_history_completionTime"
-                app:statusForIcon="@{history.completionStatus}"
+                app:statusForIcon="@{history}"
                 tools:srcCompat="@drawable/ic_notification_complete" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>

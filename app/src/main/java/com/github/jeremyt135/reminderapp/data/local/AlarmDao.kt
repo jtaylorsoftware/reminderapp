@@ -1,6 +1,7 @@
 package com.github.jeremyt135.reminderapp.data.local
 
 import androidx.room.*
+import com.github.jeremyt135.reminderapp.data.local.AlarmEntity as Alarm
 import kotlinx.coroutines.flow.Flow
 
 @Dao

@@ -2,7 +2,7 @@ package com.github.jeremyt135.reminderapp.broadcast
 
 import android.content.Context
 import android.content.Intent
-import com.github.jeremyt135.reminderapp.data.local.Alarm
+import com.github.jeremyt135.reminderapp.data.domain.Alarm
 import com.github.jeremyt135.reminderapp.util.toEpochMilli
 import com.github.jeremyt135.reminderapp.util.toLocalDateTime
 import kotlinx.coroutines.launch

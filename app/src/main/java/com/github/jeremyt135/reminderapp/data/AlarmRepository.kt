@@ -1,8 +1,9 @@
 package com.github.jeremyt135.reminderapp.data
 
-import com.github.jeremyt135.reminderapp.data.local.Alarm
+import com.github.jeremyt135.reminderapp.data.domain.Alarm
 import com.github.jeremyt135.reminderapp.data.local.AlarmDao
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -19,15 +20,15 @@ interface AlarmRepository {
 class AlarmRepositoryImpl @Inject constructor(
     private val alarmDao: AlarmDao
 ) : AlarmRepository {
-    override fun getAll(): Flow<List<Alarm>> = alarmDao.getAll()
+    override fun getAll(): Flow<List<Alarm>> = alarmDao.getAll().map { it.asDomainModel()}
 
-    override suspend fun findById(id: Long): Alarm? = alarmDao.findById(id)
+    override suspend fun findById(id: Long): Alarm? = alarmDao.findById(id)?.asDomainModel()
     override suspend fun findByReminderId(reminderId: Long): Alarm? =
-        alarmDao.findByReminderId(reminderId)
+        alarmDao.findByReminderId(reminderId)?.asDomainModel()
 
-    override suspend fun save(alarm: Alarm): Long = alarmDao.insert(alarm)
+    override suspend fun save(alarm: Alarm): Long = alarmDao.insert(alarm.asDataModel())
 
-    override suspend fun delete(alarm: Alarm) = alarmDao.delete(alarm)
+    override suspend fun delete(alarm: Alarm) = alarmDao.delete(alarm.asDataModel())
 
     override suspend fun deleteAll() = alarmDao.clearTable()
 }

@@ -8,8 +8,8 @@ import com.github.jeremyt135.reminderapp.broadcast.scheduleCompleteAlarm
 import com.github.jeremyt135.reminderapp.broadcast.scheduleSkipAlarm
 import com.github.jeremyt135.reminderapp.broadcast.scheduleSnoozeAlarm
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
+import com.github.jeremyt135.reminderapp.data.domain.Alarm
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
-import com.github.jeremyt135.reminderapp.data.local.Alarm
 import com.github.jeremyt135.reminderapp.util.toLocalDateTime
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow

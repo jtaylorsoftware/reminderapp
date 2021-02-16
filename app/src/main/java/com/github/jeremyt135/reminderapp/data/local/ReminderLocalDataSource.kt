@@ -1,9 +1,10 @@
 package com.github.jeremyt135.reminderapp.data.local
 
 import com.github.jeremyt135.reminderapp.data.ReminderDataSource
+import com.github.jeremyt135.reminderapp.data.asDomainModel
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.ReminderAndAlarm
-import com.github.jeremyt135.reminderapp.data.domain.asEntity
+import com.github.jeremyt135.reminderapp.data.domain.ReminderAndHistory
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
@@ -17,12 +18,17 @@ class ReminderLocalDataSource @Inject constructor(private val reminderDao: Remin
         it.asDomainModel()
     }
 
+    override fun getAllWithTodayHistory(): Flow<List<ReminderAndHistory>> =
+        reminderDao.getAllWithTodayHistory().map {
+            it.asDomainModel()
+        }
+
     override suspend fun findById(id: Long): Reminder? = reminderDao.findById(id)?.asDomainModel()
 
     override suspend fun getReminderAndAlarm(reminderId: Long): ReminderAndAlarm? =
         reminderDao.getReminderAndAlarm(reminderId)?.asDomainModel()
 
-    override suspend fun save(reminder: Reminder) = reminderDao.insert(reminder.asEntity())
+    override suspend fun save(reminder: Reminder) = reminderDao.insert(reminder.asDataModel())
 
-    override suspend fun delete(reminder: Reminder) = reminderDao.delete(reminder.asEntity())
+    override suspend fun delete(reminder: Reminder) = reminderDao.delete(reminder.asDataModel())
 }

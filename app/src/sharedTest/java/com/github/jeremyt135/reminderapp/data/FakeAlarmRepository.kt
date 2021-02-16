@@ -1,6 +1,7 @@
 package com.github.jeremyt135.reminderapp.data
 
-import com.github.jeremyt135.reminderapp.data.local.Alarm
+
+import com.github.jeremyt135.reminderapp.data.domain.Alarm
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import javax.inject.Inject

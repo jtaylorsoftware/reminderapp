@@ -1,6 +1,7 @@
 package com.github.jeremyt135.reminderapp.data
 
-import com.github.jeremyt135.reminderapp.data.local.Alarm
+
+import com.github.jeremyt135.reminderapp.data.local.AlarmEntity as Alarm
 import com.github.jeremyt135.reminderapp.data.local.AlarmDao
 import io.mockk.*
 import io.mockk.impl.annotations.MockK
@@ -43,7 +44,7 @@ class AlarmRepositoryTest {
         coEvery { mockAlarmDao.insert(alarm) } returns alarm.id
         repository = AlarmRepositoryImpl(mockAlarmDao)
 
-        repository.save(alarm)
+        repository.save(alarm.asDomainModel())
         coVerify {
             mockAlarmDao.insert(alarm)
         }
