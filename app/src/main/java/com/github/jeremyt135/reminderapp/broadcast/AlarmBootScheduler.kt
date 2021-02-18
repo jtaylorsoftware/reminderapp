@@ -16,6 +16,7 @@ class AlarmBootScheduler : AlarmReceiver("android.intent.action.BOOT_COMPLETED")
         val pendingResult = goAsync()
         coroutineScope.launch {
             Timber.d("Rescheduling alarms")
+            alarmRepository.deleteAll()
             val reminders = reminderRepository.getAll().first()
             val today = LocalDate.now().dayOfWeek
             val jobs = reminders.map { reminder ->

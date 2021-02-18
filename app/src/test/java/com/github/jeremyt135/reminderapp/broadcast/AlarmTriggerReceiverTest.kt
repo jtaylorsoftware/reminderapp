@@ -68,10 +68,6 @@ class AlarmTriggerReceiverTest {
 
         coEvery { mockReminderRepository.getReminderAndAlarm(alarm.reminderId) } returns reminderAndAlarm
 
-        mockkStatic(::alarmShouldTriggerNow)
-
-        every { alarmShouldTriggerNow(reminder, alarm, any()) } returns false
-
         val intent = mockk<Intent>()
         every { intent.action } returns ACTION_ALARM_START
         every { intent.getLongExtra(EXTRA_REMINDER_ID, any()) } returns 1L
@@ -80,7 +76,6 @@ class AlarmTriggerReceiverTest {
 
         coVerifyAll {
             mockReminderRepository.getReminderAndAlarm(alarm.reminderId)
-            alarmShouldTriggerNow(reminder, alarm, any())
         }
     }
 
@@ -92,9 +87,8 @@ class AlarmTriggerReceiverTest {
 
         coEvery { mockReminderRepository.getReminderAndAlarm(alarm.reminderId) } returns reminderAndAlarm
 
-        mockkStatic(::alarmShouldTriggerNow, ::triggerNotification)
+        mockkStatic(::triggerNotification)
 
-        every { alarmShouldTriggerNow(reminder, alarm, any()) } returns true
         every { triggerNotification(mockContext, reminder) } returns Unit
 
         val vibrator = mockk<Vibrator>()
@@ -109,7 +103,6 @@ class AlarmTriggerReceiverTest {
 
         coVerifyAll {
             mockReminderRepository.getReminderAndAlarm(alarm.reminderId)
-            alarmShouldTriggerNow(reminder, alarm, any())
             triggerNotification(mockContext, reminder)
         }
     }

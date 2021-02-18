@@ -2,19 +2,15 @@ package com.github.jeremyt135.reminderapp.broadcast
 
 import android.app.PendingIntent
 import android.content.Context
-import android.content.Intent
 import androidx.core.app.NotificationManagerCompat
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.filters.SmallTest
+import com.github.jeremyt135.reminderapp.data.domain.Alarm
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.ReminderStatus
-import com.github.jeremyt135.reminderapp.data.domain.Alarm
 import com.github.jeremyt135.reminderapp.util.toEpochMilli
 import com.google.common.truth.Truth.assertThat
 import dagger.hilt.android.testing.HiltAndroidTest
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.spyk
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -22,7 +18,6 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneId
-import java.time.temporal.ChronoUnit
 
 @HiltAndroidTest
 @SmallTest
@@ -102,51 +97,6 @@ class AlarmUtilTest {
         intent = getCreatedIntentForAlarmReceiver(context, alarm.reminderId)
 
         assertThat(intent).isNotNull()
-    }
-
-    @Test
-    fun alarmShouldTriggerNow_mismatchedInput_returnsFalse() {
-        val alarm = Alarm(1, 5, 0)
-        val reminder = Reminder(id = 1)
-
-        val now = LocalDateTime.now()
-        assertThat(alarmShouldTriggerNow(reminder, alarm, now)).isFalse()
-    }
-
-    @Test
-    fun alarmShouldTriggerNow_inPast_returnsFalse() {
-        val reminder = Reminder(id=1)
-
-        val now = LocalDateTime.now()
-        // Set triggerAt to time in past
-        val triggerAt = now.minusHours(1).truncatedTo(ChronoUnit.MINUTES).toEpochMilli()
-        val alarm = Alarm(1, 1, triggerAt)
-
-        assertThat(alarmShouldTriggerNow(reminder, alarm, now)).isFalse()
-    }
-
-    @Test
-    fun alarmShouldTriggerNow_inFuture_returnsFalse() {
-        val reminder = Reminder(id=1)
-
-        val now = LocalDateTime.now()
-        // Set triggerAt to time in future
-        val triggerAt = now.plusHours(1).truncatedTo(ChronoUnit.MINUTES).toEpochMilli()
-        val alarm = Alarm(1, 1, triggerAt)
-
-        assertThat(alarmShouldTriggerNow(reminder, alarm, now)).isFalse()
-    }
-
-    @Test
-    fun alarmShouldTriggerNow_triggerAtIsNow_returnsTrue() {
-        val reminder = Reminder(id=1)
-
-        val now = LocalDateTime.now()
-        // Set triggerAt to now
-        val triggerAt = now.truncatedTo(ChronoUnit.MINUTES).toEpochMilli()
-        val alarm = Alarm(1, 1, triggerAt)
-
-        assertThat(alarmShouldTriggerNow(reminder, alarm, now)).isTrue()
     }
 
     @Test

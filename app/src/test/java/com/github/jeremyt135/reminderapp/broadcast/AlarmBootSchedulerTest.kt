@@ -78,6 +78,7 @@ class AlarmBootSchedulerTest {
 
         coEvery { mockAlarmRepository.save(alarm = any()) } returnsMany listOf(1,2)
         coEvery { mockReminderRepository.getAll() } returns flowOf(reminders)
+        coEvery { mockAlarmRepository.deleteAll() } returns Unit
 
         val intent = mockk<Intent>()
         every { intent.action } returns Intent.ACTION_BOOT_COMPLETED
@@ -86,6 +87,7 @@ class AlarmBootSchedulerTest {
         receiver.onReceive(mockContext, intent)
 
         coVerifyOrder {
+            mockAlarmRepository.deleteAll()
             // Verify that 2 reminders were scheduled
             scheduleAlarmForReminder(mockContext, reminders[0], today)
             mockAlarmRepository.save(alarms[0])

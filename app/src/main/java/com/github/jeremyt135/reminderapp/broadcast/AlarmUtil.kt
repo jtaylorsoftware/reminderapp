@@ -20,10 +20,8 @@ import com.github.jeremyt135.reminderapp.util.toEpochMilli
 import com.github.jeremyt135.reminderapp.util.toLocalDateTime
 import timber.log.Timber
 import java.time.DayOfWeek
-import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
-import java.time.temporal.ChronoUnit
 
 const val ACTION_ALARM_START = "com.github.jeremyt135.reminderapp.ACTION_ALARM_START"
 const val ACTION_ALARM_SNOOZE = "com.github.jeremyt135.reminderapp.ACTION_ALARM_SNOOZE"
@@ -160,23 +158,6 @@ fun makeSnoozeToast(context: Context) {
         context, "Alarm snoozed until 2 minutes from now", Toast.LENGTH_SHORT
     ).show()
 }
-
-/**
- * Returns true if a reminder's alarm should be triggered because its triggerAt is the current time and
- * the reminder is not complete. If the reminder and alarm are not paired, returns false without
- * evaluating the time.
- */
-fun alarmShouldTriggerNow(reminder: Reminder, alarm: Alarm, now: LocalDateTime): Boolean {
-    if (reminder.id != alarm.reminderId) {
-        return false
-    }
-
-    val alarmDateTime = alarm.triggerAt.toLocalDateTime()
-
-    return reminder.alarmCanBeSetToday(now.dayOfWeek) &&
-            now.truncatedTo(ChronoUnit.MINUTES).isEqual(alarmDateTime)
-}
-
 
 /**
  * Creates and immediately fires a fullscreen alarm notification for the Reminder.
