@@ -7,11 +7,8 @@ import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.NotificationManagerCompat
 import androidx.lifecycle.asLiveData
-import androidx.lifecycle.lifecycleScope
 import com.github.jeremyt135.R
-import com.github.jeremyt135.reminderapp.broadcast.EXTRA_REMINDER_ID
 import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
 
@@ -43,15 +40,6 @@ class AlarmActivity : AppCompatActivity() {
         }
 
         /**
-         * Initialize the viewModel data - the reminderId must be nonzero for the Activity to be valid.
-         */
-        val reminderId = intent.getLongExtra(EXTRA_REMINDER_ID, 0L)
-        if (reminderId == 0L) {
-            Timber.e("Received 0 for EXTRA_REMINDER_ID")
-        }
-        viewModel.loadReminderData(reminderId)
-
-        /**
          * React to viewModel.finish by closing activity
          */
         viewModel.finished.asLiveData().observe(this) {
@@ -65,17 +53,6 @@ class AlarmActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         Timber.d("Resuming AlarmActivity")
-
-        NotificationManagerCompat.from(this).cancelAll()
-    }
-
-    override fun onStop() {
-        super.onStop()
-        Timber.d("Stopping AlarmActivity")
-
-        if (isFinishing) {
-            viewModel.snooze()
-        }
     }
 
 }

@@ -13,18 +13,19 @@ class AlarmSnoozeReceiver : AlarmReceiver(ACTION_ALARM_SNOOZE) {
     override fun doReceive(context: Context, intent: Intent) {
         val pendingResult = goAsync()
         coroutineScope.launch {
-            val alarm = requireNotNull(reminderRepository.getReminderAndAlarm(reminderId)).alarm
+            val (reminder, alarm) = requireNotNull(reminderRepository.getReminderAndAlarm(reminderId))
 
-            snoozeAlarm(context, alarm)
+            val nextTriggerAt = snoozeAlarm(context, alarm)
 
             makeSnoozeToast(context)
             cancelNotification(context, alarm.reminderId)
+            triggerSnoozeNotification(context, reminder, alarm.copy(triggerAt = nextTriggerAt))
 
             pendingResult.finish()
         }
     }
 
-    private suspend fun snoozeAlarm(context: Context, alarm: Alarm) {
+    private suspend fun snoozeAlarm(context: Context, alarm: Alarm): Long {
         // Cancel previous alarms
         cancelAlarm(context, alarm)
 
@@ -40,6 +41,7 @@ class AlarmSnoozeReceiver : AlarmReceiver(ACTION_ALARM_SNOOZE) {
         scheduleAlarm(context, nextAlarm)
 
         Timber.d("Snoozed and saved next alarm")
+        return nextAlarm.triggerAt
     }
 }
 

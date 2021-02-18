@@ -2,13 +2,13 @@ package com.github.jeremyt135.reminderapp.screens.alarm
 
 import android.content.Context
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
+import androidx.lifecycle.SavedStateHandle
 import com.github.jeremyt135.reminderapp.MainCoroutineRule
 import com.github.jeremyt135.reminderapp.ReminderApplication
+import com.github.jeremyt135.reminderapp.broadcast.EXTRA_REMINDER_ID
 import com.github.jeremyt135.reminderapp.broadcast.scheduleCompleteAlarm
 import com.github.jeremyt135.reminderapp.broadcast.scheduleSkipAlarm
 import com.github.jeremyt135.reminderapp.broadcast.scheduleSnoozeAlarm
-import com.github.jeremyt135.reminderapp.data.AlarmRepository
-import com.github.jeremyt135.reminderapp.data.HistoryRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.Alarm
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
@@ -38,10 +38,7 @@ class AlarmViewModelTest {
     lateinit var mockReminderRepo: ReminderRepository
 
     @MockK
-    lateinit var mockAlarmRepo: AlarmRepository
-
-    @MockK
-    lateinit var mockHistoryRepository: HistoryRepository
+    lateinit var mockSavedStateHandle: SavedStateHandle
 
     @MockK
     lateinit var mockApplication: ReminderApplication
@@ -88,16 +85,15 @@ class AlarmViewModelTest {
         alarm = Alarm(id = 1, reminderId = reminder.id, triggerAt = time.toEpochMilli())
         reminderAndAlarm = ReminderAndAlarm(reminder, alarm)
 
-        viewModel =
-            AlarmViewModel(mockApplication, mockReminderRepo)
-
         coEvery { mockReminderRepo.getReminderAndAlarm(reminder.id) } returns reminderAndAlarm
         every { mockApplication.applicationContext } returns mockContext
     }
 
     @Test
     fun loadReminderData_loadsReminderAndAlarm() = mainCoroutineRule.runBlockingTest {
-        viewModel.loadReminderData(reminder.id)
+        every { mockSavedStateHandle.get<Long>(EXTRA_REMINDER_ID)} returns reminder.id
+        viewModel =
+            AlarmViewModel(mockApplication, mockReminderRepo, mockSavedStateHandle)
 
         coVerify {
             mockReminderRepo.getReminderAndAlarm(reminder.id)
@@ -106,7 +102,9 @@ class AlarmViewModelTest {
 
     @Test
     fun liveData_matchesLoadedReminderData() = mainCoroutineRule.runBlockingTest {
-        viewModel.loadReminderData(reminder.id)
+        every { mockSavedStateHandle.get<Long>(EXTRA_REMINDER_ID)} returns reminder.id
+        viewModel =
+            AlarmViewModel(mockApplication, mockReminderRepo, mockSavedStateHandle)
 
         assertThat(viewModel.reminder.getOrAwaitValue()).isEqualTo(reminder)
         assertThat(viewModel.alarm.getOrAwaitValue()).isEqualTo(alarm)
@@ -118,7 +116,9 @@ class AlarmViewModelTest {
 
     @Test
     fun snooze_callsScheduleSnoozeAlarm() = mainCoroutineRule.runBlockingTest {
-        viewModel.loadReminderData(reminder.id)
+        every { mockSavedStateHandle.get<Long>(EXTRA_REMINDER_ID)} returns reminder.id
+        viewModel =
+            AlarmViewModel(mockApplication, mockReminderRepo, mockSavedStateHandle)
 
         mockkStatic(::scheduleSnoozeAlarm)
         every { scheduleSnoozeAlarm(mockContext, any())} returns Unit
@@ -135,7 +135,9 @@ class AlarmViewModelTest {
 
     @Test
     fun skip_callsScheduleSkipAlarm() = mainCoroutineRule.runBlockingTest {
-        viewModel.loadReminderData(reminder.id)
+        every { mockSavedStateHandle.get<Long>(EXTRA_REMINDER_ID)} returns reminder.id
+        viewModel =
+            AlarmViewModel(mockApplication, mockReminderRepo, mockSavedStateHandle)
 
         mockkStatic(::scheduleSkipAlarm)
         every { scheduleSkipAlarm(mockContext, any()) } returns Unit
@@ -151,7 +153,9 @@ class AlarmViewModelTest {
 
     @Test
     fun complete_callsScheduleCompleteAlarm() = mainCoroutineRule.runBlockingTest {
-        viewModel.loadReminderData(reminder.id)
+        every { mockSavedStateHandle.get<Long>(EXTRA_REMINDER_ID)} returns reminder.id
+        viewModel =
+            AlarmViewModel(mockApplication, mockReminderRepo, mockSavedStateHandle)
 
         mockkStatic(::scheduleCompleteAlarm)
         every { scheduleCompleteAlarm(mockContext, any()) } returns Unit

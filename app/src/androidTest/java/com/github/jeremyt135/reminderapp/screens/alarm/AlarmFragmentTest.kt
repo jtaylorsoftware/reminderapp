@@ -13,9 +13,9 @@ import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.filters.MediumTest
 import com.github.jeremyt135.reminderapp.broadcast.EXTRA_REMINDER_ID
 import com.github.jeremyt135.reminderapp.data.*
+import com.github.jeremyt135.reminderapp.data.domain.Alarm
 import com.github.jeremyt135.reminderapp.data.domain.History
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
-import com.github.jeremyt135.reminderapp.data.domain.Alarm
 import com.github.jeremyt135.reminderapp.data.local.FakeHistoryLocalDataSource
 import com.github.jeremyt135.reminderapp.di.DatabaseModule
 import com.github.jeremyt135.reminderapp.di.RepositoryModule
@@ -107,7 +107,6 @@ class AlarmFragmentTest {
         }
 
         ActivityScenario.launch<AlarmTestActivity>(intent).onActivity { activity ->
-            activity.viewModel.loadReminderData(reminder.id)
             activity.supportFragmentManager.commit {
                 add<AlarmFragment>(android.R.id.content) // attach to root element of view
             }

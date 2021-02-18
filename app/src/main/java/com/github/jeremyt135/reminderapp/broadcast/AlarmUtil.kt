@@ -5,6 +5,8 @@ import android.app.Notification
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
+import android.os.Build
 import android.widget.Toast
 import androidx.annotation.VisibleForTesting
 import androidx.core.app.AlarmManagerCompat
@@ -19,6 +21,8 @@ import com.github.jeremyt135.reminderapp.util.toLocalDateTime
 import timber.log.Timber
 import java.time.DayOfWeek
 import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 import java.time.temporal.ChronoUnit
 
 const val ACTION_ALARM_START = "com.github.jeremyt135.reminderapp.ACTION_ALARM_START"
@@ -38,6 +42,13 @@ val VIBRATION_PATTERN: LongArray by lazy {
     value[0] = 0
     value
 }
+
+/**
+ * Notification light colors and duration
+ */
+const val NOTIFICATION_LED_ARGB: Int = Color.GREEN
+const val NOTIFICATION_LED_ONMS: Int = 1
+const val NOTIFICATION_LED_OFFMS: Int = 0
 
 /**
  * Schedules an alarm to trigger at the next available time and date for the reminder, starting
@@ -75,7 +86,7 @@ fun scheduleAlarm(context: Context, alarm: Alarm) {
     )
 }
 
-fun scheduleSnoozeAlarm(context: Context, alarm: Alarm){
+fun scheduleSnoozeAlarm(context: Context, alarm: Alarm) {
     val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
     val intent = getIntentForSnoozeReceiver(context, alarm.reminderId)
 
@@ -85,7 +96,7 @@ fun scheduleSnoozeAlarm(context: Context, alarm: Alarm){
     )
 }
 
-fun scheduleSkipAlarm(context: Context, alarm: Alarm){
+fun scheduleSkipAlarm(context: Context, alarm: Alarm) {
     val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
     val intent = getIntentForSkipReceiver(context, alarm.reminderId)
 
@@ -95,7 +106,7 @@ fun scheduleSkipAlarm(context: Context, alarm: Alarm){
     )
 }
 
-fun scheduleCompleteAlarm(context: Context, alarm: Alarm){
+fun scheduleCompleteAlarm(context: Context, alarm: Alarm) {
     val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
     val intent = getIntentForCompleteReceiver(context, alarm.reminderId)
 
@@ -134,6 +145,14 @@ fun cancelNotification(context: Context, reminderId: Long) {
         cancel(reminderId.toInt())
     }
     Timber.d("Cancelled current notification")
+}
+
+
+fun triggerSnoozeNotification(context: Context, reminder: Reminder, alarm: Alarm) {
+    val notification = buildNotificationForSnooze(context, reminder, alarm)
+    with(NotificationManagerCompat.from(context)) {
+        notify(reminder.id.toInt(), notification)
+    }
 }
 
 fun makeSnoozeToast(context: Context) {
@@ -332,6 +351,9 @@ fun buildNotificationForAlarmIntent(
         .setContentIntent(intent)
         .setFullScreenIntent(intent, true)
 
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+        builder.setLights(NOTIFICATION_LED_ARGB, NOTIFICATION_LED_ONMS, NOTIFICATION_LED_OFFMS)
+    }
 
     val snoozeIntent = getIntentForSnoozeReceiver(context, reminder.id)
     val skipIntent = getIntentForSkipReceiver(context, reminder.id)
@@ -353,6 +375,28 @@ fun buildNotificationForAlarmIntent(
             context.getString(R.string.action_alarm_complete_name),
             completeIntent
         )
+
+    return builder.build()
+}
+
+fun buildNotificationForSnooze(context: Context, reminder: Reminder, alarm: Alarm): Notification {
+    val builder = NotificationCompat.Builder(
+        context,
+        context.getString(R.string.alarm_notification_channel_id)
+    )
+
+    builder
+        .setAutoCancel(true)
+        .setSmallIcon(R.drawable.ic_notification_snooze)
+        .setContentTitle("Reminder Snoozed")
+        .setContentText(
+            "Reminder for ${reminder.description} was snoozed until ${
+                alarm.triggerAt.toLocalDateTime().toLocalTime().format(
+                    DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)
+                )
+            }"
+        )
+        .setPriority(NotificationCompat.PRIORITY_DEFAULT)
 
     return builder.build()
 }
