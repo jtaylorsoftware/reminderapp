@@ -1,6 +1,8 @@
 package com.github.jeremyt135.reminderapp.screens.alarm
 
 import android.app.Application
+import android.content.Context
+import android.os.Vibrator
 import androidx.core.app.NotificationManagerCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
@@ -67,8 +69,13 @@ class AlarmViewModel @Inject constructor(
         super.onCleared()
         // Try to snooze when activity is finished
         snooze()
-        NotificationManagerCompat.from(getApplication<Application>().applicationContext)
-            .cancel(_reminder.value.id.toInt())
+
+        // Cancel notification and vibration
+        val context = getApplication<Application>().applicationContext
+        (context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator).let {
+            it.cancel()
+        }
+        NotificationManagerCompat.from(context).cancel(_reminder.value.id.toInt())
     }
 
     /**
