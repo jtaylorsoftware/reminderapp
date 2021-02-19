@@ -11,7 +11,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import timber.log.Timber
-import java.time.LocalDateTime
 
 
 /**
@@ -27,26 +26,21 @@ class AlarmTriggerReceiver : AlarmReceiver(ACTION_ALARM_START) {
 
             Timber.d("AlarmTriggerReceiver for alarm with reminder ${alarm.reminderId}")
 
-            val now = LocalDateTime.now()
-            if (reminder.alarmCanBeSetToday(now.dayOfWeek)) {
-                Timber.d("Alarms for reminder ${reminder.id} should fire soon")
-                triggerNotification(context, reminder)
+            Timber.d("Alarms for reminder ${reminder.id} should fire soon")
+            triggerNotification(context, reminder)
 
-                val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-                if (reminder.vibrate && vibrator.hasVibrator()) {
-                    vibrator.start()
-                }
+            val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+            if (reminder.vibrate && vibrator.hasVibrator()) {
+                vibrator.start()
+            }
 
-                launch(Dispatchers.Default) {
-                    if (BuildConfig.DEBUG) {
-                        delay(5 * 1000)
-                    } else {
-                        delay(30 * 1000)
-                    }
-                    vibrator.cancel()
+            launch(Dispatchers.Default) {
+                if (BuildConfig.DEBUG) {
+                    delay(5 * 1000)
+                } else {
+                    delay(30 * 1000)
                 }
-            } else {
-                Timber.d("Alarms NOT firing for reminder ${reminder.id} - wrong time or date")
+                vibrator.cancel()
             }
 
             pendingResult.finish()

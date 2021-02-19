@@ -1,11 +1,15 @@
 package com.github.jeremyt135.reminderapp.data.domain
 
 import com.github.jeremyt135.reminderapp.util.getFullLocaleDisplay
-import com.google.common.truth.Truth.*
+import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import java.time.DayOfWeek
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.LocalTime
+import java.time.temporal.ChronoField
+import java.time.temporal.ChronoUnit
+import java.time.temporal.TemporalAdjusters
 
 class ReminderTest {
     @Test
@@ -97,44 +101,230 @@ class ReminderTest {
     }
 
     @Test
-    fun alarmShouldBeSetToday_isTodayNotComplete_returnsTrue() {
+    fun getNextTimeForAlarm_isComplete_returnsNull() {
         val reminder = Reminder(
-            status = ReminderStatus.PENDING
+            time = LocalTime.now().minusHours(3),
+            daysOfWeek = sortedSetOf(),
+            status = ReminderStatus.COMPLETED
         )
-
-        assertThat(reminder.alarmCanBeSetToday(LocalDate.now().dayOfWeek)).isTrue()
-
-        reminder.daysOfWeek.add(DayOfWeek.MONDAY)
-
-        assertThat(reminder.alarmCanBeSetToday(DayOfWeek.MONDAY)).isTrue()
+        val nextTime = reminder.getNextTimeForAlarm(DayOfWeek.TUESDAY)
+        assertThat(nextTime).isNull()
     }
 
     @Test
-    fun alarmShouldBeSetToday_notTodayNotComplete_returnsFalse() {
-        val reminder = Reminder(
-            status = ReminderStatus.PENDING,
-            daysOfWeek = sortedSetOf(DayOfWeek.WEDNESDAY)
-        )
-        val today = DayOfWeek.MONDAY
-
-        assertThat(reminder.alarmCanBeSetToday(today)).isFalse()
+    fun getNextTimeForAlarm_oneOffInPast_returnsNull() {
+        val reminder = Reminder(time = LocalTime.now().minusHours(3), daysOfWeek = sortedSetOf())
+        val nextTime = reminder.getNextTimeForAlarm(LocalDate.now().dayOfWeek)
+        assertThat(nextTime).isNull()
     }
 
     @Test
-    fun alarmShouldBeSetToday_completeIsToday_returnsFalse(){
-        fun testWithStatus(status: ReminderStatus){
-            val reminder = Reminder(
-                status = status
+    fun getNextTimeForAlarm_oneOffInFuture_returnsTime() {
+        val reminder = Reminder(time = LocalTime.now().plusHours(3), daysOfWeek = sortedSetOf())
+        val nextTime = reminder.getNextTimeForAlarm(LocalDate.now().dayOfWeek)
+        assertThat(nextTime).isNotNull()
+    }
+
+    @Test
+    fun getNextTimeForAlarm_oneOffAtNow_returnsTimeNow() {
+        val reminder = Reminder(time = LocalTime.now(), daysOfWeek = sortedSetOf())
+        val nextTime = reminder.getNextTimeForAlarm(LocalDate.now().dayOfWeek)
+        assertThat(nextTime).isNotNull()
+    }
+
+    @Test
+    fun getNextTimeForAlarm_repeatingTodayNow_returnsTimeNow() {
+        val today = LocalDate.now().dayOfWeek
+        val reminder =
+            Reminder(time = LocalTime.now(), daysOfWeek = sortedSetOf(today))
+
+        val nextTime = reminder.getNextTimeForAlarm(today)!!
+        assertThat(
+            nextTime.isEqual(
+                LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES)
+            )
+        ).isTrue()
+    }
+
+    @Test
+    fun getNextTimeForAlarm_repeatingTodayFuture_returnsTimeLaterToday() {
+        val today = LocalDate.now().dayOfWeek
+        val reminder =
+            Reminder(time = LocalTime.now().plusHours(3), daysOfWeek = sortedSetOf(today))
+
+        val nextTime = reminder.getNextTimeForAlarm(today)!!
+        assertThat(
+            nextTime.isEqual(
+                LocalDateTime.now().plusHours(3).truncatedTo(ChronoUnit.MINUTES)
+            )
+        ).isTrue()
+    }
+
+    @Test
+    fun getNextTimeForAlarm_repeatingTodayPast_returnsTimeNextWeek() {
+        val today = LocalDate.now().dayOfWeek
+        val reminder =
+            Reminder(time = LocalTime.now().minusHours(3), daysOfWeek = sortedSetOf(today))
+
+        val nextTime = reminder.getNextTimeForAlarm(today)!!
+        val expectedNextTime = LocalDateTime.now().with(TemporalAdjusters.next(today)).minusHours(3)
+        assertThat(nextTime.isEqual(expectedNextTime.truncatedTo(ChronoUnit.MINUTES))).isTrue()
+    }
+
+    @Test
+    fun getNextTimeForAlarm_repeatingEverydayPast_returnsTimeTomorrow() {
+        val daysRange = ChronoField.DAY_OF_WEEK.range()
+        val today = LocalDate.now().dayOfWeek
+        val reminder =
+            Reminder(
+                time = LocalTime.now().minusHours(3), daysOfWeek =
+                (daysRange.minimum..daysRange.maximum).map {
+                    DayOfWeek.of(it.toInt())
+                }.toSortedSet()
             )
 
-            assertThat(reminder.alarmCanBeSetToday(LocalDate.now().dayOfWeek)).isFalse()
+        val nextTime = reminder.getNextTimeForAlarm(today)!!
+        val expectedNextTime = LocalDateTime.now().minusHours(3).plusDays(1)
+        assertThat(nextTime.isEqual(expectedNextTime.truncatedTo(ChronoUnit.MINUTES))).isTrue()
+    }
 
-            reminder.daysOfWeek.add(DayOfWeek.MONDAY)
 
-            assertThat(reminder.alarmCanBeSetToday(DayOfWeek.MONDAY)).isFalse()
-        }
+    @Test
+    fun getNextTimeForAlarm_repeatingEverydayFuture_returnsTimeLaterToday() {
+        val daysRange = ChronoField.DAY_OF_WEEK.range()
+        val today = LocalDate.now().dayOfWeek
+        val reminder =
+            Reminder(
+                time = LocalTime.now().plusHours(3), daysOfWeek =
+                (daysRange.minimum..daysRange.maximum).map {
+                    DayOfWeek.of(it.toInt())
+                }.toSortedSet()
+            )
 
-        testWithStatus(ReminderStatus.COMPLETED)
-        testWithStatus(ReminderStatus.SKIPPED)
+        val nextTime = reminder.getNextTimeForAlarm(today)!!
+        val expectedNextTime = LocalDateTime.now().plusHours(3)
+        assertThat(nextTime.isEqual(expectedNextTime.truncatedTo(ChronoUnit.MINUTES))).isTrue()
+    }
+
+
+    @Test
+    fun getNextTimeForAlarm_repeatingEverydayNow_returnsTimeNow() {
+        val daysRange = ChronoField.DAY_OF_WEEK.range()
+        val today = LocalDate.now().dayOfWeek
+        val reminder =
+            Reminder(
+                time = LocalTime.now(), daysOfWeek =
+                (daysRange.minimum..daysRange.maximum).map {
+                    DayOfWeek.of(it.toInt())
+                }.toSortedSet()
+            )
+
+        val nextTime = reminder.getNextTimeForAlarm(today)!!
+        val expectedNextTime = LocalDateTime.now()
+        assertThat(nextTime.isEqual(expectedNextTime.truncatedTo(ChronoUnit.MINUTES))).isTrue()
+    }
+
+    @Test
+    fun getNextTimeForAlarm_repeatingEverydayPastTime_todayEndOfWeek_returnsStartOfWeek() {
+        val daysRange = ChronoField.DAY_OF_WEEK.range()
+        val today = DayOfWeek.of(daysRange.maximum.toInt())
+        val startOfWeek = DayOfWeek.of(daysRange.minimum.toInt())
+        val reminder =
+            Reminder(
+                time = LocalTime.now().minusHours(2), daysOfWeek =
+                (daysRange.minimum..daysRange.maximum).map {
+                    DayOfWeek.of(it.toInt())
+                }.toSortedSet()
+            )
+
+        val nextTime = reminder.getNextTimeForAlarm(today)!!
+        val expectedNextTime =
+            LocalDateTime.now().with(TemporalAdjusters.next(startOfWeek)).minusHours(2)
+        assertThat(nextTime.isEqual(expectedNextTime.truncatedTo(ChronoUnit.MINUTES))).isTrue()
+    }
+
+    @Test
+    fun getNextTimeForAlarm_repeatingEverydayPastTime_todayStartOfWeek_returnsNextDay() {
+        val daysRange = ChronoField.DAY_OF_WEEK.range()
+        val today = DayOfWeek.of(daysRange.minimum.toInt())
+        val nextDay = today.plus(1)
+        val reminder =
+            Reminder(
+                time = LocalTime.now().minusHours(1), daysOfWeek =
+                (daysRange.minimum..daysRange.maximum).map {
+                    DayOfWeek.of(it.toInt())
+                }.toSortedSet()
+            )
+
+        val nextTime = reminder.getNextTimeForAlarm(today)!!
+        val expectedNextTime =
+            LocalDateTime.now().with(TemporalAdjusters.next(nextDay)).minusHours(1)
+        assertThat(nextTime.isEqual(expectedNextTime.truncatedTo(ChronoUnit.MINUTES))).isTrue()
+    }
+
+
+    @Test
+    fun getNextTimeForAlarm_repeatingTwoDaysPastTime_todayLast_returnsFirstDay() {
+        val today = DayOfWeek.FRIDAY
+        val nextDay = DayOfWeek.MONDAY
+        val reminder =
+            Reminder(
+                time = LocalTime.now().minusHours(1),
+                daysOfWeek = sortedSetOf(DayOfWeek.FRIDAY, DayOfWeek.MONDAY)
+            )
+
+        val nextTime = reminder.getNextTimeForAlarm(today)!!
+        val expectedNextTime =
+            LocalDateTime.now().with(TemporalAdjusters.next(nextDay)).minusHours(1)
+        assertThat(nextTime.isEqual(expectedNextTime.truncatedTo(ChronoUnit.MINUTES))).isTrue()
+    }
+
+
+    @Test
+    fun getNextTimeForAlarm_repeatingTwoDays_todayNotInSet_returnsNextDayAvailable() {
+        val reminder =
+            Reminder(
+                time = LocalTime.now(),
+                daysOfWeek = sortedSetOf(DayOfWeek.FRIDAY, DayOfWeek.MONDAY)
+            )
+
+        var today = DayOfWeek.WEDNESDAY
+        var nextTime = reminder.getNextTimeForAlarm(today)!!
+
+        assertThat(nextTime.dayOfWeek).isEqualTo(DayOfWeek.FRIDAY)
+
+        today = DayOfWeek.SATURDAY
+        nextTime = reminder.getNextTimeForAlarm(today)!!
+
+        assertThat(nextTime.dayOfWeek).isEqualTo(DayOfWeek.MONDAY)
+    }
+
+    @Test
+    fun getNextTimeForAlarm_todayMidnight_returnsNull() {
+        val today = LocalDate.now().dayOfWeek
+        val reminder =
+            Reminder(
+                time = LocalTime.MIDNIGHT,
+                daysOfWeek = sortedSetOf()
+            )
+
+        assertThat(reminder.getNextTimeForAlarm(today)).isNull()
+    }
+
+
+    @Test
+    fun getNextTimeForAlarm_today11_59_returnsTime11_59() {
+        val today = LocalDate.now().dayOfWeek
+        val time = LocalTime.MIDNIGHT.minusMinutes(1)
+        val reminder =
+            Reminder(
+                time = time,
+                daysOfWeek = sortedSetOf()
+            )
+
+        val nextTime = reminder.getNextTimeForAlarm(today)!!
+        val expectedNextTime =
+            LocalDateTime.of(LocalDate.now(), time)
+        assertThat(nextTime.isEqual(expectedNextTime.truncatedTo(ChronoUnit.MINUTES))).isTrue()
     }
 }

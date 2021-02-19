@@ -99,19 +99,18 @@ class Reminder(
 
     /**
      * Returns the next LocalDateTime that this Reminder could have an alarm scheduled,
-     * or null if the Reminder is complete or in the past and cannot be scheduled.
+     * or null if the Reminder is complete or a one-off in the past and cannot be scheduled.
      */
     fun getNextTimeForAlarm(today: DayOfWeek): LocalDateTime? {
         if (isComplete) {
             return null
         }
 
-        val nextDayOfWeek = daysOfWeek.firstOrNull { it >= today } ?: LocalDate.now().dayOfWeek
-
         val reminderTimeToday =
             LocalDateTime.of(LocalDate.now(), LocalTime.of(hour, minute))
         val timeIsInPast =
             LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES).isAfter(reminderTimeToday)
+
         return if (isOneOff) {
             if (timeIsInPast) {
                 Timber.d("One-off Alarm for today was in the past")
@@ -121,16 +120,21 @@ class Reminder(
             }
         } else {
             if (timeIsInPast) {
+                val nextDayOfWeek =
+                    daysOfWeek.firstOrNull { it > today } ?: daysOfWeek.first()
+                    ?: today
+                Timber.d("Repeating alarm next day of week -> $nextDayOfWeek")
                 reminderTimeToday.with(TemporalAdjusters.next(nextDayOfWeek))
             } else {
+                val nextDayOfWeek = if (daysOfWeek.contains(today)) {
+                    today
+                } else {
+                    daysOfWeek.firstOrNull { it > today } ?: daysOfWeek.first()
+                }
                 reminderTimeToday.with(TemporalAdjusters.nextOrSame(nextDayOfWeek))
             }
         }
-
     }
-
-    fun alarmCanBeSetToday(today: DayOfWeek): Boolean =
-        !isComplete && (this.isOneOff || daysOfWeek.contains(today))
 
     fun getDaysDisplayString() =
         when (daysOfWeek.size) {
