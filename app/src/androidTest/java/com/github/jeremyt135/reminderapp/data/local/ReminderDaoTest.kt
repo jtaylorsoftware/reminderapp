@@ -44,7 +44,6 @@ class ReminderDaoTest {
         val reminders = (1..5).map { i ->
             Reminder(
                 "Reminder $i",
-                status = if (i >= 2) ReminderStatus.COMPLETED else ReminderStatus.PENDING,
                 id = i.toLong()
             ).asDataModel()
         }
@@ -81,7 +80,6 @@ class ReminderDaoTest {
         val reminders = (1..5).map { i ->
             Reminder(
                 "Reminder $i",
-                status = if (i >= 2) ReminderStatus.COMPLETED else ReminderStatus.PENDING,
                 id = i.toLong()
             ).asDataModel()
         }
@@ -97,7 +95,7 @@ class ReminderDaoTest {
 
     @Test
     fun findById_returnsInsertedReminder() = runBlockingTest {
-        val reminder = Reminder("Reminder 1", ReminderStatus.SKIPPED).asDataModel()
+        val reminder = Reminder("Reminder 1").asDataModel()
 
         val id = reminderDao.insert(reminder)
 

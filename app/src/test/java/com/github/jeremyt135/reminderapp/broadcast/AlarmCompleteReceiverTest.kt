@@ -73,8 +73,7 @@ class AlarmCompleteReceiverTest {
     fun intentAction_isAlarmComplete_marksReminderComplete() {
         val reminder = Reminder(id = 1)
         coEvery { mockReminderRepository.findById(reminder.id) } returns reminder
-        val completeReminder = reminder.copy(status = ReminderStatus.COMPLETED)
-        coEvery { mockReminderRepository.save(completeReminder) } returns reminder.id
+
         val savedHistory = slot<History>()
         coEvery { mockHistoryRepository.save(capture(savedHistory))} returns 1L
 
@@ -90,7 +89,6 @@ class AlarmCompleteReceiverTest {
             mockReminderRepository.findById(reminder.id)
             mockHistoryRepository.save(any())
             cancelNotification(mockContext, reminder.id)
-            mockReminderRepository.save(completeReminder)
         }
 
         savedHistory.captured.let{
@@ -109,8 +107,6 @@ class AlarmCompleteReceiverTest {
     fun ifNotRepeating_doesNotReschedule() {
         val reminder = Reminder(id = 1, daysOfWeek = sortedSetOf())
         coEvery { mockReminderRepository.findById(reminder.id) } returns reminder
-        val completeReminder = reminder.copy(status = ReminderStatus.COMPLETED)
-        coEvery { mockReminderRepository.save(completeReminder) } returns reminder.id
         val savedHistory = slot<History>()
         coEvery { mockHistoryRepository.save(capture(savedHistory))} returns 1L
 
@@ -127,7 +123,6 @@ class AlarmCompleteReceiverTest {
             mockReminderRepository.findById(reminder.id)
             mockHistoryRepository.save(any())
             cancelNotification(mockContext, reminder.id)
-            mockReminderRepository.save(completeReminder)
         }
 
         coVerify(exactly = 0) {
@@ -137,11 +132,9 @@ class AlarmCompleteReceiverTest {
     }
 
     @Test
-    fun ifRepeating_doesReschedule_doesNotUpdateReminder() {
+    fun ifRepeating_doesReschedule() {
         val reminder = Reminder(id = 1, daysOfWeek = sortedSetOf(DayOfWeek.MONDAY, DayOfWeek.FRIDAY))
         coEvery { mockReminderRepository.findById(reminder.id) } returns reminder
-        val completeReminder = reminder.copy(status = ReminderStatus.COMPLETED)
-        coEvery { mockReminderRepository.save(completeReminder) } returns reminder.id
         val savedHistory = slot<History>()
         coEvery { mockHistoryRepository.save(capture(savedHistory))} returns 1L
 
@@ -149,7 +142,7 @@ class AlarmCompleteReceiverTest {
         every { cancelNotification(mockContext, reminder.id) } returns Unit
 
         val today = LocalDate.now().dayOfWeek
-        every { scheduleAlarmForReminder(mockContext, reminder, today) } returns Alarm(0, 0, 0)
+        every { scheduleAlarmForReminder(mockContext, reminder, today, false) } returns Alarm(0, 0, 0)
         val intent = mockk<Intent>()
         every { intent.action } returns ACTION_ALARM_COMPLETE
         every { intent.getLongExtra(EXTRA_REMINDER_ID, 0) } returns reminder.id
@@ -162,12 +155,8 @@ class AlarmCompleteReceiverTest {
             mockReminderRepository.findById(reminder.id)
             mockHistoryRepository.save(any())
             cancelNotification(mockContext, reminder.id)
-            scheduleAlarmForReminder(mockContext, reminder, today)
+            scheduleAlarmForReminder(mockContext, reminder, today, false)
             mockAlarmRepository.save(any())
-        }
-
-        coVerify(exactly = 0){
-            mockReminderRepository.save(completeReminder)
         }
     }
 }

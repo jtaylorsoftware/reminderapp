@@ -7,7 +7,6 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.filters.SmallTest
 import com.github.jeremyt135.reminderapp.data.domain.Alarm
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
-import com.github.jeremyt135.reminderapp.data.domain.ReminderStatus
 import com.github.jeremyt135.reminderapp.util.toEpochMilli
 import com.google.common.truth.Truth.assertThat
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -39,21 +38,10 @@ class AlarmUtilTest {
     }
 
     @Test
-    fun scheduleAlarmForReminder_completedReminder_returnsNull() {
-        val reminder = Reminder(status = ReminderStatus.COMPLETED)
-        val context = ApplicationProvider.getApplicationContext<Context>()
-        val today = LocalDate.now().dayOfWeek
-
-        assertThat(scheduleAlarmForReminder(context, reminder, today)).isNull()
-        intent = getCreatedIntentForAlarmReceiver(context, reminder.id)
-    }
-
-    @Test
     fun scheduleAlarmForReminder_oneOffInPast_returnsNull() {
         val reminder = Reminder(
-            status = ReminderStatus.PENDING,
             daysOfWeek = sortedSetOf(),
-            time = LocalTime.now().minusHours(1)
+            time = LocalTime.now().minusMinutes(2)
         )
 
         val today = LocalDate.now().dayOfWeek
@@ -65,7 +53,6 @@ class AlarmUtilTest {
     @Test
     fun scheduleAlarmForReminder_goodDateTime_setsAlarm() {
         val reminder = Reminder(
-            status = ReminderStatus.PENDING,
             daysOfWeek = sortedSetOf(),
             time = LocalTime.now().plusHours(1)
         )

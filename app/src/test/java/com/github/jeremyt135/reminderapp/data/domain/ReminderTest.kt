@@ -17,7 +17,6 @@ class ReminderTest {
         val time = LocalTime.now()
         val reminder = Reminder(
             "Description",
-            ReminderStatus.PENDING,
             time
         )
 
@@ -80,47 +79,15 @@ class ReminderTest {
     }
 
     @Test
-    fun isComplete_pending_returnsFalse() {
-        val reminder = Reminder(
-            status = ReminderStatus.PENDING
-        )
-        assertThat(reminder.isComplete).isFalse()
-    }
-
-    @Test
-    fun isComplete_notPending_returnsTrue() {
-        val reminder = Reminder(
-            status = ReminderStatus.SKIPPED
-        )
-
-        assertThat(reminder.isComplete).isTrue()
-
-        reminder.status = ReminderStatus.COMPLETED
-
-        assertThat(reminder.isComplete).isTrue()
-    }
-
-    @Test
-    fun getNextTimeForAlarm_isComplete_returnsNull() {
-        val reminder = Reminder(
-            time = LocalTime.now().minusHours(3),
-            daysOfWeek = sortedSetOf(),
-            status = ReminderStatus.COMPLETED
-        )
-        val nextTime = reminder.getNextTimeForAlarm(DayOfWeek.TUESDAY)
-        assertThat(nextTime).isNull()
-    }
-
-    @Test
     fun getNextTimeForAlarm_oneOffInPast_returnsNull() {
-        val reminder = Reminder(time = LocalTime.now().minusHours(3), daysOfWeek = sortedSetOf())
+        val reminder = Reminder(time = LocalTime.now().minusMinutes(1), daysOfWeek = sortedSetOf())
         val nextTime = reminder.getNextTimeForAlarm(LocalDate.now().dayOfWeek)
         assertThat(nextTime).isNull()
     }
 
     @Test
     fun getNextTimeForAlarm_oneOffInFuture_returnsTime() {
-        val reminder = Reminder(time = LocalTime.now().plusHours(3), daysOfWeek = sortedSetOf())
+        val reminder = Reminder(time = LocalTime.now().plusMinutes(1), daysOfWeek = sortedSetOf())
         val nextTime = reminder.getNextTimeForAlarm(LocalDate.now().dayOfWeek)
         assertThat(nextTime).isNotNull()
     }
@@ -150,12 +117,12 @@ class ReminderTest {
     fun getNextTimeForAlarm_repeatingTodayFuture_returnsTimeLaterToday() {
         val today = LocalDate.now().dayOfWeek
         val reminder =
-            Reminder(time = LocalTime.now().plusHours(3), daysOfWeek = sortedSetOf(today))
+            Reminder(time = LocalTime.now().plusMinutes(1), daysOfWeek = sortedSetOf(today))
 
         val nextTime = reminder.getNextTimeForAlarm(today)!!
         assertThat(
             nextTime.isEqual(
-                LocalDateTime.now().plusHours(3).truncatedTo(ChronoUnit.MINUTES)
+                LocalDateTime.now().plusMinutes(1).truncatedTo(ChronoUnit.MINUTES)
             )
         ).isTrue()
     }
@@ -164,10 +131,10 @@ class ReminderTest {
     fun getNextTimeForAlarm_repeatingTodayPast_returnsTimeNextWeek() {
         val today = LocalDate.now().dayOfWeek
         val reminder =
-            Reminder(time = LocalTime.now().minusHours(3), daysOfWeek = sortedSetOf(today))
+            Reminder(time = LocalTime.now().minusMinutes(1), daysOfWeek = sortedSetOf(today))
 
         val nextTime = reminder.getNextTimeForAlarm(today)!!
-        val expectedNextTime = LocalDateTime.now().with(TemporalAdjusters.next(today)).minusHours(3)
+        val expectedNextTime = LocalDateTime.now().with(TemporalAdjusters.next(today)).minusMinutes(1)
         assertThat(nextTime.isEqual(expectedNextTime.truncatedTo(ChronoUnit.MINUTES))).isTrue()
     }
 
@@ -177,14 +144,14 @@ class ReminderTest {
         val today = LocalDate.now().dayOfWeek
         val reminder =
             Reminder(
-                time = LocalTime.now().minusHours(3), daysOfWeek =
+                time = LocalTime.now().minusMinutes(1), daysOfWeek =
                 (daysRange.minimum..daysRange.maximum).map {
                     DayOfWeek.of(it.toInt())
                 }.toSortedSet()
             )
 
         val nextTime = reminder.getNextTimeForAlarm(today)!!
-        val expectedNextTime = LocalDateTime.now().minusHours(3).plusDays(1)
+        val expectedNextTime = LocalDateTime.now().minusMinutes(1).plusDays(1)
         assertThat(nextTime.isEqual(expectedNextTime.truncatedTo(ChronoUnit.MINUTES))).isTrue()
     }
 
@@ -195,14 +162,14 @@ class ReminderTest {
         val today = LocalDate.now().dayOfWeek
         val reminder =
             Reminder(
-                time = LocalTime.now().plusHours(3), daysOfWeek =
+                time = LocalTime.now().plusMinutes(1), daysOfWeek =
                 (daysRange.minimum..daysRange.maximum).map {
                     DayOfWeek.of(it.toInt())
                 }.toSortedSet()
             )
 
         val nextTime = reminder.getNextTimeForAlarm(today)!!
-        val expectedNextTime = LocalDateTime.now().plusHours(3)
+        val expectedNextTime = LocalDateTime.now().plusMinutes(1)
         assertThat(nextTime.isEqual(expectedNextTime.truncatedTo(ChronoUnit.MINUTES))).isTrue()
     }
 
@@ -231,7 +198,7 @@ class ReminderTest {
         val startOfWeek = DayOfWeek.of(daysRange.minimum.toInt())
         val reminder =
             Reminder(
-                time = LocalTime.now().minusHours(2), daysOfWeek =
+                time = LocalTime.now().minusMinutes(2), daysOfWeek =
                 (daysRange.minimum..daysRange.maximum).map {
                     DayOfWeek.of(it.toInt())
                 }.toSortedSet()
@@ -239,7 +206,7 @@ class ReminderTest {
 
         val nextTime = reminder.getNextTimeForAlarm(today)!!
         val expectedNextTime =
-            LocalDateTime.now().with(TemporalAdjusters.next(startOfWeek)).minusHours(2)
+            LocalDateTime.now().with(TemporalAdjusters.next(startOfWeek)).minusMinutes(2)
         assertThat(nextTime.isEqual(expectedNextTime.truncatedTo(ChronoUnit.MINUTES))).isTrue()
     }
 
@@ -250,7 +217,7 @@ class ReminderTest {
         val nextDay = today.plus(1)
         val reminder =
             Reminder(
-                time = LocalTime.now().minusHours(1), daysOfWeek =
+                time = LocalTime.now().minusMinutes(1), daysOfWeek =
                 (daysRange.minimum..daysRange.maximum).map {
                     DayOfWeek.of(it.toInt())
                 }.toSortedSet()
@@ -258,7 +225,7 @@ class ReminderTest {
 
         val nextTime = reminder.getNextTimeForAlarm(today)!!
         val expectedNextTime =
-            LocalDateTime.now().with(TemporalAdjusters.next(nextDay)).minusHours(1)
+            LocalDateTime.now().with(TemporalAdjusters.next(nextDay)).minusMinutes(1)
         assertThat(nextTime.isEqual(expectedNextTime.truncatedTo(ChronoUnit.MINUTES))).isTrue()
     }
 
@@ -269,13 +236,13 @@ class ReminderTest {
         val nextDay = DayOfWeek.MONDAY
         val reminder =
             Reminder(
-                time = LocalTime.now().minusHours(1),
+                time = LocalTime.now().minusMinutes(1),
                 daysOfWeek = sortedSetOf(DayOfWeek.FRIDAY, DayOfWeek.MONDAY)
             )
 
         val nextTime = reminder.getNextTimeForAlarm(today)!!
         val expectedNextTime =
-            LocalDateTime.now().with(TemporalAdjusters.next(nextDay)).minusHours(1)
+            LocalDateTime.now().with(TemporalAdjusters.next(nextDay)).minusMinutes(1)
         assertThat(nextTime.isEqual(expectedNextTime.truncatedTo(ChronoUnit.MINUTES))).isTrue()
     }
 

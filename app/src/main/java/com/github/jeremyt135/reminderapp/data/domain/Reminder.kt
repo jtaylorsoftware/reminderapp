@@ -45,12 +45,6 @@ enum class ReminderStatus {
  */
 class Reminder(
     description: String = "",
-    /**
-     * The status for this Reminder as it pertains to scheduling. For one-off Reminder,
-     * SKIPPED or COMPLETED will cause it to not be rescheduled. Usually PENDING if the
-     * alarm for this has not gone off yet or if the Reminder is repeating.
-     */
-    var status: ReminderStatus = ReminderStatus.PENDING,
     time: LocalTime = LocalTime.now(),
     val daysOfWeek: SortedSet<DayOfWeek> = sortedSetOf(),
     vibrate: Boolean = false,
@@ -88,9 +82,6 @@ class Reminder(
             }
         }
 
-    val isComplete: Boolean
-        get() = status != ReminderStatus.PENDING
-
     // True if this Reminder was scheduled for the same day as it was created and does not repeat.
     val isOneOff: Boolean = daysOfWeek.isEmpty()
 
@@ -99,13 +90,9 @@ class Reminder(
 
     /**
      * Returns the next LocalDateTime that this Reminder could have an alarm scheduled,
-     * or null if the Reminder is complete or a one-off in the past and cannot be scheduled.
+     * or null if the Reminder is a one-off in the past and cannot be scheduled.
      */
-    fun getNextTimeForAlarm(today: DayOfWeek): LocalDateTime? {
-        if (isComplete) {
-            return null
-        }
-
+    fun getNextTimeForAlarm(today: DayOfWeek, allowSameDay: Boolean = true): LocalDateTime? {
         val reminderTimeToday =
             LocalDateTime.of(LocalDate.now(), LocalTime.of(hour, minute))
         val timeIsInPast =
@@ -119,19 +106,23 @@ class Reminder(
                 reminderTimeToday
             }
         } else {
+            val nextDayOfWeek = daysOfWeek.firstOrNull { it > today } ?: daysOfWeek.first()
             if (timeIsInPast) {
-                val nextDayOfWeek =
-                    daysOfWeek.firstOrNull { it > today } ?: daysOfWeek.first()
-                    ?: today
                 Timber.d("Repeating alarm next day of week -> $nextDayOfWeek")
                 reminderTimeToday.with(TemporalAdjusters.next(nextDayOfWeek))
             } else {
                 val nextDayOfWeek = if (daysOfWeek.contains(today)) {
                     today
                 } else {
-                    daysOfWeek.firstOrNull { it > today } ?: daysOfWeek.first()
+                    nextDayOfWeek
                 }
-                reminderTimeToday.with(TemporalAdjusters.nextOrSame(nextDayOfWeek))
+                reminderTimeToday.with(
+                    if (allowSameDay) {
+                        TemporalAdjusters.nextOrSame(nextDayOfWeek)
+                    } else {
+                        TemporalAdjusters.next(nextDayOfWeek)
+                    }
+                )
             }
         }
     }
@@ -161,13 +152,29 @@ class Reminder(
 
     fun dayIsChecked(day: DayOfWeek) = daysOfWeek.contains(day)
 
+    fun copy(
+        description: String = this.description,
+        time: LocalTime = LocalTime.of(this.hour, this.minute),
+        daysOfWeek: SortedSet<DayOfWeek> = this.daysOfWeek.toSortedSet(),
+        vibrate: Boolean = this.vibrate,
+        id: Long = this.id,
+    ) = Reminder(description, time, daysOfWeek, vibrate, id)
+
+    override fun asDataModel(): ReminderEntity =
+        ReminderEntity(
+            id = this.id,
+            description = this.description,
+            time = LocalTime.of(hour, minute),
+            daysOfWeek = this.daysOfWeek.toSortedSet(),
+            vibrate = this.vibrate,
+        )
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
         other as Reminder
 
-        if (status != other.status) return false
         if (daysOfWeek != other.daysOfWeek) return false
         if (id != other.id) return false
         if (description != other.description) return false
@@ -179,8 +186,7 @@ class Reminder(
     }
 
     override fun hashCode(): Int {
-        var result = status.hashCode()
-        result = 31 * result + daysOfWeek.hashCode()
+        var result = daysOfWeek.hashCode()
         result = 31 * result + id.hashCode()
         result = 31 * result + description.hashCode()
         result = 31 * result + vibrate.hashCode()
@@ -191,7 +197,6 @@ class Reminder(
 
     override fun toString(): String {
         return "Reminder(" +
-                "status=$status, " +
                 "daysOfWeek=$daysOfWeek, " +
                 "id=$id, " +
                 "description='$description', " +
@@ -200,25 +205,6 @@ class Reminder(
                 "minute=$minute" +
                 ")"
     }
-
-    fun copy(
-        description: String = this.description,
-        status: ReminderStatus = this.status,
-        time: LocalTime = LocalTime.of(this.hour, this.minute),
-        daysOfWeek: SortedSet<DayOfWeek> = this.daysOfWeek.toSortedSet(),
-        vibrate: Boolean = this.vibrate,
-        id: Long = this.id,
-    ) = Reminder(description, status, time, daysOfWeek, vibrate, id)
-
-    override fun asDataModel(): ReminderEntity =
-        ReminderEntity(
-            id = this.id,
-            description = this.description,
-            time = LocalTime.of(hour, minute),
-            daysOfWeek = this.daysOfWeek.toSortedSet(),
-            status = this.status.name,
-            vibrate = this.vibrate,
-        )
 
 }
 

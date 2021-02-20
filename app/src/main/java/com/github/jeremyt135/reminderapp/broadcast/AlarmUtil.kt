@@ -56,8 +56,9 @@ const val NOTIFICATION_LED_OFFMS: Int = 0
 fun scheduleAlarmForReminder(
     context: Context,
     reminder: Reminder,
-    today: DayOfWeek
-): Alarm? = reminder.getNextTimeForAlarm(today)?.let {
+    today: DayOfWeek,
+    allowSameDay: Boolean = true
+): Alarm? = reminder.getNextTimeForAlarm(today, allowSameDay)?.let {
     val alarm = Alarm(
         0,
         reminderId = reminder.id,

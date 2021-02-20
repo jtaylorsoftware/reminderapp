@@ -16,7 +16,6 @@ import com.github.jeremyt135.reminderapp.data.*
 import com.github.jeremyt135.reminderapp.data.domain.Alarm
 import com.github.jeremyt135.reminderapp.data.domain.History
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
-import com.github.jeremyt135.reminderapp.data.domain.ReminderStatus
 import com.github.jeremyt135.reminderapp.data.local.FakeHistoryLocalDataSource
 import com.github.jeremyt135.reminderapp.di.DatabaseModule
 import com.github.jeremyt135.reminderapp.di.RepositoryModule
@@ -93,7 +92,7 @@ class ReminderEditorFragmentTest {
         listOf(
             Reminder(id = 1),
             Reminder(
-                "My Reminder", ReminderStatus.PENDING,
+                "My Reminder",
                 daysOfWeek = sortedSetOf(DayOfWeek.MONDAY, DayOfWeek.TUESDAY),
                 vibrate = true,
                 id = 2
@@ -203,7 +202,6 @@ class ReminderEditorFragmentTest {
         // Create a new reminder that edits fields of current repo version
         val editedReminder = Reminder(
             reminder.description + "edited",
-            reminder.status,
             time = LocalTime.of(reminder.hour, reminder.minute).plusHours(12),
             daysOfWeek = sortedSetOf(DayOfWeek.MONDAY, DayOfWeek.TUESDAY),
             vibrate = true,

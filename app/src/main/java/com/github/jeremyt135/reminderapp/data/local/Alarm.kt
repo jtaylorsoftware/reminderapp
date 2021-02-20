@@ -20,8 +20,9 @@ import kotlinx.parcelize.Parcelize
         ForeignKey(
             entity = ReminderEntity::class,
             parentColumns = ["id"],
-            childColumns = ["reminder_id"]
-        )
+            childColumns = ["reminder_id"],
+            onDelete = ForeignKey.CASCADE
+        ),
     ],
     indices = [
         Index(value = ["reminder_id"])

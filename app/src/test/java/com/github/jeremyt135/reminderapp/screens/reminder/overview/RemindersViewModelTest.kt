@@ -4,7 +4,10 @@ import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.github.jeremyt135.reminderapp.MainCoroutineRule
 import com.github.jeremyt135.reminderapp.data.FakeReminderRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
-import com.github.jeremyt135.reminderapp.data.domain.*
+import com.github.jeremyt135.reminderapp.data.domain.Alarm
+import com.github.jeremyt135.reminderapp.data.domain.History
+import com.github.jeremyt135.reminderapp.data.domain.Reminder
+import com.github.jeremyt135.reminderapp.data.domain.ReminderAndHistory
 import com.github.jeremyt135.reminderapp.getOrAwaitValue
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -21,8 +24,8 @@ class RemindersViewModelTest {
     private lateinit var fakeReminderRepository: ReminderRepository
     private lateinit var viewModel: RemindersViewModel
     private val reminders = listOf(
-        Reminder("1", ReminderStatus.PENDING, id = 1),
-        Reminder("2", ReminderStatus.COMPLETED, id = 2)
+        Reminder("1", id = 1),
+        Reminder("2", id = 2)
     )
     private val alarms = listOf<Alarm>()
     private val history = listOf<History>()

@@ -10,7 +10,6 @@ import com.github.jeremyt135.reminderapp.data.AlarmRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.Alarm
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
-import com.github.jeremyt135.reminderapp.data.domain.ReminderStatus
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -71,10 +70,6 @@ class ReminderEditorViewModel @Inject constructor(
 
     fun saveReminder() {
         viewModelScope.launch {
-            // Reset back to PENDING for convenience with one-off reminder
-            // TODO: convey to user that they reset it to PENDING
-            _reminder.value.status = ReminderStatus.PENDING
-
             val id = _reminder.value.let {
                 reminderRepository.save(it)
             }

@@ -13,7 +13,6 @@ import com.github.jeremyt135.reminderapp.data.*
 import com.github.jeremyt135.reminderapp.data.domain.Alarm
 import com.github.jeremyt135.reminderapp.data.domain.History
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
-import com.github.jeremyt135.reminderapp.data.domain.ReminderStatus
 import com.github.jeremyt135.reminderapp.data.local.FakeHistoryLocalDataSource
 import com.github.jeremyt135.reminderapp.di.DatabaseModule
 import com.github.jeremyt135.reminderapp.di.RepositoryModule
@@ -78,7 +77,7 @@ class RemindersFragmentTest {
     lateinit var repository: ReminderRepository
 
     private val reminders =
-        (1..3).map { Reminder("My Reminder $it", ReminderStatus.PENDING, id = it.toLong()) }
+        (1..3).map { Reminder("My Reminder $it", id = it.toLong()) }
 
     @Before
     fun setup() {

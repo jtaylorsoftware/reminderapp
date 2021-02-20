@@ -2,9 +2,8 @@ package com.github.jeremyt135.reminderapp.data.local
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.test.filters.MediumTest
-import com.github.jeremyt135.reminderapp.util.InMemoryDatabaseRule
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
-import com.github.jeremyt135.reminderapp.data.domain.ReminderStatus
+import com.github.jeremyt135.reminderapp.util.InMemoryDatabaseRule
 import com.google.common.truth.Truth.assertThat
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -37,7 +36,6 @@ class ReminderLocalDataSourceTest {
         val reminders = (1..3).map { i ->
             Reminder(
                 "Reminder $i",
-                ReminderStatus.COMPLETED,
                 id = i.toLong()
             )
         }
@@ -52,7 +50,7 @@ class ReminderLocalDataSourceTest {
 
     @Test
     fun findById_returnsSavedReminder() = runBlockingTest{
-        val reminder = Reminder("My reminder", ReminderStatus.COMPLETED)
+        val reminder = Reminder("My reminder")
 
         val id = localDataSource.save(reminder)
         reminder.id = id
@@ -63,7 +61,7 @@ class ReminderLocalDataSourceTest {
 
     @Test
     fun delete_then_findReturnsNull() = runBlockingTest {
-        val reminder = Reminder("My reminder", ReminderStatus.COMPLETED)
+        val reminder = Reminder("My reminder")
 
         val id = localDataSource.save(reminder)
         reminder.id = id

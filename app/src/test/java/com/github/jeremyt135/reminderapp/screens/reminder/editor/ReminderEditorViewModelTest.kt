@@ -12,7 +12,6 @@ import com.github.jeremyt135.reminderapp.data.AlarmRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.Alarm
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
-import com.github.jeremyt135.reminderapp.data.domain.ReminderStatus
 import com.github.jeremyt135.reminderapp.getOrAwaitValue
 import com.github.jeremyt135.reminderapp.util.verifyFlowEmitted
 import com.google.common.truth.Truth.assertThat
@@ -77,7 +76,7 @@ class ReminderEditorViewModelTest {
     @Test
     fun isEditing_withId_IsTrue() = mainCoroutineRule.runBlockingTest {
         // Open with existing Reminder
-        val reminder = Reminder("My Reminder", ReminderStatus.PENDING, id = 1)
+        val reminder = Reminder("My Reminder", id = 1)
         coEvery { mockReminderRepo.findById(reminder.id) } returns reminder
         every { mockSavedState.get<Long?>("reminderId") } returns 1L
 
@@ -99,7 +98,7 @@ class ReminderEditorViewModelTest {
     @Test
     fun reminderLiveData_withReminderId_loadsReminder() = mainCoroutineRule.runBlockingTest {
         // Simulate a reminder that has already been persisted so it can be found later
-        val reminder = Reminder("My Reminder", ReminderStatus.PENDING, id = 1)
+        val reminder = Reminder("My Reminder", id = 1)
         coEvery { mockReminderRepo.findById(reminder.id) } returns reminder
 
         // Simulate editor is navigated to with the reminderId

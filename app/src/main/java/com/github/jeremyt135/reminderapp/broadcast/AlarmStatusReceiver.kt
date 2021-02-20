@@ -12,12 +12,13 @@ import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 
 /**
- * An AlarmReceiver that changes the status of a Reminder, adds history, and reschedules.
+ * An AlarmReceiver that adds history for a Reminder, and reschedules if the Reminder should repeat.
  */
-abstract class AlarmStatusReceiver(private val newStatus: ReminderStatus, action: String):  AlarmReceiver(action){
+abstract class AlarmStatusReceiver(private val completionStatus: ReminderStatus, action: String) :
+    AlarmReceiver(action) {
 
     override fun doReceive(context: Context, intent: Intent) {
-        Timber.d("AlarmStatusReceiver: $newStatus")
+        Timber.d("AlarmStatusReceiver: $completionStatus")
 
         val pendingResult = goAsync()
         coroutineScope.launch {
@@ -26,23 +27,19 @@ abstract class AlarmStatusReceiver(private val newStatus: ReminderStatus, action
             val history = History(
                 reminderId = reminder.id,
                 description = reminder.description,
-                completionStatus = newStatus,
+                completionStatus = completionStatus,
                 completedAt = LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES).toEpochMilli()
             )
             historyRepository.save(history)
 
             cancelNotification(context, reminder.id)
 
-            if (!reminder.isOneOff){
-                Timber.d("$newStatus -> scheduling new reminder")
-                scheduleAlarmForReminder(context, reminder, LocalDate.now().dayOfWeek)?.let{
+            if (!reminder.isOneOff) {
+                Timber.d("$completionStatus -> scheduling new reminder")
+                scheduleAlarmForReminder(context, reminder, LocalDate.now().dayOfWeek, false)?.let {
                     Timber.d("Saving new alarm")
                     alarmRepository.save(it)
                 } ?: Timber.d("got null reminder")
-            } else {
-                Timber.d("$newStatus -> changing one-off status")
-                reminder.status = newStatus
-                reminderRepository.save(reminder)
             }
 
             pendingResult.finish()

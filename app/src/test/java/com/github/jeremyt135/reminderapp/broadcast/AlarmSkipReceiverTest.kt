@@ -11,7 +11,6 @@ import com.github.jeremyt135.reminderapp.data.domain.Alarm
 import com.github.jeremyt135.reminderapp.data.domain.History
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.ReminderStatus
-import com.github.jeremyt135.reminderapp.util.toEpochMilli
 import com.github.jeremyt135.reminderapp.util.toLocalDateTime
 import com.google.common.truth.Truth.assertThat
 import io.mockk.*
@@ -74,8 +73,6 @@ class AlarmSkipReceiverTest {
     fun intentAction_isAlarmSkip_marksReminderSkipped() {
         val reminder = Reminder(id = 1)
         coEvery { mockReminderRepository.findById(reminder.id) } returns reminder
-        val skippedReminder = reminder.copy(status = ReminderStatus.SKIPPED)
-        coEvery { mockReminderRepository.save(skippedReminder) } returns reminder.id
         val savedHistory = slot<History>()
         coEvery { mockHistoryRepository.save(capture(savedHistory)) } returns 1L
 
@@ -91,7 +88,6 @@ class AlarmSkipReceiverTest {
             mockReminderRepository.findById(reminder.id)
             mockHistoryRepository.save(any())
             cancelNotification(mockContext, reminder.id)
-            mockReminderRepository.save(skippedReminder)
         }
 
         savedHistory.captured.let {
@@ -106,8 +102,6 @@ class AlarmSkipReceiverTest {
     fun ifNotRepeating_doesNotReschedule() {
         val reminder = Reminder(id = 1, daysOfWeek = sortedSetOf())
         coEvery { mockReminderRepository.findById(reminder.id) } returns reminder
-        val skippedReminder = reminder.copy(status = ReminderStatus.SKIPPED)
-        coEvery { mockReminderRepository.save(skippedReminder) } returns reminder.id
         val savedHistory = slot<History>()
         coEvery { mockHistoryRepository.save(capture(savedHistory)) } returns 1L
 
@@ -125,7 +119,6 @@ class AlarmSkipReceiverTest {
             mockReminderRepository.findById(reminder.id)
             mockHistoryRepository.save(any())
             cancelNotification(mockContext, reminder.id)
-            mockReminderRepository.save(skippedReminder)
         }
         verify(exactly = 0) {
             scheduleAlarmForReminder(mockContext, reminder, any())
@@ -133,11 +126,9 @@ class AlarmSkipReceiverTest {
     }
 
     @Test
-    fun ifRepeating_doesReschedule_doesNotUpdateReminder() {
+    fun ifRepeating_doesReschedule() {
         val reminder = Reminder(id = 1, daysOfWeek = sortedSetOf(DayOfWeek.MONDAY, DayOfWeek.TUESDAY))
         coEvery { mockReminderRepository.findById(reminder.id) } returns reminder
-        val skippedReminder = reminder.copy(status = ReminderStatus.SKIPPED)
-        coEvery { mockReminderRepository.save(skippedReminder) } returns reminder.id
         val savedHistory = slot<History>()
         coEvery { mockHistoryRepository.save(capture(savedHistory)) } returns 1L
 
@@ -145,7 +136,7 @@ class AlarmSkipReceiverTest {
         every { cancelNotification(mockContext, reminder.id) } returns Unit
 
         val today = LocalDate.now().dayOfWeek
-        every { scheduleAlarmForReminder(mockContext, reminder, today) } returns Alarm(0, 0, 0)
+        every { scheduleAlarmForReminder(mockContext, reminder, today, false) } returns Alarm(0, 0, 0)
 
         val intent = mockk<Intent>()
         every { intent.action } returns ACTION_ALARM_SKIP
@@ -159,12 +150,8 @@ class AlarmSkipReceiverTest {
             mockReminderRepository.findById(reminder.id)
             mockHistoryRepository.save(any())
             cancelNotification(mockContext, reminder.id)
-            scheduleAlarmForReminder(mockContext, reminder, today)
+            scheduleAlarmForReminder(mockContext, reminder, today, false)
             mockAlarmRepository.save(any())
-        }
-
-        coVerify(exactly = 0) {
-            mockReminderRepository.save(skippedReminder)
         }
     }
 }

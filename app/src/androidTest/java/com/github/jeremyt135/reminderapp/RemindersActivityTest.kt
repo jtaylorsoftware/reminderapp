@@ -3,9 +3,7 @@ package com.github.jeremyt135.reminderapp
 import android.content.Context
 import androidx.core.app.NotificationManagerCompat
 import androidx.navigation.NavController
-import androidx.navigation.Navigation
 import androidx.navigation.findNavController
-import androidx.navigation.testing.TestNavHostController
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.click
@@ -20,12 +18,11 @@ import com.github.jeremyt135.R
 import com.github.jeremyt135.reminderapp.broadcast.getCreatedIntentForAlarmReceiver
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
-import com.github.jeremyt135.reminderapp.data.domain.ReminderStatus
 import com.github.jeremyt135.reminderapp.data.local.AppDatabase
 import com.github.jeremyt135.reminderapp.screens.reminder.overview.ReminderListAdapter
 import com.github.jeremyt135.reminderapp.util.withActivityScenario
 import com.github.jeremyt135.reminderapp.util.withTime
-import com.google.common.truth.Truth.*
+import com.google.common.truth.Truth.assertThat
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.flow.first
@@ -53,7 +50,7 @@ class RemindersActivityTest {
     lateinit var database: AppDatabase
 
     private val reminders =
-        (1..3).map { Reminder("My Reminder $it", ReminderStatus.PENDING, id = it.toLong()) }
+        (1..3).map { Reminder("My Reminder $it", id = it.toLong()) }
 
     @Before
     fun setup() {
