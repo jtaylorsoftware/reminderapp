@@ -106,11 +106,18 @@ class ReminderTest {
             Reminder(time = LocalTime.now(), daysOfWeek = sortedSetOf(today))
 
         val nextTime = reminder.getNextTimeForAlarm(today)!!
-        assertThat(
-            nextTime.isEqual(
-                LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES)
-            )
-        ).isTrue()
+        assertThat(nextTime.isEqual(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES))).isTrue()
+    }
+
+    @Test
+    fun getNextTimeForAlarm_repeatingTodayNow_dontAllowSameDay_returnsTimeNextWeek() {
+        val today = LocalDate.now().dayOfWeek
+        val reminder =
+            Reminder(time = LocalTime.now(), daysOfWeek = sortedSetOf(today))
+
+        val nextTime = reminder.getNextTimeForAlarm(today, false)!!
+        val expectedTime = LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES).plusDays(7)
+        assertThat(nextTime.isEqual(expectedTime)).isTrue()
     }
 
     @Test
@@ -120,11 +127,20 @@ class ReminderTest {
             Reminder(time = LocalTime.now().plusMinutes(1), daysOfWeek = sortedSetOf(today))
 
         val nextTime = reminder.getNextTimeForAlarm(today)!!
-        assertThat(
-            nextTime.isEqual(
-                LocalDateTime.now().plusMinutes(1).truncatedTo(ChronoUnit.MINUTES)
-            )
-        ).isTrue()
+        val expectedTime = LocalDateTime.now().plusMinutes(1).truncatedTo(ChronoUnit.MINUTES)
+        assertThat(nextTime.isEqual(expectedTime)).isTrue()
+    }
+
+    @Test
+    fun getNextTimeForAlarm_repeatingTodayFuture__dontAllowSameDay_returnsTimeNextWeek() {
+        val today = LocalDate.now().dayOfWeek
+        val reminder =
+            Reminder(time = LocalTime.now().plusMinutes(1), daysOfWeek = sortedSetOf(today))
+
+        val nextTime = reminder.getNextTimeForAlarm(today, false)!!
+        val expectedTime =
+            LocalDateTime.now().plusMinutes(1).truncatedTo(ChronoUnit.MINUTES).plusDays(7)
+        assertThat(nextTime.isEqual(expectedTime)).isTrue()
     }
 
     @Test
@@ -134,7 +150,8 @@ class ReminderTest {
             Reminder(time = LocalTime.now().minusMinutes(1), daysOfWeek = sortedSetOf(today))
 
         val nextTime = reminder.getNextTimeForAlarm(today)!!
-        val expectedNextTime = LocalDateTime.now().with(TemporalAdjusters.next(today)).minusMinutes(1)
+        val expectedNextTime =
+            LocalDateTime.now().with(TemporalAdjusters.next(today)).minusMinutes(1)
         assertThat(nextTime.isEqual(expectedNextTime.truncatedTo(ChronoUnit.MINUTES))).isTrue()
     }
 
@@ -175,6 +192,24 @@ class ReminderTest {
 
 
     @Test
+    fun getNextTimeForAlarm_repeatingEverydayFuture_dontAllowSameDay_returnsTimeTomorrow() {
+        val daysRange = ChronoField.DAY_OF_WEEK.range()
+        val today = LocalDate.now().dayOfWeek
+        val reminder =
+            Reminder(
+                time = LocalTime.now().plusMinutes(1), daysOfWeek =
+                (daysRange.minimum..daysRange.maximum).map {
+                    DayOfWeek.of(it.toInt())
+                }.toSortedSet()
+            )
+
+        val nextTime = reminder.getNextTimeForAlarm(today, false)!!
+        val expectedNextTime = LocalDateTime.now().plusMinutes(1).plusDays(1)
+        assertThat(nextTime.isEqual(expectedNextTime.truncatedTo(ChronoUnit.MINUTES))).isTrue()
+    }
+
+
+    @Test
     fun getNextTimeForAlarm_repeatingEverydayNow_returnsTimeNow() {
         val daysRange = ChronoField.DAY_OF_WEEK.range()
         val today = LocalDate.now().dayOfWeek
@@ -188,6 +223,24 @@ class ReminderTest {
 
         val nextTime = reminder.getNextTimeForAlarm(today)!!
         val expectedNextTime = LocalDateTime.now()
+        assertThat(nextTime.isEqual(expectedNextTime.truncatedTo(ChronoUnit.MINUTES))).isTrue()
+    }
+
+
+    @Test
+    fun getNextTimeForAlarm_repeatingEverydayNow_dontAllowSameDay_returnsTimeTomorrow() {
+        val daysRange = ChronoField.DAY_OF_WEEK.range()
+        val today = LocalDate.now().dayOfWeek
+        val reminder =
+            Reminder(
+                time = LocalTime.now(), daysOfWeek =
+                (daysRange.minimum..daysRange.maximum).map {
+                    DayOfWeek.of(it.toInt())
+                }.toSortedSet()
+            )
+
+        val nextTime = reminder.getNextTimeForAlarm(today, false)!!
+        val expectedNextTime = LocalDateTime.now().plusDays(1)
         assertThat(nextTime.isEqual(expectedNextTime.truncatedTo(ChronoUnit.MINUTES))).isTrue()
     }
 

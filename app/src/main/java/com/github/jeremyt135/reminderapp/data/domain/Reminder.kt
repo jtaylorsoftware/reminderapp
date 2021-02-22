@@ -108,14 +108,15 @@ class Reminder(
         } else {
             val nextDayOfWeek = daysOfWeek.firstOrNull { it > today } ?: daysOfWeek.first()
             if (timeIsInPast) {
-                Timber.d("Repeating alarm next day of week -> $nextDayOfWeek")
+                Timber.d("Repeating alarm (in past) next day of week -> $nextDayOfWeek")
                 reminderTimeToday.with(TemporalAdjusters.next(nextDayOfWeek))
             } else {
-                val nextDayOfWeek = if (daysOfWeek.contains(today)) {
+                val nextDayOfWeek = if (daysOfWeek.contains(today) && allowSameDay) {
                     today
                 } else {
                     nextDayOfWeek
                 }
+                Timber.d("Repeating alarm (time >= now) next day of week -> $nextDayOfWeek")
                 reminderTimeToday.with(
                     if (allowSameDay) {
                         TemporalAdjusters.nextOrSame(nextDayOfWeek)
