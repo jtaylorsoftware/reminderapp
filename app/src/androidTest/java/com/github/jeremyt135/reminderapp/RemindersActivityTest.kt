@@ -15,7 +15,7 @@ import androidx.test.espresso.matcher.ViewMatchers.*
 import androidx.test.filters.LargeTest
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.jeremyt135.R
-import com.github.jeremyt135.reminderapp.broadcast.getCreatedIntentForAlarmReceiver
+import com.github.jeremyt135.reminderapp.broadcast.getCreatedIntentForAlarmStart
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.local.AppDatabase
@@ -156,7 +156,7 @@ class RemindersActivityTest {
             val reminderId = runBlocking {
                 repository.getAll().first().first { it.description == description }
             }.id
-            val alarmIntent = getCreatedIntentForAlarmReceiver(context, reminderId)
+            val alarmIntent = getCreatedIntentForAlarmStart(context, reminderId)
             assertThat(alarmIntent).isNotNull()
             alarmIntent?.cancel()
         }
@@ -174,7 +174,7 @@ class RemindersActivityTest {
         withActivityScenario(RemindersActivity::class.java) {
             lateinit var navController: NavController
             onActivity {
-                navController = it.findNavController(R.id.nav_host_fragment)
+                navController = it.findNavController(R.id.nav_host_fragment_main)
             }
 
 
@@ -188,7 +188,6 @@ class RemindersActivityTest {
             /**
              * Verify editor has opened
              */
-            assertThat(navController.currentDestination?.id).isEqualTo(R.id.fragment_reminder_editor)
             onView(withId(R.id.edit_editor_description))
                 .check(matches(isDisplayed()))
                 .check(

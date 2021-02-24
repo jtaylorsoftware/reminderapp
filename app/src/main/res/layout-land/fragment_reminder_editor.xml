@@ -155,17 +155,17 @@
                 app:layout_constraintTop_toBottomOf="@+id/edit_editor_description"
                 tools:text="Every day" />
 
-<!--            <TextView-->
-<!--                android:id="@+id/text_editor_heading"-->
-<!--                android:layout_width="wrap_content"-->
-<!--                android:layout_height="wrap_content"-->
-<!--                android:layout_marginTop="@dimen/margin_editor_small"-->
-<!--                android:text="@{model.editing ? @string/editor_heading_edit : @string/editor_heading_add}"-->
-<!--                android:textSize="24sp"-->
-<!--                app:layout_constraintEnd_toEndOf="parent"-->
-<!--                app:layout_constraintStart_toStartOf="parent"-->
-<!--                app:layout_constraintTop_toTopOf="parent"-->
-<!--                tools:text="@string/editor_heading_add" />-->
+            <!--            <TextView-->
+            <!--                android:id="@+id/text_editor_heading"-->
+            <!--                android:layout_width="wrap_content"-->
+            <!--                android:layout_height="wrap_content"-->
+            <!--                android:layout_marginTop="@dimen/margin_editor_small"-->
+            <!--                android:text="@{model.editing ? @string/editor_heading_edit : @string/editor_heading_add}"-->
+            <!--                android:textSize="24sp"-->
+            <!--                app:layout_constraintEnd_toEndOf="parent"-->
+            <!--                app:layout_constraintStart_toStartOf="parent"-->
+            <!--                app:layout_constraintTop_toTopOf="parent"-->
+            <!--                tools:text="@string/editor_heading_add" />-->
 
             <com.google.android.material.switchmaterial.SwitchMaterial
                 android:id="@+id/switch_editor_vibrate"
@@ -182,6 +182,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/margin_editor_medium"
                 android:layout_marginBottom="@dimen/margin_editor_medium"
+                android:onClick="@{() -> model.cancel()}"
                 android:text="@string/editor_cancel"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toStartOf="@+id/button_editor_delete"

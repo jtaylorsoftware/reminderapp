@@ -27,7 +27,7 @@ class AlarmUtilTest {
 
     @Before
     fun setup() {
-        context = ApplicationProvider.getApplicationContext<Context>()
+        context = ApplicationProvider.getApplicationContext()
     }
 
     @After
@@ -47,7 +47,7 @@ class AlarmUtilTest {
         val today = LocalDate.now().dayOfWeek
 
         assertThat(scheduleAlarmForReminder(context, reminder, today)).isNull()
-        intent = getCreatedIntentForAlarmReceiver(context, reminder.id)
+        intent = getCreatedIntentForAlarmStart(context, reminder.id)
     }
 
     @Test
@@ -71,7 +71,7 @@ class AlarmUtilTest {
         assertThat(scheduleAlarmForReminder(context, reminder, today)).isNotNull()
 
         // Verify that AlarmManager did set the alarm with the correct intent
-        intent = getCreatedIntentForAlarmReceiver(context, alarm.reminderId)
+        intent = getCreatedIntentForAlarmStart(context, alarm.reminderId)
         assertThat(intent).isNotNull()
     }
 
@@ -81,7 +81,7 @@ class AlarmUtilTest {
 
         scheduleAlarm(context, alarm)
 
-        intent = getCreatedIntentForAlarmReceiver(context, alarm.reminderId)
+        intent = getCreatedIntentForAlarmStart(context, alarm.reminderId)
 
         assertThat(intent).isNotNull()
     }
@@ -91,22 +91,23 @@ class AlarmUtilTest {
         val reminder = Reminder(id = 1)
 
         // Build notification which should create Intents for skip, snooze, complete
-        buildNotificationForAlarmIntent(
+        buildNotificationForAlarm(
             context,
             getIntentForAlarmActivity(context, reminder.id),
             reminder
         )
 
-        assertThat(getCreatedIntentForSnoozeReceiver(context, reminder.id)).isNotNull()
-        assertThat(getCreatedIntentForSkipReceiver(context, reminder.id)).isNotNull()
-        assertThat(getCreatedIntentForCompleteReceiver(context, reminder.id)).isNotNull()
+        assertThat(getCreatedIntentForAlarmSnooze(context, reminder.id)).isNotNull()
+        assertThat(getCreatedIntentForAlarmSkip(context, reminder.id)).isNotNull()
+        assertThat(getCreatedIntentForAlarmComplete(context, reminder.id)).isNotNull()
     }
 
     @Test
     fun triggerNotification_createsAlarmActivityIntent(){
         val reminder = Reminder(id=1)
+        val alarm = Alarm(id=1,reminderId = reminder.id, triggerAt = 0)
 
-        triggerNotification(context, reminder)
+        triggerNotification(context, reminder, alarm.id)
 
         intent = getCreatedIntentForAlarmActivity(context, reminder.id)
 

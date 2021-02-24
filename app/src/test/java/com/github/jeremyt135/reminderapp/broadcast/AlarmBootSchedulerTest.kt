@@ -11,6 +11,7 @@ import com.github.jeremyt135.reminderapp.data.domain.Alarm
 import com.github.jeremyt135.reminderapp.data.local.ReminderEntity
 import io.mockk.*
 import io.mockk.impl.annotations.MockK
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runBlockingTest
@@ -39,9 +40,11 @@ class AlarmBootSchedulerTest {
     fun setup() {
         MockKAnnotations.init(this)
 
-        receiver = spyk(AlarmBootScheduler())
-        receiver.alarmRepository = mockAlarmRepository
-        receiver.reminderRepository = mockReminderRepository
+        receiver = spyk(AlarmBootScheduler().apply {
+            mainDispatcher = Dispatchers.Main
+            alarmRepository = mockAlarmRepository
+            reminderRepository = mockReminderRepository
+        })
 
         val mockPendingResult = mockk<BroadcastReceiver.PendingResult>()
         every { receiver.goAsync() } returns mockPendingResult
@@ -76,13 +79,13 @@ class AlarmBootSchedulerTest {
         mockkStatic(::scheduleAlarmForReminder)
         every { scheduleAlarmForReminder(mockContext, reminder = any(), today) } returnsMany alarms
 
-        coEvery { mockAlarmRepository.save(alarm = any()) } returnsMany listOf(1,2)
+        coEvery { mockAlarmRepository.save(alarm = any()) } returnsMany listOf(1, 2)
         coEvery { mockReminderRepository.getAll() } returns flowOf(reminders)
         coEvery { mockAlarmRepository.deleteAll() } returns Unit
 
         val intent = mockk<Intent>()
         every { intent.action } returns Intent.ACTION_BOOT_COMPLETED
-        every { intent.getLongExtra(EXTRA_REMINDER_ID, any()) } returnsMany listOf(1,2)
+        every { intent.getLongExtra(EXTRA_REMINDER_ID, any()) } returnsMany listOf(1, 2)
 
         receiver.onReceive(mockContext, intent)
 

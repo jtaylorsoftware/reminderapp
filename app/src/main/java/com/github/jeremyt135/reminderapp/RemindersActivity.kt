@@ -9,9 +9,11 @@ import android.os.Bundle
 import androidx.navigation.findNavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.AppBarConfiguration
+import androidx.navigation.ui.NavigationUI
 import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
 import com.github.jeremyt135.R
+import com.github.jeremyt135.reminderapp.broadcast.EXTRA_REMINDER_ID
 import com.github.jeremyt135.reminderapp.broadcast.NOTIFICATION_LED_ARGB
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -24,20 +26,10 @@ class RemindersActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         val navHostFragment =
-            supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+            supportFragmentManager.findFragmentById(R.id.nav_host_fragment_main) as NavHostFragment
         val navController = navHostFragment.navController
         appBarConfiguration = AppBarConfiguration(navController.graph)
         setupActionBarWithNavController(navController, appBarConfiguration)
-
-        navController.addOnDestinationChangedListener { _, destination, arguments ->
-            if (destination.id == R.id.fragment_reminder_editor){
-                supportActionBar?.title = if(requireNotNull(arguments).getLong("reminderId") != 0L){
-                    getString(R.string.editor_heading_edit)
-                } else {
-                    getString(R.string.editor_heading_add)
-                }
-            }
-        }
 
         createNotificationChannel()
     }
@@ -68,6 +60,9 @@ class RemindersActivity : AppCompatActivity() {
     }
 
     override fun onSupportNavigateUp(): Boolean =
-        findNavController(R.id.nav_host_fragment).navigateUp(appBarConfiguration) || super.onSupportNavigateUp()
+        NavigationUI.navigateUp(
+            findNavController(R.id.nav_host_fragment_main),
+            appBarConfiguration
+        ) || super.onSupportNavigateUp()
 
 }

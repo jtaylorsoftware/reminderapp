@@ -110,7 +110,7 @@ class RemindersFragmentTest {
         onView(withId(R.id.fab_reminders_add)).perform(click())
 
         verify(navController).navigate(
-            RemindersFragmentDirections.actionFragmentRemindersToFragmentReminderEditor(
+            RemindersFragmentDirections.actionFragmentRemindersToReminderEditorActivity(
                 0L
             )
         )
@@ -135,7 +135,7 @@ class RemindersFragmentTest {
 
         // Verify the navigation happened with that reminder
         verify(navController).navigate(
-            RemindersFragmentDirections.actionFragmentRemindersToFragmentReminderEditor(
+            RemindersFragmentDirections.actionFragmentRemindersToReminderEditorActivity(
                 reminder.id
             )
         )

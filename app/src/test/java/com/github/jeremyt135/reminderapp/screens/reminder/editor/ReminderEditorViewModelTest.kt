@@ -5,6 +5,7 @@ import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.lifecycle.SavedStateHandle
 import com.github.jeremyt135.reminderapp.MainCoroutineRule
 import com.github.jeremyt135.reminderapp.ReminderApplication
+import com.github.jeremyt135.reminderapp.broadcast.EXTRA_REMINDER_ID
 import com.github.jeremyt135.reminderapp.broadcast.cancelAlarm
 import com.github.jeremyt135.reminderapp.broadcast.cancelNotification
 import com.github.jeremyt135.reminderapp.broadcast.scheduleAlarmForReminder
@@ -66,7 +67,7 @@ class ReminderEditorViewModelTest {
 
     @Test
     fun isEditing_withNoId_IsFalse() = mainCoroutineRule.runBlockingTest {
-        every { mockSavedState.get<Long?>("reminderId") } returns 0L
+        every { mockSavedState.get<Long?>(EXTRA_REMINDER_ID) } returns 0L
 
         createViewModel()
 
@@ -78,7 +79,7 @@ class ReminderEditorViewModelTest {
         // Open with existing Reminder
         val reminder = Reminder("My Reminder", id = 1)
         coEvery { mockReminderRepo.findById(reminder.id) } returns reminder
-        every { mockSavedState.get<Long?>("reminderId") } returns 1L
+        every { mockSavedState.get<Long?>(EXTRA_REMINDER_ID) } returns 1L
 
         createViewModel()
 
@@ -88,7 +89,7 @@ class ReminderEditorViewModelTest {
     @Test
     fun reminderLiveData_isInitializedToEmptyReminder() = mainCoroutineRule.runBlockingTest {
         // Simulate that the editor is opened with a value of 0L for reminderId argument
-        every { mockSavedState.get<Long?>("reminderId") } returns 0L
+        every { mockSavedState.get<Long?>(EXTRA_REMINDER_ID) } returns 0L
 
         createViewModel()
 
@@ -102,7 +103,7 @@ class ReminderEditorViewModelTest {
         coEvery { mockReminderRepo.findById(reminder.id) } returns reminder
 
         // Simulate editor is navigated to with the reminderId
-        every { mockSavedState.get<Long?>("reminderId") } returns reminder.id
+        every { mockSavedState.get<Long?>(EXTRA_REMINDER_ID) } returns reminder.id
 
         createViewModel()
 
@@ -114,7 +115,7 @@ class ReminderEditorViewModelTest {
         val reminder = Reminder()
         val alarm = Alarm(reminderId = reminder.id, triggerAt = 0)
 
-        every { mockSavedState.get<Long?>("reminderId") } returns 0L
+        every { mockSavedState.get<Long?>(EXTRA_REMINDER_ID) } returns 0L
         coEvery { mockReminderRepo.save(reminder) } returns 0L
         coEvery { mockAlarmRepo.save(alarm) } returns 0L
         coEvery { mockAlarmRepo.findByReminderId(0) } returns null
@@ -138,7 +139,7 @@ class ReminderEditorViewModelTest {
         val reminder = Reminder()
         val alarm = Alarm(reminderId = reminder.id, triggerAt = 0)
 
-        every { mockSavedState.get<Long?>("reminderId") } returns 0L
+        every { mockSavedState.get<Long?>(EXTRA_REMINDER_ID) } returns 0L
         coEvery { mockReminderRepo.save(reminder) } returns 0L
         coEvery { mockAlarmRepo.save(alarm) } returns 0L
         coEvery { mockAlarmRepo.findByReminderId(0) } returns alarm
@@ -170,7 +171,7 @@ class ReminderEditorViewModelTest {
         val reminder = Reminder()
         val alarm = Alarm(reminderId = reminder.id, triggerAt = 0)
 
-        every { mockSavedState.get<Long?>("reminderId") } returns 0L
+        every { mockSavedState.get<Long?>(EXTRA_REMINDER_ID) } returns 0L
         coEvery { mockReminderRepo.save(reminder) } returns 0L
         coEvery { mockAlarmRepo.save(alarm) } returns 0L
         coEvery { mockAlarmRepo.findByReminderId(0) } returns null
@@ -195,7 +196,7 @@ class ReminderEditorViewModelTest {
         val reminder = Reminder()
         val alarm = Alarm(reminderId = reminder.id, triggerAt = 0)
 
-        every { mockSavedState.get<Long?>("reminderId") } returns 0L
+        every { mockSavedState.get<Long?>(EXTRA_REMINDER_ID) } returns 0L
         coEvery { mockReminderRepo.save(reminder) } returns 0L
         coEvery { mockAlarmRepo.save(alarm) } returns 0L
         coEvery { mockAlarmRepo.findByReminderId(0) } returns null
@@ -215,7 +216,7 @@ class ReminderEditorViewModelTest {
 
     @Test
     fun deleteReminder_notEditing_returns() = mainCoroutineRule.runBlockingTest {
-        every { mockSavedState.get<Long?>("reminderId") } returns 0L
+        every { mockSavedState.get<Long?>(EXTRA_REMINDER_ID) } returns 0L
         coEvery { mockReminderRepo.delete(any()) } returns Unit
 
         createViewModel()
@@ -232,7 +233,7 @@ class ReminderEditorViewModelTest {
             val reminder = Reminder(id = 1)
             val alarm = Alarm(id = 1, reminderId = 1, triggerAt = 0)
 
-            every { mockSavedState.get<Long?>("reminderId") } returns reminder.id
+            every { mockSavedState.get<Long?>(EXTRA_REMINDER_ID) } returns reminder.id
             coEvery { mockReminderRepo.findById(reminder.id) } returns reminder
             coEvery { mockAlarmRepo.findByReminderId(reminder.id) } returns alarm
             coEvery { mockReminderRepo.delete(reminder) } returns Unit

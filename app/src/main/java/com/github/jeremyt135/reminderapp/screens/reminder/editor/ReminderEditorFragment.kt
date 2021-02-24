@@ -1,35 +1,37 @@
 package com.github.jeremyt135.reminderapp.screens.reminder.editor
 
-import android.os.Build
 import android.os.Bundle
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import android.widget.TimePicker
+import androidx.annotation.VisibleForTesting
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.viewModels
-import androidx.lifecycle.asLiveData
-import androidx.navigation.fragment.findNavController
+import androidx.fragment.app.activityViewModels
 import com.github.jeremyt135.R
 import com.github.jeremyt135.databinding.FragmentReminderEditorBinding
+import com.github.jeremyt135.reminderapp.broadcast.EXTRA_REMINDER_ID
 import com.github.jeremyt135.reminderapp.util.time
 import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
 
 @AndroidEntryPoint
 class ReminderEditorFragment : Fragment(R.layout.fragment_reminder_editor) {
-    private val viewModel: ReminderEditorViewModel by viewModels()
+    val viewModel: ReminderEditorViewModel by activityViewModels()
+        @VisibleForTesting get
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        with(requireActivity()) {
+            actionBar?.title = if (intent.getLongExtra(EXTRA_REMINDER_ID, 0L) != 0L) {
+                getString(R.string.editor_heading_edit)
+            } else {
+                getString(R.string.editor_heading_add)
+            }
+        }
+
         val binding = FragmentReminderEditorBinding.bind(view).apply {
             lifecycleOwner = viewLifecycleOwner
             model = viewModel
-
-            buttonEditorCancel.setOnClickListener {
-                goToReminders()
-            }
         }
 
         /**
@@ -46,14 +48,6 @@ class ReminderEditorFragment : Fragment(R.layout.fragment_reminder_editor) {
                 viewModel.onTimeChanged(hour, minute)
             }
         }
-
-        viewModel.navigateToReminders.asLiveData().observe(viewLifecycleOwner) {
-            goToReminders()
-        }
-    }
-
-    private fun goToReminders() {
-        findNavController().navigateUp()
     }
 
     private fun setTimePickerTime(timePicker: TimePicker, hour: Int, minute: Int) {

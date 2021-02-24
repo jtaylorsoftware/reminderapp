@@ -2,7 +2,9 @@ package com.github.jeremyt135.reminderapp.screens.reminder.editor
 
 import android.app.Application
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.*
+import com.github.jeremyt135.reminderapp.broadcast.EXTRA_REMINDER_ID
 import com.github.jeremyt135.reminderapp.broadcast.cancelAlarm
 import com.github.jeremyt135.reminderapp.broadcast.cancelNotification
 import com.github.jeremyt135.reminderapp.broadcast.scheduleAlarmForReminder
@@ -38,7 +40,7 @@ class ReminderEditorViewModel @Inject constructor(
     private val _navigateToReminders = MutableSharedFlow<Unit>(replay = 0)
     val navigateToReminders: SharedFlow<Unit> = _navigateToReminders
 
-    private val savedReminderId: Long = requireNotNull(savedStateHandle.get("reminderId"))
+    private val savedReminderId: Long = requireNotNull(savedStateHandle.get(EXTRA_REMINDER_ID))
     val isEditing: Boolean = savedReminderId != 0L
 
     init {
@@ -51,6 +53,10 @@ class ReminderEditorViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    fun cancel(){
+        viewModelScope.launch{ _navigateToReminders.emit(Unit) }
     }
 
     fun toggleDay(dayString: String) {

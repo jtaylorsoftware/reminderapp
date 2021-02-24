@@ -1,29 +1,27 @@
 package com.github.jeremyt135.reminderapp.screens.alarm
 
+import android.content.ComponentName
 import android.content.Context
+import android.content.ServiceConnection
+import android.os.IBinder
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.lifecycle.SavedStateHandle
 import com.github.jeremyt135.reminderapp.MainCoroutineRule
 import com.github.jeremyt135.reminderapp.ReminderApplication
 import com.github.jeremyt135.reminderapp.broadcast.EXTRA_REMINDER_ID
-import com.github.jeremyt135.reminderapp.broadcast.scheduleCompleteAlarm
-import com.github.jeremyt135.reminderapp.broadcast.scheduleSkipAlarm
-import com.github.jeremyt135.reminderapp.broadcast.scheduleSnoozeAlarm
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.Alarm
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.ReminderAndAlarm
 import com.github.jeremyt135.reminderapp.getOrAwaitValue
+import com.github.jeremyt135.reminderapp.service.ReminderAlarmManager
 import com.github.jeremyt135.reminderapp.util.toEpochMilli
+import com.github.jeremyt135.reminderapp.util.verifyFlowEmitted
 import com.google.common.truth.Truth.assertThat
 import io.mockk.*
 import io.mockk.impl.annotations.MockK
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
 import org.junit.Rule
@@ -46,7 +44,7 @@ class AlarmViewModelTest {
     @MockK
     lateinit var mockContext: Context
 
-    lateinit var viewModel: AlarmViewModel
+    private lateinit var fakeBinder: ReminderAlarmManager.LocalBinder
 
     @get:Rule
     var mainCoroutineRule = MainCoroutineRule()
@@ -54,27 +52,13 @@ class AlarmViewModelTest {
     @get:Rule
     var instantExecutorRule = InstantTaskExecutorRule()
 
-    lateinit var time: LocalDateTime
-    lateinit var reminder: Reminder
-    lateinit var alarm: Alarm
-    lateinit var reminderAndAlarm: ReminderAndAlarm
+    private lateinit var time: LocalDateTime
+    private lateinit var reminder: Reminder
+    private lateinit var alarm: Alarm
+    private lateinit var reminderAndAlarm: ReminderAndAlarm
 
-    private fun <T> verifyFlowEmitted(
-        flow: SharedFlow<T>,
-        coroutineScope: CoroutineScope,
-        action: () -> Unit
-    ) {
-        var eventEmitted = false
-        coroutineScope.launch {
-            flow.collect {
-                eventEmitted = true
-                cancel()
-            }
-        }
-        // Do action that emits event
-        action()
-        assertThat(eventEmitted).isTrue()
-    }
+    private lateinit var viewModel: AlarmViewModel
+    private lateinit var serviceConnection: CapturingSlot<ServiceConnection>
 
     @Before
     fun setup() {
@@ -87,11 +71,25 @@ class AlarmViewModelTest {
 
         coEvery { mockReminderRepo.getReminderAndAlarm(reminder.id) } returns reminderAndAlarm
         every { mockApplication.applicationContext } returns mockContext
+
+        mockkObject(ReminderAlarmManager.Companion)
+        serviceConnection = slot()
+        every { ReminderAlarmManager.bind(any(), capture(serviceConnection), any()) } returns Unit
+
+        val snoozeTimeout = flow { emit(Unit) }.shareIn(
+            mainCoroutineRule,
+            SharingStarted.Lazily
+        )
+        fakeBinder = spyk(object : ReminderAlarmManager.LocalBinder(snoozeTimeout) {
+            override fun snooze() {}
+            override fun skip() {}
+            override fun complete() {}
+        })
     }
 
     @Test
     fun loadReminderData_loadsReminderAndAlarm() = mainCoroutineRule.runBlockingTest {
-        every { mockSavedStateHandle.get<Long>(EXTRA_REMINDER_ID)} returns reminder.id
+        every { mockSavedStateHandle.get<Long>(EXTRA_REMINDER_ID) } returns reminder.id
         viewModel =
             AlarmViewModel(mockApplication, mockReminderRepo, mockSavedStateHandle)
 
@@ -102,7 +100,7 @@ class AlarmViewModelTest {
 
     @Test
     fun liveData_matchesLoadedReminderData() = mainCoroutineRule.runBlockingTest {
-        every { mockSavedStateHandle.get<Long>(EXTRA_REMINDER_ID)} returns reminder.id
+        every { mockSavedStateHandle.get<Long>(EXTRA_REMINDER_ID) } returns reminder.id
         viewModel =
             AlarmViewModel(mockApplication, mockReminderRepo, mockSavedStateHandle)
 
@@ -116,12 +114,10 @@ class AlarmViewModelTest {
 
     @Test
     fun snooze_callsScheduleSnoozeAlarm() = mainCoroutineRule.runBlockingTest {
-        every { mockSavedStateHandle.get<Long>(EXTRA_REMINDER_ID)} returns reminder.id
+        every { mockSavedStateHandle.get<Long>(EXTRA_REMINDER_ID) } returns reminder.id
         viewModel =
             AlarmViewModel(mockApplication, mockReminderRepo, mockSavedStateHandle)
-
-        mockkStatic(::scheduleSnoozeAlarm)
-        every { scheduleSnoozeAlarm(mockContext, any())} returns Unit
+        serviceConnection.captured.onServiceConnected(mockk(), fakeBinder)
 
         verifyFlowEmitted(viewModel.finished, this) {
             viewModel.snooze()
@@ -129,43 +125,39 @@ class AlarmViewModelTest {
 
         // Verify the snooze happened
         verify {
-            scheduleSnoozeAlarm(mockContext, any())
+            fakeBinder.snooze()
         }
     }
 
     @Test
     fun skip_callsScheduleSkipAlarm() = mainCoroutineRule.runBlockingTest {
-        every { mockSavedStateHandle.get<Long>(EXTRA_REMINDER_ID)} returns reminder.id
+        every { mockSavedStateHandle.get<Long>(EXTRA_REMINDER_ID) } returns reminder.id
         viewModel =
             AlarmViewModel(mockApplication, mockReminderRepo, mockSavedStateHandle)
-
-        mockkStatic(::scheduleSkipAlarm)
-        every { scheduleSkipAlarm(mockContext, any()) } returns Unit
+        serviceConnection.captured.onServiceConnected(mockk(), fakeBinder)
 
         verifyFlowEmitted(viewModel.finished, this) {
             viewModel.skip()
         }
 
         verify {
-            scheduleSkipAlarm(mockContext, any())
+            fakeBinder.skip()
         }
     }
 
     @Test
     fun complete_callsScheduleCompleteAlarm() = mainCoroutineRule.runBlockingTest {
-        every { mockSavedStateHandle.get<Long>(EXTRA_REMINDER_ID)} returns reminder.id
+        every { mockSavedStateHandle.get<Long>(EXTRA_REMINDER_ID) } returns reminder.id
         viewModel =
             AlarmViewModel(mockApplication, mockReminderRepo, mockSavedStateHandle)
-
-        mockkStatic(::scheduleCompleteAlarm)
-        every { scheduleCompleteAlarm(mockContext, any()) } returns Unit
+        serviceConnection.captured.onServiceConnected(mockk(), fakeBinder)
 
         verifyFlowEmitted(viewModel.finished, this) {
             viewModel.complete()
         }
 
         verify {
-            scheduleCompleteAlarm(mockContext, any())
+            fakeBinder.complete()
         }
     }
 

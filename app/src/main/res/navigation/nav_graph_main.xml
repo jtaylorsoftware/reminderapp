@@ -2,7 +2,7 @@
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/nav_graph"
+    android:id="@+id/nav_graph_main"
     app:startDestination="@id/fragment_reminders">
 
     <fragment
@@ -11,27 +11,27 @@
         android:label="Reminders"
         tools:layout="@layout/fragment_reminders">
         <action
-            android:id="@+id/action_fragment_reminders_to_fragment_reminder_editor"
-            app:destination="@id/fragment_reminder_editor" >
-            <argument
-                android:name="reminderId"
-                android:defaultValue="0L" />
-        </action>
-        <action
             android:id="@+id/action_fragment_reminders_to_historyFragment"
             app:destination="@id/fragment_history" />
-    </fragment>
-    <fragment
-        android:id="@+id/fragment_reminder_editor"
-        android:name="com.github.jeremyt135.reminderapp.screens.reminder.editor.ReminderEditorFragment"
-        tools:layout="@layout/fragment_reminder_editor" >
-        <argument
-            android:name="reminderId"
-            app:argType="long" />
+        <action
+            android:id="@+id/action_fragment_reminders_to_reminderEditorActivity"
+            app:destination="@id/activity_reminder_editor" >
+            <argument
+                android:name="com.github.jeremyt135.reminderapp.EXTRA_REMINDER_ID"
+                android:defaultValue="0L" />
+        </action>
     </fragment>
     <fragment
         android:id="@+id/fragment_history"
         android:name="com.github.jeremyt135.reminderapp.screens.reminder.history.HistoryFragment"
         android:label="History"
         tools:layout="@layout/fragment_history"/>
+    <activity
+        android:id="@+id/activity_reminder_editor"
+        android:name="com.github.jeremyt135.reminderapp.screens.reminder.editor.ReminderEditorActivity"
+        tools:layout="@layout/fragment_reminder_editor">
+        <argument
+            android:name="com.github.jeremyt135.reminderapp.EXTRA_REMINDER_ID"
+            app:argType="long" />
+    </activity>
 </navigation>

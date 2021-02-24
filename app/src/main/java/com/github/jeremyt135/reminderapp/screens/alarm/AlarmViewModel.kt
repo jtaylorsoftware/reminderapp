@@ -1,27 +1,25 @@
 package com.github.jeremyt135.reminderapp.screens.alarm
 
 import android.app.Application
-import android.content.Context
-import android.os.Vibrator
-import androidx.core.app.NotificationManagerCompat
+import android.content.ComponentName
+import android.content.ServiceConnection
+import android.os.IBinder
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
-import com.github.jeremyt135.BuildConfig
 import com.github.jeremyt135.reminderapp.broadcast.EXTRA_REMINDER_ID
-import com.github.jeremyt135.reminderapp.broadcast.scheduleCompleteAlarm
-import com.github.jeremyt135.reminderapp.broadcast.scheduleSkipAlarm
-import com.github.jeremyt135.reminderapp.broadcast.scheduleSnoozeAlarm
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.Alarm
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
+import com.github.jeremyt135.reminderapp.service.ReminderAlarmManager
 import com.github.jeremyt135.reminderapp.util.toLocalDateTime
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.time.format.DateTimeFormatter
@@ -48,34 +46,41 @@ class AlarmViewModel @Inject constructor(
     private val _finished = MutableSharedFlow<Unit>(replay = 0)
     val finished: SharedFlow<Unit> = _finished
 
+    private lateinit var reminderAlarmManager: ReminderAlarmManager.LocalBinder
+    private var bound = false
+    private val serviceConnection = object : ServiceConnection {
+        private lateinit var snoozeTimeoutJob: Job
+        override fun onServiceConnected(className: ComponentName, service: IBinder) {
+            reminderAlarmManager = service as ReminderAlarmManager.LocalBinder
+            bound = true
+            snoozeTimeoutJob = viewModelScope.launch {
+                reminderAlarmManager.snoozeTimeout.collect {
+                    _finished.emit(Unit)
+                }
+            }
+        }
+
+        override fun onServiceDisconnected(className: ComponentName) {
+            bound = false
+            snoozeTimeoutJob.cancel()
+        }
+    }
+
     init {
         val reminderId = requireNotNull(savedStateHandle.get<Long>(EXTRA_REMINDER_ID))
         loadReminderData(reminderId)
 
-        viewModelScope.launch {
-            val delayMilli: Long = if (BuildConfig.DEBUG) {
-                5 * 1000
-            } else {
-                30 * 1000
-            }
-            delay(delayMilli)
-
-            Timber.d("VM delay done -> snooze")
-            snooze()
-        }
+        val context = getApplication<Application>().applicationContext
+        ReminderAlarmManager.bind(context, serviceConnection, reminderId)
     }
 
     override fun onCleared() {
         super.onCleared()
-        // Try to snooze when activity is finished
-        snooze()
 
-        // Cancel notification and vibration
-        val context = getApplication<Application>().applicationContext
-        (context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator).let {
-            it.cancel()
+        if (bound) {
+            getApplication<Application>().applicationContext.unbindService(serviceConnection)
+            bound = false
         }
-        NotificationManagerCompat.from(context).cancel(_reminder.value.id.toInt())
     }
 
     /**
@@ -105,12 +110,9 @@ class AlarmViewModel @Inject constructor(
         if (tookAction) {
             return
         }
-        Timber.d("Snoozing alarm")
 
-        val context = getApplication<Application>().applicationContext
-        scheduleSnoozeAlarm(context, _alarm.value.copy())
-        Timber.d("Snoozed alarm")
-
+        require(bound)
+        reminderAlarmManager.snooze()
         viewModelScope.launch {
             onAction()
         }
@@ -123,11 +125,9 @@ class AlarmViewModel @Inject constructor(
         if (tookAction) {
             return
         }
-        Timber.d("Skipping alarm")
 
-        val context = getApplication<Application>().applicationContext
-        scheduleSkipAlarm(context, _alarm.value.copy())
-
+        require(bound)
+        reminderAlarmManager.skip()
         viewModelScope.launch {
             onAction()
         }
@@ -140,11 +140,9 @@ class AlarmViewModel @Inject constructor(
         if (tookAction) {
             return
         }
-        Timber.d("Completing alarm")
 
-        val context = getApplication<Application>().applicationContext
-        scheduleCompleteAlarm(context, _alarm.value.copy())
-
+        require(bound)
+        reminderAlarmManager.complete()
         viewModelScope.launch {
             onAction()
         }

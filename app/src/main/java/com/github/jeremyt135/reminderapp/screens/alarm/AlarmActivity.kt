@@ -19,6 +19,8 @@ class AlarmActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        Timber.d("Created AlarmActivity")
+
         /**
          * Ensure that desired screen behavior is achieved across SDK versions
          * - Alarm should turn screen on, show even if locked, and dismiss the keyguard/lockscreen

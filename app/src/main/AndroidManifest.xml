@@ -3,7 +3,7 @@
     package="com.github.jeremyt135">
 
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.VIBRATE" />
 
     <application
@@ -15,54 +15,25 @@
         android:theme="@style/Theme.ReminderApp">
         <activity
             android:name=".reminderapp.RemindersActivity"
-            android:windowSoftInputMode="adjustPan">
+            android:windowSoftInputMode="adjustPan"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
         <activity
-            android:name=".reminderapp.HiltTestActivity"
-            android:exported="false" />
-        <activity
-            android:name=".reminderapp.screens.alarm.AlarmTestActivity"
-            android:exported="false" />
+            android:name=".reminderapp.screens.reminder.editor.ReminderEditorActivity"
+            android:windowSoftInputMode="adjustPan" />
+        <activity android:name=".reminderapp.screens.reminder.editor.ReminderEditorTestActivity" />
+        <activity android:name=".reminderapp.HiltTestActivity" />
+        <activity android:name=".reminderapp.screens.alarm.AlarmTestActivity" />
         <activity
             android:name=".reminderapp.screens.alarm.AlarmActivity"
-            android:exported="true"
             android:configChanges="orientation"
             android:screenOrientation="portrait"
-            android:theme="@style/Theme.ReminderApp.Alarm" />
-
-        <receiver
-            android:name=".reminderapp.broadcast.AlarmTriggerReceiver"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="com.github.jeremyt135.reminderapp.ACTION_ALARM_START" />
-            </intent-filter>
-        </receiver>
-        <receiver
-            android:name=".reminderapp.broadcast.AlarmSnoozeReceiver"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="com.github.jeremyt135.reminderapp.ACTION_ALARM_SNOOZE" />
-            </intent-filter>
-        </receiver>
-        <receiver
-            android:name=".reminderapp.broadcast.AlarmSkipReceiver"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="com.github.jeremyt135.reminderapp.ACTION_ALARM_SKIP" />
-            </intent-filter>
-        </receiver>
-        <receiver
-            android:name=".reminderapp.broadcast.AlarmCompleteReceiver"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="com.github.jeremyt135.reminderapp.ACTION_ALARM_COMPLETE" />
-            </intent-filter>
-        </receiver>
+            android:theme="@style/Theme.ReminderApp.Alarm"
+            android:exported="false"/>
         <receiver
             android:name=".reminderapp.broadcast.AlarmBootScheduler"
             android:exported="true">
@@ -70,6 +41,7 @@
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
+        <service android:name=".reminderapp.service.ReminderAlarmManager" />
     </application>
 
 </manifest>
