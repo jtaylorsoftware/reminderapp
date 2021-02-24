@@ -1,5 +1,6 @@
 package com.github.jeremyt135.reminderapp.service
 
+import android.app.Notification
 import android.app.Service
 import android.content.Context
 import android.content.Intent
@@ -84,7 +85,8 @@ class ReminderAlarmManager : Service() {
     private val reminderId = AtomicLong(0)
 
     /**
-     * Flag that is set when an external component has bound and handled the alarm.
+     * Flag that is set when the service received and handled an Intent with an action other than
+     * START.
      */
     private val isHandled = AtomicBoolean(false)
 
@@ -165,12 +167,6 @@ class ReminderAlarmManager : Service() {
         Timber.d("Service destroyed")
     }
 
-    private fun createForegroundNotification(reminder: Reminder) =
-        buildNotificationForAlarm(
-            this,
-            getIntentForAlarmActivity(this, reminder.id), reminder
-        )
-
     /**
      * Interface that can be used to snooze, skip, or complete the current alarm.
      */
@@ -216,64 +212,66 @@ class ReminderAlarmManager : Service() {
                 // Collect actions on separate thread
                 actions.collect { action ->
                     Timber.d("Received action: ${action.name} for reminder ${action.reminderId}")
-
-                    when (action.name) {
-                        /**
-                         * Sets up the foreground notification - the first action emitted
-                         * should always be this, otherwise the service will likely ANR.
-                         */
-                        ACTION_ALARM_START -> {
-                            // Only perform setup once
-                            if (reminderId.compareAndSet(0L, action.reminderId)) {
-                                val reminder =
-                                    requireNotNull(reminderRepository.findById(reminderId.get()))
-                                val vibrator =
-                                    this@ReminderAlarmManager.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-                                if (reminder.vibrate && vibrator.hasVibrator()) {
-                                    vibrator.start()
-                                }
-                                startForeground(
-                                    reminderId.toInt(),
-                                    createForegroundNotification(reminder)
-                                )
-                            }
-                        }
-                        ACTION_ALARM_SNOOZE -> {
-                            if (action.reminderId == reminderId.get()) {
-                                val (reminder, alarm) = requireNotNull(
-                                    reminderRepository.getReminderAndAlarm(reminderId.get())
-                                )
-                                snoozeAlarm(reminder, alarm)
-                            }
-                        }
-                        ACTION_ALARM_SKIP -> {
-                            if (action.reminderId == reminderId.get()) {
-                                val (reminder, alarm) = requireNotNull(
-                                    reminderRepository.getReminderAndAlarm(reminderId.get())
-                                )
-                                handleCompletion(reminder, alarm, ReminderStatus.SKIPPED)
-                            }
-                        }
-                        ACTION_ALARM_COMPLETE -> {
-                            if (action.reminderId == reminderId.get()) {
-                                val (reminder, alarm) = requireNotNull(
-                                    reminderRepository.getReminderAndAlarm(reminderId.get())
-                                )
-                                handleCompletion(reminder, alarm, ReminderStatus.COMPLETED)
-                            }
-                        }
-                    }
+                    handleAction(action)
                 }
             }
         }
 
+        private suspend fun handleAction(action: Action) {
+            when (action.name) {
+                /**
+                 * Set up the foreground notification - the first action emitted
+                 * should always be this, otherwise the service will likely ANR.
+                 */
+                ACTION_ALARM_START -> handleStart(action)
+
+                /**
+                 * Handle the management action (snooze, skip, or complete). Can be done
+                 * once per service/alarm.
+                 */
+                ACTION_ALARM_SNOOZE -> handleSnooze(action)
+                ACTION_ALARM_SKIP -> handleCompletion(action, ReminderStatus.SKIPPED)
+                ACTION_ALARM_COMPLETE -> handleCompletion(action, ReminderStatus.COMPLETED)
+            }
+        }
+
+        private suspend fun handleStart(action: Action) {
+            if (reminderId.compareAndSet(0L, action.reminderId)) {
+                val reminder =
+                    requireNotNull(reminderRepository.findById(reminderId.get()))
+                val vibrator =
+                    this@ReminderAlarmManager.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+                if (reminder.vibrate && vibrator.hasVibrator()) {
+                    vibrator.start()
+                }
+                startForeground(
+                    reminderId.toInt(),
+                    createForegroundNotification(reminder)
+                )
+            }
+        }
+
+        private fun createForegroundNotification(reminder: Reminder): Notification {
+            val context: Context = this@ReminderAlarmManager
+            return buildNotificationForAlarm(
+                context,
+                getIntentForAlarmActivity(context, reminder.id), reminder
+            )
+        }
+
         private suspend fun handleCompletion(
-            reminder: Reminder,
-            alarm: Alarm,
+            action: Action,
             completionStatus: ReminderStatus
         ) {
-            alarmRepository.delete(alarm)
-            completeReminderWithStatus(reminder, completionStatus)
+            if (action.reminderId == reminderId.get() &&
+                isHandled.compareAndSet(false, true)
+            ) {
+                val (reminder, alarm) = requireNotNull(
+                    reminderRepository.getReminderAndAlarm(reminderId.get())
+                )
+                alarmRepository.delete(alarm)
+                completeReminderWithStatus(reminder, completionStatus)
+            }
         }
 
         private suspend fun completeReminderWithStatus(
@@ -305,8 +303,18 @@ class ReminderAlarmManager : Service() {
                 } ?: Timber.d("Did not save new alarm")
             }
 
-            isHandled.set(true)
             stopSelf()
+        }
+
+        private suspend fun handleSnooze(action: Action) {
+            if (action.reminderId == reminderId.get() &&
+                isHandled.compareAndSet(false, true)
+            ) {
+                val (reminder, alarm) = requireNotNull(
+                    reminderRepository.getReminderAndAlarm(reminderId.get())
+                )
+                snoozeAlarm(reminder, alarm)
+            }
         }
 
         private suspend fun snoozeAlarm(reminder: Reminder, alarm: Alarm) {
@@ -337,7 +345,6 @@ class ReminderAlarmManager : Service() {
                 )
             }
 
-            isHandled.set(true)
             stopSelf()
         }
     }
