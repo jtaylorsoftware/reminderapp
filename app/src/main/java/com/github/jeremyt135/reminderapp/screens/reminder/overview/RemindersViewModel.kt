@@ -7,9 +7,9 @@ import androidx.lifecycle.viewModelScope
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.ReminderAndHistory
+import com.github.jeremyt135.reminderapp.util.MutableEventFlow
+import com.github.jeremyt135.reminderapp.util.asSingleEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -20,18 +20,18 @@ class RemindersViewModel @Inject constructor(private val reminderRepository: Rem
     val reminders: LiveData<List<ReminderAndHistory>> =
         reminderRepository.getAllWithTodayHistory().asLiveData(viewModelScope.coroutineContext)
 
-    private val _navigateToEditor = MutableSharedFlow<Reminder?>(replay = 0)
-    val navigateToEditor: SharedFlow<Reminder?> = _navigateToEditor
+    private val _navigateToEditor = MutableEventFlow<Reminder>()
+    val navigateToEditor = _navigateToEditor.asSingleEvent()
 
     fun addReminder() {
         viewModelScope.launch {
-            _navigateToEditor.emit(null)
+            _navigateToEditor.value = Reminder()
         }
     }
 
     fun editReminder(reminder: Reminder) {
         viewModelScope.launch {
-            _navigateToEditor.emit(reminder)
+            _navigateToEditor.value = reminder
         }
     }
 }

@@ -4,22 +4,23 @@ import android.app.Application
 import android.content.ComponentName
 import android.content.ServiceConnection
 import android.os.IBinder
+import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
+import com.github.jeremyt135.BuildConfig
 import com.github.jeremyt135.reminderapp.broadcast.EXTRA_REMINDER_ID
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.Alarm
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.service.ReminderAlarmManager
+import com.github.jeremyt135.reminderapp.util.MutableEventFlow
+import com.github.jeremyt135.reminderapp.util.asSingleEvent
 import com.github.jeremyt135.reminderapp.util.toLocalDateTime
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.time.format.DateTimeFormatter
@@ -43,24 +44,26 @@ class AlarmViewModel @Inject constructor(
 
     private var tookAction: Boolean = false
 
-    private val _finished = MutableSharedFlow<Unit>(replay = 0)
-    val finished: SharedFlow<Unit> = _finished
+    private val _finished = MutableEventFlow<Unit>()
+    val finished = _finished.asSingleEvent()
 
     private lateinit var reminderAlarmManager: ReminderAlarmManager.LocalBinder
     private var bound = false
     private val serviceConnection = object : ServiceConnection {
         private lateinit var snoozeTimeoutJob: Job
         override fun onServiceConnected(className: ComponentName, service: IBinder) {
+            Timber.d("AlarmViewModel bound to service")
             reminderAlarmManager = service as ReminderAlarmManager.LocalBinder
             bound = true
             snoozeTimeoutJob = viewModelScope.launch {
-                reminderAlarmManager.snoozeTimeout.collect {
-                    _finished.emit(Unit)
+                reminderAlarmManager.snoozeTimeout.onEvent { timeout ->
+                    timeout?.let { _finished.value = Unit }
                 }
             }
         }
 
         override fun onServiceDisconnected(className: ComponentName) {
+            Timber.d("AlarmViewModel unbound from service")
             bound = false
             snoozeTimeoutJob.cancel()
         }
@@ -80,6 +83,12 @@ class AlarmViewModel @Inject constructor(
         if (bound) {
             getApplication<Application>().applicationContext.unbindService(serviceConnection)
             bound = false
+        } else if (BuildConfig.DEBUG) {
+            val msg = "AlarmViewModel was not bound to ReminderAlarmManager at time of onCleared"
+            Timber.d(msg)
+            Toast
+                .makeText(getApplication<Application>().applicationContext, msg, Toast.LENGTH_LONG)
+                .show()
         }
     }
 
@@ -111,10 +120,15 @@ class AlarmViewModel @Inject constructor(
             return
         }
 
-        require(bound)
-        reminderAlarmManager.snooze()
-        viewModelScope.launch {
+        if (bound) {
+            reminderAlarmManager.snooze()
             onAction()
+        } else if (BuildConfig.DEBUG) {
+            val msg = "ReminderAlarmManager is not bound but AlarmViewModel requested action"
+            Timber.d(msg)
+            Toast
+                .makeText(getApplication<Application>().applicationContext, msg, Toast.LENGTH_LONG)
+                .show()
         }
     }
 
@@ -126,10 +140,15 @@ class AlarmViewModel @Inject constructor(
             return
         }
 
-        require(bound)
-        reminderAlarmManager.skip()
-        viewModelScope.launch {
+        if (bound) {
+            reminderAlarmManager.skip()
             onAction()
+        } else if (BuildConfig.DEBUG) {
+            val msg = "ReminderAlarmManager is not bound but AlarmViewModel requested action"
+            Timber.d(msg)
+            Toast
+                .makeText(getApplication<Application>().applicationContext, msg, Toast.LENGTH_LONG)
+                .show()
         }
     }
 
@@ -141,15 +160,20 @@ class AlarmViewModel @Inject constructor(
             return
         }
 
-        require(bound)
-        reminderAlarmManager.complete()
-        viewModelScope.launch {
+        if (bound) {
+            reminderAlarmManager.complete()
             onAction()
+        } else if (BuildConfig.DEBUG) {
+            val msg = "ReminderAlarmManager is not bound but AlarmViewModel requested action"
+            Timber.d(msg)
+            Toast
+                .makeText(getApplication<Application>().applicationContext, msg, Toast.LENGTH_LONG)
+                .show()
         }
     }
 
-    private suspend fun onAction() {
+    private fun onAction() {
         tookAction = true
-        _finished.emit(Unit)
+        _finished.value = Unit
     }
 }

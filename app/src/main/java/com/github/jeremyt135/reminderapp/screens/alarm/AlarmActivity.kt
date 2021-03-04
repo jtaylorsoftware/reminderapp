@@ -44,8 +44,11 @@ class AlarmActivity : AppCompatActivity() {
         /**
          * React to viewModel.finish by closing activity
          */
-        viewModel.finished.asLiveData().observe(this) {
-            this@AlarmActivity.finish()
+        viewModel.finished.flow.asLiveData().observe(this) { event ->
+            event.value?.let {
+                Timber.d("Finishing AlarmActivity")
+                this@AlarmActivity.finish()
+            }
         }
 
         setContentView(R.layout.activity_alarm)

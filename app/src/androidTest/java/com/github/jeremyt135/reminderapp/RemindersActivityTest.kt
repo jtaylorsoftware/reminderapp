@@ -16,6 +16,7 @@ import androidx.test.filters.LargeTest
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.jeremyt135.R
 import com.github.jeremyt135.reminderapp.broadcast.getCreatedIntentForAlarmStart
+import com.github.jeremyt135.reminderapp.data.AlarmRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.local.AppDatabase
@@ -44,7 +45,10 @@ class RemindersActivityTest {
     lateinit var context: Context
 
     @Inject
-    lateinit var repository: ReminderRepository
+    lateinit var reminderRepo: ReminderRepository
+
+    @Inject
+    lateinit var alarmRepo: AlarmRepository
 
     @Inject
     lateinit var database: AppDatabase
@@ -76,7 +80,7 @@ class RemindersActivityTest {
 
     @Test
     fun activity_opensToRemindersList() {
-        runBlocking { reminders.forEach { repository.save(it) } }
+        runBlocking { reminders.forEach { reminderRepo.save(it) } }
 
         val reminder = reminders[0]
 
@@ -153,10 +157,14 @@ class RemindersActivityTest {
             /**
              * Verify the alarm was scheduled
              */
-            val reminderId = runBlocking {
-                repository.getAll().first().first { it.description == description }
-            }.id
-            val alarmIntent = getCreatedIntentForAlarmStart(context, reminderId)
+            val reminder = runBlocking {
+                reminderRepo.getAll().first().first { it.description == description }
+            }
+            val alarm = runBlocking {
+                alarmRepo.findByReminderId(reminder.id)
+            }
+            assertThat(alarm).isNotNull()
+            val alarmIntent = getCreatedIntentForAlarmStart(context, alarm!!,reminder)
             assertThat(alarmIntent).isNotNull()
             alarmIntent?.cancel()
         }
@@ -168,7 +176,7 @@ class RemindersActivityTest {
         val reminder = reminders[0]
 
         runBlocking {
-            reminder.id = repository.save(reminder)
+            reminder.id = reminderRepo.save(reminder)
         }
 
         withActivityScenario(RemindersActivity::class.java) {
@@ -212,7 +220,7 @@ class RemindersActivityTest {
              * Verify that reminder has been deleted
              */
             runBlocking {
-                assertThat(repository.findById(reminder.id)).isNull()
+                assertThat(reminderRepo.findById(reminder.id)).isNull()
             }
         }
     }

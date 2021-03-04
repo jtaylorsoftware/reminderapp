@@ -4,19 +4,29 @@ import android.app.PendingIntent
 import android.content.Context
 import androidx.core.app.NotificationManagerCompat
 import androidx.test.core.app.ApplicationProvider
+import androidx.test.filters.MediumTest
 import androidx.test.filters.SmallTest
+import com.github.jeremyt135.reminderapp.data.AlarmRepository
+import com.github.jeremyt135.reminderapp.data.FakeAlarmRepository
+import com.github.jeremyt135.reminderapp.data.FakeReminderRepository
+import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.Alarm
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
+import com.github.jeremyt135.reminderapp.di.DatabaseModule
 import com.github.jeremyt135.reminderapp.util.toEpochMilli
 import com.google.common.truth.Truth.assertThat
 import dagger.hilt.android.testing.HiltAndroidTest
+import dagger.hilt.android.testing.UninstallModules
+import io.mockk.justRun
+import io.mockk.mockkStatic
+import io.mockk.verify
+import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
-import java.time.LocalDate
 import java.time.LocalDateTime
-import java.time.LocalTime
-import java.time.ZoneId
+import java.time.temporal.ChronoUnit
+import javax.inject.Inject
 
 @HiltAndroidTest
 @SmallTest
@@ -24,6 +34,13 @@ class AlarmUtilTest {
     lateinit var context: Context
 
     private var intent: PendingIntent? = null
+
+    private var alarmCache = mutableListOf<Alarm>()
+    private var alarmRepo: AlarmRepository = FakeAlarmRepository(alarmCache)
+    private var reminderCache = mutableListOf<Reminder>()
+    private var reminderRepository: ReminderRepository = FakeReminderRepository(
+        reminderCache, alarmCache, mutableListOf()
+    )
 
     @Before
     fun setup() {
@@ -38,52 +55,53 @@ class AlarmUtilTest {
     }
 
     @Test
-    fun scheduleAlarmForReminder_oneOffInPast_returnsNull() {
-        val reminder = Reminder(
-            daysOfWeek = sortedSetOf(),
-            time = LocalTime.now().minusMinutes(2)
-        )
-
-        val today = LocalDate.now().dayOfWeek
-
-        assertThat(scheduleAlarmForReminder(context, reminder, today)).isNull()
-        intent = getCreatedIntentForAlarmStart(context, reminder.id)
-    }
-
-    @Test
-    fun scheduleAlarmForReminder_goodDateTime_setsAlarm() {
-        val reminder = Reminder(
-            daysOfWeek = sortedSetOf(),
-            time = LocalTime.now().plusHours(1)
-        )
-
-        val today = LocalDate.now().dayOfWeek
-
-        // Set the alarm's triggerAt to match the reminder's time
-        val alarmTime =
-            reminder.getNextTimeForAlarm(today)!!
-                .atZone(ZoneId.systemDefault())
-                .toInstant()
-                .toEpochMilli()
-        val alarm = Alarm(reminderId = reminder.id, triggerAt = alarmTime)
-
-        // Verify alarm was scheduled without failure
-        assertThat(scheduleAlarmForReminder(context, reminder, today)).isNotNull()
-
-        // Verify that AlarmManager did set the alarm with the correct intent
-        intent = getCreatedIntentForAlarmStart(context, alarm.reminderId)
-        assertThat(intent).isNotNull()
-    }
-
-    @Test
-    fun scheduleAlarm_setsAlarm() {
+    fun scheduleAlarmForReminder_setsAlarm() {
         val alarm = Alarm(1, 1, LocalDateTime.now().plusHours(1).toEpochMilli())
+        val reminder = Reminder(id = 1)
 
-        scheduleAlarm(context, alarm)
+        scheduleAlarmForReminder(context, alarm, reminder)
 
-        intent = getCreatedIntentForAlarmStart(context, alarm.reminderId)
+        intent = getCreatedIntentForAlarmStart(context, alarm, reminder)
 
         assertThat(intent).isNotNull()
+    }
+
+    @Test
+    fun scheduleNextAlarm_populatedDb_setsAlarmForNextSoonest() {
+        val now = LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES)
+
+        // Save alarms with descending id but ascending time
+        val alarms = listOf(
+            Alarm(id = 2, reminderId = 1, triggerAt = now.plusMinutes(10).toEpochMilli()),
+            Alarm(id = 1, reminderId = 1, triggerAt = now.plusMinutes(15).toEpochMilli())
+        )
+        alarms.forEach { runBlocking { alarmRepo.save(it) } }
+
+        val reminder = Reminder(id = 1)
+        runBlocking {
+            reminderRepository.save(reminder)
+            scheduleNextAlarm(context, alarmRepo, reminderRepository)
+        }
+
+        intent = getCreatedIntentForAlarmStart(context, alarms[0], reminder)
+
+        assertThat(intent).isNotNull()
+    }
+
+    @Test
+    fun scheduleNextAlarm_noAlarms_doesNotSchedule() {
+        val reminder = Reminder(id = 1)
+        runBlocking {
+            reminderRepository.save(reminder)
+            scheduleNextAlarm(context, alarmRepo, reminderRepository)
+        }
+
+        mockkStatic(::scheduleAlarmForReminder)
+        justRun { scheduleAlarmForReminder(context, any(), any()) }
+
+        verify(exactly=0) {
+            scheduleAlarmForReminder(context, any(), any())
+        }
     }
 
     @Test
@@ -103,9 +121,9 @@ class AlarmUtilTest {
     }
 
     @Test
-    fun triggerNotification_createsAlarmActivityIntent(){
-        val reminder = Reminder(id=1)
-        val alarm = Alarm(id=1,reminderId = reminder.id, triggerAt = 0)
+    fun triggerNotification_createsAlarmActivityIntent() {
+        val reminder = Reminder(id = 1)
+        val alarm = Alarm(id = 1, reminderId = reminder.id, triggerAt = 0)
 
         triggerNotification(context, reminder, alarm.id)
 

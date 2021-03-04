@@ -54,7 +54,7 @@ class AlarmBootSchedulerTest {
     @Test
     fun intentAction_notBootCompleted_returnsWithoutScheduling() {
         val intent = mockk<Intent>()
-        every { intent.action } returns ACTION_ALARM_START
+        every { intent.action } returns ACTION_ALARM_SNOOZE
 
         receiver.onReceive(mockContext, intent)
 
@@ -76,8 +76,8 @@ class AlarmBootSchedulerTest {
 
         val today = LocalDate.now().dayOfWeek
 
-        mockkStatic(::scheduleAlarmForReminder)
-        every { scheduleAlarmForReminder(mockContext, reminder = any(), today) } returnsMany alarms
+        mockkStatic(::scheduleNextAlarm)
+        coEvery { scheduleNextAlarm(mockContext, mockAlarmRepository, mockReminderRepository) } returns Unit
 
         coEvery { mockAlarmRepository.save(alarm = any()) } returnsMany listOf(1, 2)
         coEvery { mockReminderRepository.getAll() } returns flowOf(reminders)
@@ -90,12 +90,7 @@ class AlarmBootSchedulerTest {
         receiver.onReceive(mockContext, intent)
 
         coVerifyOrder {
-            mockAlarmRepository.deleteAll()
-            // Verify that 2 reminders were scheduled
-            scheduleAlarmForReminder(mockContext, reminders[0], today)
-            mockAlarmRepository.save(alarms[0])
-            scheduleAlarmForReminder(mockContext, reminders[1], today)
-            mockAlarmRepository.save(alarms[1])
+            scheduleNextAlarm(mockContext, mockAlarmRepository, mockReminderRepository)
         }
     }
 }

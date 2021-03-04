@@ -14,12 +14,23 @@ class FakeAlarmRepository @Inject constructor(private val cache: MutableList<Ala
         emit(cache)
     }
 
+    override suspend fun getFirstStartingFrom(timeNow: Long): Alarm? =
+        // Find the earliest alarm to come after timeNow
+        cache.toMutableList().filter { it.triggerAt >= timeNow }.minByOrNull { it.triggerAt }
+
+
+    override suspend fun getFirstStartingFrom(timeNow: Long, id: Long): Alarm? =
+        cache
+            .toMutableList()
+            .filter { it.triggerAt >= timeNow && it.id > id }
+            .minByOrNull { it.triggerAt }
+
     override suspend fun findById(id: Long): Alarm? = cache.find { it.id == id }
     override suspend fun findByReminderId(reminderId: Long): Alarm? =
         cache.find { it.reminderId == reminderId }
 
     override suspend fun save(alarm: Alarm): Long =
-        when(val index = cache.indexOf(alarm)){
+        when (val index = cache.indexOf(alarm)) {
             -1 -> {
                 cache.add(alarm.copy(id = cache.size + 1L))
                 cache.size.toLong()
@@ -30,7 +41,7 @@ class FakeAlarmRepository @Inject constructor(private val cache: MutableList<Ala
             }
         }
 
-    override suspend fun delete(alarm: Alarm){
+    override suspend fun delete(alarm: Alarm) {
         cache.remove(alarm)
     }
 

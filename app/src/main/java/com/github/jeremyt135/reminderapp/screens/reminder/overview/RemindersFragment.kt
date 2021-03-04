@@ -43,13 +43,15 @@ class RemindersFragment : Fragment() {
             }
         }
 
-        viewModel.navigateToEditor.asLiveData().observe(viewLifecycleOwner) { reminder ->
-            Timber.d("navigateToEditor received reminder: $reminder")
-            findNavController().navigate(
-                RemindersFragmentDirections.actionFragmentRemindersToReminderEditorActivity(
-                    reminder?.id ?: 0L
+        viewModel.navigateToEditor.asLiveData().observe(viewLifecycleOwner) { event ->
+            event.value?.let { reminder ->
+                Timber.d("navigateToEditor received reminder: $reminder")
+                findNavController().navigate(
+                    RemindersFragmentDirections.actionFragmentRemindersToReminderEditorActivity(
+                        reminder.id
+                    )
                 )
-            )
+            }
         }
     }
 

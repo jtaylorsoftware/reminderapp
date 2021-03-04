@@ -23,7 +23,6 @@ import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.local.FakeHistoryLocalDataSource
 import com.github.jeremyt135.reminderapp.di.DatabaseModule
 import com.github.jeremyt135.reminderapp.di.RepositoryModule
-import com.github.jeremyt135.reminderapp.util.verifyFlowEmitted
 import com.github.jeremyt135.reminderapp.util.withTime
 import com.google.common.truth.Truth.assertThat
 import dagger.Module
@@ -179,10 +178,8 @@ class ReminderEditorFragmentTest {
             fragmentVM = this.viewModel
         }
 
-        verifyFlowEmitted(fragmentVM.navigateToReminders, this){
-            // Cancel the edits
-            onView(withId(R.id.button_editor_cancel)).perform(click())
-        }
+        onView(withId(R.id.button_editor_cancel)).perform(click())
+        assertThat(fragmentVM.navigateToReminders.value).isNotNull()
 
         // Assert that the size hasn't changed during this test
         val finalReminders = reminderRepository.getAll().first()
@@ -197,9 +194,8 @@ class ReminderEditorFragmentTest {
             fragmentVM = this.viewModel
         }
 
-        verifyFlowEmitted(fragmentVM.navigateToReminders, this){
-            onView(withId(R.id.button_editor_save)).perform(click())
-        }
+        onView(withId(R.id.button_editor_save)).perform(click())
+        assertThat(fragmentVM.navigateToReminders.value).isNotNull()
     }
 
     @Test

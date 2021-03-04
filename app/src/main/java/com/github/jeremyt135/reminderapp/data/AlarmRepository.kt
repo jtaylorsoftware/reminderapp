@@ -11,6 +11,8 @@ interface AlarmRepository {
     fun getAll(): Flow<List<Alarm>>
     suspend fun findById(id: Long): Alarm?
     suspend fun findByReminderId(reminderId: Long): Alarm?
+    suspend fun getFirstStartingFrom(timeNow: Long): Alarm?
+    suspend fun getFirstStartingFrom(timeNow: Long, id: Long): Alarm?
     suspend fun save(alarm: Alarm): Long
     suspend fun delete(alarm: Alarm)
     suspend fun deleteAll()
@@ -20,11 +22,17 @@ interface AlarmRepository {
 class AlarmRepositoryImpl @Inject constructor(
     private val alarmDao: AlarmDao
 ) : AlarmRepository {
-    override fun getAll(): Flow<List<Alarm>> = alarmDao.getAll().map { it.asDomainModel()}
+    override fun getAll(): Flow<List<Alarm>> = alarmDao.getAll().map { it.asDomainModel() }
 
     override suspend fun findById(id: Long): Alarm? = alarmDao.findById(id)?.asDomainModel()
     override suspend fun findByReminderId(reminderId: Long): Alarm? =
         alarmDao.findByReminderId(reminderId)?.asDomainModel()
+
+    override suspend fun getFirstStartingFrom(timeNow: Long) =
+        alarmDao.getFirstStartingFrom(timeNow)?.asDomainModel()
+
+    override suspend fun getFirstStartingFrom(timeNow: Long, id: Long) =
+        alarmDao.getFirstStartingFrom(timeNow, id)?.asDomainModel()
 
     override suspend fun save(alarm: Alarm): Long = alarmDao.insert(alarm.asDataModel())
 

@@ -26,8 +26,8 @@ class ReminderEditorActivity : AppCompatActivity() {
         setContentView(R.layout.activity_reminder_editor)
         configureActionBar()
 
-        viewModel.navigateToReminders.asLiveData().observe(this) {
-            goToReminders()
+        viewModel.navigateToReminders.asLiveData().observe(this) { event ->
+            event.value?.let{ goToReminders() }
         }
     }
 

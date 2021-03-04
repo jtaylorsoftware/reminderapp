@@ -12,6 +12,7 @@ import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.ReminderStatus
 import com.github.jeremyt135.reminderapp.data.local.FakeHistoryLocalDataSource
 import com.github.jeremyt135.reminderapp.di.*
+import com.github.jeremyt135.reminderapp.util.toEpochMilli
 import com.google.common.truth.Truth.assertThat
 import dagger.Module
 import dagger.Provides
@@ -20,9 +21,10 @@ import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.UninstallModules
 import dagger.hilt.components.SingletonComponent
+import io.mockk.coJustRun
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockkStatic
-import io.mockk.verify
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -33,7 +35,8 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import java.time.DayOfWeek
-import java.time.Instant
+import java.time.LocalDateTime
+import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -99,7 +102,6 @@ class ReminderAlarmManagerTest {
     lateinit var historyRepository: HistoryRepository
 
     private lateinit var reminder: Reminder
-    private lateinit var alarm: Alarm
 
     @Before
     fun setup() {
@@ -111,12 +113,6 @@ class ReminderAlarmManagerTest {
         )
         runBlocking {
             reminder.id = reminderRepository.save(reminder)
-            alarm = Alarm(
-                id = 0,
-                reminderId = reminder.id,
-                triggerAt = Instant.now().toEpochMilli()
-            )
-            alarm.id = alarmRepository.save(alarm)
         }
         mockkStatic(::showToast)
         every { showToast(any(), any(), any()) } returns Unit
@@ -126,7 +122,7 @@ class ReminderAlarmManagerTest {
     fun start_actionStart_createsNotification() {
         val context: Context = ApplicationProvider.getApplicationContext()
         serviceRule.startService(
-            ReminderAlarmManager.getIntent(context, ACTION_ALARM_START, reminder.id)
+            ReminderAlarmManager.getActionIntent(context, ACTION_ALARM_SET_NOTIF, reminder.id)
         )
 
         assertThat(getCreatedIntentForAlarmActivity(context, reminder.id)).isNotNull()
@@ -135,39 +131,34 @@ class ReminderAlarmManagerTest {
     @Test
     fun onBind_returnsLocalBinder() {
         val context: Context = ApplicationProvider.getApplicationContext()
-        val intent = ReminderAlarmManager.getIntent(context, ACTION_ALARM_START, reminder.id)
+        val intent =
+            ReminderAlarmManager.getActionIntent(context, ACTION_ALARM_SET_NOTIF, reminder.id)
         serviceRule.startService(intent)
 
         val binder = serviceRule.bindService(intent)
         assertThat(binder).isInstanceOf(ReminderAlarmManager.LocalBinder::class.java)
     }
 
-    /**
-     * Tests the ActionHandler's response to an action being received
-     * from the ReminderAlarmManager's call to onStartCommand. The binder
-     * also delegates work to the handler.
-     */
     @Test
     fun actionSnooze_snoozesAlarm() = testCoroutineDispatcher.runBlockingTest {
         val context: Context = ApplicationProvider.getApplicationContext()
         serviceRule.startService(
-            ReminderAlarmManager.getIntent(context, ACTION_ALARM_START, reminder.id)
+            ReminderAlarmManager.getActionIntent(context, ACTION_ALARM_SET_NOTIF, reminder.id)
         )
 
-        mockkStatic(::scheduleAlarm, ::showToast, ::triggerNotification)
-        every { scheduleAlarm(any(), any()) } returns Unit
+        mockkStatic(::scheduleNextAlarm, ::showToast, ::triggerNotification)
+        coJustRun { scheduleNextAlarm(any(), alarmRepository, reminderRepository) }
         every { showToast(any(), any(), any()) } returns Unit
         every { triggerNotification(any(), any(), any()) } returns Unit
 
         serviceRule.startService(
-            ReminderAlarmManager.getIntent(context, ACTION_ALARM_SNOOZE, reminder.id)
+            ReminderAlarmManager.getActionIntent(context, ACTION_ALARM_SNOOZE, reminder.id)
         )
 
-        val nextAlarm = alarmRepository.findById(alarm.id)!!
-        assertThat(nextAlarm.triggerAt).isGreaterThan(alarm.triggerAt)
+        val nextAlarm = alarmRepository.findByReminderId(reminder.id)!!
 
-        verify {
-            scheduleAlarm(any(), nextAlarm)
+        coVerify {
+            scheduleNextAlarm(any(), alarmRepository, reminderRepository)
             showToast(any(), any())
             triggerSnoozeNotification(
                 any(),
@@ -181,21 +172,14 @@ class ReminderAlarmManagerTest {
     fun actionSkip_savesHistory_andReschedules() {
         val context: Context = ApplicationProvider.getApplicationContext()
         serviceRule.startService(
-            ReminderAlarmManager.getIntent(context, ACTION_ALARM_START, reminder.id)
+            ReminderAlarmManager.getActionIntent(context, ACTION_ALARM_SET_NOTIF, reminder.id)
         )
 
-        mockkStatic(::scheduleAlarmForReminder)
-        every {
-            scheduleAlarmForReminder(
-                any(),
-                reminder,
-                any(),
-                false
-            )
-        } returns Alarm(id = alarm.id, reminderId = reminder.id, triggerAt = 0)
+        mockkStatic(::scheduleNextAlarm)
+        coJustRun { scheduleNextAlarm(any(), alarmRepository, reminderRepository) }
 
         serviceRule.startService(
-            ReminderAlarmManager.getIntent(context, ACTION_ALARM_SKIP, reminder.id)
+            ReminderAlarmManager.getActionIntent(context, ACTION_ALARM_SKIP, reminder.id)
         )
 
         runBlockingTest {
@@ -204,8 +188,8 @@ class ReminderAlarmManagerTest {
             }
             assertThat(history).isNotNull()
 
-            val nextAlarm = alarmRepository.findByReminderId(reminder.id)!!
-            assertThat(nextAlarm.triggerAt).isEqualTo(0)
+            val nextAlarm = alarmRepository.findByReminderId(reminder.id)
+            assertThat(nextAlarm).isNotNull()
         }
     }
 
@@ -213,21 +197,14 @@ class ReminderAlarmManagerTest {
     fun actionComplete_savesHistory_andReschedules() {
         val context: Context = ApplicationProvider.getApplicationContext()
         serviceRule.startService(
-            ReminderAlarmManager.getIntent(context, ACTION_ALARM_START, reminder.id)
+            ReminderAlarmManager.getActionIntent(context, ACTION_ALARM_SET_NOTIF, reminder.id)
         )
 
-        mockkStatic(::scheduleAlarmForReminder)
-        every {
-            scheduleAlarmForReminder(
-                any(),
-                reminder,
-                any(),
-                false
-            )
-        } returns Alarm(id = alarm.id, reminderId = reminder.id, triggerAt = 0)
+        mockkStatic(::scheduleNextAlarm)
+        coJustRun { scheduleNextAlarm(any(), alarmRepository, reminderRepository) }
 
         serviceRule.startService(
-            ReminderAlarmManager.getIntent(context, ACTION_ALARM_COMPLETE, reminder.id)
+            ReminderAlarmManager.getActionIntent(context, ACTION_ALARM_COMPLETE, reminder.id)
         )
 
         runBlockingTest {
@@ -236,28 +213,30 @@ class ReminderAlarmManagerTest {
             }
             assertThat(history).isNotNull()
 
-            val nextAlarm = alarmRepository.findByReminderId(reminder.id)!!
-            assertThat(nextAlarm.triggerAt).isEqualTo(0)
+            val nextAlarm = alarmRepository.findByReminderId(reminder.id)
+            assertThat(nextAlarm).isNotNull()
         }
     }
 
     @Test
     fun localBinder_snooze_snoozesAlarm() = testCoroutineDispatcher.runBlockingTest {
         val context: Context = ApplicationProvider.getApplicationContext()
-        val intent = ReminderAlarmManager.getIntent(context, ACTION_ALARM_START, reminder.id)
+        val intent =
+            ReminderAlarmManager.getActionIntent(context, ACTION_ALARM_SET_NOTIF, reminder.id)
         serviceRule.startService(intent)
 
         val binder = serviceRule.bindService(intent) as ReminderAlarmManager.LocalBinder
         binder.snooze()
 
         val nextAlarm = alarmRepository.findByReminderId(reminder.id)!!
-        assertThat(nextAlarm.triggerAt).isGreaterThan(alarm.triggerAt)
+        assertThat(nextAlarm.triggerAt).isGreaterThan(0)
     }
 
     @Test
     fun localBinder_skip_skipsAlarm() {
         val context: Context = ApplicationProvider.getApplicationContext()
-        val intent = ReminderAlarmManager.getIntent(context, ACTION_ALARM_START, reminder.id)
+        val intent =
+            ReminderAlarmManager.getActionIntent(context, ACTION_ALARM_SET_NOTIF, reminder.id)
         serviceRule.startService(intent)
 
         val binder = serviceRule.bindService(intent) as ReminderAlarmManager.LocalBinder
@@ -274,7 +253,8 @@ class ReminderAlarmManagerTest {
     @Test
     fun localBinder_complete_completesAlarm() {
         val context: Context = ApplicationProvider.getApplicationContext()
-        val intent = ReminderAlarmManager.getIntent(context, ACTION_ALARM_START, reminder.id)
+        val intent =
+            ReminderAlarmManager.getActionIntent(context, ACTION_ALARM_SET_NOTIF, reminder.id)
         serviceRule.startService(intent)
 
         val binder = serviceRule.bindService(intent) as ReminderAlarmManager.LocalBinder

@@ -1,9 +1,7 @@
 package com.github.jeremyt135.reminderapp.screens.alarm
 
-import android.content.ComponentName
 import android.content.Context
 import android.content.ServiceConnection
-import android.os.IBinder
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.lifecycle.SavedStateHandle
 import com.github.jeremyt135.reminderapp.MainCoroutineRule
@@ -15,8 +13,8 @@ import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.ReminderAndAlarm
 import com.github.jeremyt135.reminderapp.getOrAwaitValue
 import com.github.jeremyt135.reminderapp.service.ReminderAlarmManager
+import com.github.jeremyt135.reminderapp.util.EventFlow
 import com.github.jeremyt135.reminderapp.util.toEpochMilli
-import com.github.jeremyt135.reminderapp.util.verifyFlowEmitted
 import com.google.common.truth.Truth.assertThat
 import io.mockk.*
 import io.mockk.impl.annotations.MockK
@@ -76,10 +74,7 @@ class AlarmViewModelTest {
         serviceConnection = slot()
         every { ReminderAlarmManager.bind(any(), capture(serviceConnection), any()) } returns Unit
 
-        val snoozeTimeout = flow { emit(Unit) }.shareIn(
-            mainCoroutineRule,
-            SharingStarted.Lazily
-        )
+        val snoozeTimeout = EventFlow<Unit>()
         fakeBinder = spyk(object : ReminderAlarmManager.LocalBinder(snoozeTimeout) {
             override fun snooze() {}
             override fun skip() {}
@@ -119,9 +114,8 @@ class AlarmViewModelTest {
             AlarmViewModel(mockApplication, mockReminderRepo, mockSavedStateHandle)
         serviceConnection.captured.onServiceConnected(mockk(), fakeBinder)
 
-        verifyFlowEmitted(viewModel.finished, this) {
-            viewModel.snooze()
-        }
+        viewModel.snooze()
+        assertThat(viewModel.finished.peek()).isNotNull()
 
         // Verify the snooze happened
         verify {
@@ -136,9 +130,8 @@ class AlarmViewModelTest {
             AlarmViewModel(mockApplication, mockReminderRepo, mockSavedStateHandle)
         serviceConnection.captured.onServiceConnected(mockk(), fakeBinder)
 
-        verifyFlowEmitted(viewModel.finished, this) {
-            viewModel.skip()
-        }
+        viewModel.skip()
+        assertThat(viewModel.finished.peek()).isNotNull()
 
         verify {
             fakeBinder.skip()
@@ -152,9 +145,8 @@ class AlarmViewModelTest {
             AlarmViewModel(mockApplication, mockReminderRepo, mockSavedStateHandle)
         serviceConnection.captured.onServiceConnected(mockk(), fakeBinder)
 
-        verifyFlowEmitted(viewModel.finished, this) {
-            viewModel.complete()
-        }
+        viewModel.complete()
+        assertThat(viewModel.finished.peek()).isNotNull()
 
         verify {
             fakeBinder.complete()
