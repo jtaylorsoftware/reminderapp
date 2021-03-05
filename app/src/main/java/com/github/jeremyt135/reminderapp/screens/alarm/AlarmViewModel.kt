@@ -74,7 +74,7 @@ class AlarmViewModel @Inject constructor(
         loadReminderData(reminderId)
 
         val context = getApplication<Application>().applicationContext
-        ReminderAlarmManager.bind(context, serviceConnection, reminderId)
+        ReminderAlarmManager.bind(context, serviceConnection, reminderId, 0)
     }
 
     override fun onCleared() {

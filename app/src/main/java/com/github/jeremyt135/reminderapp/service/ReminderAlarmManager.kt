@@ -378,11 +378,11 @@ class ReminderAlarmManager : Service() {
          * If reminderId is not the same as the one that started the service,
          * onBind will return a null Binder
          */
-        fun bind(context: Context, connection: ServiceConnection, reminderId: Long) {
+        fun bind(context: Context, connection: ServiceConnection, reminderId: Long, flags: Int) {
             Intent(context, ReminderAlarmManager::class.java).apply {
                 putExtra(EXTRA_REMINDER_ID, reminderId)
             }.also {
-                context.bindService(it, connection, 0)
+                context.bindService(it, connection, flags)
             }
         }
 

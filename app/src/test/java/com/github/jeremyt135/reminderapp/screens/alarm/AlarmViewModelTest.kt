@@ -72,7 +72,7 @@ class AlarmViewModelTest {
 
         mockkObject(ReminderAlarmManager.Companion)
         serviceConnection = slot()
-        every { ReminderAlarmManager.bind(any(), capture(serviceConnection), any()) } returns Unit
+        every { ReminderAlarmManager.bind(any(), capture(serviceConnection), any(), any()) } returns Unit
 
         val snoozeTimeout = EventFlow<Unit>()
         fakeBinder = spyk(object : ReminderAlarmManager.LocalBinder(snoozeTimeout) {
