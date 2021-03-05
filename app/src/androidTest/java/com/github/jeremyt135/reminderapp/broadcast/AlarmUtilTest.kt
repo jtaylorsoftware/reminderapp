@@ -2,6 +2,7 @@ package com.github.jeremyt135.reminderapp.broadcast
 
 import android.app.PendingIntent
 import android.content.Context
+import android.os.Parcel
 import androidx.core.app.NotificationManagerCompat
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.filters.MediumTest
@@ -72,20 +73,58 @@ class AlarmUtilTest {
 
         // Save alarms with descending id but ascending time
         val alarms = listOf(
-            Alarm(id = 2, reminderId = 1, triggerAt = now.plusMinutes(10).toEpochMilli()),
-            Alarm(id = 1, reminderId = 1, triggerAt = now.plusMinutes(15).toEpochMilli())
+            Alarm(id = 1, reminderId = 1, triggerAt = now.plusMinutes(10).toEpochMilli()),
+            Alarm(id = 2, reminderId = 2, triggerAt = now.plusMinutes(20).toEpochMilli()),
+            )
+        alarms.forEach { runBlocking { alarmRepo.save(it) } }
+
+        val reminder = Reminder(id = 1)
+        runBlocking {
+            reminderRepository.save(reminder)
+            scheduleNextAlarm(
+                context,
+                alarmRepo,
+                reminderRepository,
+                LocalDateTime.now().withHour(0)
+            )
+
+            intent = getCreatedIntentForAlarmStart(context, alarms[0], reminder)
+
+            assertThat(intent).isNotNull()
+            assertThat(alarmRepo.findById(1)!!.scheduled).isTrue()
+        }
+    }
+
+    @Test
+    fun scheduleNextAlarm_clearsPreviouslyScheduled() {
+        val now = LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES)
+
+        // Save alarms with descending id but ascending time
+        val alarms = listOf(
+            Alarm(id = 2, reminderId = 1, triggerAt = now.plusMinutes(2).toEpochMilli()),
+            Alarm(id = 1, reminderId = 2, triggerAt = now.plusMinutes(3).toEpochMilli()),
+            Alarm(
+                id = 4,
+                reminderId = 3,
+                triggerAt = now.plusMinutes(5).toEpochMilli(),
+                scheduled = true
+            ),
+            Alarm(id = 3, reminderId = 4, triggerAt = now.plusMinutes(4).toEpochMilli())
         )
         alarms.forEach { runBlocking { alarmRepo.save(it) } }
 
         val reminder = Reminder(id = 1)
         runBlocking {
             reminderRepository.save(reminder)
-            scheduleNextAlarm(context, alarmRepo, reminderRepository)
+            scheduleNextAlarm(
+                context,
+                alarmRepo,
+                reminderRepository,
+                LocalDateTime.now().withHour(0)
+            )
+
+            assertThat(alarmRepo.findById(4)!!.scheduled).isNull()
         }
-
-        intent = getCreatedIntentForAlarmStart(context, alarms[0], reminder)
-
-        assertThat(intent).isNotNull()
     }
 
     @Test
@@ -99,7 +138,7 @@ class AlarmUtilTest {
         mockkStatic(::scheduleAlarmForReminder)
         justRun { scheduleAlarmForReminder(context, any(), any()) }
 
-        verify(exactly=0) {
+        verify(exactly = 0) {
             scheduleAlarmForReminder(context, any(), any())
         }
     }

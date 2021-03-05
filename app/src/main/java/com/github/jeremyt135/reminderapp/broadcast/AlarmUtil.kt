@@ -61,15 +61,49 @@ const val NOTIFICATION_LED_ONMS: Int = 1
 const val NOTIFICATION_LED_OFFMS: Int = 0
 
 /**
+ * Schedules the Alarm that is chronologically next to trigger today, if one exists.
+ */
+suspend fun scheduleNextAlarm(
+    context: Context,
+    alarmRepository: AlarmRepository,
+    reminderRepository: ReminderRepository,
+    startTime: LocalDateTime = LocalDateTime.now(),
+) {
+    // Unset currently scheduled
+    alarmRepository.getFirstScheduledAlarm()?.let {
+        alarmRepository.clearScheduled(it)
+    }
+
+    Timber.d("Scheduling next alarm...")
+
+    // Try to reschedule the next soonest alarm
+    val startTimeMilli = startTime.truncatedTo(ChronoUnit.MINUTES).toEpochMilli()
+    var alarm = alarmRepository.getFirstStartingFrom(startTimeMilli)
+    while (alarm != null) {
+        val reminder = reminderRepository.findById(alarm.reminderId)
+
+        if (reminder != null) {
+            alarmRepository.setScheduled(alarm)
+            scheduleAlarmForReminder(context, alarm.copy(scheduled = true), reminder)
+            break
+        } else {
+            alarm = alarmRepository.getFirstStartingFrom(startTimeMilli)
+            continue
+        }
+    }
+}
+
+/**
  * Schedules a system AlarmClock for the Alarm and Reminder, using the Alarm.triggerAt value
  * for the AlarmClock triggerAt value.
  */
+@VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
 fun scheduleAlarmForReminder(
     context: Context,
     alarm: Alarm,
     reminder: Reminder
 ) {
-
+    Timber.d("Scheduling $alarm for ${alarm.triggerAt.toLocalDateTime()} (${alarm.triggerAt})")
     val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
     val intent = getIntentForAlarmStart(context, alarm, reminder)
     val showIntent = getIntentForEditorActivity(context, alarm.reminderId)
@@ -79,32 +113,6 @@ fun scheduleAlarmForReminder(
         showIntent,
         intent
     )
-}
-
-/**
- * Schedules the Alarm that is chronologically next to trigger, if one exists.
- */
-suspend fun scheduleNextAlarm(
-    context: Context,
-    alarmRepository: AlarmRepository,
-    reminderRepository: ReminderRepository
-) {
-    val timeNow = LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES).toEpochMilli()
-
-    // Try to reschedule the next soonest alarm
-    var alarm = alarmRepository.getFirstStartingFrom(timeNow)
-    while (alarm != null) {
-        val reminder = reminderRepository.findById(alarm.reminderId)
-        if (reminder == null) {
-            // Clean up dangling alarms
-            alarmRepository.delete(alarm)
-            alarm = alarmRepository.getFirstStartingFrom(timeNow, alarm.id)
-            continue
-        }
-
-        scheduleAlarmForReminder(context, alarm, reminder)
-        break
-    }
 }
 
 /**
@@ -219,12 +227,21 @@ private fun createAlarmActivityIntent(
 
 @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
 fun getIntentForAlarmStart(context: Context, alarm: Alarm, reminder: Reminder): PendingIntent =
-    PendingIntent.getService(
-        context,
-        reminder.id.toInt(),
-        ReminderAlarmManager.getStartIntent(context, alarm, reminder),
-        0
-    )
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        PendingIntent.getForegroundService(
+            context,
+            reminder.id.toInt(),
+            ReminderAlarmManager.getStartIntent(context, alarm, reminder),
+            0
+        )
+    } else {
+        PendingIntent.getService(
+            context,
+            reminder.id.toInt(),
+            ReminderAlarmManager.getStartIntent(context, alarm, reminder),
+            0
+        )
+    }
 
 @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
 fun getCreatedIntentForAlarmStart(
@@ -232,13 +249,21 @@ fun getCreatedIntentForAlarmStart(
     alarm: Alarm,
     reminder: Reminder
 ): PendingIntent? =
-    PendingIntent.getService(
-        context,
-        reminder.id.toInt(),
-        ReminderAlarmManager.getStartIntent(context, alarm, reminder),
-        PendingIntent.FLAG_NO_CREATE
-    )
-
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        PendingIntent.getForegroundService(
+            context,
+            reminder.id.toInt(),
+            ReminderAlarmManager.getStartIntent(context, alarm, reminder),
+            PendingIntent.FLAG_NO_CREATE
+        )
+    } else {
+        PendingIntent.getService(
+            context,
+            reminder.id.toInt(),
+            ReminderAlarmManager.getStartIntent(context, alarm, reminder),
+            PendingIntent.FLAG_NO_CREATE
+        )
+    }
 
 @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
 fun getIntentForAlarmSkip(context: Context, reminderId: Long): PendingIntent =
@@ -276,12 +301,21 @@ private fun createAlarmActionIntent(
     pendingIntentFlags: Int
 ): PendingIntent? =
     ReminderAlarmManager.getActionIntent(context, action, reminderId).run {
-        PendingIntent.getService(
-            context,
-            reminderId.toInt(),
-            this,
-            pendingIntentFlags
-        )
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            PendingIntent.getForegroundService(
+                context,
+                reminderId.toInt(),
+                this,
+                pendingIntentFlags
+            )
+        } else {
+            PendingIntent.getService(
+                context,
+                reminderId.toInt(),
+                this,
+                pendingIntentFlags
+            )
+        }
     }
 
 fun buildNotificationForAlarm(

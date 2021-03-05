@@ -7,7 +7,9 @@ import android.content.Intent
 import android.content.ServiceConnection
 import android.media.AudioAttributes
 import android.os.*
+import android.widget.Toast
 import androidx.core.app.NotificationManagerCompat
+import com.github.jeremyt135.BuildConfig
 import com.github.jeremyt135.reminderapp.broadcast.*
 import com.github.jeremyt135.reminderapp.data.AlarmRepository
 import com.github.jeremyt135.reminderapp.data.HistoryRepository
@@ -16,7 +18,7 @@ import com.github.jeremyt135.reminderapp.data.domain.Alarm
 import com.github.jeremyt135.reminderapp.data.domain.History
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.ReminderStatus
-import com.github.jeremyt135.reminderapp.di.MainDispatcher
+import com.github.jeremyt135.reminderapp.di.AppCoroutineScope
 import com.github.jeremyt135.reminderapp.util.EventFlow
 import com.github.jeremyt135.reminderapp.util.MutableEventFlow
 import com.github.jeremyt135.reminderapp.util.toEpochMilli
@@ -26,6 +28,8 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import timber.log.Timber
 import java.time.*
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 
@@ -40,14 +44,17 @@ class ReminderAlarmManager : Service() {
     @Inject
     lateinit var historyRepository: HistoryRepository
 
-    @MainDispatcher
+    /**
+     * Scope for doing Room persistence & alarm scheduling that must not be cancelled on Service
+     * being destroyed
+     */
+    @AppCoroutineScope
     @Inject
-    lateinit var mainDispatcher: CoroutineDispatcher
+    lateinit var applicationScope: CoroutineScope
 
-    private val serviceScope: CoroutineScope by lazy {
-        CoroutineScope(SupervisorJob() + mainDispatcher + CoroutineName("ReminderAlarmManager"))
-    }
-
+    /**
+     * Commands stored by ReminderId
+     */
     private val commands = mutableMapOf<Long, Command>()
 
     private var activeBindings = 0
@@ -59,10 +66,12 @@ class ReminderAlarmManager : Service() {
         // Return an appropriate binder if reminderId != 0, otherwise null to reject bind
         return commands[reminderId]?.let {
             LocalBinderImpl(it)
-        } ?:
-        // Return a default Binder to clients that bind with invalid parameters.
-        // Mostly used for testing.
-        Binder()
+        } ?: run {
+            Timber.w("Service onBind called without matching reminder")
+            // Return a default Binder to clients that bind with invalid parameters.
+            // Mostly used for testing.
+            Binder()
+        }
     }
 
     override fun onUnbind(intent: Intent): Boolean {
@@ -80,9 +89,7 @@ class ReminderAlarmManager : Service() {
         val action = intent.action
         if (action != null) {
             Timber.d("onStart action: $action")
-            serviceScope.launch {
-                handleCommand(intent, action, startId)
-            }
+            handleCommand(intent, action, startId)
         } else {
             Timber.w("onStartCommand called with null action in Intent")
         }
@@ -92,13 +99,12 @@ class ReminderAlarmManager : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
-        serviceScope.cancel()
         val vibrator = this.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
         vibrator.cancel()
         Timber.d("Service destroyed")
     }
 
-    private suspend fun handleCommand(intent: Intent, action: String, startId: Int) {
+    private fun handleCommand(intent: Intent, action: String, startId: Int) {
         val reminderId = intent.getLongExtra(EXTRA_REMINDER_ID, 0L)
 
         // Do not handle command at all if no reminderId is given
@@ -125,8 +131,9 @@ class ReminderAlarmManager : Service() {
         }
     }
 
-    private suspend fun handleStart(reminder: Reminder, alarmId: Long, startId: Int) {
-        // Set notification using extras so it can get to foreground ASAP
+    // Calls setNotification and creates a Command
+    private fun handleStart(reminder: Reminder, alarmId: Long, startId: Int) {
+        // Set notification using extras, and in main thread w/o dispatch, so it can get to foreground ASAP
         setNotification(
             reminder,
             alarmId
@@ -134,8 +141,9 @@ class ReminderAlarmManager : Service() {
 
         // Store a Command with the startId from the current onStartCommand so
         // it can be modified later
+
         val snoozeTimeout = MutableEventFlow<Unit>()
-        val snoozeJob = serviceScope.launch {
+        val snoozeJob = applicationScope.launch {
             delay(DELAY_UNTIL_SNOOZE_SEC * 1000)
             snoozeTimeout.value = Unit
             Timber.d("Reminder alarm ${reminder.id} auto-snoozing")
@@ -143,11 +151,12 @@ class ReminderAlarmManager : Service() {
         }
         val command = Command(
             reminderId = reminder.id,
-            alarmId = alarmId,
+            notificationAlarmId = alarmId,
             notificationStartId = startId,
             snoozeTimeout = snoozeTimeout,
             snoozeJob = snoozeJob
         )
+        Timber.d("Created command: $command")
         commands[reminder.id] = command
     }
 
@@ -171,44 +180,74 @@ class ReminderAlarmManager : Service() {
         )
     }
 
-    private suspend fun handleSkip(reminderId: Long, startId: Int?) =
+    private fun handleSkip(reminderId: Long, startId: Int?) {
         handleCompletion(reminderId, ReminderStatus.SKIPPED, startId)
+        showToast(
+            this,
+            "Skipped Reminder",
+        )
+    }
 
-    private suspend fun handleCompleted(reminderId: Long, startId: Int?) =
+    private fun handleCompleted(reminderId: Long, startId: Int?) {
         handleCompletion(reminderId, ReminderStatus.COMPLETED, startId)
+        showToast(
+            this,
+            "Completed Reminder",
+        )
+    }
 
-    private suspend fun handleCompletion(
+    // Performs completion of a Reminder - cancels alarms, saves a new alarm and history entry,
+    // schedules next alarm
+    private fun handleCompletion(
         reminderId: Long,
         completionStatus: ReminderStatus,
         startId: Int?
     ) {
-        Timber.d("Completing reminder $reminderId")
-        commands[reminderId]?.let { command ->
-            reminderRepository.getReminderAndAlarm(command.reminderId)?.let { (reminder, alarm) ->
-                val context: Context = this@ReminderAlarmManager
-                NotificationManagerCompat.from(context).cancel(alarm.id.toInt())
+        applicationScope.launch {
+            Timber.d("Completing reminder $reminderId")
+            val context: Context = this@ReminderAlarmManager
+            commands[reminderId]?.let { command ->
+                command.snoozeJob.cancel()
+                NotificationManagerCompat.from(context).cancel(command.notificationAlarmId.toInt())
 
-                saveHistoryEntry(reminder, completionStatus)
+                reminderRepository.getReminderAndAlarm(command.reminderId)
+                    ?.let { (reminder, alarm) ->
+                        NotificationManagerCompat.from(context).cancel(alarm.id.toInt())
 
-                // Remove old alarm
-                alarmRepository.delete(alarm)
+                        saveHistoryEntry(reminder, completionStatus)
 
-                // Save a new alarm if appropriate
-                if (!reminder.isOneOff) {
-                    val today = LocalDate.now().dayOfWeek
-                    reminder.getNextTimeForAlarm(today, false)?.let {
-                        val nextAlarm = alarm.copy(triggerAt = it.toEpochMilli())
-                        nextAlarm.id = alarmRepository.save(nextAlarm)
+                        // Remove old alarm
+                        alarmRepository.delete(alarm)
+
+                        // Save a new alarm if appropriate
+                        if (!reminder.isOneOff) {
+                            val today = LocalDate.now().dayOfWeek
+                            reminder.getNextTimeForAlarm(today, false)?.let {
+                                val nextAlarm = Alarm(
+                                    reminderId = alarm.reminderId,
+                                    triggerAt = it.toEpochMilli()
+                                )
+                                nextAlarm.id = alarmRepository.save(nextAlarm)
+                            }
+                        }
+                    } ?: run {
+                    if (BuildConfig.DEBUG) {
+                        showToast(
+                            context,
+                            "ReminderAlarmManager.handleCompletion: null reminder",
+                            Toast.LENGTH_LONG
+                        )
                     }
                 }
 
+                // schedule next even if getting the reminder failed
                 scheduleNextAlarm(context, alarmRepository, reminderRepository)
+
+                startId?.let { stopSelf(it) }
+                stopSelf(command.notificationStartId)
             }
-            command.snoozeJob.cancel()
-            startId?.let { stopSelf(it) }
-            stopSelf(command.notificationStartId)
+            commands.remove(reminderId)
         }
-        commands.remove(reminderId)
     }
 
     private suspend fun saveHistoryEntry(
@@ -224,50 +263,80 @@ class ReminderAlarmManager : Service() {
         historyRepository.save(history)
     }
 
-    private suspend fun handleSnooze(reminderId: Long, startId: Int?) {
-        Timber.d("Handle snooze: $reminderId")
-        commands[reminderId]?.let { command ->
-            val (reminder, alarm) = requireNotNull(
+    private fun handleSnooze(reminderId: Long, startId: Int?) {
+        applicationScope.launch {
+            Timber.d("Handle snooze: $reminderId")
+            val context: Context = this@ReminderAlarmManager
+            commands[reminderId]?.let { command ->
+                command.snoozeJob.cancel()
+                NotificationManagerCompat.from(context).cancel(command.notificationAlarmId.toInt())
+
                 reminderRepository.getReminderAndAlarm(command.reminderId)
-            )
+                    ?.let { (reminder, alarm) ->
+                        NotificationManagerCompat.from(context).cancel(alarm.id.toInt())
+                        snoozeAlarm(context, reminder, alarm)
+                    } ?: run {
+                    if (BuildConfig.DEBUG) {
+                        showToast(
+                            context,
+                            "ReminderAlarmManager.handleSnooze: null reminder",
+                            Toast.LENGTH_LONG
+                        )
+                    }
+                }
 
-            snoozeAlarm(reminder, alarm)
+                // schedule next even if getting the reminder failed
+                scheduleNextAlarm(context, alarmRepository, reminderRepository)
 
-            command.snoozeJob.cancel()
-            startId?.let { stopSelf(it) }
-            stopSelf(command.notificationStartId)
+                startId?.let { stopSelf(it) }
+                stopSelf(command.notificationStartId)
+            }
+            commands.remove(reminderId)
         }
-        commands.remove(reminderId)
     }
 
-    private suspend fun snoozeAlarm(reminder: Reminder, alarm: Alarm) {
-        val context: Context = this@ReminderAlarmManager
-        NotificationManagerCompat.from(context).cancel(alarm.id.toInt())
+    private suspend fun snoozeAlarm(context: Context, reminder: Reminder, alarm: Alarm) {
+        val nextAlarm = saveNextAlarm(alarm)
+        showSnoozeNotifications(context, reminder, nextAlarm)
+    }
 
+    // Saves the next Alarm, but does not schedule
+    private suspend fun saveNextAlarm(alarm: Alarm): Alarm {
         // Determine next triggerAt
-        val nextAlarm = alarm.copy(
-            id = 0,
+        val nextAlarm = Alarm(
+            reminderId = alarm.reminderId,
             triggerAt = alarm.triggerAt.toLocalDateTime().plusMinutes(SNOOZE_TIME_MIN)
-                .truncatedTo(ChronoUnit.MINUTES).toEpochMilli()
+                .truncatedTo(ChronoUnit.MINUTES).toEpochMilli(),
         )
 
         // Delete previous, save changes
         alarmRepository.delete(alarm)
         nextAlarm.id = alarmRepository.save(nextAlarm)
+        Timber.d("Saved next alarm: $nextAlarm")
 
-        // Schedule new alarm
-        scheduleNextAlarm(context, alarmRepository, reminderRepository)
-
-        withContext(mainDispatcher) {
-            showToast(context, "Alarm snoozed until 2 minutes from now")
-            triggerSnoozeNotification(
-                context,
-                reminder,
-                nextAlarm
-            )
-        }
+        return nextAlarm
     }
 
+    private fun showSnoozeNotifications(context: Context, reminder: Reminder, alarm: Alarm) {
+        showToast(
+            context,
+            "Alarm snoozed until ${
+                alarm.triggerAt.toLocalDateTime().format(
+                    DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)
+                )
+            }"
+        )
+
+        triggerSnoozeNotification(
+            context,
+            reminder,
+            alarm
+        )
+    }
+
+    /**
+     * Interface that can be used to snooze, skip, or complete the current alarm.
+     */
     abstract class LocalBinder(val snoozeTimeout: EventFlow<Unit>) :
         Binder() {
         abstract fun snooze()
@@ -275,28 +344,25 @@ class ReminderAlarmManager : Service() {
         abstract fun complete()
     }
 
-    /**
-     * Interface that can be used to snooze, skip, or complete the current alarm.
-     */
     private inner class LocalBinderImpl(
         private val command: Command,
     ) :
         LocalBinder(command.snoozeTimeout) {
 
         override fun snooze() {
-            serviceScope.launch {
+            applicationScope.launch {
                 handleSnooze(command.reminderId, null)
             }
         }
 
         override fun skip() {
-            serviceScope.launch {
+            applicationScope.launch {
                 handleSkip(command.reminderId, null)
             }
         }
 
         override fun complete() {
-            serviceScope.launch {
+            applicationScope.launch {
                 handleCompleted(command.reminderId, null)
             }
         }
@@ -360,7 +426,7 @@ class ReminderAlarmManager : Service() {
 
 private data class Command(
     val reminderId: Long = 0L,
-    val alarmId: Long = 0L,
+    val notificationAlarmId: Long = 0L,
     val notificationStartId: Int = 0,
     val snoozeTimeout: EventFlow<Unit>,
     var snoozeJob: Job,

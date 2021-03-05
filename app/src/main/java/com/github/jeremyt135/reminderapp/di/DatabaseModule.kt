@@ -22,7 +22,7 @@ object DatabaseModule {
             AppDatabase::class.java,
             "ReminderApp.db"
         )
-            .addMigrations(Migrations.MIGRATION_1_2)
+            .addMigrations(*Migrations.all)
             .build()
     }
 

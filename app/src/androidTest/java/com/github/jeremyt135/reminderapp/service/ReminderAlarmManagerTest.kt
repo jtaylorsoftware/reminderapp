@@ -12,7 +12,6 @@ import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.ReminderStatus
 import com.github.jeremyt135.reminderapp.data.local.FakeHistoryLocalDataSource
 import com.github.jeremyt135.reminderapp.di.*
-import com.github.jeremyt135.reminderapp.util.toEpochMilli
 import com.google.common.truth.Truth.assertThat
 import dagger.Module
 import dagger.Provides
@@ -26,6 +25,7 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockkStatic
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -35,8 +35,6 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import java.time.DayOfWeek
-import java.time.LocalDateTime
-import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -84,6 +82,11 @@ class ReminderAlarmManagerTest {
         @Provides
         @Singleton
         fun provideMainDispatcher(): CoroutineDispatcher = testCoroutineDispatcher
+
+        @AppCoroutineScope
+        @Provides
+        @Singleton
+        fun provideAppCoroutineScope(): CoroutineScope = CoroutineScope(testCoroutineDispatcher)
     }
 
     @get:Rule
@@ -147,7 +150,7 @@ class ReminderAlarmManagerTest {
         )
 
         mockkStatic(::scheduleNextAlarm, ::showToast, ::triggerNotification)
-        coJustRun { scheduleNextAlarm(any(), alarmRepository, reminderRepository) }
+        coJustRun { scheduleNextAlarm(any(), alarmRepository, reminderRepository, any()) }
         every { showToast(any(), any(), any()) } returns Unit
         every { triggerNotification(any(), any(), any()) } returns Unit
 
@@ -158,7 +161,7 @@ class ReminderAlarmManagerTest {
         val nextAlarm = alarmRepository.findByReminderId(reminder.id)!!
 
         coVerify {
-            scheduleNextAlarm(any(), alarmRepository, reminderRepository)
+            scheduleNextAlarm(any(), alarmRepository, reminderRepository, any())
             showToast(any(), any())
             triggerSnoozeNotification(
                 any(),

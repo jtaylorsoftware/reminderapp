@@ -2,32 +2,38 @@ package com.github.jeremyt135.reminderapp.screens.reminder.editor
 
 import android.app.Application
 import android.content.Context
+import android.widget.Toast
 import androidx.lifecycle.*
-import com.github.jeremyt135.reminderapp.broadcast.EXTRA_REMINDER_ID
-import com.github.jeremyt135.reminderapp.broadcast.cancelNotification
-import com.github.jeremyt135.reminderapp.broadcast.cancelReminder
-import com.github.jeremyt135.reminderapp.broadcast.scheduleNextAlarm
+import com.github.jeremyt135.BuildConfig
+import com.github.jeremyt135.reminderapp.broadcast.*
 import com.github.jeremyt135.reminderapp.data.AlarmRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.Alarm
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
+import com.github.jeremyt135.reminderapp.di.AppCoroutineScope
 import com.github.jeremyt135.reminderapp.util.MutableEventFlow
 import com.github.jeremyt135.reminderapp.util.asSingleEvent
 import com.github.jeremyt135.reminderapp.util.toEpochMilli
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.time.DayOfWeek
 import java.time.LocalDate
 import javax.inject.Inject
+import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.properties.Delegates
 
 @HiltViewModel
 class ReminderEditorViewModel @Inject constructor(
     application: Application,
     private val reminderRepository: ReminderRepository,
     private val alarmRepository: AlarmRepository,
-    savedStateHandle: SavedStateHandle
+    savedStateHandle: SavedStateHandle,
+    @AppCoroutineScope private val applicationScope: CoroutineScope = CoroutineScope(
+        EmptyCoroutineContext
+    )
 ) :
     AndroidViewModel(application) {
     private val _reminder = MutableStateFlow(Reminder())
@@ -40,10 +46,22 @@ class ReminderEditorViewModel @Inject constructor(
     private val _navigateToReminders = MutableEventFlow<Unit>()
     val navigateToReminders = _navigateToReminders.asSingleEvent()
 
-    private val savedReminderId: Long = requireNotNull(savedStateHandle.get(EXTRA_REMINDER_ID))
-    val isEditing: Boolean = savedReminderId != 0L
+    private var savedReminderId by Delegates.notNull<Long>()
+    var isEditing by Delegates.notNull<Boolean>()
 
     init {
+        savedReminderId = savedStateHandle.get(EXTRA_REMINDER_ID) ?: run {
+            if (BuildConfig.DEBUG) {
+                showToast(
+                    getApplication<Application>().applicationContext,
+                    "ReminderEditorViewModel: savedStateHandle.get(REMINDER_ID) was null",
+                    Toast.LENGTH_LONG
+                )
+            }
+            0L
+        }
+        isEditing = savedReminderId != 0L
+
         Timber.d("reminderId = $savedReminderId")
         if (isEditing) {
             viewModelScope.launch {
@@ -75,7 +93,7 @@ class ReminderEditorViewModel @Inject constructor(
     }
 
     fun saveReminder() {
-        viewModelScope.launch {
+        applicationScope.launch {
             _reminder.value.copy().let { reminder ->
                 reminder.id = reminderRepository.save(reminder)
 
@@ -83,13 +101,13 @@ class ReminderEditorViewModel @Inject constructor(
 
                 cancelReminder(context, reminder)
 
-                // Schedule reminder for time closest to today
                 val today = LocalDate.now().dayOfWeek
                 reminder.getNextTimeForAlarm(today)?.let { time ->
                     val nextAlarm = Alarm(reminderId = reminder.id, triggerAt = time.toEpochMilli())
                     nextAlarm.id = alarmRepository.save(nextAlarm)
-                    scheduleNextAlarm(context, alarmRepository, reminderRepository)
                 }
+
+                scheduleNextAlarm(context, alarmRepository, reminderRepository)
             }
 
             _navigateToReminders.value = Unit
@@ -101,10 +119,12 @@ class ReminderEditorViewModel @Inject constructor(
             return
         }
 
-        viewModelScope.launch {
+        applicationScope.launch {
             val context = getApplication<Application>().applicationContext
             _reminder.value.copy().let { reminder ->
-                cancelReminder(context, reminder)
+                if (cancelReminder(context, reminder)) {
+                    scheduleNextAlarm(context, alarmRepository, reminderRepository)
+                }
 
                 reminderRepository.delete(reminder)
             }
@@ -119,12 +139,13 @@ class ReminderEditorViewModel @Inject constructor(
         }
     }
 
-    private suspend fun cancelReminder(context: Context, reminder: Reminder) {
+    // Cancels & deletes Reminder, returning value of alarm.scheduled
+    private suspend fun cancelReminder(context: Context, reminder: Reminder): Boolean =
         alarmRepository.findByReminderId(savedReminderId)?.let {
             Timber.d("Cancelling previous alarm")
             cancelNotification(context, it.id)
             cancelReminder(context, it, reminder)
             alarmRepository.delete(it)
-        }
-    }
+            it.scheduled
+        } ?: false
 }

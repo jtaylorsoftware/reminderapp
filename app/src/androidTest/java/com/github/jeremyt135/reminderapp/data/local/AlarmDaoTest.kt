@@ -2,7 +2,6 @@ package com.github.jeremyt135.reminderapp.data.local
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.test.filters.SmallTest
-import com.github.jeremyt135.reminderapp.data.local.AlarmEntity as Alarm
 import com.github.jeremyt135.reminderapp.util.InMemoryDatabaseRule
 import com.google.common.truth.Truth.assertThat
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -13,6 +12,7 @@ import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import com.github.jeremyt135.reminderapp.data.local.AlarmEntity as Alarm
 
 @ExperimentalCoroutinesApi
 @HiltAndroidTest
@@ -21,7 +21,7 @@ class AlarmDaoTest {
     private lateinit var alarmDao: AlarmDao
 
     private val reminders = listOf(
-        ReminderEntity(id=1), ReminderEntity(id=2)
+        ReminderEntity(id = 1), ReminderEntity(id = 2)
     )
 
     private val alarms = listOf(
@@ -88,10 +88,119 @@ class AlarmDaoTest {
     fun clearTable_deletesAllAlarms() = runBlockingTest {
         alarmDao.insert(alarms[0])
 
-        assertThat(alarmDao.findById(1)).isEqualTo(alarms[0].copy(id=1))
+        assertThat(alarmDao.findById(1)).isEqualTo(alarms[0].copy(id = 1))
 
         alarmDao.clearTable()
 
         assertThat(alarmDao.findById(1)).isNull()
+    }
+
+    @Test
+    fun getFirstStartingFrom_timeIs0_returnsLowestTime() = runBlockingTest {
+        val alarms = (1..3).map { i ->
+            Alarm(id = i.toLong(), reminderId = 1, triggerAt = 1000L * i).also {
+                alarmDao.insert(it)
+            }
+        }
+
+        assertThat(alarmDao.getFirstStartingFrom(0)).isEqualTo(alarms[0])
+    }
+
+    @Test
+    fun getFirstStartingFrom_farInFuture_returnsNull() = runBlockingTest {
+        (1..3).map { i ->
+            Alarm(reminderId = 1, triggerAt = 1000L * i).also {
+                alarmDao.insert(it)
+            }
+        }
+
+        assertThat(alarmDao.getFirstStartingFrom(100000)).isNull()
+    }
+
+    @Test
+    fun getFirstStartingFrom_idAndTimeIs0_returnsLowestTime() = runBlockingTest {
+        val alarms = (1..3).map { i ->
+            Alarm(id = i.toLong(), reminderId = 1, triggerAt = 1000L * i).also {
+                alarmDao.insert(it)
+            }
+        }
+
+        assertThat(alarmDao.getFirstStartingFrom(0, 0)).isEqualTo(alarms[0])
+    }
+
+    @Test
+    fun getFirstStartingFrom_lastId_returnsNull() = runBlockingTest {
+        val alarms = (1..3).map { i ->
+            Alarm(reminderId = 1, triggerAt = 1000L * i).also {
+                alarmDao.insert(it)
+            }
+        }
+
+        assertThat(alarmDao.getFirstStartingFrom(0, 4)).isNull()
+    }
+
+    @Test
+    fun getFirstScheduledAlarm_noneScheduled_returnsNull() = runBlockingTest {
+        val alarms = (1..3).map { i ->
+            Alarm(reminderId = 1, triggerAt = 1000L * i).also {
+                alarmDao.insert(it)
+            }
+        }
+
+        assertThat(alarmDao.getFirstScheduledAlarm()).isNull()
+    }
+
+    @Test
+    fun getFirstScheduledAlarm_multipleScheduled_returnsFirst() = runBlockingTest {
+        val alarms = (1..6).map { i ->
+            Alarm(
+                id = i.toLong(),
+                reminderId = 1,
+                triggerAt = 1000L * i,
+                scheduled = if (i % 2 == 0) true else null
+            ).also {
+                alarmDao.insert(it)
+            }
+        }
+
+        assertThat(alarmDao.getFirstScheduledAlarm()).isEqualTo(alarms[1])
+    }
+
+    @Test
+    fun getAllScheduledAlarms_returnsOnlyScheduledAlarms() = runBlockingTest {
+        val alarms = (1..6).map { i ->
+            Alarm(
+                id = i.toLong(),
+                reminderId = 1,
+                triggerAt = 1000L * i,
+                scheduled = if (i % 2 == 0) true else null
+            ).also {
+                alarmDao.insert(it)
+            }
+        }
+
+        assertThat(alarmDao.getAllScheduledAlarms().first()).containsExactlyElementsIn(
+            alarms.filter { it.scheduled == true }
+        )
+    }
+
+    @Test
+    fun deleteAllInPast_deletesOnlyAlarmsBeforeTime() = runBlockingTest {
+        val alarms = (1..5).map { i ->
+            Alarm(
+                id=i.toLong(),
+                reminderId = 1,
+                triggerAt = 1000L * i,
+                scheduled = if (i % 2 == 0) true else null
+            ).also {
+                alarmDao.insert(it)
+            }
+        }
+
+        alarmDao.deleteAllInPast(3000)
+
+        assertThat(alarmDao.getAll().first()).containsExactlyElementsIn(
+            alarms.filter { it.triggerAt >= 3000 }
+        )
     }
 }

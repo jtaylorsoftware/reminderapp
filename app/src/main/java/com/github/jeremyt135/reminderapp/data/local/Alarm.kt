@@ -37,10 +37,13 @@ data class AlarmEntity(
 
     @ColumnInfo(name = "trigger_at")
     val triggerAt: Long,
+
+    val scheduled: Boolean? = null
 ) : Parcelable, DataModel<Alarm> {
     override fun asDomainModel(): Alarm = Alarm(
         id = this.id,
         reminderId = this.reminderId,
-        triggerAt = this.triggerAt
+        triggerAt = this.triggerAt,
+        scheduled = this.scheduled
     )
 }

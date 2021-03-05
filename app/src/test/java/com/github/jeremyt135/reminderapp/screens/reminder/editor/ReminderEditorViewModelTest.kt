@@ -58,7 +58,8 @@ class ReminderEditorViewModelTest {
             mockApplication,
             mockReminderRepo,
             mockAlarmRepo,
-            mockSavedState
+            mockSavedState,
+            mainCoroutineRule
         )
     }
 
@@ -137,7 +138,7 @@ class ReminderEditorViewModelTest {
         every { mockApplication.applicationContext } returns mockContext
 
         mockkStatic(::scheduleNextAlarm, ::cancelReminder, ::cancelNotification)
-        coEvery { scheduleNextAlarm(mockContext, mockAlarmRepo, mockReminderRepo) } returns Unit
+        coEvery { scheduleNextAlarm(mockContext, mockAlarmRepo, mockReminderRepo, any()) } returns Unit
         every { cancelReminder(mockContext, alarm, reminder) } returns Unit
         every { cancelNotification(mockContext, 1) } returns Unit
 
@@ -158,7 +159,7 @@ class ReminderEditorViewModelTest {
 
             // Should save and schedule the next available alarm
             mockAlarmRepo.save(nextAlarm.copy(id = alarm.id + 1))
-            scheduleNextAlarm(mockContext, mockAlarmRepo, mockReminderRepo)
+            scheduleNextAlarm(mockContext, mockAlarmRepo, mockReminderRepo, any())
         }
     }
 
@@ -171,6 +172,10 @@ class ReminderEditorViewModelTest {
         coEvery { mockReminderRepo.save(reminder) } returns reminder.id
         coEvery { mockAlarmRepo.findByReminderId(reminder.id) } returns null
         every { mockApplication.applicationContext } returns mockContext
+        mockkStatic(::cancelReminder, ::cancelNotification, ::scheduleNextAlarm)
+        justRun { cancelReminder(mockContext, any(), any()) }
+        every { cancelNotification(mockContext, reminder.id) } returns Unit
+        coJustRun { scheduleNextAlarm(mockContext, mockAlarmRepo, mockReminderRepo, any()) }
 
         createViewModel()
 

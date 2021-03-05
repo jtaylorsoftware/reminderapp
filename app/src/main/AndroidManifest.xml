@@ -35,10 +35,11 @@
             android:theme="@style/Theme.ReminderApp.Alarm"
             android:exported="false"/>
         <receiver
-            android:name=".reminderapp.broadcast.AlarmBootScheduler"
+            android:name=".reminderapp.broadcast.AlarmScheduler"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
         </receiver>
         <service android:name=".reminderapp.service.ReminderAlarmManager" />

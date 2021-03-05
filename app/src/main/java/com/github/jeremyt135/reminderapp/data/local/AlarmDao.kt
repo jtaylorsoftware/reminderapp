@@ -21,8 +21,23 @@ interface AlarmDao {
     @Query("SELECT * FROM alarm WHERE trigger_at >= :timeNow AND id > :id ORDER BY trigger_at ASC LIMIT 1")
     suspend fun getFirstStartingFrom(timeNow: Long, id: Long): Alarm?
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Query("SELECT * FROM alarm WHERE scheduled IS NOT NULL ORDER BY trigger_at ASC LIMIT 1")
+    suspend fun getFirstScheduledAlarm(): Alarm?
+
+    @Query("SELECT * FROM alarm WHERE scheduled IS NOT NULL ORDER BY trigger_at ASC")
+    fun getAllScheduledAlarms(): Flow<List<Alarm>>
+
+    @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insert(alarm: Alarm): Long
+
+    @Update(entity = Alarm::class)
+    suspend fun setScheduled(scheduleFlag: AlarmScheduleFlag)
+
+    @Query("UPDATE alarm SET scheduled = NULL")
+    suspend fun clearScheduled()
+
+    @Query("DELETE FROM alarm WHERE trigger_at < :timeNow")
+    suspend fun deleteAllInPast(timeNow: Long)
 
     @Delete
     suspend fun delete(alarm: Alarm)
@@ -30,3 +45,5 @@ interface AlarmDao {
     @Query("DELETE FROM alarm")
     suspend fun clearTable()
 }
+
+data class AlarmScheduleFlag(val id: Long, val scheduled: Boolean?)

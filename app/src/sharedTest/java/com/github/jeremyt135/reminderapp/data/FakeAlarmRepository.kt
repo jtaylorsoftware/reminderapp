@@ -3,6 +3,7 @@ package com.github.jeremyt135.reminderapp.data
 
 import com.github.jeremyt135.reminderapp.data.domain.Alarm
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.flow
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -16,14 +17,41 @@ class FakeAlarmRepository @Inject constructor(private val cache: MutableList<Ala
 
     override suspend fun getFirstStartingFrom(timeNow: Long): Alarm? =
         // Find the earliest alarm to come after timeNow
-        cache.toMutableList().filter { it.triggerAt >= timeNow }.minByOrNull { it.triggerAt }
+        cache.filter { it.triggerAt >= timeNow }.minByOrNull { it.triggerAt }
 
 
     override suspend fun getFirstStartingFrom(timeNow: Long, id: Long): Alarm? =
         cache
-            .toMutableList()
             .filter { it.triggerAt >= timeNow && it.id > id }
             .minByOrNull { it.triggerAt }
+
+    override suspend fun getFirstScheduledAlarm(): Alarm? =
+        findScheduled().minByOrNull { it.triggerAt }
+
+
+    override fun getAllScheduledAlarms(): Flow<List<Alarm>> = flow {
+        emit(findScheduled())
+    }
+
+    private fun findScheduled() = cache.filter { it.scheduled == true }
+
+    override suspend fun setScheduled(alarm: Alarm) {
+        setScheduledImpl(alarm,true)
+    }
+
+    override suspend fun clearScheduled(alarm: Alarm) {
+        setScheduledImpl(alarm, null)
+    }
+
+    private fun setScheduledImpl(alarm: Alarm, value: Boolean?){
+        cache.indexOf(alarm).let{ index ->
+            cache[index] = alarm.copy(scheduled = value)
+        }
+    }
+
+    override suspend fun clearAllScheduled() {
+        findScheduled().forEach { setScheduledImpl(it, null) }
+    }
 
     override suspend fun findById(id: Long): Alarm? = cache.find { it.id == id }
     override suspend fun findByReminderId(reminderId: Long): Alarm? =
@@ -36,13 +64,17 @@ class FakeAlarmRepository @Inject constructor(private val cache: MutableList<Ala
                 cache.size.toLong()
             }
             else -> {
-                cache[index] = alarm
+                cache[index] = alarm.copy()
                 alarm.id
             }
         }
 
     override suspend fun delete(alarm: Alarm) {
         cache.remove(alarm)
+    }
+
+    override suspend fun deleteAllInPast(timeNow: Long) {
+        cache.removeAll { it.triggerAt < timeNow }
     }
 
     override suspend fun deleteAll() {

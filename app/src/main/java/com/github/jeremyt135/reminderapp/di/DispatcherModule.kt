@@ -4,8 +4,7 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.*
 import javax.inject.Qualifier
 import javax.inject.Singleton
 
@@ -18,6 +17,9 @@ annotation class DefaultDispatcher
 
 @Qualifier
 annotation class MainDispatcher
+
+@Qualifier
+annotation class AppCoroutineScope
 
 @InstallIn(SingletonComponent::class)
 @Module
@@ -36,4 +38,11 @@ object DispatcherModule {
     @Provides
     @Singleton
     fun provideMainDispatcher(): CoroutineDispatcher = Dispatchers.Main
+
+    @AppCoroutineScope
+    @Provides
+    @Singleton
+    fun provideApplicationScope() =
+        MainScope() + CoroutineName("ReminderApplication:applicationScope")
+
 }
