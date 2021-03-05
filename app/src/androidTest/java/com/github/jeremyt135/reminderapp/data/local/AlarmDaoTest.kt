@@ -188,7 +188,7 @@ class AlarmDaoTest {
     fun deleteAllInPast_deletesOnlyAlarmsBeforeTime() = runBlockingTest {
         val alarms = (1..5).map { i ->
             Alarm(
-                id=i.toLong(),
+                id = i.toLong(),
                 reminderId = 1,
                 triggerAt = 1000L * i,
                 scheduled = if (i % 2 == 0) true else null
@@ -202,5 +202,37 @@ class AlarmDaoTest {
         assertThat(alarmDao.getAll().first()).containsExactlyElementsIn(
             alarms.filter { it.triggerAt >= 3000 }
         )
+    }
+
+    @Test
+    fun clearScheduled_setsAllScheduledNull() = runBlockingTest {
+         (1..5).map { i ->
+            Alarm(
+                id = i.toLong(),
+                reminderId = 1,
+                triggerAt = 1000L * i,
+                scheduled = true
+            ).also {
+                alarmDao.insert(it)
+            }
+        }
+
+        alarmDao.clearScheduled()
+
+        assertThat(alarmDao.getAll().first().all { it.scheduled == null }).isTrue()
+    }
+
+    @Test
+    fun setScheduled_changesValue() = runBlockingTest {
+        val alarm = Alarm(id=1,reminderId = 1, triggerAt = 0, scheduled = null)
+        alarmDao.insert(alarm)
+
+        alarmDao.setScheduled(AlarmScheduleFlag(alarm.id, true))
+
+        assertThat(alarmDao.findById(alarm.id)!!.scheduled).isTrue()
+
+        alarmDao.setScheduled(AlarmScheduleFlag(alarm.id, null))
+
+        assertThat(alarmDao.findById(alarm.id)!!.scheduled).isNull()
     }
 }
