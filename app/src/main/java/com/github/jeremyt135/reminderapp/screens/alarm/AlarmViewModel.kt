@@ -2,6 +2,7 @@ package com.github.jeremyt135.reminderapp.screens.alarm
 
 import android.app.Application
 import android.content.ComponentName
+import android.content.Context
 import android.content.ServiceConnection
 import android.os.IBinder
 import android.widget.Toast
@@ -74,7 +75,7 @@ class AlarmViewModel @Inject constructor(
         loadReminderData(reminderId)
 
         val context = getApplication<Application>().applicationContext
-        ReminderAlarmManager.bind(context, serviceConnection, reminderId, 0)
+        ReminderAlarmManager.bind(context, serviceConnection, reminderId, Context.BIND_IMPORTANT)
     }
 
     override fun onCleared() {
@@ -83,12 +84,6 @@ class AlarmViewModel @Inject constructor(
         if (bound) {
             getApplication<Application>().applicationContext.unbindService(serviceConnection)
             bound = false
-        } else if (BuildConfig.DEBUG) {
-            val msg = "AlarmViewModel was not bound to ReminderAlarmManager at time of onCleared"
-            Timber.d(msg)
-            Toast
-                .makeText(getApplication<Application>().applicationContext, msg, Toast.LENGTH_LONG)
-                .show()
         }
     }
 
