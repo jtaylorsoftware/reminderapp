@@ -208,7 +208,6 @@ class ReminderAlarmManager : Service() {
             val context: Context = this@ReminderAlarmManager
             commands[reminderId]?.let { command ->
                 command.snoozeJob.cancel()
-                NotificationManagerCompat.from(context).cancel(command.notificationAlarmId.toInt())
 
                 reminderRepository.getReminderAndAlarm(command.reminderId)
                     ?.let { (reminder, alarm) ->
@@ -243,8 +242,7 @@ class ReminderAlarmManager : Service() {
                 // schedule next even if getting the reminder failed
                 scheduleNextAlarm(context, alarmRepository, reminderRepository)
 
-                startId?.let { stopSelf(it) }
-                stopSelf(command.notificationStartId)
+                cleanupCommand(command, startId)
             }
             commands.remove(reminderId)
         }
@@ -269,7 +267,6 @@ class ReminderAlarmManager : Service() {
             val context: Context = this@ReminderAlarmManager
             commands[reminderId]?.let { command ->
                 command.snoozeJob.cancel()
-                NotificationManagerCompat.from(context).cancel(command.notificationAlarmId.toInt())
 
                 reminderRepository.getReminderAndAlarm(command.reminderId)
                     ?.let { (reminder, alarm) ->
@@ -288,11 +285,17 @@ class ReminderAlarmManager : Service() {
                 // schedule next even if getting the reminder failed
                 scheduleNextAlarm(context, alarmRepository, reminderRepository)
 
-                startId?.let { stopSelf(it) }
-                stopSelf(command.notificationStartId)
+                cleanupCommand(command, startId)
             }
             commands.remove(reminderId)
         }
+    }
+
+    // Cleanup the notification Command for a Reminder and the current handler command
+    private fun cleanupCommand(command: Command, startId: Int?){
+        startId?.let { stopSelf(it) }
+//        NotificationManagerCompat.from(this).cancel(command.notificationAlarmId.toInt())
+        stopSelf(command.notificationStartId)
     }
 
     private suspend fun snoozeAlarm(context: Context, reminder: Reminder, alarm: Alarm) {
