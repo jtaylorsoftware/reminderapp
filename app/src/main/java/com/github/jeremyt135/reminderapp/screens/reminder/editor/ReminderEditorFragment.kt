@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.TimePicker
 import androidx.annotation.VisibleForTesting
+import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import com.github.jeremyt135.R
@@ -22,11 +23,12 @@ class ReminderEditorFragment : Fragment(R.layout.fragment_reminder_editor) {
         super.onViewCreated(view, savedInstanceState)
 
         with(requireActivity()) {
-            actionBar?.title = if (intent.getLongExtra(EXTRA_REMINDER_ID, 0L) != 0L) {
-                getString(R.string.editor_heading_edit)
-            } else {
-                getString(R.string.editor_heading_add)
-            }
+            (this as AppCompatActivity).supportActionBar?.title =
+                if (intent.getLongExtra(EXTRA_REMINDER_ID, 0L) != 0L) {
+                    getString(R.string.editor_heading_edit)
+                } else {
+                    getString(R.string.editor_heading_add)
+                }
         }
 
         val binding = FragmentReminderEditorBinding.bind(view).apply {
