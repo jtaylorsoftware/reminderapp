@@ -69,9 +69,8 @@ suspend fun scheduleNextAlarm(
     reminderRepository: ReminderRepository,
     startTime: LocalDateTime = LocalDateTime.now(),
 ) {
-    // Unset currently scheduled
-    alarmRepository.getFirstScheduledAlarm()?.let {
-        alarmRepository.clearScheduled(it)
+    if (alarmRepository.getFirstScheduledAlarm() != null){
+        return
     }
 
     Timber.d("Scheduling next alarm...")
