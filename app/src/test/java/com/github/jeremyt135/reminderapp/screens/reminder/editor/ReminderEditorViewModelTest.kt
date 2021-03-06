@@ -115,7 +115,7 @@ class ReminderEditorViewModelTest {
 
     @Test
     fun saveReminder_savesToRepository_schedulesAlarm() = mainCoroutineRule.runBlockingTest {
-        val reminder = Reminder(id = 1, time = LocalTime.now().plusHours(1))
+        val reminder = Reminder(id = 1, time = LocalTime.now().plusMinutes(1))
 
         val alarm = Alarm(id = 1, reminderId = reminder.id, triggerAt = 0)
         val nextAlarm =
@@ -138,7 +138,7 @@ class ReminderEditorViewModelTest {
         every { mockApplication.applicationContext } returns mockContext
 
         mockkStatic(::scheduleNextAlarm, ::cancelReminder, ::cancelNotification)
-        coEvery { scheduleNextAlarm(mockContext, mockAlarmRepo, mockReminderRepo, any()) } returns Unit
+        coEvery { scheduleNextAlarm(mockContext, mockAlarmRepo, mockReminderRepo) } returns Unit
         every { cancelReminder(mockContext, alarm, reminder) } returns Unit
         every { cancelNotification(mockContext, 1) } returns Unit
 
@@ -159,7 +159,7 @@ class ReminderEditorViewModelTest {
 
             // Should save and schedule the next available alarm
             mockAlarmRepo.save(nextAlarm.copy(id = alarm.id + 1))
-            scheduleNextAlarm(mockContext, mockAlarmRepo, mockReminderRepo, any())
+            scheduleNextAlarm(mockContext, mockAlarmRepo, mockReminderRepo)
         }
     }
 
@@ -175,7 +175,7 @@ class ReminderEditorViewModelTest {
         mockkStatic(::cancelReminder, ::cancelNotification, ::scheduleNextAlarm)
         justRun { cancelReminder(mockContext, any(), any()) }
         every { cancelNotification(mockContext, reminder.id) } returns Unit
-        coJustRun { scheduleNextAlarm(mockContext, mockAlarmRepo, mockReminderRepo, any()) }
+        coJustRun { scheduleNextAlarm(mockContext, mockAlarmRepo, mockReminderRepo) }
 
         createViewModel()
 

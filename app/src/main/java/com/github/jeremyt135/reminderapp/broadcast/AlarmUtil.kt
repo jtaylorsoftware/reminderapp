@@ -20,13 +20,10 @@ import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.screens.alarm.AlarmActivity
 import com.github.jeremyt135.reminderapp.screens.reminder.editor.ReminderEditorActivity
 import com.github.jeremyt135.reminderapp.service.ReminderAlarmManager
-import com.github.jeremyt135.reminderapp.util.toEpochMilli
 import com.github.jeremyt135.reminderapp.util.toLocalDateTime
 import timber.log.Timber
-import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
-import java.time.temporal.ChronoUnit
 
 
 const val ACTION_ALARM_SET_NOTIF =
@@ -67,29 +64,26 @@ suspend fun scheduleNextAlarm(
     context: Context,
     alarmRepository: AlarmRepository,
     reminderRepository: ReminderRepository,
-    startTime: LocalDateTime = LocalDateTime.now(),
 ) {
-    if (alarmRepository.getFirstScheduledAlarm() != null){
-        return
-    }
-
     Timber.d("Scheduling next alarm...")
 
-    // Try to reschedule the next soonest alarm
-    val startTimeMilli = startTime.truncatedTo(ChronoUnit.MINUTES).toEpochMilli()
-    var alarm = alarmRepository.getFirstStartingFrom(startTimeMilli)
-    while (alarm != null) {
-        val reminder = reminderRepository.findById(alarm.reminderId)
+    val alarm = alarmRepository.getFirstByTimeAscending()
 
-        if (reminder != null) {
-            alarmRepository.setScheduled(alarm)
-            scheduleAlarmForReminder(context, alarm.copy(scheduled = true), reminder)
-            break
-        } else {
-            alarm = alarmRepository.getFirstStartingFrom(startTimeMilli)
-            continue
+    val previousScheduled = alarmRepository.getFirstScheduledAlarm()
+    if (alarm != null && previousScheduled != alarm) {
+        // Alarm is not the one already scheduled - clear previous & set new
+        previousScheduled?.let { prevAlarm ->
+            alarmRepository.clearScheduled(prevAlarm)
+            reminderRepository.findById(prevAlarm.reminderId)?.let { prevReminder ->
+                // Clear the pending intents
+                cancelReminder(context, prevAlarm, prevReminder)
+            }
         }
-    }
+        alarmRepository.setScheduled(alarm)
+        reminderRepository.findById(alarm.reminderId)?.let { reminder ->
+            scheduleAlarmForReminder(context, alarm.copy(scheduled = true), reminder)
+        }
+    } // Else the Alarm was the one already scheduled
 }
 
 /**

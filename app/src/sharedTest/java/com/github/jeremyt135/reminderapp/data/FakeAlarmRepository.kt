@@ -15,36 +15,24 @@ class FakeAlarmRepository @Inject constructor(private val cache: MutableList<Ala
         emit(cache)
     }
 
-    override suspend fun getFirstStartingFrom(timeNow: Long): Alarm? =
-        // Find the earliest alarm to come after timeNow
-        cache.filter { it.triggerAt >= timeNow }.minByOrNull { it.triggerAt }
-
-
-    override suspend fun getFirstStartingFrom(timeNow: Long, id: Long): Alarm? =
-        cache
-            .filter { it.triggerAt >= timeNow && it.id > id }
-            .minByOrNull { it.triggerAt }
-
     override suspend fun getFirstScheduledAlarm(): Alarm? =
         findScheduled().minByOrNull { it.triggerAt }
 
-
-    override fun getAllScheduledAlarms(): Flow<List<Alarm>> = flow {
-        emit(findScheduled())
-    }
-
     private fun findScheduled() = cache.filter { it.scheduled == true }
 
+    override suspend fun getFirstByTimeAscending(): Alarm? =
+        cache.minByOrNull { it.triggerAt }
+
     override suspend fun setScheduled(alarm: Alarm) {
-        setScheduledImpl(alarm,true)
+        setScheduledImpl(alarm, true)
     }
 
     override suspend fun clearScheduled(alarm: Alarm) {
         setScheduledImpl(alarm, null)
     }
 
-    private fun setScheduledImpl(alarm: Alarm, value: Boolean?){
-        cache.indexOf(alarm).let{ index ->
+    private fun setScheduledImpl(alarm: Alarm, value: Boolean?) {
+        cache.indexOf(alarm).let { index ->
             cache[index] = alarm.copy(scheduled = value)
         }
     }

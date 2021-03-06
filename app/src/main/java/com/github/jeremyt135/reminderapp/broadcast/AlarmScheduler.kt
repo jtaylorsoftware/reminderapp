@@ -28,8 +28,7 @@ class AlarmScheduler : AlarmReceiver(
             alarmRepository.deleteAllInPast(now.toEpochMilli())
             alarmRepository.clearAllScheduled()
 
-            // Schedule starting from when this boot completed (now)
-            scheduleNextAlarm(context, alarmRepository, reminderRepository, now)
+            scheduleNextAlarm(context, alarmRepository, reminderRepository)
         }
         pendingResult.finish()
     }

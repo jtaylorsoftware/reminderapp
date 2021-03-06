@@ -156,9 +156,7 @@ class ReminderAlarmManager : Service() {
         val command = Command(
             reminderId = reminder.id,
             notificationAlarmId = alarmId,
-            notificationStartId = startId,
-            notificationStartTime = LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES)
-                .toEpochMilli()
+            notificationStartId = startId
         )
         Timber.d("Created command: $command")
         commands[reminder.id] = command
@@ -202,9 +200,7 @@ class ReminderAlarmManager : Service() {
                     this@ReminderAlarmManager,
                     alarmRepository,
                     reminderRepository,
-                    startTime = command.notificationStartTime.toLocalDateTime()
                 )
-
                 cleanupCommand(command, startId)
 
             } ?: run {
@@ -417,7 +413,6 @@ class ReminderAlarmManager : Service() {
 private data class Command(
     val reminderId: Long,
     val notificationAlarmId: Long,
-    val notificationStartTime: Long,
     val notificationStartId: Int
 ) {
     private val snoozeHandled: AtomicBoolean = AtomicBoolean(false)

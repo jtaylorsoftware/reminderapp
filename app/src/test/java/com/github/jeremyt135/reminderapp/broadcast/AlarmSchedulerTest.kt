@@ -40,7 +40,6 @@ class AlarmSchedulerTest {
                 mockContext,
                 mockAlarmRepository,
                 mockReminderRepository,
-                any()
             )
         }
 
@@ -83,7 +82,7 @@ class AlarmSchedulerTest {
             coVerifyOrder {
                 mockAlarmRepository.deleteAllInPast(any())
                 mockAlarmRepository.clearAllScheduled()
-                scheduleNextAlarm(mockContext, mockAlarmRepository, mockReminderRepository, any())
+                scheduleNextAlarm(mockContext, mockAlarmRepository, mockReminderRepository)
             }
         }
 
@@ -99,7 +98,7 @@ class AlarmSchedulerTest {
             coVerifyOrder {
                 mockAlarmRepository.deleteAllInPast(any())
                 mockAlarmRepository.clearAllScheduled()
-                scheduleNextAlarm(mockContext, mockAlarmRepository, mockReminderRepository, any())
+                scheduleNextAlarm(mockContext, mockAlarmRepository, mockReminderRepository)
             }
         }
 }

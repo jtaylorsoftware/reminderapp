@@ -52,6 +52,8 @@ class AlarmUtilTest {
     fun teardown() {
         intent?.cancel()
         intent = null
+        alarmCache.clear()
+        reminderCache.clear()
         NotificationManagerCompat.from(context).cancelAll()
     }
 
@@ -85,13 +87,12 @@ class AlarmUtilTest {
                 context,
                 alarmRepo,
                 reminderRepository,
-                LocalDateTime.now().withHour(0)
             )
 
             intent = getCreatedIntentForAlarmStart(context, alarms[0], reminder)
 
             assertThat(intent).isNotNull()
-            assertThat(alarmRepo.findById(1)!!.scheduled).isTrue()
+            assertThat(alarmRepo.getFirstScheduledAlarm()).isEqualTo(alarms[0].copy(scheduled = true))
         }
     }
 
@@ -120,7 +121,6 @@ class AlarmUtilTest {
                 context,
                 alarmRepo,
                 reminderRepository,
-                LocalDateTime.now().withHour(0)
             )
 
             assertThat(alarmRepo.findById(4)!!.scheduled).isNull()

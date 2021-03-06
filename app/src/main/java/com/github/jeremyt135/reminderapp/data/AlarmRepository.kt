@@ -12,10 +12,8 @@ interface AlarmRepository {
     fun getAll(): Flow<List<Alarm>>
     suspend fun findById(id: Long): Alarm?
     suspend fun findByReminderId(reminderId: Long): Alarm?
-    suspend fun getFirstStartingFrom(timeNow: Long): Alarm?
-    suspend fun getFirstStartingFrom(timeNow: Long, id: Long): Alarm?
     suspend fun getFirstScheduledAlarm(): Alarm?
-    fun getAllScheduledAlarms(): Flow<List<Alarm>>
+    suspend fun getFirstByTimeAscending(): Alarm?
     suspend fun setScheduled(alarm: Alarm)
     suspend fun clearScheduled(alarm: Alarm)
     suspend fun clearAllScheduled()
@@ -35,17 +33,11 @@ class AlarmRepositoryImpl @Inject constructor(
     override suspend fun findByReminderId(reminderId: Long): Alarm? =
         alarmDao.findByReminderId(reminderId)?.asDomainModel()
 
-    override suspend fun getFirstStartingFrom(timeNow: Long) =
-        alarmDao.getFirstStartingFrom(timeNow)?.asDomainModel()
-
-    override suspend fun getFirstStartingFrom(timeNow: Long, id: Long) =
-        alarmDao.getFirstStartingFrom(timeNow, id)?.asDomainModel()
-
     override suspend fun getFirstScheduledAlarm() =
         alarmDao.getFirstScheduledAlarm()?.asDomainModel()
 
-    override fun getAllScheduledAlarms(): Flow<List<Alarm>> =
-        alarmDao.getAllScheduledAlarms().map { it.asDomainModel() }
+    override suspend fun getFirstByTimeAscending() =
+        alarmDao.getFirstByTimeAscending()?.asDomainModel()
 
     override suspend fun setScheduled(alarm: Alarm) {
         alarmDao.setScheduled(AlarmScheduleFlag(alarm.id, true))

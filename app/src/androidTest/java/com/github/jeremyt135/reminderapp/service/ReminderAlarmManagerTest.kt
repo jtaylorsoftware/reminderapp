@@ -43,6 +43,7 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -53,13 +54,13 @@ import javax.inject.Singleton
 class ReminderAlarmManagerTest {
     private val testCoroutineDispatcher = TestCoroutineDispatcher()
 
+    private val reminderCache: MutableList<Reminder> = mutableListOf()
+    private val alarmCache: MutableList<Alarm> = mutableListOf()
+    private val historyCache: MutableList<History> = mutableListOf()
+
     @InstallIn(SingletonComponent::class)
     @Module
     inner class TestModule {
-        private val reminderCache: MutableList<Reminder> = mutableListOf()
-        private val alarmCache: MutableList<Alarm> = mutableListOf()
-        private val historyCache: MutableList<History> = mutableListOf()
-
         @Provides
         @Singleton
         fun provideReminderRepository(): ReminderRepository =
@@ -129,7 +130,7 @@ class ReminderAlarmManagerTest {
         oneOffReminder = Reminder(
             description = "One-off Reminder",
             daysOfWeek = sortedSetOf(),
-            time = time
+            time = time.plusMinutes(5)
         )
 
         runBlocking {
@@ -165,8 +166,9 @@ class ReminderAlarmManagerTest {
             }
         }
         NotificationManagerCompat.from(context).cancelAll()
-        alarmRepository.clearAllScheduled()
-        alarmRepository.deleteAllInPast(LocalDateTime.now().toEpochMilli())
+        alarmCache.clear()
+        reminderCache.clear()
+        historyCache.clear()
     }
 
     @Test
@@ -213,7 +215,7 @@ class ReminderAlarmManagerTest {
         )
 
         mockkStatic(::scheduleNextAlarm, ::showToast, ::triggerNotification)
-        coJustRun { scheduleNextAlarm(any(), alarmRepository, reminderRepository, any()) }
+        coJustRun { scheduleNextAlarm(any(), alarmRepository, reminderRepository) }
         every { showToast(any(), any(), any()) } returns Unit
         every { triggerNotification(any(), any(), any()) } returns Unit
 
@@ -227,7 +229,7 @@ class ReminderAlarmManagerTest {
         assertThat(alarmRepository.findById(previousAlarm.id)).isNull()
 
         coVerify {
-            scheduleNextAlarm(any(), alarmRepository, reminderRepository, any())
+            scheduleNextAlarm(any(), alarmRepository, reminderRepository)
             showToast(any(), any())
             triggerSnoozeNotification(
                 any(),
@@ -511,7 +513,7 @@ class ReminderAlarmManagerTest {
                     repeatingReminder.id
                 )
             serviceRule.startService(intent)
-
+            advanceTimeBy((DELAY_UNTIL_SNOOZE_SEC * 1 / 3) * 1000)
             // Save an alarm
             reminder = Reminder(description = "Temp Reminder")
             reminder.id = reminderRepository.save(reminder)
@@ -519,16 +521,24 @@ class ReminderAlarmManagerTest {
                 Alarm(
                     id = 0,
                     reminderId = reminder.id,
-                    triggerAt = LocalDateTime.now().toEpochMilli()
+                    triggerAt = LocalDateTime.now().minusMinutes(2).truncatedTo(ChronoUnit.MINUTES)
+                        .toEpochMilli()
                 )
             alarm.id = alarmRepository.save(alarm)
         }
+        val previousAlarm = alarmRepository.findByReminderId(repeatingReminder.id)
+
+        advanceTimeBy((DELAY_UNTIL_SNOOZE_SEC * 1 / 3) * 1000)
 
         val binder = serviceRule.bindService(intent) as ReminderAlarmManager.LocalBinder
         binder.snooze()
 
-        val nextAlarm = alarmRepository.findByReminderId(reminder.id)
+        advanceTimeBy((DELAY_UNTIL_SNOOZE_SEC * 1 / 3 + 1) * 1000)
+
+        val nextAlarm = alarmRepository.getFirstScheduledAlarm()
+//        assertThat(alarmRepository.getAll().first()).isEmpty()
         assertThat(nextAlarm).isNotNull()
+        assertThat(nextAlarm).isNotEqualTo(previousAlarm)
         assertThat(nextAlarm!!.scheduled).isTrue()
     }
 }

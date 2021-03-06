@@ -15,17 +15,11 @@ interface AlarmDao {
     @Query("SELECT * FROM alarm WHERE reminder_id = :reminderId")
     suspend fun findByReminderId(reminderId: Long): Alarm?
 
-    @Query("SELECT * FROM alarm WHERE trigger_at >= :timeNow ORDER BY trigger_at ASC LIMIT 1")
-    suspend fun getFirstStartingFrom(timeNow: Long): Alarm?
-
-    @Query("SELECT * FROM alarm WHERE trigger_at >= :timeNow AND id > :id ORDER BY trigger_at ASC LIMIT 1")
-    suspend fun getFirstStartingFrom(timeNow: Long, id: Long): Alarm?
+    @Query("SELECT alarm.* FROM alarm LEFT JOIN reminder ON alarm.reminder_id = reminder.id ORDER BY trigger_at ASC LIMIT 1")
+    suspend fun getFirstByTimeAscending(): Alarm?
 
     @Query("SELECT * FROM alarm WHERE scheduled IS NOT NULL ORDER BY trigger_at ASC LIMIT 1")
     suspend fun getFirstScheduledAlarm(): Alarm?
-
-    @Query("SELECT * FROM alarm WHERE scheduled IS NOT NULL ORDER BY trigger_at ASC")
-    fun getAllScheduledAlarms(): Flow<List<Alarm>>
 
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insert(alarm: Alarm): Long
