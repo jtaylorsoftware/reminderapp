@@ -1,6 +1,9 @@
 package com.github.jeremyt135.reminderapp.service
 
+import android.app.Application
 import android.content.Context
+import android.content.Intent
+import androidx.core.app.NotificationManagerCompat
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.filters.MediumTest
 import androidx.test.rule.ServiceTestRule
@@ -12,6 +15,7 @@ import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.ReminderStatus
 import com.github.jeremyt135.reminderapp.data.local.FakeHistoryLocalDataSource
 import com.github.jeremyt135.reminderapp.di.*
+import com.github.jeremyt135.reminderapp.util.toEpochMilli
 import com.google.common.truth.Truth.assertThat
 import dagger.Module
 import dagger.Provides
@@ -31,10 +35,14 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.TestCoroutineDispatcher
 import kotlinx.coroutines.test.runBlockingTest
+import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import java.time.DayOfWeek
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -111,23 +119,54 @@ class ReminderAlarmManagerTest {
     fun setup() {
         hiltRule.inject()
 
+        val time = LocalTime.now()
+
         repeatingReminder = Reminder(
             description = "My Reminder",
-            daysOfWeek = sortedSetOf(DayOfWeek.MONDAY, DayOfWeek.TUESDAY)
+            daysOfWeek = sortedSetOf(*DayOfWeek.values()),
+            time = time
         )
         oneOffReminder = Reminder(
             description = "One-off Reminder",
-            daysOfWeek = sortedSetOf()
+            daysOfWeek = sortedSetOf(),
+            time = time
         )
 
         runBlocking {
             repeatingReminder.id = reminderRepository.save(repeatingReminder)
             oneOffReminder.id = reminderRepository.save(oneOffReminder)
-            alarmRepository.save(Alarm(id = 0, reminderId = repeatingReminder.id, triggerAt = 0))
-            alarmRepository.save(Alarm(id = 0, reminderId = oneOffReminder.id, triggerAt = 0))
+            val today = LocalDate.now().dayOfWeek
+            alarmRepository.save(
+                Alarm(
+                    id = 0,
+                    reminderId = repeatingReminder.id,
+                    triggerAt = repeatingReminder.getNextTimeForAlarm(today)!!.toEpochMilli()
+                )
+            )
+            alarmRepository.save(
+                Alarm(
+                    id = 0,
+                    reminderId = oneOffReminder.id,
+                    triggerAt = oneOffReminder.getNextTimeForAlarm(today)!!.plusMinutes(5)
+                        .toEpochMilli()
+                )
+            )
         }
         mockkStatic(::showToast)
         every { showToast(any(), any(), any()) } returns Unit
+    }
+
+    @After
+    fun teardown() = runBlocking {
+        val context = ApplicationProvider.getApplicationContext<Application>()
+        alarmRepository.getFirstScheduledAlarm()?.let { alarm ->
+            reminderRepository.findById(alarm.id)?.let { reminder ->
+                cancelReminder(context, alarm, reminder)
+            }
+        }
+        NotificationManagerCompat.from(context).cancelAll()
+        alarmRepository.clearAllScheduled()
+        alarmRepository.deleteAllInPast(LocalDateTime.now().toEpochMilli())
     }
 
     @Test
@@ -456,5 +495,40 @@ class ReminderAlarmManagerTest {
 
         val nextAlarm = alarmRepository.findByReminderId(oneOffReminder.id)
         assertThat(nextAlarm).isNull()
+    }
+
+    @Test
+    fun alarmSavedWhileServiceOpen_isStillScheduled() = testCoroutineDispatcher.runBlockingTest {
+        val context: Context = ApplicationProvider.getApplicationContext()
+
+        lateinit var intent: Intent
+        lateinit var reminder: Reminder
+        pauseDispatcher {
+            intent =
+                ReminderAlarmManager.getActionIntent(
+                    context,
+                    ACTION_ALARM_SET_NOTIF,
+                    repeatingReminder.id
+                )
+            serviceRule.startService(intent)
+
+            // Save an alarm
+            reminder = Reminder(description = "Temp Reminder")
+            reminder.id = reminderRepository.save(reminder)
+            val alarm =
+                Alarm(
+                    id = 0,
+                    reminderId = reminder.id,
+                    triggerAt = LocalDateTime.now().toEpochMilli()
+                )
+            alarm.id = alarmRepository.save(alarm)
+        }
+
+        val binder = serviceRule.bindService(intent) as ReminderAlarmManager.LocalBinder
+        binder.snooze()
+
+        val nextAlarm = alarmRepository.findByReminderId(reminder.id)
+        assertThat(nextAlarm).isNotNull()
+        assertThat(nextAlarm!!.scheduled).isTrue()
     }
 }

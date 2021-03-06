@@ -157,6 +157,8 @@ class ReminderAlarmManager : Service() {
             reminderId = reminder.id,
             notificationAlarmId = alarmId,
             notificationStartId = startId,
+            notificationStartTime = LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES)
+                .toEpochMilli()
         )
         Timber.d("Created command: $command")
         commands[reminder.id] = command
@@ -199,7 +201,8 @@ class ReminderAlarmManager : Service() {
                 scheduleNextAlarm(
                     this@ReminderAlarmManager,
                     alarmRepository,
-                    reminderRepository
+                    reminderRepository,
+                    startTime = command.notificationStartTime.toLocalDateTime()
                 )
 
                 cleanupCommand(command, startId)
@@ -412,9 +415,10 @@ class ReminderAlarmManager : Service() {
 }
 
 private data class Command(
-    val reminderId: Long = 0L,
-    val notificationAlarmId: Long = 0L,
-    val notificationStartId: Int = 0,
+    val reminderId: Long,
+    val notificationAlarmId: Long,
+    val notificationStartTime: Long,
+    val notificationStartId: Int
 ) {
     private val snoozeHandled: AtomicBoolean = AtomicBoolean(false)
     private val snoozeTimeoutEvent = MutableEventFlow<Unit>()
