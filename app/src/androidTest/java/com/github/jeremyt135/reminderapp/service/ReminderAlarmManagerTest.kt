@@ -15,6 +15,7 @@ import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.ReminderStatus
 import com.github.jeremyt135.reminderapp.data.local.FakeHistoryLocalDataSource
 import com.github.jeremyt135.reminderapp.di.*
+import com.github.jeremyt135.reminderapp.util.currentLocalDateTime
 import com.github.jeremyt135.reminderapp.util.toEpochMilli
 import com.google.common.truth.Truth.assertThat
 import dagger.Module
@@ -521,7 +522,7 @@ class ReminderAlarmManagerTest {
                 Alarm(
                     id = 0,
                     reminderId = reminder.id,
-                    triggerAt = LocalDateTime.now().minusMinutes(2).truncatedTo(ChronoUnit.MINUTES)
+                    triggerAt = currentLocalDateTime().minusMinutes(2)
                         .toEpochMilli()
                 )
             alarm.id = alarmRepository.save(alarm)

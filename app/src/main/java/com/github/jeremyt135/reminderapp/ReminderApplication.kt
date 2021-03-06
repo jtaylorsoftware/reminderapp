@@ -6,6 +6,7 @@ import com.github.jeremyt135.reminderapp.broadcast.scheduleNextAlarm
 import com.github.jeremyt135.reminderapp.data.AlarmRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.di.AppCoroutineScope
+import com.github.jeremyt135.reminderapp.util.currentEpochMilli
 import com.github.jeremyt135.reminderapp.util.toEpochMilli
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
@@ -38,8 +39,7 @@ class ReminderApplication : Application() {
         }
 
         // Perform cleanup and reschedule, which may be necessary due to a force stop
-        val now = LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES)
-        alarmRepository.deleteAllInPast(now.toEpochMilli())
+        alarmRepository.deleteAllInPast(currentEpochMilli())
         alarmRepository.clearAllScheduled()
         scheduleNextAlarm(this, alarmRepository, reminderRepository)
     }

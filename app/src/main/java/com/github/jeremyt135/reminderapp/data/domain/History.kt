@@ -2,9 +2,9 @@ package com.github.jeremyt135.reminderapp.data.domain
 
 import com.github.jeremyt135.reminderapp.data.DomainModel
 import com.github.jeremyt135.reminderapp.data.local.HistoryEntity
+import com.github.jeremyt135.reminderapp.util.getShortLocalDateDisplay
+import com.github.jeremyt135.reminderapp.util.getShortLocalTimeDisplay
 import com.github.jeremyt135.reminderapp.util.toLocalDateTime
-import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
 
 data class History(
     val id: Long = 0,
@@ -15,13 +15,9 @@ data class History(
 ) : DomainModel<HistoryEntity> {
     private val completionLocalDateTime = completedAt.toLocalDateTime()
 
-    fun getTimeDisplayString(): String = completionLocalDateTime.format(
-        DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)
-    )
+    fun getTimeDisplayString(): String = completionLocalDateTime.getShortLocalTimeDisplay()
 
-    fun getDateDisplayString(): String = completionLocalDateTime.toLocalDate().format(
-        DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT)
-    )
+    fun getDateDisplayString(): String = completionLocalDateTime.getShortLocalDateDisplay()
 
     override fun asDataModel(): HistoryEntity = HistoryEntity(
         id = this.id,

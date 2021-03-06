@@ -19,6 +19,8 @@ import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.local.FakeHistoryLocalDataSource
 import com.github.jeremyt135.reminderapp.di.DatabaseModule
 import com.github.jeremyt135.reminderapp.di.RepositoryModule
+import com.github.jeremyt135.reminderapp.util.currentLocalDateTime
+import com.github.jeremyt135.reminderapp.util.getShortLocalTimeDisplay
 import com.github.jeremyt135.reminderapp.util.toEpochMilli
 import dagger.Module
 import dagger.Provides
@@ -34,8 +36,6 @@ import org.junit.Rule
 import org.junit.Test
 import java.time.LocalDate
 import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -88,7 +88,7 @@ class AlarmFragmentTest {
     @Inject
     lateinit var historyRepository: HistoryRepository
 
-    val time: LocalDateTime = LocalDateTime.now().plusHours(2)
+    val time: LocalDateTime = currentLocalDateTime().plusHours(2)
     val reminder = Reminder(id = 1, time = time.toLocalTime(), description = "My Reminder")
     val alarm = Alarm(id = 1, reminderId = reminder.id, triggerAt = time.toEpochMilli())
 
@@ -131,7 +131,7 @@ class AlarmFragmentTest {
 
         val time = LocalDate.now().atTime(reminder.hour, reminder.minute)
         onView(withText(reminder.description)).check(matches(isDisplayed()))
-        onView(withText(time.format(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)))).check(
+        onView(withText(time.getShortLocalTimeDisplay())).check(
             matches(isDisplayed())
         )
     }

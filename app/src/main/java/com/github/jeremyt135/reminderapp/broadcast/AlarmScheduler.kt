@@ -2,6 +2,7 @@ package com.github.jeremyt135.reminderapp.broadcast
 
 import android.content.Context
 import android.content.Intent
+import com.github.jeremyt135.reminderapp.util.currentEpochMilli
 import com.github.jeremyt135.reminderapp.util.toEpochMilli
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -24,8 +25,7 @@ class AlarmScheduler : AlarmReceiver(
             Timber.d("Rescheduling alarms")
 
             // Clean up dangling Alarms
-            val now = LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES)
-            alarmRepository.deleteAllInPast(now.toEpochMilli())
+            alarmRepository.deleteAllInPast(currentEpochMilli())
             alarmRepository.clearAllScheduled()
 
             scheduleNextAlarm(context, alarmRepository, reminderRepository)

@@ -18,14 +18,13 @@ import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.service.ReminderAlarmManager
 import com.github.jeremyt135.reminderapp.util.MutableEventFlow
 import com.github.jeremyt135.reminderapp.util.asSingleEvent
+import com.github.jeremyt135.reminderapp.util.getShortLocalTimeDisplay
 import com.github.jeremyt135.reminderapp.util.toLocalDateTime
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import timber.log.Timber
-import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
 import javax.inject.Inject
 
 @HiltViewModel
@@ -102,7 +101,7 @@ class AlarmViewModel @Inject constructor(
 
                 val alarmTime = alarm.triggerAt.toLocalDateTime()
                 _time.value =
-                    alarmTime.format(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT))
+                    alarmTime.getShortLocalTimeDisplay()
             }
         }
     }

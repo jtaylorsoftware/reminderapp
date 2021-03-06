@@ -20,10 +20,9 @@ import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.screens.alarm.AlarmActivity
 import com.github.jeremyt135.reminderapp.screens.reminder.editor.ReminderEditorActivity
 import com.github.jeremyt135.reminderapp.service.ReminderAlarmManager
+import com.github.jeremyt135.reminderapp.util.getShortLocalTimeDisplay
 import com.github.jeremyt135.reminderapp.util.toLocalDateTime
 import timber.log.Timber
-import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
 
 
 const val ACTION_ALARM_SET_NOTIF =
@@ -372,9 +371,7 @@ fun buildNotificationForSnooze(context: Context, reminder: Reminder, alarm: Alar
         .setContentTitle("Reminder Snoozed")
         .setContentText(
             "Reminder for ${reminder.description} was snoozed until ${
-                alarm.triggerAt.toLocalDateTime().toLocalTime().format(
-                    DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)
-                )
+                alarm.triggerAt.toLocalDateTime().getShortLocalTimeDisplay()
             }"
         )
         .setPriority(NotificationCompat.PRIORITY_DEFAULT)

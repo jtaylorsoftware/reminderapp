@@ -7,14 +7,14 @@ import com.github.jeremyt135.reminderapp.data.DomainModel
 import com.github.jeremyt135.reminderapp.data.local.ReminderAndAlarmEntity
 import com.github.jeremyt135.reminderapp.data.local.ReminderAndHistoryEntity
 import com.github.jeremyt135.reminderapp.data.local.ReminderEntity
+import com.github.jeremyt135.reminderapp.util.currentLocalDateTime
 import com.github.jeremyt135.reminderapp.util.getFullLocaleDisplay
+import com.github.jeremyt135.reminderapp.util.getShortLocalTimeDisplay
 import timber.log.Timber
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
-import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
 import java.time.temporal.ChronoField
 import java.time.temporal.ChronoUnit
 import java.time.temporal.TemporalAdjusters
@@ -95,8 +95,7 @@ class Reminder(
     fun getNextTimeForAlarm(today: DayOfWeek, allowSameDay: Boolean = true): LocalDateTime? {
         val reminderTimeToday =
             LocalDateTime.of(LocalDate.now(), LocalTime.of(hour, minute))
-        val timeIsInPast =
-            LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES).isAfter(reminderTimeToday)
+        val timeIsInPast = currentLocalDateTime().isAfter(reminderTimeToday)
 
         return if (isOneOff) {
             if (timeIsInPast) {
@@ -145,9 +144,7 @@ class Reminder(
         }
 
     fun getTimeDisplayString(): String =
-        LocalDateTime.now().withHour(hour).withMinute(minute).format(
-            DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)
-        )
+        LocalDateTime.now().withHour(hour).withMinute(minute).getShortLocalTimeDisplay()
 
     fun dayIsChecked(dayString: String) = dayIsChecked(DayOfWeek.valueOf(dayString))
 

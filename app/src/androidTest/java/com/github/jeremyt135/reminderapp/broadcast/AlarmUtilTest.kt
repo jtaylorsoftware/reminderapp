@@ -14,6 +14,7 @@ import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.Alarm
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.di.DatabaseModule
+import com.github.jeremyt135.reminderapp.util.currentLocalDateTime
 import com.github.jeremyt135.reminderapp.util.toEpochMilli
 import com.google.common.truth.Truth.assertThat
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -59,7 +60,7 @@ class AlarmUtilTest {
 
     @Test
     fun scheduleAlarmForReminder_setsAlarm() {
-        val alarm = Alarm(1, 1, LocalDateTime.now().plusHours(1).toEpochMilli())
+        val alarm = Alarm(1, 1, currentLocalDateTime().plusHours(1).toEpochMilli())
         val reminder = Reminder(id = 1)
 
         scheduleAlarmForReminder(context, alarm, reminder)
@@ -71,7 +72,7 @@ class AlarmUtilTest {
 
     @Test
     fun scheduleNextAlarm_populatedDb_setsAlarmForNextSoonest() {
-        val now = LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES)
+        val now = currentLocalDateTime()
 
         // Save alarms with descending id but ascending time
         val alarms = listOf(
@@ -98,7 +99,7 @@ class AlarmUtilTest {
 
     @Test
     fun scheduleNextAlarm_clearsPreviouslyScheduled() {
-        val now = LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES)
+        val now = currentLocalDateTime()
 
         // Save alarms with descending id but ascending time
         val alarms = listOf(

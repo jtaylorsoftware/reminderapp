@@ -19,16 +19,11 @@ import com.github.jeremyt135.reminderapp.data.domain.History
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.ReminderStatus
 import com.github.jeremyt135.reminderapp.di.AppCoroutineScope
-import com.github.jeremyt135.reminderapp.util.EventFlow
-import com.github.jeremyt135.reminderapp.util.MutableEventFlow
-import com.github.jeremyt135.reminderapp.util.toEpochMilli
-import com.github.jeremyt135.reminderapp.util.toLocalDateTime
+import com.github.jeremyt135.reminderapp.util.*
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
 import timber.log.Timber
 import java.time.*
-import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
 import java.time.temporal.ChronoUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
@@ -273,7 +268,7 @@ class ReminderAlarmManager : Service() {
             reminderId = reminder.id,
             description = reminder.description,
             completionStatus = completionStatus,
-            completedAt = LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES).toEpochMilli()
+            completedAt = currentEpochMilli()
         )
         historyRepository.save(history)
     }
@@ -288,8 +283,7 @@ class ReminderAlarmManager : Service() {
         // Determine next triggerAt for a snoozing alarm
         val nextAlarm = Alarm(
             reminderId = alarm.reminderId,
-            triggerAt = alarm.triggerAt.toLocalDateTime().plusMinutes(SNOOZE_TIME_MIN)
-                .truncatedTo(ChronoUnit.MINUTES).toEpochMilli(),
+            triggerAt = alarm.triggerAt.toLocalDateTime().plusMinutes(SNOOZE_TIME_MIN).toEpochMilli(),
         )
 
         // Delete previous, save changes
@@ -303,11 +297,7 @@ class ReminderAlarmManager : Service() {
     private fun showSnoozeNotifications(context: Context, reminder: Reminder, alarm: Alarm) {
         showToast(
             context,
-            "Alarm snoozed until ${
-                alarm.triggerAt.toLocalDateTime().format(
-                    DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)
-                )
-            }"
+            "Alarm snoozed until ${alarm.triggerAt.toLocalDateTime().getShortLocalTimeDisplay()}"
         )
 
         triggerSnoozeNotification(

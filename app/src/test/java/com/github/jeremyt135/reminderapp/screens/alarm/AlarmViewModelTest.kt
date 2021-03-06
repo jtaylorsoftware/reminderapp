@@ -14,19 +14,18 @@ import com.github.jeremyt135.reminderapp.data.domain.ReminderAndAlarm
 import com.github.jeremyt135.reminderapp.getOrAwaitValue
 import com.github.jeremyt135.reminderapp.service.ReminderAlarmManager
 import com.github.jeremyt135.reminderapp.util.EventFlow
+import com.github.jeremyt135.reminderapp.util.currentLocalDateTime
+import com.github.jeremyt135.reminderapp.util.getShortLocalTimeDisplay
 import com.github.jeremyt135.reminderapp.util.toEpochMilli
 import com.google.common.truth.Truth.assertThat
 import io.mockk.*
 import io.mockk.impl.annotations.MockK
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
 
 @ExperimentalCoroutinesApi
 class AlarmViewModelTest {
@@ -62,7 +61,7 @@ class AlarmViewModelTest {
     fun setup() {
         MockKAnnotations.init(this)
 
-        time = LocalDateTime.now().plusHours(2)
+        time = currentLocalDateTime().plusHours(2)
         reminder = Reminder(id = 1, time = time.toLocalTime())
         alarm = Alarm(id = 1, reminderId = reminder.id, triggerAt = time.toEpochMilli())
         reminderAndAlarm = ReminderAndAlarm(reminder, alarm)
@@ -72,7 +71,14 @@ class AlarmViewModelTest {
 
         mockkObject(ReminderAlarmManager.Companion)
         serviceConnection = slot()
-        every { ReminderAlarmManager.bind(any(), capture(serviceConnection), any(), any()) } returns Unit
+        every {
+            ReminderAlarmManager.bind(
+                any(),
+                capture(serviceConnection),
+                any(),
+                any()
+            )
+        } returns Unit
 
         val snoozeTimeout = EventFlow<Unit>()
         fakeBinder = spyk(object : ReminderAlarmManager.LocalBinder(snoozeTimeout) {
@@ -102,9 +108,7 @@ class AlarmViewModelTest {
         assertThat(viewModel.reminder.getOrAwaitValue()).isEqualTo(reminder)
         assertThat(viewModel.alarm.getOrAwaitValue()).isEqualTo(alarm)
 
-        assertThat(viewModel.time.getOrAwaitValue()).isEqualTo(
-            time.format(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT))
-        )
+        assertThat(viewModel.time.getOrAwaitValue()).isEqualTo(time.getShortLocalTimeDisplay())
     }
 
     @Test

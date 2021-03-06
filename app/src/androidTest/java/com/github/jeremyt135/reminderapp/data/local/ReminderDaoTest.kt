@@ -6,6 +6,7 @@ import com.github.jeremyt135.reminderapp.data.domain.History
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.ReminderStatus
 import com.github.jeremyt135.reminderapp.util.InMemoryDatabaseRule
+import com.github.jeremyt135.reminderapp.util.currentEpochMilli
 import com.github.jeremyt135.reminderapp.util.toEpochMilli
 import com.google.common.truth.Truth.assertThat
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -56,7 +57,7 @@ class ReminderDaoTest {
                 reminderId = reminders[i - 1].id,
                 description = reminders[i - 1].description,
                 completionStatus = ReminderStatus.COMPLETED,
-                completedAt = LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES).toEpochMilli()
+                completedAt = currentEpochMilli()
             ).asDataModel()
         }
         historyEntries.forEach {
