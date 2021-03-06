@@ -198,6 +198,9 @@ class ReminderAlarmManager : Service() {
                 cleanupCommand(command, startId)
 
             } ?: run {
+            // No good way to recover without data, so immediately cleanup
+            cleanupCommand(command, startId)
+
             if (BuildConfig.DEBUG) {
                 showToast(
                     this@ReminderAlarmManager,
