@@ -2,6 +2,7 @@ package com.github.jeremyt135.reminderapp.data
 
 
 import com.github.jeremyt135.reminderapp.data.domain.Alarm
+import com.github.jeremyt135.reminderapp.util.toEpochMilli
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.flow
@@ -62,7 +63,7 @@ class FakeAlarmRepository @Inject constructor(private val cache: MutableList<Ala
     }
 
     override suspend fun deleteAllInPast(timeNow: Long) {
-        cache.removeAll { it.triggerAt < timeNow }
+        cache.removeAll { it.triggerAt.toEpochMilli() < timeNow }
     }
 
     override suspend fun deleteAll() {

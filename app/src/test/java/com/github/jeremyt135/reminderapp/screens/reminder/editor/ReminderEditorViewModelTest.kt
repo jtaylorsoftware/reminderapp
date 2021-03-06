@@ -14,7 +14,7 @@ import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.Alarm
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.getOrAwaitValue
-import com.github.jeremyt135.reminderapp.util.toEpochMilli
+import com.github.jeremyt135.reminderapp.util.currentLocalDateTime
 import com.google.common.truth.Truth.assertThat
 import io.mockk.*
 import io.mockk.impl.annotations.MockK
@@ -23,8 +23,6 @@ import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import java.time.LocalDate
-import java.time.LocalDateTime
 import java.time.LocalTime
 
 @ExperimentalCoroutinesApi
@@ -117,15 +115,14 @@ class ReminderEditorViewModelTest {
     fun saveReminder_savesToRepository_schedulesAlarm() = mainCoroutineRule.runBlockingTest {
         val reminder = Reminder(id = 1, time = LocalTime.now().plusMinutes(1))
 
-        val alarm = Alarm(id = 1, reminderId = reminder.id, triggerAt = 0)
+        val alarm = Alarm(id = 1, reminderId = reminder.id)
         val nextAlarm =
             Alarm(
                 id = 0,
                 reminderId = 1,
-                triggerAt = LocalDateTime.of(
-                    LocalDate.now(),
-                    LocalTime.of(reminder.hour, reminder.minute)
-                ).toEpochMilli()
+                triggerAt = currentLocalDateTime()
+                    .withHour(reminder.hour)
+                    .withMinute(reminder.minute)
             )
 
         every { mockSavedState.get<Long?>(EXTRA_REMINDER_ID) } returns 1
@@ -203,7 +200,7 @@ class ReminderEditorViewModelTest {
     fun deleteReminder_cancelsAlarms_andEmitsNavigateToReminders() =
         mainCoroutineRule.runBlockingTest {
             val reminder = Reminder(id = 1)
-            val alarm = Alarm(id = 1, reminderId = 1, triggerAt = 0)
+            val alarm = Alarm(id = 1, reminderId = 1)
 
             every { mockSavedState.get<Long?>(EXTRA_REMINDER_ID) } returns reminder.id
             coEvery { mockReminderRepo.findById(reminder.id) } returns reminder

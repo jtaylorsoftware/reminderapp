@@ -19,7 +19,6 @@ import com.github.jeremyt135.reminderapp.service.ReminderAlarmManager
 import com.github.jeremyt135.reminderapp.util.MutableEventFlow
 import com.github.jeremyt135.reminderapp.util.asSingleEvent
 import com.github.jeremyt135.reminderapp.util.getShortLocalTimeDisplay
-import com.github.jeremyt135.reminderapp.util.toLocalDateTime
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -36,7 +35,7 @@ class AlarmViewModel @Inject constructor(
     private val _reminder = MutableStateFlow(Reminder())
     val reminder = _reminder.asLiveData(viewModelScope.coroutineContext)
 
-    private val _alarm = MutableStateFlow(Alarm(0, 0, 0))
+    private val _alarm = MutableStateFlow(Alarm(0, 0))
     val alarm = _alarm.asLiveData(viewModelScope.coroutineContext)
 
     private val _time = MutableStateFlow("")
@@ -99,9 +98,8 @@ class AlarmViewModel @Inject constructor(
                 _reminder.value = reminder
                 _alarm.value = alarm
 
-                val alarmTime = alarm.triggerAt.toLocalDateTime()
-                _time.value =
-                    alarmTime.getShortLocalTimeDisplay()
+
+                _time.value = alarm.triggerAt.getShortLocalTimeDisplay()
             }
         }
     }

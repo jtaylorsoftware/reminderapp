@@ -20,8 +20,9 @@ import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.screens.alarm.AlarmActivity
 import com.github.jeremyt135.reminderapp.screens.reminder.editor.ReminderEditorActivity
 import com.github.jeremyt135.reminderapp.service.ReminderAlarmManager
+import com.github.jeremyt135.reminderapp.util.getShortLocalDateDisplay
 import com.github.jeremyt135.reminderapp.util.getShortLocalTimeDisplay
-import com.github.jeremyt135.reminderapp.util.toLocalDateTime
+import com.github.jeremyt135.reminderapp.util.toEpochMilli
 import timber.log.Timber
 
 
@@ -95,13 +96,13 @@ fun scheduleAlarmForReminder(
     alarm: Alarm,
     reminder: Reminder
 ) {
-    Timber.d("Scheduling $alarm for ${alarm.triggerAt.toLocalDateTime()} (${alarm.triggerAt})")
+    Timber.d("Scheduling $alarm for ${alarm.triggerAt.getShortLocalDateDisplay()} at ${alarm.triggerAt.getShortLocalTimeDisplay()}")
     val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
     val intent = getIntentForAlarmStart(context, alarm, reminder)
     val showIntent = getIntentForEditorActivity(context, alarm.reminderId)
 
     AlarmManagerCompat.setAlarmClock(
-        alarmManager, alarm.triggerAt,
+        alarmManager, alarm.triggerAt.toEpochMilli(),
         showIntent,
         intent
     )
@@ -371,7 +372,7 @@ fun buildNotificationForSnooze(context: Context, reminder: Reminder, alarm: Alar
         .setContentTitle("Reminder Snoozed")
         .setContentText(
             "Reminder for ${reminder.description} was snoozed until ${
-                alarm.triggerAt.toLocalDateTime().getShortLocalTimeDisplay()
+                alarm.triggerAt.getShortLocalTimeDisplay()
             }"
         )
         .setPriority(NotificationCompat.PRIORITY_DEFAULT)

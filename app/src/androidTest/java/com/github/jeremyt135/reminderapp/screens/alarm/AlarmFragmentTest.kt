@@ -21,7 +21,6 @@ import com.github.jeremyt135.reminderapp.di.DatabaseModule
 import com.github.jeremyt135.reminderapp.di.RepositoryModule
 import com.github.jeremyt135.reminderapp.util.currentLocalDateTime
 import com.github.jeremyt135.reminderapp.util.getShortLocalTimeDisplay
-import com.github.jeremyt135.reminderapp.util.toEpochMilli
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -90,7 +89,7 @@ class AlarmFragmentTest {
 
     val time: LocalDateTime = currentLocalDateTime().plusHours(2)
     val reminder = Reminder(id = 1, time = time.toLocalTime(), description = "My Reminder")
-    val alarm = Alarm(id = 1, reminderId = reminder.id, triggerAt = time.toEpochMilli())
+    val alarm = Alarm(id = 1, reminderId = reminder.id, triggerAt = time)
 
     /**
      *  Need to launch an Activity class to get the activityViewModel and

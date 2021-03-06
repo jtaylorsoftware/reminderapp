@@ -13,7 +13,6 @@ import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.di.AppCoroutineScope
 import com.github.jeremyt135.reminderapp.util.MutableEventFlow
 import com.github.jeremyt135.reminderapp.util.asSingleEvent
-import com.github.jeremyt135.reminderapp.util.toEpochMilli
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -103,7 +102,7 @@ class ReminderEditorViewModel @Inject constructor(
 
                 val today = LocalDate.now().dayOfWeek
                 reminder.getNextTimeForAlarm(today)?.let { time ->
-                    val nextAlarm = Alarm(reminderId = reminder.id, triggerAt = time.toEpochMilli())
+                    val nextAlarm = Alarm(reminderId = reminder.id, triggerAt = time)
                     nextAlarm.id = alarmRepository.save(nextAlarm)
                 }
 

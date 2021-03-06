@@ -24,7 +24,6 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
 import timber.log.Timber
 import java.time.*
-import java.time.temporal.ChronoUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 
@@ -251,7 +250,7 @@ class ReminderAlarmManager : Service() {
             reminder.getNextTimeForAlarm(today, false)?.let {
                 val nextAlarm = Alarm(
                     reminderId = alarm.reminderId,
-                    triggerAt = it.toEpochMilli()
+                    triggerAt = it
                 )
                 nextAlarm.id = alarmRepository.save(nextAlarm)
             }
@@ -283,7 +282,7 @@ class ReminderAlarmManager : Service() {
         // Determine next triggerAt for a snoozing alarm
         val nextAlarm = Alarm(
             reminderId = alarm.reminderId,
-            triggerAt = alarm.triggerAt.toLocalDateTime().plusMinutes(SNOOZE_TIME_MIN).toEpochMilli(),
+            triggerAt = alarm.triggerAt.plusMinutes(SNOOZE_TIME_MIN),
         )
 
         // Delete previous, save changes
@@ -297,7 +296,7 @@ class ReminderAlarmManager : Service() {
     private fun showSnoozeNotifications(context: Context, reminder: Reminder, alarm: Alarm) {
         showToast(
             context,
-            "Alarm snoozed until ${alarm.triggerAt.toLocalDateTime().getShortLocalTimeDisplay()}"
+            "Alarm snoozed until ${alarm.triggerAt.getShortLocalTimeDisplay()}"
         )
 
         triggerSnoozeNotification(

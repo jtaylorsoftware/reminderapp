@@ -23,6 +23,7 @@ import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.local.FakeHistoryLocalDataSource
 import com.github.jeremyt135.reminderapp.di.DatabaseModule
 import com.github.jeremyt135.reminderapp.di.RepositoryModule
+import com.github.jeremyt135.reminderapp.util.currentLocalDateTime
 import com.github.jeremyt135.reminderapp.util.withTime
 import com.google.common.truth.Truth.assertThat
 import dagger.Module
@@ -174,7 +175,7 @@ class ReminderEditorFragmentTest {
     fun cancel_navigatesUpWithoutSaving() = runBlockingTest {
         val initialReminders = reminderRepository.getAll().first()
 
-        launchEditorFragmentWithReminder(0L){
+        launchEditorFragmentWithReminder(0L) {
             fragmentVM = this.viewModel
         }
 
@@ -190,7 +191,7 @@ class ReminderEditorFragmentTest {
     @ExperimentalCoroutinesApi
     @Test
     fun save_navigatesUp() = runBlockingTest {
-        launchEditorFragmentWithReminder(3L){
+        launchEditorFragmentWithReminder(3L) {
             fragmentVM = this.viewModel
         }
 
@@ -245,7 +246,7 @@ class ReminderEditorFragmentTest {
     @Test
     fun deleteButton_editing_deletesReminderAndAlarm() = runBlocking {
         val reminder = Reminder(id = reminderRepository.save(Reminder()))
-        val alarm = Alarm(id = 1, reminderId = reminder.id, triggerAt = 0)
+        val alarm = Alarm(id = 1, reminderId = reminder.id, triggerAt = currentLocalDateTime())
         alarmRepository.save(alarm)
 
         launchEditorFragmentWithReminder(reminder.id)

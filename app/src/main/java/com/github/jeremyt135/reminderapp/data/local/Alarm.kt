@@ -5,6 +5,7 @@ import androidx.room.*
 import com.github.jeremyt135.reminderapp.data.DataModel
 import com.github.jeremyt135.reminderapp.data.domain.Alarm
 import kotlinx.parcelize.Parcelize
+import java.time.LocalDateTime
 
 /**
  * Parcelable entity for persisting Alarms.
@@ -36,7 +37,7 @@ data class AlarmEntity(
     val reminderId: Long,
 
     @ColumnInfo(name = "trigger_at")
-    val triggerAt: Long,
+    val triggerAt: LocalDateTime,
 
     val scheduled: Boolean? = null
 ) : Parcelable, DataModel<Alarm> {

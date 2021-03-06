@@ -21,7 +21,7 @@ class ReminderRepositoryTest {
     )
 
     private val alarms = localReminders.mapIndexed { i, reminder ->
-        Alarm(id = i.toLong() + 1, reminderId = reminder.id, triggerAt = 0)
+        Alarm(id = i.toLong() + 1, reminderId = reminder.id)
     }
 
     @Before

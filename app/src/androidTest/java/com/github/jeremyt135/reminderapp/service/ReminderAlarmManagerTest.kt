@@ -16,7 +16,6 @@ import com.github.jeremyt135.reminderapp.data.domain.ReminderStatus
 import com.github.jeremyt135.reminderapp.data.local.FakeHistoryLocalDataSource
 import com.github.jeremyt135.reminderapp.di.*
 import com.github.jeremyt135.reminderapp.util.currentLocalDateTime
-import com.github.jeremyt135.reminderapp.util.toEpochMilli
 import com.google.common.truth.Truth.assertThat
 import dagger.Module
 import dagger.Provides
@@ -42,9 +41,7 @@ import org.junit.Rule
 import org.junit.Test
 import java.time.DayOfWeek
 import java.time.LocalDate
-import java.time.LocalDateTime
 import java.time.LocalTime
-import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -142,7 +139,7 @@ class ReminderAlarmManagerTest {
                 Alarm(
                     id = 0,
                     reminderId = repeatingReminder.id,
-                    triggerAt = repeatingReminder.getNextTimeForAlarm(today)!!.toEpochMilli()
+                    triggerAt = repeatingReminder.getNextTimeForAlarm(today)!!
                 )
             )
             alarmRepository.save(
@@ -150,7 +147,6 @@ class ReminderAlarmManagerTest {
                     id = 0,
                     reminderId = oneOffReminder.id,
                     triggerAt = oneOffReminder.getNextTimeForAlarm(today)!!.plusMinutes(5)
-                        .toEpochMilli()
                 )
             )
         }
@@ -329,7 +325,7 @@ class ReminderAlarmManagerTest {
         assertThat(nextAlarm.id).isNotEqualTo(previousAlarm.id)
         assertThat(nextAlarm.reminderId).isEqualTo(previousAlarm.reminderId)
         assertThat(alarmRepository.findById(previousAlarm.id)).isNull()
-        assertThat(nextAlarm.triggerAt).isGreaterThan(0)
+        assertThat(nextAlarm.triggerAt).isGreaterThan(currentLocalDateTime().minusMinutes(1))
     }
 
     @Test
@@ -436,7 +432,7 @@ class ReminderAlarmManagerTest {
 
         // expect that it was saved the first time
         val nextAlarm = alarmRepository.findByReminderId(repeatingReminder.id)!!
-        assertThat(nextAlarm.triggerAt).isGreaterThan(0)
+        assertThat(nextAlarm.triggerAt).isGreaterThan(currentLocalDateTime().minusMinutes(1))
 
         // do again
         binder.snooze()
@@ -523,7 +519,6 @@ class ReminderAlarmManagerTest {
                     id = 0,
                     reminderId = reminder.id,
                     triggerAt = currentLocalDateTime().minusMinutes(2)
-                        .toEpochMilli()
                 )
             alarm.id = alarmRepository.save(alarm)
         }

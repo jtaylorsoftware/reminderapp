@@ -2,10 +2,8 @@ package com.github.jeremyt135.reminderapp.broadcast
 
 import android.app.PendingIntent
 import android.content.Context
-import android.os.Parcel
 import androidx.core.app.NotificationManagerCompat
 import androidx.test.core.app.ApplicationProvider
-import androidx.test.filters.MediumTest
 import androidx.test.filters.SmallTest
 import com.github.jeremyt135.reminderapp.data.AlarmRepository
 import com.github.jeremyt135.reminderapp.data.FakeAlarmRepository
@@ -13,12 +11,9 @@ import com.github.jeremyt135.reminderapp.data.FakeReminderRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.Alarm
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
-import com.github.jeremyt135.reminderapp.di.DatabaseModule
 import com.github.jeremyt135.reminderapp.util.currentLocalDateTime
-import com.github.jeremyt135.reminderapp.util.toEpochMilli
 import com.google.common.truth.Truth.assertThat
 import dagger.hilt.android.testing.HiltAndroidTest
-import dagger.hilt.android.testing.UninstallModules
 import io.mockk.justRun
 import io.mockk.mockkStatic
 import io.mockk.verify
@@ -26,9 +21,6 @@ import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
-import java.time.LocalDateTime
-import java.time.temporal.ChronoUnit
-import javax.inject.Inject
 
 @HiltAndroidTest
 @SmallTest
@@ -60,7 +52,7 @@ class AlarmUtilTest {
 
     @Test
     fun scheduleAlarmForReminder_setsAlarm() {
-        val alarm = Alarm(1, 1, currentLocalDateTime().plusHours(1).toEpochMilli())
+        val alarm = Alarm(1, 1, currentLocalDateTime().plusHours(1))
         val reminder = Reminder(id = 1)
 
         scheduleAlarmForReminder(context, alarm, reminder)
@@ -76,9 +68,9 @@ class AlarmUtilTest {
 
         // Save alarms with descending id but ascending time
         val alarms = listOf(
-            Alarm(id = 1, reminderId = 1, triggerAt = now.plusMinutes(10).toEpochMilli()),
-            Alarm(id = 2, reminderId = 2, triggerAt = now.plusMinutes(20).toEpochMilli()),
-            )
+            Alarm(id = 1, reminderId = 1, triggerAt = now.plusMinutes(10)),
+            Alarm(id = 2, reminderId = 2, triggerAt = now.plusMinutes(20)),
+        )
         alarms.forEach { runBlocking { alarmRepo.save(it) } }
 
         val reminder = Reminder(id = 1)
@@ -103,15 +95,15 @@ class AlarmUtilTest {
 
         // Save alarms with descending id but ascending time
         val alarms = listOf(
-            Alarm(id = 2, reminderId = 1, triggerAt = now.plusMinutes(2).toEpochMilli()),
-            Alarm(id = 1, reminderId = 2, triggerAt = now.plusMinutes(3).toEpochMilli()),
+            Alarm(id = 2, reminderId = 1, triggerAt = now.plusMinutes(2)),
+            Alarm(id = 1, reminderId = 2, triggerAt = now.plusMinutes(3)),
             Alarm(
                 id = 4,
                 reminderId = 3,
-                triggerAt = now.plusMinutes(5).toEpochMilli(),
+                triggerAt = now.plusMinutes(5),
                 scheduled = true
             ),
-            Alarm(id = 3, reminderId = 4, triggerAt = now.plusMinutes(4).toEpochMilli())
+            Alarm(id = 3, reminderId = 4, triggerAt = now.plusMinutes(4))
         )
         alarms.forEach { runBlocking { alarmRepo.save(it) } }
 
@@ -163,7 +155,7 @@ class AlarmUtilTest {
     @Test
     fun triggerNotification_createsAlarmActivityIntent() {
         val reminder = Reminder(id = 1)
-        val alarm = Alarm(id = 1, reminderId = reminder.id, triggerAt = 0)
+        val alarm = Alarm(id = 1, reminderId = reminder.id)
 
         triggerNotification(context, reminder, alarm.id)
 

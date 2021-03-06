@@ -7,7 +7,7 @@ import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.ReminderStatus
 import com.github.jeremyt135.reminderapp.util.InMemoryDatabaseRule
 import com.github.jeremyt135.reminderapp.util.currentEpochMilli
-import com.github.jeremyt135.reminderapp.util.toEpochMilli
+import com.github.jeremyt135.reminderapp.util.currentLocalDateTime
 import com.google.common.truth.Truth.assertThat
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -16,8 +16,6 @@ import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import java.time.LocalDateTime
-import java.time.temporal.ChronoUnit
 
 @ExperimentalCoroutinesApi
 @HiltAndroidTest
@@ -129,7 +127,7 @@ class ReminderDaoTest {
         val reminder = Reminder(id = 1).asDataModel()
         reminderDao.insert(reminder)
 
-        val alarm = AlarmEntity(id = 1, reminderId = 1, triggerAt = 0)
+        val alarm = AlarmEntity(id = 1, reminderId = 1, triggerAt = currentLocalDateTime())
         alarmDao.insert(alarm)
 
         val reminderAndAlarm = reminderDao.getReminderAndAlarm(reminder.id)

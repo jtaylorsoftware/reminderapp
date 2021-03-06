@@ -3,6 +3,7 @@ package com.github.jeremyt135.reminderapp.data
 
 import com.github.jeremyt135.reminderapp.data.local.AlarmEntity as Alarm
 import com.github.jeremyt135.reminderapp.data.local.AlarmDao
+import com.github.jeremyt135.reminderapp.util.currentLocalDateTime
 import io.mockk.*
 import io.mockk.impl.annotations.MockK
 import kotlinx.coroutines.flow.flowOf
@@ -17,8 +18,8 @@ class AlarmRepositoryTest {
     lateinit var repository: AlarmRepository
 
     private val alarms = listOf(
-        Alarm(1, 110, 1),
-        Alarm(2, 210, 2),
+        Alarm(1, 110, currentLocalDateTime().plusMinutes(1)),
+        Alarm(2, 210, currentLocalDateTime().plusMinutes(2)),
     )
 
     @Before

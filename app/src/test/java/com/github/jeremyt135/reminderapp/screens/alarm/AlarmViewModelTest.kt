@@ -16,7 +16,6 @@ import com.github.jeremyt135.reminderapp.service.ReminderAlarmManager
 import com.github.jeremyt135.reminderapp.util.EventFlow
 import com.github.jeremyt135.reminderapp.util.currentLocalDateTime
 import com.github.jeremyt135.reminderapp.util.getShortLocalTimeDisplay
-import com.github.jeremyt135.reminderapp.util.toEpochMilli
 import com.google.common.truth.Truth.assertThat
 import io.mockk.*
 import io.mockk.impl.annotations.MockK
@@ -63,7 +62,7 @@ class AlarmViewModelTest {
 
         time = currentLocalDateTime().plusHours(2)
         reminder = Reminder(id = 1, time = time.toLocalTime())
-        alarm = Alarm(id = 1, reminderId = reminder.id, triggerAt = time.toEpochMilli())
+        alarm = Alarm(id = 1, reminderId = reminder.id, triggerAt = time)
         reminderAndAlarm = ReminderAndAlarm(reminder, alarm)
 
         coEvery { mockReminderRepo.getReminderAndAlarm(reminder.id) } returns reminderAndAlarm

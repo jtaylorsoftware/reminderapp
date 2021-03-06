@@ -16,7 +16,6 @@ import com.github.jeremyt135.reminderapp.data.domain.Alarm
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.local.AppDatabase
 import com.github.jeremyt135.reminderapp.util.currentLocalDateTime
-import com.github.jeremyt135.reminderapp.util.toEpochMilli
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.runBlocking
@@ -44,7 +43,7 @@ class AlarmActivityTest {
 
     val time: LocalDateTime = currentLocalDateTime().plusHours(2)
     val reminder = Reminder(id = 1, time = time.toLocalTime(), description = "My Reminder")
-    val alarm = Alarm(id = 1, reminderId = reminder.id, triggerAt = time.toEpochMilli())
+    val alarm = Alarm(id = 1, reminderId = reminder.id, triggerAt = time)
 
     @Before
     fun setup() {
