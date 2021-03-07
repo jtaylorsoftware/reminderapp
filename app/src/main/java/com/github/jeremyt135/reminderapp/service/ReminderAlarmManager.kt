@@ -9,7 +9,6 @@ import android.media.AudioAttributes
 import android.os.*
 import android.widget.Toast
 import androidx.core.app.NotificationManagerCompat
-import com.github.jeremyt135.BuildConfig
 import com.github.jeremyt135.reminderapp.broadcast.*
 import com.github.jeremyt135.reminderapp.data.AlarmRepository
 import com.github.jeremyt135.reminderapp.data.HistoryRepository
@@ -63,7 +62,7 @@ class ReminderAlarmManager : Service() {
         } ?: run {
             Timber.w("Service onBind called without matching reminder")
             // Return a default Binder to clients that bind with invalid parameters.
-            // Mostly used for testing.
+            // Mostly used for testing, and doesn't necessarily indicate an error.
             Binder()
         }
     }
@@ -126,17 +125,18 @@ class ReminderAlarmManager : Service() {
                 applicationScope.launch {
                     handleActionWithCommand(action, it, startId)
                 }
-            } ?: run {
-                if (BuildConfig.DEBUG) {
-                    val msg = "handleAction: could not handle non-start command, command == null"
-                    Timber.e(msg)
-                    showToast(this, msg, Toast.LENGTH_LONG)
-                }
-            }
+            } ?: handleError(
+                null,
+                startId,
+                "handleAction: could not handle non-start command, command == null"
+            )
+
         }
     }
 
-    // Calls setNotification and creates a Command
+    /**
+     * Calls setNotification and creates a Command
+     */
     private fun handleStart(reminder: Reminder, alarmId: Long, startId: Int) {
         // Set notification using extras, and in main thread w/o dispatch, so it can get to foreground ASAP
         bringToForeground(
@@ -197,22 +197,33 @@ class ReminderAlarmManager : Service() {
                 )
                 cleanupCommand(command, startId)
 
-            } ?: run {
-            // No good way to recover without data, so immediately cleanup
-            cleanupCommand(command, startId)
-
-            if (BuildConfig.DEBUG) {
-                showToast(
-                    this@ReminderAlarmManager,
-                    "ReminderAlarmManager.handleActionWithCommand: null reminder/alarm",
-                    Toast.LENGTH_LONG
-                )
-            }
-        }
-
+            } ?: handleError(
+            command,
+            startId,
+            "ReminderAlarmManager.handleActionWithCommand: null reminder/alarm"
+        )
     }
 
-    // Cleanup the notification Command for a Reminder and the current handler command
+
+    /**
+     *  Runs whatever cleanup is possible, displays optional error message, and schedules next alarm
+     */
+    private fun handleError(command: Command?, startId: Int?, errorMsg: String?) {
+        command?.let { cleanupCommand(it, startId) } ?: run {
+            startId?.let { stopSelf(it) }
+        }
+        errorMsg?.let {
+            Timber.e(it)
+            showToast(this, it, Toast.LENGTH_LONG)
+        }
+        applicationScope.launch {
+            scheduleNextAlarm(this@ReminderAlarmManager, alarmRepository, reminderRepository)
+        }
+    }
+
+    /**
+     * Cleanup the notification Command for a Reminder and the current handler command
+     */
     private fun cleanupCommand(command: Command, startId: Int?) {
         commands.remove(command.reminderId)
 
@@ -238,8 +249,10 @@ class ReminderAlarmManager : Service() {
         )
     }
 
-    // Performs completion of a Reminder - cancels alarms, saves a new alarm and history entry,
-    // schedules next alarm
+    /**
+     * Performs completion of a Reminder - cancels alarms, saves a new alarm and history entry,
+     * schedules next alarm
+     */
     private suspend fun saveHistoryWithStatus(
         reminder: Reminder,
         alarm: Alarm,
@@ -428,15 +441,22 @@ private data class Command(
             if (snoozeHandled.compareAndSet(false, true)) {
                 snoozeTimeoutEvent.value = Unit
                 Timber.d("Reminder $reminderId alarm $notificationAlarmId auto-snoozing (startId:$notificationStartId)")
-                try {
-                    handleSnooze(command)
-                    Timber.d("Auto-snooze job completed")
-                } catch (e: CancellationException) {
-                    withContext(NonCancellable) {
-                        Timber.d("Auto-snooze job was cancelled")
+
+                // Try snooze a few times
+                var attempts = 3
+                while (attempts > 0) {
+                    attempts--
+                    try {
+                        handleSnooze(command)
+                        Timber.d("Auto-snooze job completed")
+                        break
+                    } catch (e: CancellationException) {
+                        withContext(NonCancellable) {
+                            Timber.d("Auto-snooze job was cancelled")
+                        }
+                    } catch (e: Exception) {
+                        Timber.d("Exception in auto-snooze job: $e")
                     }
-                } catch (e: Exception) {
-                    Timber.d("Exception in auto-snooze job: $e")
                 }
             }
         }
