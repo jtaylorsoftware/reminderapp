@@ -12,7 +12,7 @@ import com.github.jeremyt135.reminderapp.data.domain.Alarm
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.di.AppCoroutineScope
 import com.github.jeremyt135.reminderapp.util.MutableEventFlow
-import com.github.jeremyt135.reminderapp.util.asSingleEvent
+import com.github.jeremyt135.reminderapp.util.asEventFlow
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -43,7 +43,7 @@ class ReminderEditorViewModel @Inject constructor(
         _reminderDatesDisplay.asLiveData(viewModelScope.coroutineContext)
 
     private val _navigateToReminders = MutableEventFlow<Unit>()
-    val navigateToReminders = _navigateToReminders.asSingleEvent()
+    val navigateToReminders = _navigateToReminders.asEventFlow()
 
     private var savedReminderId by Delegates.notNull<Long>()
     var isEditing by Delegates.notNull<Boolean>()

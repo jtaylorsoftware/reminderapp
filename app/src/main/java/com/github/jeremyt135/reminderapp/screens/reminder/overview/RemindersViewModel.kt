@@ -8,7 +8,7 @@ import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.ReminderAndHistory
 import com.github.jeremyt135.reminderapp.util.MutableEventFlow
-import com.github.jeremyt135.reminderapp.util.asSingleEvent
+import com.github.jeremyt135.reminderapp.util.asEventFlow
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -21,7 +21,7 @@ class RemindersViewModel @Inject constructor(private val reminderRepository: Rem
         reminderRepository.getAllWithTodayHistory().asLiveData(viewModelScope.coroutineContext)
 
     private val _navigateToEditor = MutableEventFlow<Reminder>()
-    val navigateToEditor = _navigateToEditor.asSingleEvent()
+    val navigateToEditor = _navigateToEditor.asEventFlow()
 
     fun addReminder() {
         viewModelScope.launch {

@@ -84,4 +84,7 @@ class MutableEventFlow<T>(initialValue: T? = null) :
         }
 }
 
-fun <T> MutableEventFlow<T>.asSingleEvent() = this as EventFlow<T>
+/**
+ * Returns this MutableEventFlow as an EventFlow
+ */
+fun <T> MutableEventFlow<T>.asEventFlow() = this as EventFlow<T>

@@ -17,7 +17,7 @@ import com.github.jeremyt135.reminderapp.data.domain.Alarm
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.service.ReminderAlarmManager
 import com.github.jeremyt135.reminderapp.util.MutableEventFlow
-import com.github.jeremyt135.reminderapp.util.asSingleEvent
+import com.github.jeremyt135.reminderapp.util.asEventFlow
 import com.github.jeremyt135.reminderapp.util.getShortLocalTimeDisplay
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -44,7 +44,7 @@ class AlarmViewModel @Inject constructor(
     private var tookAction: Boolean = false
 
     private val _finished = MutableEventFlow<Unit>()
-    val finished = _finished.asSingleEvent()
+    val finished = _finished.asEventFlow()
 
     private lateinit var reminderAlarmManager: ReminderAlarmManager.LocalBinder
     private var bound = false
