@@ -38,7 +38,7 @@ open class EventFlow<T>(initialValue: T? = null) {
     /**
      * Collects the Event, but only performs action if the Event is not handled.
      */
-    suspend inline fun onEvent(crossinline action: suspend (T?) -> Unit) =
+    suspend inline fun onEvent(crossinline action: suspend (T) -> Unit) =
         this.flow.collect { event -> event.value?.let { action(it) } }
 
     fun asLiveData(context: CoroutineContext = EmptyCoroutineContext) =
