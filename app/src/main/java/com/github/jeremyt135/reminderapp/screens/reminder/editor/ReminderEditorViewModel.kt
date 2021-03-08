@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import android.widget.Toast
 import androidx.lifecycle.*
+import androidx.work.WorkManager
 import com.github.jeremyt135.BuildConfig
 import com.github.jeremyt135.reminderapp.broadcast.*
 import com.github.jeremyt135.reminderapp.data.AlarmRepository
@@ -11,8 +12,10 @@ import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.Alarm
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.di.AppCoroutineScope
+import com.github.jeremyt135.reminderapp.service.AlarmService
 import com.github.jeremyt135.reminderapp.util.MutableEventFlow
 import com.github.jeremyt135.reminderapp.util.asEventFlow
+import com.github.jeremyt135.reminderapp.work.AlarmActionHandler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -96,9 +99,7 @@ class ReminderEditorViewModel @Inject constructor(
             _reminder.value.copy().let { reminder ->
                 reminder.id = reminderRepository.save(reminder)
 
-                val context = getApplication<Application>().applicationContext
-
-                cancelReminder(context, reminder)
+                val wasScheduled = stopAlarmsForReminder(getApplication(), reminder)
 
                 val today = LocalDate.now().dayOfWeek
                 reminder.getNextTimeForAlarm(today)?.let { time ->
@@ -106,11 +107,15 @@ class ReminderEditorViewModel @Inject constructor(
                     nextAlarm.id = alarmRepository.save(nextAlarm)
                 }
 
-                scheduleNextAlarm(context, alarmRepository, reminderRepository)
-            }
+                if (wasScheduled) {
+                    AlarmService.requestStop(getApplication())
+                }
 
-            _navigateToReminders.value = Unit
+                scheduleNextAlarm()
+            }
         }
+
+        _navigateToReminders.value = Unit
     }
 
     fun deleteReminder() {
@@ -119,16 +124,20 @@ class ReminderEditorViewModel @Inject constructor(
         }
 
         applicationScope.launch {
-            val context = getApplication<Application>().applicationContext
             _reminder.value.copy().let { reminder ->
-                if (cancelReminder(context, reminder)) {
-                    scheduleNextAlarm(context, alarmRepository, reminderRepository)
+                with(getApplication<Application>()) {
+                    if (stopAlarmsForReminder(this, reminder)) {
+                        // Was currently scheduled, so try to schedule next
+                        AlarmService.requestStop(this)
+                        scheduleNextAlarm()
+                    }
                 }
 
                 reminderRepository.delete(reminder)
             }
-            _navigateToReminders.value = Unit
         }
+
+        _navigateToReminders.value = Unit
     }
 
     fun onTimeChanged(newHour: Int, newMinute: Int) {
@@ -138,13 +147,18 @@ class ReminderEditorViewModel @Inject constructor(
         }
     }
 
+    private fun scheduleNextAlarm() {
+        AlarmActionHandler.createForAction(ACTION_ALARM_SCHEDULE_NEXT, 0).let {
+            WorkManager.getInstance(getApplication()).enqueue(it)
+        }
+    }
+
     // Cancels & deletes Reminder, returning value of alarm.scheduled
-    private suspend fun cancelReminder(context: Context, reminder: Reminder): Boolean =
+    private suspend fun stopAlarmsForReminder(context: Context, reminder: Reminder): Boolean =
         alarmRepository.findByReminderId(savedReminderId)?.let {
             Timber.d("Cancelling previous alarm")
-            cancelNotification(context, it.id)
-            cancelReminder(context, it, reminder)
+            cancelAlarmIntentsForReminder(context, reminder)
             alarmRepository.delete(it)
             it.scheduled
-        } ?: false
+        } == true
 }

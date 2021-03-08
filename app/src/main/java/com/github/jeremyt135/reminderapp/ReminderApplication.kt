@@ -1,23 +1,25 @@
 package com.github.jeremyt135.reminderapp
 
 import android.app.Application
+import androidx.hilt.work.HiltWorkerFactory
+import androidx.work.Configuration
+import androidx.work.WorkManager
 import com.github.jeremyt135.BuildConfig
+import com.github.jeremyt135.reminderapp.broadcast.ACTION_ALARM_SCHEDULE_NEXT
 import com.github.jeremyt135.reminderapp.broadcast.scheduleNextAlarm
 import com.github.jeremyt135.reminderapp.data.AlarmRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.di.AppCoroutineScope
 import com.github.jeremyt135.reminderapp.util.currentEpochMilli
-import com.github.jeremyt135.reminderapp.util.toEpochMilli
+import com.github.jeremyt135.reminderapp.work.AlarmActionHandler
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import timber.log.Timber
-import java.time.LocalDateTime
-import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 
 @HiltAndroidApp
-class ReminderApplication : Application() {
+class ReminderApplication : Application(), Configuration.Provider {
     @AppCoroutineScope
     @Inject
     lateinit var applicationScope: CoroutineScope
@@ -27,6 +29,9 @@ class ReminderApplication : Application() {
 
     @Inject
     lateinit var reminderRepository: ReminderRepository
+
+    @Inject
+    lateinit var workerFactory: HiltWorkerFactory
 
     override fun onCreate() {
         super.onCreate()
@@ -41,6 +46,15 @@ class ReminderApplication : Application() {
         // Perform cleanup and reschedule, which may be necessary due to a force stop
         alarmRepository.deleteAllInPast(currentEpochMilli())
         alarmRepository.clearAllScheduled()
-        scheduleNextAlarm(this, alarmRepository, reminderRepository)
+
+        AlarmActionHandler.createForAction(ACTION_ALARM_SCHEDULE_NEXT, 0).let {
+            WorkManager.getInstance(this).enqueue(it)
+        }
     }
+
+    override fun getWorkManagerConfiguration() =
+        Configuration.Builder()
+            .setWorkerFactory(workerFactory)
+            .build()
+
 }

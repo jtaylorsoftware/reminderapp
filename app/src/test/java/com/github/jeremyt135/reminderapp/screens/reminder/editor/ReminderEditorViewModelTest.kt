@@ -3,18 +3,23 @@ package com.github.jeremyt135.reminderapp.screens.reminder.editor
 import android.content.Context
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.lifecycle.SavedStateHandle
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.Operation
+import androidx.work.WorkManager
+import androidx.work.WorkRequest
 import com.github.jeremyt135.reminderapp.MainCoroutineRule
 import com.github.jeremyt135.reminderapp.ReminderApplication
+import com.github.jeremyt135.reminderapp.broadcast.ACTION_ALARM_SCHEDULE_NEXT
 import com.github.jeremyt135.reminderapp.broadcast.EXTRA_REMINDER_ID
-import com.github.jeremyt135.reminderapp.broadcast.cancelNotification
-import com.github.jeremyt135.reminderapp.broadcast.cancelReminder
-import com.github.jeremyt135.reminderapp.broadcast.scheduleNextAlarm
+import com.github.jeremyt135.reminderapp.broadcast.cancelAlarmIntentsForReminder
 import com.github.jeremyt135.reminderapp.data.AlarmRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.Alarm
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.getOrAwaitValue
+import com.github.jeremyt135.reminderapp.service.AlarmService
 import com.github.jeremyt135.reminderapp.util.currentLocalDateTime
+import com.github.jeremyt135.reminderapp.work.AlarmActionHandler
 import com.google.common.truth.Truth.assertThat
 import io.mockk.*
 import io.mockk.impl.annotations.MockK
@@ -64,6 +69,19 @@ class ReminderEditorViewModelTest {
     @Before
     fun setup() {
         MockKAnnotations.init(this)
+
+        val mockWorkManager = mockkClass(WorkManager::class)
+        every { mockWorkManager.enqueue(any<WorkRequest>()) } returns mockkClass(Operation::class)
+        mockkStatic(WorkManager::class)
+        every { WorkManager.getInstance(any()) } returns mockWorkManager
+
+        mockkObject(AlarmService.Companion)
+        justRun { AlarmService.requestStop(any()) }
+
+        mockkObject(AlarmActionHandler.Companion)
+        every {
+            AlarmActionHandler.createForAction(any(), any())
+        } returns OneTimeWorkRequestBuilder<AlarmActionHandler>().build()
     }
 
     @Test
@@ -115,7 +133,7 @@ class ReminderEditorViewModelTest {
     fun saveReminder_savesToRepository_schedulesAlarm() = mainCoroutineRule.runBlockingTest {
         val reminder = Reminder(id = 1, time = LocalTime.now().plusMinutes(1))
 
-        val alarm = Alarm(id = 1, reminderId = reminder.id)
+        val alarm = Alarm(id = 1, reminderId = reminder.id, scheduled=true)
         val nextAlarm =
             Alarm(
                 id = 0,
@@ -134,10 +152,8 @@ class ReminderEditorViewModelTest {
         coEvery { mockAlarmRepo.save(nextAlarm) } returns alarm.id + 1
         every { mockApplication.applicationContext } returns mockContext
 
-        mockkStatic(::scheduleNextAlarm, ::cancelReminder, ::cancelNotification)
-        coEvery { scheduleNextAlarm(mockContext, mockAlarmRepo, mockReminderRepo) } returns Unit
-        every { cancelReminder(mockContext, alarm, reminder) } returns Unit
-        every { cancelNotification(mockContext, 1) } returns Unit
+        mockkStatic(::cancelAlarmIntentsForReminder)
+        every { cancelAlarmIntentsForReminder(mockApplication, any()) } returns Unit
 
         createViewModel()
 
@@ -150,13 +166,13 @@ class ReminderEditorViewModelTest {
 
             // Should cancel previous by finding old alarm, cancelling, and deleting
             mockAlarmRepo.findByReminderId(reminder.id)
-            cancelNotification(mockContext, alarm.id)
-            cancelReminder(mockContext, alarm, reminder)
+            cancelAlarmIntentsForReminder(mockApplication, reminder)
             mockAlarmRepo.delete(alarm)
 
             // Should save and schedule the next available alarm
             mockAlarmRepo.save(nextAlarm.copy(id = alarm.id + 1))
-            scheduleNextAlarm(mockContext, mockAlarmRepo, mockReminderRepo)
+            AlarmService.requestStop(mockApplication)
+            AlarmActionHandler.createForAction(ACTION_ALARM_SCHEDULE_NEXT, 0)
         }
     }
 
@@ -169,10 +185,8 @@ class ReminderEditorViewModelTest {
         coEvery { mockReminderRepo.save(reminder) } returns reminder.id
         coEvery { mockAlarmRepo.findByReminderId(reminder.id) } returns null
         every { mockApplication.applicationContext } returns mockContext
-        mockkStatic(::cancelReminder, ::cancelNotification, ::scheduleNextAlarm)
-        justRun { cancelReminder(mockContext, any(), any()) }
-        every { cancelNotification(mockContext, reminder.id) } returns Unit
-        coJustRun { scheduleNextAlarm(mockContext, mockAlarmRepo, mockReminderRepo) }
+        mockkStatic(::cancelAlarmIntentsForReminder)
+        every { cancelAlarmIntentsForReminder(mockApplication, any()) } returns Unit
 
         createViewModel()
 
@@ -200,18 +214,17 @@ class ReminderEditorViewModelTest {
     fun deleteReminder_cancelsAlarms_andEmitsNavigateToReminders() =
         mainCoroutineRule.runBlockingTest {
             val reminder = Reminder(id = 1)
-            val alarm = Alarm(id = 1, reminderId = 1)
+            val alarm = Alarm(id = 1, reminderId = 1, scheduled=true)
 
             every { mockSavedState.get<Long?>(EXTRA_REMINDER_ID) } returns reminder.id
             coEvery { mockReminderRepo.findById(reminder.id) } returns reminder
             coEvery { mockAlarmRepo.findByReminderId(reminder.id) } returns alarm
             coEvery { mockReminderRepo.delete(reminder) } returns Unit
             coEvery { mockAlarmRepo.delete(alarm) } returns Unit
-            coEvery { mockApplication.applicationContext } returns mockContext
+            every { mockApplication.applicationContext } returns mockContext
 
-            mockkStatic(::cancelReminder, ::cancelNotification)
-            every { cancelReminder(mockContext, alarm, reminder) } returns Unit
-            every { cancelNotification(mockContext, reminder.id) } returns Unit
+            mockkStatic(::cancelAlarmIntentsForReminder)
+            every { cancelAlarmIntentsForReminder(mockApplication, any()) } returns Unit
 
             createViewModel()
 
@@ -219,11 +232,13 @@ class ReminderEditorViewModelTest {
             viewModel.deleteReminder()
             assertThat(viewModel.navigateToReminders.value).isNotNull()
 
-            coVerifyOrder {
-                cancelNotification(mockContext, reminder.id)
-                cancelReminder(mockContext, alarm, reminder)
+            coVerify {
+                mockAlarmRepo.findByReminderId(reminder.id)
+                cancelAlarmIntentsForReminder(mockApplication, any())
                 mockAlarmRepo.delete(alarm)
+                AlarmService.requestStop(mockApplication)
                 mockReminderRepo.delete(reminder)
+                AlarmActionHandler.createForAction(ACTION_ALARM_SCHEDULE_NEXT, 0)
             }
         }
 }

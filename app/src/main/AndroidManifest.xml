@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="com.github.jeremyt135">
 
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
@@ -15,8 +16,8 @@
         android:theme="@style/Theme.ReminderApp">
         <activity
             android:name=".reminderapp.RemindersActivity"
-            android:windowSoftInputMode="adjustPan"
-            android:exported="true">
+            android:exported="true"
+            android:windowSoftInputMode="adjustPan">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -31,9 +32,12 @@
         <activity
             android:name=".reminderapp.screens.alarm.AlarmActivity"
             android:configChanges="orientation"
+            android:exported="false"
             android:screenOrientation="portrait"
-            android:theme="@style/Theme.ReminderApp.Alarm"
-            android:exported="false"/>
+            android:theme="@style/Theme.ReminderApp.Alarm" />
+
+        <receiver android:name=".reminderapp.broadcast.AlarmStartReceiver" />
+        <receiver android:name=".reminderapp.broadcast.AlarmActionReceiver" />
         <receiver
             android:name=".reminderapp.broadcast.AlarmScheduler"
             android:exported="true">
@@ -42,7 +46,13 @@
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
         </receiver>
-        <service android:name=".reminderapp.service.ReminderAlarmManager" />
+
+        <service android:name=".reminderapp.service.AlarmService" />
+        <provider
+            android:name="androidx.work.impl.WorkManagerInitializer"
+            android:authorities="${applicationId}.workmanager-init"
+            tools:node="remove"
+            android:exported="false" />
     </application>
 
 </manifest>

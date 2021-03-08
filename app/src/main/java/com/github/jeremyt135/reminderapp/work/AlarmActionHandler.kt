@@ -1,0 +1,204 @@
+package com.github.jeremyt135.reminderapp.work
+
+import android.content.Context
+import androidx.annotation.VisibleForTesting
+import androidx.core.app.NotificationManagerCompat
+import androidx.hilt.work.HiltWorker
+import androidx.work.*
+import androidx.work.ListenableWorker.Result
+import com.github.jeremyt135.reminderapp.broadcast.*
+import com.github.jeremyt135.reminderapp.data.AlarmRepository
+import com.github.jeremyt135.reminderapp.data.HistoryRepository
+import com.github.jeremyt135.reminderapp.data.ReminderRepository
+import com.github.jeremyt135.reminderapp.data.domain.Alarm
+import com.github.jeremyt135.reminderapp.data.domain.History
+import com.github.jeremyt135.reminderapp.data.domain.Reminder
+import com.github.jeremyt135.reminderapp.data.domain.ReminderStatus
+import com.github.jeremyt135.reminderapp.util.currentEpochMilli
+import com.github.jeremyt135.reminderapp.util.currentLocalDateTime
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedInject
+import kotlinx.coroutines.flow.first
+import timber.log.Timber
+import java.time.LocalDate
+import java.util.concurrent.TimeUnit
+
+@HiltWorker
+class AlarmActionHandler @AssistedInject constructor(
+    @Assisted context: Context,
+    @Assisted workerParameters: WorkerParameters,
+    alarmRepository: AlarmRepository,
+    reminderRepository: ReminderRepository,
+    historyRepository: HistoryRepository
+) :
+    CoroutineWorker(context, workerParameters) {
+
+    private val impl = AlarmActionHandlerImpl(
+        context, inputData, alarmRepository, reminderRepository, historyRepository
+    )
+
+    override suspend fun doWork(): Result = impl.doWork()
+
+    companion object {
+        fun createForAction(action: String, reminderId: Long) =
+            OneTimeWorkRequestBuilder<AlarmActionHandler>()
+                .setInputData(
+                    workDataOf(
+                        EXTRA_ALARM_ACTION_NAME to action,
+                        EXTRA_REMINDER_ID to reminderId
+                    )
+                )
+                .setBackoffCriteria(
+                    BackoffPolicy.LINEAR,
+                    OneTimeWorkRequest.MIN_BACKOFF_MILLIS,
+                    TimeUnit.MILLISECONDS
+                )
+                .build()
+
+    }
+
+}
+
+@VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+class AlarmActionHandlerImpl(
+    private val applicationContext: Context,
+    private val inputData: Data,
+    private val alarmRepository: AlarmRepository,
+    private val reminderRepository: ReminderRepository,
+    private val historyRepository: HistoryRepository
+) {
+    private val actions = arrayOf(
+        ACTION_ALARM_SCHEDULE_NEXT,
+        ACTION_ALARM_SNOOZE,
+        ACTION_ALARM_SKIP,
+        ACTION_ALARM_COMPLETE,
+    )
+
+    suspend fun doWork(): Result {
+        Timber.d("Started doWork")
+        val action = inputData.getString(EXTRA_ALARM_ACTION_NAME)
+        val reminderId = inputData.getLong(EXTRA_REMINDER_ID, 0L)
+        return try {
+            if (action == null || action !in actions) {
+                Timber.e("Invalid action for doWork: $action")
+                Result.failure()
+            } else {
+                handleAction(action, reminderId)
+            }
+        } catch (e: Exception) {
+            Timber.e(e)
+            Result.retry()
+        }
+    }
+
+    /**
+     * Attempts to handle an action
+     */
+    private suspend fun handleAction(action: String, reminderId: Long): Result {
+        if (action == ACTION_ALARM_SCHEDULE_NEXT) {
+            return if (reminderRepository.getAll().first().isNotEmpty()) {
+                scheduleNext()
+            } else Result.failure()
+        }
+
+        val reminder = reminderRepository.findById(reminderId) ?: return Result.failure()
+        val alarm = alarmRepository.findByReminderId(reminder.id) ?: return Result.failure()
+
+        // Do action
+        when (action) {
+            ACTION_ALARM_SNOOZE -> handleSnooze(reminder, alarm)
+            ACTION_ALARM_SKIP -> handleSkip(reminder, alarm)
+            ACTION_ALARM_COMPLETE -> handleCompleted(reminder, alarm)
+        }
+
+        // Do scheduling
+        return scheduleNext()
+    }
+
+    private suspend fun scheduleNext(): Result =
+        if (scheduleNextAlarm(applicationContext, alarmRepository, reminderRepository)) {
+            Result.success()
+        } else {
+            Result.retry()
+        }
+
+    private suspend fun handleSkip(reminder: Reminder, alarm: Alarm) =
+        saveHistoryWithStatus(reminder, alarm, ReminderStatus.SKIPPED)
+
+    private suspend fun handleCompleted(reminder: Reminder, alarm: Alarm) =
+        saveHistoryWithStatus(reminder, alarm, ReminderStatus.COMPLETED)
+
+    /**
+     * Performs completion of a Reminder - cancels alarms, saves a new alarm and history entry,
+     * schedules next alarm
+     */
+    private suspend fun saveHistoryWithStatus(
+        reminder: Reminder,
+        alarm: Alarm,
+        completionStatus: ReminderStatus
+    ) {
+        saveHistoryEntry(reminder, completionStatus)
+
+        // Save a new alarm if appropriate
+        if (!reminder.isOneOff) {
+            val today = LocalDate.now().dayOfWeek
+            reminder.getNextTimeForAlarm(today, false)?.let {
+                val nextAlarm = Alarm(
+                    reminderId = alarm.reminderId,
+                    triggerAt = it
+                )
+                nextAlarm.id = alarmRepository.save(nextAlarm)
+            }
+        }
+
+        alarmRepository.delete(alarm)
+    }
+
+    private suspend fun saveHistoryEntry(
+        reminder: Reminder,
+        completionStatus: ReminderStatus
+    ) {
+        val history = History(
+            reminderId = reminder.id,
+            description = reminder.description,
+            completionStatus = completionStatus,
+            completedAt = currentEpochMilli()
+        )
+        historyRepository.save(history)
+    }
+
+    private suspend fun handleSnooze(reminder: Reminder, alarm: Alarm) {
+        Timber.d("Handle snooze: ${reminder.id}")
+        snoozeAlarm(applicationContext, reminder, alarm)
+        alarmRepository.delete(alarm)
+    }
+
+    private suspend fun snoozeAlarm(context: Context, reminder: Reminder, alarm: Alarm) {
+        // Determine next triggerAt for a snoozing alarm
+        val nextAlarm = Alarm(
+            reminderId = alarm.reminderId,
+            // may cause backed up scheduling if multiple alarms scheduled w/in a certain time window
+            // triggerAt = alarm.triggerAt.plusMinutes(SNOOZE_TIME_MIN),
+
+            // if Alarm A, B, C all are scheduled for time T, you wouldn't want the last one C
+            // to snooze until T+2:00, you'd want it to snooze until T_next=T_current+2:00 since
+            // T could be now in the past by a minute or more
+            triggerAt = currentLocalDateTime().plusMinutes(SNOOZE_TIME_MIN)
+        )
+
+        // Delete previous, save changes
+        nextAlarm.id = alarmRepository.save(nextAlarm)
+        Timber.d("Saved next alarm: $nextAlarm")
+
+        NotificationManagerCompat.from(context).cancel(alarm.id.toInt())
+        showSnoozeNotifications(context, reminder, nextAlarm)
+    }
+
+    private fun showSnoozeNotifications(context: Context, reminder: Reminder, alarm: Alarm) {
+        triggerSnoozeNotification(
+            context,
+            reminder,
+            alarm
+        )
+    }
+}

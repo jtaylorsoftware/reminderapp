@@ -57,7 +57,7 @@ class AlarmUtilTest {
 
         scheduleAlarmForReminder(context, alarm, reminder)
 
-        intent = getCreatedIntentForAlarmStart(context, alarm, reminder)
+        intent = getCreatedIntentForAlarmStart(context, reminder.id)
 
         assertThat(intent).isNotNull()
     }
@@ -82,7 +82,7 @@ class AlarmUtilTest {
                 reminderRepository,
             )
 
-            intent = getCreatedIntentForAlarmStart(context, alarms[0], reminder)
+            intent = getCreatedIntentForAlarmStart(context, reminder.id)
 
             assertThat(intent).isNotNull()
             assertThat(alarmRepo.getFirstScheduledAlarm()).isEqualTo(alarms[0].copy(scheduled = true))

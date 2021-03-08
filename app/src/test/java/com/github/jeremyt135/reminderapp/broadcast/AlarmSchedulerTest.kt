@@ -3,9 +3,13 @@ package com.github.jeremyt135.reminderapp.broadcast
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import androidx.work.Operation
+import androidx.work.WorkManager
+import androidx.work.WorkRequest
 import com.github.jeremyt135.reminderapp.MainCoroutineRule
 import com.github.jeremyt135.reminderapp.data.AlarmRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
+import com.github.jeremyt135.reminderapp.work.AlarmActionHandler
 import io.mockk.*
 import io.mockk.impl.annotations.MockK
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -34,14 +38,10 @@ class AlarmSchedulerTest {
     fun setup() {
         MockKAnnotations.init(this)
 
-        mockkStatic(::scheduleNextAlarm)
-        coJustRun {
-            scheduleNextAlarm(
-                mockContext,
-                mockAlarmRepository,
-                mockReminderRepository,
-            )
-        }
+        val mockWorkManager = mockkClass(WorkManager::class)
+        every { mockWorkManager.enqueue(any<WorkRequest>()) } returns mockkClass(Operation::class)
+        mockkStatic(WorkManager::class)
+        every { WorkManager.getInstance(any()) } returns mockWorkManager
 
         coJustRun { mockAlarmRepository.deleteAllInPast(any()) }
         coJustRun { mockAlarmRepository.clearAllScheduled() }
@@ -71,34 +71,30 @@ class AlarmSchedulerTest {
     }
 
     @Test
-    fun alarmScheduler_intentAction_isBootCompleted_schedulesAlarms() =
-        mainCoroutineRule.runBlockingTest {
+    fun alarmScheduler_intentAction_isBootCompleted_schedulesAlarms() {
+        val intent = mockk<Intent>()
+        every { intent.action } returns Intent.ACTION_BOOT_COMPLETED
 
-            val intent = mockk<Intent>()
-            every { intent.action } returns Intent.ACTION_BOOT_COMPLETED
+        receiver.onReceive(mockContext, intent)
 
-            receiver.onReceive(mockContext, intent)
-
-            coVerifyOrder {
-                mockAlarmRepository.deleteAllInPast(any())
-                mockAlarmRepository.clearAllScheduled()
-                scheduleNextAlarm(mockContext, mockAlarmRepository, mockReminderRepository)
-            }
+        coVerifyOrder {
+            mockAlarmRepository.deleteAllInPast(any())
+            mockAlarmRepository.clearAllScheduled()
+            AlarmActionHandler.createForAction(ACTION_ALARM_SCHEDULE_NEXT, 0)
         }
+    }
 
     @Test
-    fun alarmScheduler_intentAction_isMyPackageReplaced_schedulesAlarms() =
-        mainCoroutineRule.runBlockingTest {
+    fun alarmScheduler_intentAction_isMyPackageReplaced_schedulesAlarms() {
+        val intent = mockk<Intent>()
+        every { intent.action } returns Intent.ACTION_MY_PACKAGE_REPLACED
 
-            val intent = mockk<Intent>()
-            every { intent.action } returns Intent.ACTION_MY_PACKAGE_REPLACED
+        receiver.onReceive(mockContext, intent)
 
-            receiver.onReceive(mockContext, intent)
-
-            coVerifyOrder {
-                mockAlarmRepository.deleteAllInPast(any())
-                mockAlarmRepository.clearAllScheduled()
-                scheduleNextAlarm(mockContext, mockAlarmRepository, mockReminderRepository)
-            }
+        coVerifyOrder {
+            mockAlarmRepository.deleteAllInPast(any())
+            mockAlarmRepository.clearAllScheduled()
+            AlarmActionHandler.createForAction(ACTION_ALARM_SCHEDULE_NEXT, 0)
         }
+    }
 }
