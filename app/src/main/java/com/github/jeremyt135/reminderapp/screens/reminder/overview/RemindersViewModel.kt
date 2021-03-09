@@ -25,7 +25,7 @@ class RemindersViewModel @Inject constructor(private val reminderRepository: Rem
 
     fun addReminder() {
         viewModelScope.launch {
-            _navigateToEditor.value = Reminder()
+            _navigateToEditor.value = Reminder(id="")
         }
     }
 
