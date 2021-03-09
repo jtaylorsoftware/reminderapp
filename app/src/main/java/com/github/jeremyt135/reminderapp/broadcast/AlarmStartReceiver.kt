@@ -36,7 +36,7 @@ class AlarmStartReceiver : BroadcastReceiver() {
             return
         }
 
-        val reminderId = intent.getLongExtra(EXTRA_REMINDER_ID, 0)
+        val reminderId = intent.getStringExtra(EXTRA_REMINDER_ID) ?: return scheduleNext(context)
 
         val pendingResult = goAsync()
         applicationScope.launch {
@@ -51,7 +51,7 @@ class AlarmStartReceiver : BroadcastReceiver() {
     }
 
     private fun scheduleNext(context: Context) {
-        AlarmActionHandler.createForAction(ACTION_ALARM_SCHEDULE_NEXT, 0).let {
+        AlarmActionHandler.createForAction(ACTION_ALARM_SCHEDULE_NEXT, "").let {
             WorkManager.getInstance(context).enqueue(it)
         }
     }

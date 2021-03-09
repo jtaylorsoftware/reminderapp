@@ -6,13 +6,13 @@ import kotlinx.coroutines.flow.Flow
 interface HistoryDataSource {
     fun getAll(): Flow<List<History>>
 
-    fun findByReminderId(reminderId: Long): Flow<List<History>>
+    fun findByReminderId(reminderId: String): Flow<List<History>>
 
-    suspend fun findById(id: Long): History?
+    suspend fun findById(id: String): History?
 
-    suspend fun save(history: History): Long
+    suspend fun save(history: History)
 
-    suspend fun saveAll(historyEntries: List<History>): List<Long>
+    suspend fun saveAll(historyEntries: List<History>)
 
     suspend fun deleteAll()
 }

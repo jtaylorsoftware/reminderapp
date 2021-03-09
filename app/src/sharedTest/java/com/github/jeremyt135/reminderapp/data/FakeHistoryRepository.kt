@@ -10,15 +10,18 @@ class FakeHistoryRepository(private val localDataSource: FakeHistoryLocalDataSou
     HistoryRepository {
     override fun getAll(): Flow<List<History>> = localDataSource.getAll()
 
-    override fun findByReminderId(reminderId: Long): Flow<List<History>> =
+    override fun findByReminderId(reminderId: String): Flow<List<History>> =
         localDataSource.findByReminderId(reminderId)
 
-    override suspend fun findById(id: Long): History? = localDataSource.findById(id)
+    override suspend fun findById(id: String): History? = localDataSource.findById(id)
 
-    override suspend fun save(history: History): Long = localDataSource.save(history)
+    override suspend fun save(history: History) {
+        localDataSource.save(history)
+    }
 
-    override suspend fun saveAll(historyEntries: List<History>): List<Long> =
+    override suspend fun saveAll(historyEntries: List<History>) {
         localDataSource.saveAll(historyEntries)
+    }
 
     override suspend fun deleteAll() = localDataSource.deleteAll()
 }

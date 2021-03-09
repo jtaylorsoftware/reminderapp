@@ -52,8 +52,8 @@ class AlarmUtilTest {
 
     @Test
     fun scheduleAlarmForReminder_setsAlarm() {
-        val alarm = Alarm(1, 1, currentLocalDateTime().plusHours(1))
-        val reminder = Reminder(id = 1)
+        val reminder = Reminder()
+        val alarm = Alarm(1, reminderId = reminder.id, triggerAt = currentLocalDateTime().plusHours(1))
 
         scheduleAlarmForReminder(context, alarm, reminder)
 
@@ -66,50 +66,53 @@ class AlarmUtilTest {
     fun scheduleNextAlarm_populatedDb_setsAlarmForNextSoonest() {
         val now = currentLocalDateTime()
 
+        val reminders = (1..2).map { Reminder() }
+
         // Save alarms with descending id but ascending time
-        val alarms = listOf(
-            Alarm(id = 1, reminderId = 1, triggerAt = now.plusMinutes(10)),
-            Alarm(id = 2, reminderId = 2, triggerAt = now.plusMinutes(20)),
-        )
+        val alarms = reminders.mapIndexed { i, reminder ->
+            Alarm(
+                id = i.toLong(),
+                reminderId = reminder.id,
+                triggerAt = now.plusMinutes(10L * (i + 1))
+            )
+        }
         alarms.forEach { runBlocking { alarmRepo.save(it) } }
 
-        val reminder = Reminder(id = 1)
         runBlocking {
-            reminderRepository.save(reminder)
+            reminderRepository.saveAll(reminders)
             scheduleNextAlarm(
                 context,
                 alarmRepo,
                 reminderRepository,
             )
 
-            intent = getCreatedIntentForAlarmStart(context, reminder.id)
+            intent = getCreatedIntentForAlarmStart(context, reminders[0].id)
 
             assertThat(intent).isNotNull()
-            assertThat(alarmRepo.getFirstScheduledAlarm()).isEqualTo(alarms[0].copy(scheduled = true))
+            assertThat(alarmRepo.getFirstScheduledAlarm()!!.copy(id=0)).isEqualTo(alarms[0].copy(scheduled = true))
         }
     }
 
+    // Sometimes (always?) runs twice, once fails with error:
+    // java.lang.IllegalStateException: The component was not created. Check that you have added the HiltAndroidRule.
+    // TODO: See if there's a way to fix, but the 2nd run succeeds so not vital
     @Test
     fun scheduleNextAlarm_clearsPreviouslyScheduled() {
         val now = currentLocalDateTime()
 
+        val reminders = (1..4).map { Reminder() }
+
         // Save alarms with descending id but ascending time
-        val alarms = listOf(
-            Alarm(id = 2, reminderId = 1, triggerAt = now.plusMinutes(2)),
-            Alarm(id = 1, reminderId = 2, triggerAt = now.plusMinutes(3)),
+        val alarms = reminders.mapIndexed { i, reminder ->
             Alarm(
-                id = 4,
-                reminderId = 3,
-                triggerAt = now.plusMinutes(5),
-                scheduled = true
-            ),
-            Alarm(id = 3, reminderId = 4, triggerAt = now.plusMinutes(4))
-        )
+                id = i.toLong(), reminderId = reminder.id, triggerAt = now.plusMinutes(i.toLong()),
+                scheduled = if (i == 4) true else null
+            )
+        }
         alarms.forEach { runBlocking { alarmRepo.save(it) } }
 
-        val reminder = Reminder(id = 1)
         runBlocking {
-            reminderRepository.save(reminder)
+            reminderRepository.saveAll(reminders)
             scheduleNextAlarm(
                 context,
                 alarmRepo,
@@ -122,7 +125,7 @@ class AlarmUtilTest {
 
     @Test
     fun scheduleNextAlarm_noAlarms_doesNotSchedule() {
-        val reminder = Reminder(id = 1)
+        val reminder = Reminder()
         runBlocking {
             reminderRepository.save(reminder)
             scheduleNextAlarm(context, alarmRepo, reminderRepository)
@@ -138,7 +141,7 @@ class AlarmUtilTest {
 
     @Test
     fun buildNotificationForAlarmIntent_createsActionIntents() {
-        val reminder = Reminder(id = 1)
+        val reminder = Reminder()
 
         // Build notification which should create Intents for skip, snooze, complete
         buildNotificationForAlarm(
@@ -154,10 +157,10 @@ class AlarmUtilTest {
 
     @Test
     fun triggerNotification_createsAlarmActivityIntent() {
-        val reminder = Reminder(id = 1)
+        val reminder = Reminder()
         val alarm = Alarm(id = 1, reminderId = reminder.id)
 
-        triggerNotification(context, reminder, alarm.id)
+        triggerNotification(context, reminder, alarm)
 
         intent = getCreatedIntentForAlarmActivity(context, reminder.id)
 

@@ -12,28 +12,26 @@ class FakeHistoryLocalDataSource(private val cache: MutableList<History> = mutab
         emit(cache)
     }
 
-    override fun findByReminderId(reminderId: Long): Flow<List<History>> = flow {
+    override fun findByReminderId(reminderId: String): Flow<List<History>> = flow {
         emit(cache.filter { it.reminderId == reminderId })
     }
 
-    override suspend fun findById(id: Long): History? = cache.find { it.id == id }
+    override suspend fun findById(id: String): History? = cache.find { it.id == id }
 
-    override suspend fun save(history: History): Long =
-        when (val index = cache.indexOf(history)){
+    override suspend fun save(history: History) {
+        when (val index = cache.indexOf(history)) {
             -1 -> {
-                cache.add(history.copy(id = cache.size + 1L))
-                cache.size.toLong()
+                cache.add(history.copy())
             }
             else -> {
                 cache[index] = history
-                history.id
             }
         }
+    }
 
-
-    override suspend fun saveAll(historyEntries: List<History>): List<Long> =
-        historyEntries.map { save(it) }
-
+    override suspend fun saveAll(historyEntries: List<History>) {
+        historyEntries.forEach { save(it) }
+    }
     override suspend fun deleteAll() {
         cache.clear()
     }

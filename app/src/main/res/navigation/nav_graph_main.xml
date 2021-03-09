@@ -18,7 +18,7 @@
             app:destination="@id/activity_reminder_editor" >
             <argument
                 android:name="com.github.jeremyt135.reminderapp.EXTRA_REMINDER_ID"
-                android:defaultValue="0L" />
+                android:defaultValue='""' />
         </action>
     </fragment>
     <fragment
@@ -32,6 +32,6 @@
         tools:layout="@layout/fragment_reminder_editor">
         <argument
             android:name="com.github.jeremyt135.reminderapp.EXTRA_REMINDER_ID"
-            app:argType="long" />
+            app:argType="string" />
     </activity>
 </navigation>

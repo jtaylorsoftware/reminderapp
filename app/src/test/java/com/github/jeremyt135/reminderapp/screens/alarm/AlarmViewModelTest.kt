@@ -43,7 +43,7 @@ class AlarmViewModelTest {
     lateinit var mockContext: Context
 
     lateinit var actionSlot: CapturingSlot<String>
-    lateinit var reminderIdSlot: CapturingSlot<Long>
+    lateinit var reminderIdSlot: CapturingSlot<String>
 
     private lateinit var fakeBinder: AlarmService.AlarmServiceBinder
 
@@ -66,7 +66,7 @@ class AlarmViewModelTest {
         MockKAnnotations.init(this)
 
         time = currentLocalDateTime().plusHours(2)
-        reminder = Reminder(id = 1, time = time.toLocalTime())
+        reminder = Reminder(time = time.toLocalTime())
         alarm = Alarm(id = 1, reminderId = reminder.id, triggerAt = time)
         reminderAndAlarm = ReminderAndAlarm(reminder, alarm)
 
@@ -102,7 +102,7 @@ class AlarmViewModelTest {
 
     @Test
     fun loadReminderData_loadsReminderAndAlarm() = mainCoroutineRule.runBlockingTest {
-        every { mockSavedStateHandle.get<Long>(EXTRA_REMINDER_ID) } returns reminder.id
+        every { mockSavedStateHandle.get<String>(EXTRA_REMINDER_ID) } returns reminder.id
         viewModel =
             AlarmViewModel(mockApplication, mockReminderRepo, mockSavedStateHandle, this)
 
@@ -113,7 +113,7 @@ class AlarmViewModelTest {
 
     @Test
     fun liveData_matchesLoadedReminderData() = mainCoroutineRule.runBlockingTest {
-        every { mockSavedStateHandle.get<Long>(EXTRA_REMINDER_ID) } returns reminder.id
+        every { mockSavedStateHandle.get<String>(EXTRA_REMINDER_ID) } returns reminder.id
         viewModel =
             AlarmViewModel(mockApplication, mockReminderRepo, mockSavedStateHandle, this)
 
@@ -125,7 +125,7 @@ class AlarmViewModelTest {
 
     @Test
     fun snooze_createsWorkerForSnooze() = mainCoroutineRule.runBlockingTest {
-        every { mockSavedStateHandle.get<Long>(EXTRA_REMINDER_ID) } returns reminder.id
+        every { mockSavedStateHandle.get<String>(EXTRA_REMINDER_ID) } returns reminder.id
         viewModel =
             AlarmViewModel(mockApplication, mockReminderRepo, mockSavedStateHandle, this)
         serviceConnection.captured.onServiceConnected(mockk(), fakeBinder)
@@ -139,7 +139,7 @@ class AlarmViewModelTest {
 
     @Test
     fun skip_createsWorkerForSkip() = mainCoroutineRule.runBlockingTest {
-        every { mockSavedStateHandle.get<Long>(EXTRA_REMINDER_ID) } returns reminder.id
+        every { mockSavedStateHandle.get<String>(EXTRA_REMINDER_ID) } returns reminder.id
         viewModel =
             AlarmViewModel(mockApplication, mockReminderRepo, mockSavedStateHandle, this)
         serviceConnection.captured.onServiceConnected(mockk(), fakeBinder)
@@ -153,7 +153,7 @@ class AlarmViewModelTest {
 
     @Test
     fun complete_createsWorkerForComplete() = mainCoroutineRule.runBlockingTest {
-        every { mockSavedStateHandle.get<Long>(EXTRA_REMINDER_ID) } returns reminder.id
+        every { mockSavedStateHandle.get<String>(EXTRA_REMINDER_ID) } returns reminder.id
         viewModel =
             AlarmViewModel(mockApplication, mockReminderRepo, mockSavedStateHandle, this)
         serviceConnection.captured.onServiceConnected(mockk(), fakeBinder)
@@ -167,7 +167,7 @@ class AlarmViewModelTest {
 
     @Test
     fun autoSnoozesAfterDelay() = mainCoroutineRule.runBlockingTest {
-        every { mockSavedStateHandle.get<Long>(EXTRA_REMINDER_ID) } returns reminder.id
+        every { mockSavedStateHandle.get<String>(EXTRA_REMINDER_ID) } returns reminder.id
         viewModel =
             AlarmViewModel(mockApplication, mockReminderRepo, mockSavedStateHandle, this)
         serviceConnection.captured.onServiceConnected(mockk(), fakeBinder)

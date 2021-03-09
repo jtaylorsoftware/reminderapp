@@ -10,13 +10,13 @@ import com.github.jeremyt135.reminderapp.data.local.ReminderEntity
 import com.github.jeremyt135.reminderapp.util.currentLocalDateTime
 import com.github.jeremyt135.reminderapp.util.getFullLocaleDisplay
 import com.github.jeremyt135.reminderapp.util.getShortLocalTimeDisplay
+import com.github.jeremyt135.reminderapp.util.uuid
 import timber.log.Timber
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.temporal.ChronoField
-import java.time.temporal.ChronoUnit
 import java.time.temporal.TemporalAdjusters
 import java.util.*
 
@@ -48,7 +48,7 @@ class Reminder(
     time: LocalTime = LocalTime.now(),
     val daysOfWeek: SortedSet<DayOfWeek> = sortedSetOf(),
     vibrate: Boolean = false,
-    var id: Long = 0L
+    var id: String = uuid()
 ) : BaseObservable(), DomainModel<ReminderEntity> {
     @get:Bindable
     var description: String = description
@@ -155,7 +155,7 @@ class Reminder(
         time: LocalTime = LocalTime.of(this.hour, this.minute),
         daysOfWeek: SortedSet<DayOfWeek> = this.daysOfWeek.toSortedSet(),
         vibrate: Boolean = this.vibrate,
-        id: Long = this.id,
+        id: String = this.id,
     ) = Reminder(description, time, daysOfWeek, vibrate, id)
 
     override fun asDataModel(): ReminderEntity =

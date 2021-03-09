@@ -8,8 +8,9 @@ import kotlinx.coroutines.flow.Flow
 interface ReminderDataSource {
     fun getAll(): Flow<List<Reminder>>
     fun getAllWithTodayHistory(): Flow<List<ReminderAndHistory>>
-    suspend fun findById(id: Long): Reminder?
-    suspend fun getReminderAndAlarm(reminderId: Long): ReminderAndAlarm?
-    suspend fun save(reminder: Reminder): Long
+    suspend fun findById(id: String): Reminder?
+    suspend fun getReminderAndAlarm(reminderId: String): ReminderAndAlarm?
+    suspend fun save(reminder: Reminder)
+    suspend fun saveAll(reminders: List<Reminder>)
     suspend fun delete(reminder: Reminder)
 }

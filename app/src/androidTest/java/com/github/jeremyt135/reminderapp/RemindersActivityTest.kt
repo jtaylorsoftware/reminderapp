@@ -54,7 +54,7 @@ class RemindersActivityTest {
     lateinit var database: AppDatabase
 
     private val reminders =
-        (1..3).map { Reminder("My Reminder $it", id = it.toLong()) }
+        (1..3).map { Reminder("My Reminder $it") }
 
     @Before
     fun setup() {
@@ -178,7 +178,7 @@ class RemindersActivityTest {
         val reminder = reminders[0]
 
         runBlocking {
-            reminder.id = reminderRepo.save(reminder)
+            reminderRepo.save(reminder)
         }
 
         withActivityScenario(RemindersActivity::class.java) {

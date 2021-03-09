@@ -72,33 +72,33 @@ class AlarmStartReceiverTest {
         receiver.onReceive(mockContext, intent)
 
         verify(exactly = 0) {
-            intent.getLongExtra(EXTRA_REMINDER_ID, 0)
+            intent.getStringExtra(EXTRA_REMINDER_ID)
         }
     }
 
     @Test
     fun getsNullReminder_schedulesNext() {
-        val reminder = Reminder(id = 1)
+        val reminder = Reminder()
 
         val intent = mockk<Intent>()
         every { intent.action } returns ACTION_ALARM_START
-        every { intent.getLongExtra(EXTRA_REMINDER_ID, 0) } returns reminder.id
+        every { intent.getStringExtra(EXTRA_REMINDER_ID) } returns reminder.id
         coEvery { mockReminderRepository.getReminderAndAlarm(reminder.id) } returns null
         receiver.onReceive(mockContext, intent)
 
         verify {
-            AlarmActionHandler.createForAction(ACTION_ALARM_SCHEDULE_NEXT, 0)
+            AlarmActionHandler.createForAction(ACTION_ALARM_SCHEDULE_NEXT, "")
         }
     }
 
     @Test
     fun getsReminder_startsService() {
-        val reminder = Reminder(id = 1)
+        val reminder = Reminder()
         val alarm = Alarm(id = 1, reminderId = reminder.id, triggerAt = currentLocalDateTime())
 
         val intent = mockk<Intent>()
         every { intent.action } returns ACTION_ALARM_START
-        every { intent.getLongExtra(EXTRA_REMINDER_ID, 0) } returns reminder.id
+        every { intent.getStringExtra(EXTRA_REMINDER_ID) } returns reminder.id
         coEvery { mockReminderRepository.getReminderAndAlarm(reminder.id) } returns
                 ReminderAndAlarm(
                     reminder,
@@ -108,7 +108,7 @@ class AlarmStartReceiverTest {
         receiver.onReceive(mockContext, intent)
 
         verify {
-            AlarmActionHandler.createForAction(ACTION_ALARM_SCHEDULE_NEXT, 0)
+            AlarmActionHandler.createForAction(ACTION_ALARM_SCHEDULE_NEXT, "")
             AlarmService.start(mockContext, reminder)
         }
     }

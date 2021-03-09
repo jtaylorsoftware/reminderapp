@@ -2,8 +2,11 @@ package com.github.jeremyt135.reminderapp.data.local
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.test.filters.SmallTest
+import com.github.jeremyt135.reminderapp.data.domain.Reminder
+import com.github.jeremyt135.reminderapp.data.domain.ReminderStatus
 import com.github.jeremyt135.reminderapp.data.local.HistoryEntity as History
 import com.github.jeremyt135.reminderapp.util.InMemoryDatabaseRule
+import com.github.jeremyt135.reminderapp.util.uuid
 import com.google.common.truth.Truth.*
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -27,19 +30,17 @@ class HistoryDaoTest {
 
     private lateinit var historyDao: HistoryDao
 
-    private val historyEntries = mutableListOf(
-        History(reminderId = 0),
-        History(reminderId = 1),
-        History(reminderId = 2),
-        History(reminderId = 2)
-    )
+    private val reminders = (1..4).map {
+        Reminder()
+    }
+
+    private val historyEntries =
+        reminders.map { History(reminderId = it.id) } + listOf(History(reminderId = reminders[1].id))
 
     @Before
     fun setup() = runBlockingTest {
         historyDao = inMemoryDb.db.historyDao()
-        historyDao.insertAll(historyEntries).forEachIndexed { i, id ->
-            historyEntries[i] = historyEntries[i].copy(id = id)
-        }
+        historyDao.insertAll(historyEntries)
     }
 
     @Test
@@ -48,8 +49,8 @@ class HistoryDaoTest {
     }
 
     @Test
-    fun findById_zeroId_returnsNull() = runBlockingTest {
-        assertThat(historyDao.findById(0)).isNull()
+    fun findById_emptyId_returnsNull() = runBlockingTest {
+        assertThat(historyDao.findById("")).isNull()
     }
 
     @Test
@@ -59,14 +60,16 @@ class HistoryDaoTest {
 
     @Test
     fun findByReminderId_returnsAllMatchingEntities() = runBlockingTest {
-        assertThat(historyDao.findByReminderId(2).first()).containsExactlyElementsIn(
-            historyEntries.filter { it.reminderId == 2L }
+        assertThat(historyDao.findByReminderId(reminders[1].id).first()).containsExactlyElementsIn(
+            historyEntries.filter { it.reminderId == reminders[1].id }
         )
     }
 
     @Test
     fun insert_existingId_updatesHistoryEntity() = runBlockingTest {
-        assertThat(historyDao.insert(historyEntries[0])).isEqualTo(historyEntries[0].id)
+        val updated = historyEntries[0].copy(completionStatus = ReminderStatus.SKIPPED.name)
+        historyDao.insert(updated)
+        assertThat(historyDao.findById(historyEntries[0].id)).isEqualTo(updated)
     }
 
     @Test

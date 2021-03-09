@@ -4,6 +4,7 @@ import android.os.Parcelable
 import androidx.room.*
 import com.github.jeremyt135.reminderapp.data.DataModel
 import com.github.jeremyt135.reminderapp.data.domain.Alarm
+import com.github.jeremyt135.reminderapp.util.NotificationId
 import kotlinx.parcelize.Parcelize
 import java.time.LocalDateTime
 
@@ -34,17 +35,21 @@ data class AlarmEntity(
     var id: Long = 0L,
 
     @ColumnInfo(name = "reminder_id")
-    val reminderId: Long,
+    val reminderId: String = "",
 
     @ColumnInfo(name = "trigger_at")
     val triggerAt: LocalDateTime,
 
-    val scheduled: Boolean? = null
+    val scheduled: Boolean? = null,
+
+    @ColumnInfo(name = "notification_id")
+    val notificationId: Int = NotificationId.next
 ) : Parcelable, DataModel<Alarm> {
     override fun asDomainModel(): Alarm = Alarm(
         id = this.id,
         reminderId = this.reminderId,
         triggerAt = this.triggerAt,
-        scheduled = this.scheduled
+        scheduled = this.scheduled,
+        notificationId = this.notificationId
     )
 }

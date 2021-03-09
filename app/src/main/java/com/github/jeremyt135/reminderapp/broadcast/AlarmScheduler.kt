@@ -52,7 +52,7 @@ class AlarmScheduler : BroadcastReceiver() {
             alarmRepository.deleteAllInPast(currentEpochMilli())
             alarmRepository.clearAllScheduled()
 
-            val worker = AlarmActionHandler.createForAction(ACTION_ALARM_SCHEDULE_NEXT, 0)
+            val worker = AlarmActionHandler.createForAction(ACTION_ALARM_SCHEDULE_NEXT, "")
             WorkManager.getInstance(context).enqueue(worker)
             pendingResult.finish()
         }

@@ -43,7 +43,7 @@ class FakeAlarmRepository @Inject constructor(private val cache: MutableList<Ala
     }
 
     override suspend fun findById(id: Long): Alarm? = cache.find { it.id == id }
-    override suspend fun findByReminderId(reminderId: Long): Alarm? =
+    override suspend fun findByReminderId(reminderId: String): Alarm? =
         cache.find { it.reminderId == reminderId }
 
     override suspend fun save(alarm: Alarm): Long =

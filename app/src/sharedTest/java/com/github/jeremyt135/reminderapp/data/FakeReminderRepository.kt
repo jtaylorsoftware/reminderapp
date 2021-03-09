@@ -21,15 +21,19 @@ class FakeReminderRepository @Inject constructor(
 
     override fun getAllWithTodayHistory(): Flow<List<ReminderAndHistory>> = fakeLocalDataSource.getAllWithTodayHistory()
 
-    override suspend fun getReminderAndAlarm(reminderId: Long): ReminderAndAlarm? {
+    override suspend fun getReminderAndAlarm(reminderId: String): ReminderAndAlarm? {
         return fakeLocalDataSource.getReminderAndAlarm(reminderId)
     }
 
-    override suspend fun save(reminder: Reminder): Long {
-        return fakeLocalDataSource.save(reminder)
+    override suspend fun save(reminder: Reminder) {
+        fakeLocalDataSource.save(reminder)
     }
 
-    override suspend fun findById(id: Long): Reminder? = cache.find { it.id == id }
+    override suspend fun saveAll(reminders: List<Reminder>) {
+        fakeLocalDataSource.saveAll(reminders)
+    }
+
+    override suspend fun findById(id: String): Reminder? = cache.find { it.id == id }
 
     override suspend fun delete(reminder: Reminder) = fakeLocalDataSource.delete(reminder)
 }

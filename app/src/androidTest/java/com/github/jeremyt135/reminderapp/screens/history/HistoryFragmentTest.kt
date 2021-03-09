@@ -14,6 +14,7 @@ import com.github.jeremyt135.reminderapp.di.DatabaseModule
 import com.github.jeremyt135.reminderapp.di.RepositoryModule
 import com.github.jeremyt135.reminderapp.launchFragmentInHiltContainer
 import com.github.jeremyt135.reminderapp.screens.reminder.history.HistoryFragment
+import com.github.jeremyt135.reminderapp.util.uuid
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -72,18 +73,16 @@ class HistoryFragmentTest {
     lateinit var repository: HistoryRepository
 
     private val historyEntries = mutableListOf(
-        History(reminderId = 1, description = "History Entry One"),
-        History(reminderId = 0, description = "History Entry Two"),
-        History(reminderId = 2, description = "History Entry Three")
+        History(reminderId = uuid(), description = "History Entry One"),
+        History(reminderId = uuid(), description = "History Entry Two"),
+        History(reminderId = uuid(), description = "History Entry Three")
     )
 
     @Before
     fun setup(){
         hiltRule.inject()
         runBlocking {
-            repository.saveAll(historyEntries).forEachIndexed { i, id ->
-                historyEntries[i] = historyEntries[i].copy(id=id)
-            }
+            repository.saveAll(historyEntries)
         }
     }
 

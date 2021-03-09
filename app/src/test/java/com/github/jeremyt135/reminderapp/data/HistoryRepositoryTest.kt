@@ -16,7 +16,7 @@ class HistoryRepositoryTest {
     private lateinit var localDataSource: HistoryDataSource
 
     private val historyEntries = mutableListOf(
-        History(reminderId = 1), History(reminderId = 0), History(reminderId = 2)
+        History(), History(), History()
     )
 
     @Before
@@ -24,9 +24,7 @@ class HistoryRepositoryTest {
         localDataSource = FakeHistoryLocalDataSource(historyEntries)
         repository = HistoryRepositoryImpl(localDataSource)
         runBlocking {
-            repository.saveAll(historyEntries).forEachIndexed { i, id ->
-                historyEntries[i] = historyEntries[i].copy(id = id)
-            }
+            repository.saveAll(historyEntries)
         }
     }
 
@@ -37,7 +35,7 @@ class HistoryRepositoryTest {
 
     @Test
     fun findById_invalidId_returnsNull() = runBlockingTest {
-        assertThat(repository.findById(historyEntries.size * 2L)).isNull()
+        assertThat(repository.findById("")).isNull()
     }
 
     @Test
@@ -47,7 +45,7 @@ class HistoryRepositoryTest {
 
     @Test
     fun findByReminderId_returnsOnlyMatchingHistory() = runBlockingTest {
-        val id = 1L
+        val id = historyEntries[0].reminderId
         val history = repository.findByReminderId(id).first()
         assertThat(history).containsExactlyElementsIn(historyEntries.filter { it.reminderId == id })
     }

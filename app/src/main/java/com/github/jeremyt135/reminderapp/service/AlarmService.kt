@@ -7,16 +7,13 @@ import android.content.ServiceConnection
 import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.os.*
-import androidx.work.WorkManager
 import com.github.jeremyt135.reminderapp.broadcast.*
 import com.github.jeremyt135.reminderapp.data.AlarmRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.di.AppCoroutineScope
-import com.github.jeremyt135.reminderapp.work.AlarmActionHandler
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
@@ -81,13 +78,13 @@ class AlarmService : Service() {
             return
         }
 
-        val reminderId = intent.getLongExtra(EXTRA_REMINDER_ID, 0L)
+        val reminderId = intent.getStringExtra(EXTRA_REMINDER_ID) ?: ""
         val description = intent.getStringExtra(EXTRA_REMINDER_DESCRIPTION) ?: ""
         val vibrate = intent.getBooleanExtra(EXTRA_REMINDER_VIBRATE, false)
         val sound = intent.getStringExtra(EXTRA_REMINDER_SOUND)
 
         startForeground(
-            reminderId.toInt(),
+            reminderId.hashCode(),
             createNotificationForAlarm(
                 this,
                 Reminder(id = reminderId, description = description, vibrate = vibrate)

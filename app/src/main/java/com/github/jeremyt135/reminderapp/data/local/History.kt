@@ -6,15 +6,16 @@ import androidx.room.PrimaryKey
 import com.github.jeremyt135.reminderapp.data.DataModel
 import com.github.jeremyt135.reminderapp.data.domain.History
 import com.github.jeremyt135.reminderapp.data.domain.ReminderStatus
+import com.github.jeremyt135.reminderapp.util.uuid
 
 @Entity(tableName = "history")
 data class HistoryEntity(
-    @PrimaryKey(autoGenerate = true)
+    @PrimaryKey
     @ColumnInfo(name = "history_id")
-    val id: Long = 0,
+    val id: String = uuid(),
 
     @ColumnInfo(name = "reminder_id")
-    val reminderId: Long = 0,
+    val reminderId: String = "",
 
     @ColumnInfo(name = "reminder_description")
     val description: String = "",

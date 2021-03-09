@@ -88,14 +88,14 @@ class AlarmFragmentTest {
     lateinit var historyRepository: HistoryRepository
 
     val time: LocalDateTime = currentLocalDateTime().plusHours(2)
-    val reminder = Reminder(id = 1, time = time.toLocalTime(), description = "My Reminder")
+    val reminder = Reminder(time = time.toLocalTime(), description = "My Reminder")
     val alarm = Alarm(id = 1, reminderId = reminder.id, triggerAt = time)
 
     /**
      *  Need to launch an Activity class to get the activityViewModel and
      *  to pass the reminderId
      */
-    private fun launchAlarmFragmentWithReminder(reminderId: Long) {
+    private fun launchAlarmFragmentWithReminder(reminderId: String) {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val intent = Intent(
             context,

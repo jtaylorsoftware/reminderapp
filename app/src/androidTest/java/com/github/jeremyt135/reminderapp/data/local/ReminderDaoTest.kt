@@ -8,6 +8,7 @@ import com.github.jeremyt135.reminderapp.data.domain.ReminderStatus
 import com.github.jeremyt135.reminderapp.util.InMemoryDatabaseRule
 import com.github.jeremyt135.reminderapp.util.currentEpochMilli
 import com.github.jeremyt135.reminderapp.util.currentLocalDateTime
+import com.github.jeremyt135.reminderapp.util.uuid
 import com.google.common.truth.Truth.assertThat
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -43,7 +44,6 @@ class ReminderDaoTest {
         val reminders = (1..5).map { i ->
             Reminder(
                 "Reminder $i",
-                id = i.toLong()
             ).asDataModel()
         }
         reminders.forEach {
@@ -51,7 +51,6 @@ class ReminderDaoTest {
         }
         val historyEntries = (1..3).map { i ->
             History(
-                id = i.toLong(),
                 reminderId = reminders[i - 1].id,
                 description = reminders[i - 1].description,
                 completionStatus = ReminderStatus.COMPLETED,
@@ -79,7 +78,6 @@ class ReminderDaoTest {
         val reminders = (1..5).map { i ->
             Reminder(
                 "Reminder $i",
-                id = i.toLong()
             ).asDataModel()
         }
         reminders.forEach {
@@ -96,23 +94,23 @@ class ReminderDaoTest {
     fun findById_returnsInsertedReminder() = runBlockingTest {
         val reminder = Reminder("Reminder 1").asDataModel()
 
-        val id = reminderDao.insert(reminder)
+        reminderDao.insert(reminder)
 
-        val dbReminder = reminderDao.findById(id)
+        val dbReminder = reminderDao.findById(reminder.id)
 
-        assertThat(dbReminder).isEqualTo(reminder.copy(id = id))
+        assertThat(dbReminder).isEqualTo(reminder)
     }
 
     @Test
     fun findById_emptyDb_returnsNull() = runBlockingTest {
-        val dbReminder = reminderDao.findById(1L)
+        val dbReminder = reminderDao.findById(uuid())
 
         assertThat(dbReminder).isNull()
     }
 
     @Test
     fun delete_then_findReturnsNull() = runBlockingTest {
-        val reminder = Reminder(id = 1).asDataModel()
+        val reminder = Reminder().asDataModel()
         reminderDao.insert(reminder)
 
         assertThat(reminderDao.findById(reminder.id)).isNotNull()
@@ -124,10 +122,10 @@ class ReminderDaoTest {
 
     @Test
     fun getReminderAndAlarm() = runBlockingTest {
-        val reminder = Reminder(id = 1).asDataModel()
+        val reminder = Reminder().asDataModel()
         reminderDao.insert(reminder)
 
-        val alarm = AlarmEntity(id = 1, reminderId = 1, triggerAt = currentLocalDateTime())
+        val alarm = AlarmEntity(id = 1, reminderId = reminder.id, triggerAt = currentLocalDateTime())
         alarmDao.insert(alarm)
 
         val reminderAndAlarm = reminderDao.getReminderAndAlarm(reminder.id)

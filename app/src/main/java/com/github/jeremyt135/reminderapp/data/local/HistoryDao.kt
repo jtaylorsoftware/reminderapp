@@ -4,7 +4,6 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import com.github.jeremyt135.reminderapp.data.domain.ReminderStatus
 import kotlinx.coroutines.flow.Flow
 import com.github.jeremyt135.reminderapp.data.local.HistoryEntity as History
 
@@ -14,16 +13,16 @@ interface HistoryDao {
     fun getAll(): Flow<List<History>>
 
     @Query("SELECT * FROM history WHERE reminder_id = :reminderId")
-    fun findByReminderId(reminderId: Long): Flow<List<History>>
+    fun findByReminderId(reminderId: String): Flow<List<History>>
 
     @Query("SELECT * FROM history WHERE history_id = :id")
-    suspend fun findById(id: Long): History?
+    suspend fun findById(id: String): History?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(history: History): Long
+    suspend fun insert(history: History)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertAll(historyEntities: List<History>): List<Long>
+    suspend fun insertAll(historyEntities: List<History>)
 
     @Query("DELETE FROM history")
     suspend fun clearTable()

@@ -24,7 +24,7 @@ class AlarmActionReceiver : BroadcastReceiver() {
 
         stopAlarmService(context)
 
-        val reminderId = intent.getLongExtra(EXTRA_REMINDER_ID, 0)
+        val reminderId = intent.getStringExtra(EXTRA_REMINDER_ID) ?: return
         createWorkerForAction(context, intent.action!!, reminderId)
     }
 
@@ -33,7 +33,7 @@ class AlarmActionReceiver : BroadcastReceiver() {
         AlarmService.requestStop(context)
     }
 
-    private fun createWorkerForAction(context: Context, action: String, reminderId: Long) {
+    private fun createWorkerForAction(context: Context, action: String, reminderId: String) {
         Timber.w("Starting work for $action")
         val worker = AlarmActionHandler.createForAction(action, reminderId)
         WorkManager.getInstance(context).enqueue(worker)

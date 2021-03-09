@@ -26,14 +26,17 @@ interface ReminderDao {
     fun getAll(): Flow<List<Reminder>>
 
     @Query("SELECT * FROM reminder WHERE id = :id")
-    suspend fun findById(id: Long): Reminder?
+    suspend fun findById(id: String): Reminder?
 
     @Transaction
     @Query("SELECT * FROM reminder WHERE id = :reminderId")
-    suspend fun getReminderAndAlarm(reminderId: Long): ReminderAndAlarm?
+    suspend fun getReminderAndAlarm(reminderId: String): ReminderAndAlarm?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(reminder: Reminder): Long
+    suspend fun insert(reminder: Reminder)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(reminders: List<Reminder>)
 
     @Delete
     suspend fun delete(reminder: Reminder)

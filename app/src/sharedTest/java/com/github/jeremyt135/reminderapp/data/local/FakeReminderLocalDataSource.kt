@@ -33,7 +33,7 @@ class FakeReminderLocalDataSource(
         }
     }
 
-    override suspend fun getReminderAndAlarm(reminderId: Long): ReminderAndAlarm? {
+    override suspend fun getReminderAndAlarm(reminderId: String): ReminderAndAlarm? {
         return findById(reminderId)?.let {
             val alarm = alarmCache.firstOrNull { alarm -> alarm.reminderId == reminderId }
                 ?: throw IllegalStateException("FakeReminderLocalDataSource has no matching alarm for reminder $reminderId")
@@ -44,19 +44,22 @@ class FakeReminderLocalDataSource(
         }
     }
 
-    override suspend fun findById(id: Long): Reminder? = reminderCache.find { it.id == id }
+    override suspend fun findById(id: String): Reminder? = reminderCache.find { it.id == id }
 
-    override suspend fun save(reminder: Reminder): Long =
+    override suspend fun save(reminder: Reminder) {
         when (val index = reminderCache.indexOf(reminder)) {
             -1 -> {
-                reminderCache.add(reminder.copy(id = reminderCache.size + 1L))
-                reminderCache.size.toLong()
+                reminderCache.add(reminder.copy())
             }
             else -> {
                 reminderCache[index] = reminder
-                reminder.id
             }
         }
+    }
+
+    override suspend fun saveAll(reminders: List<Reminder>) {
+        reminders.forEach { save(it) }
+    }
 
     override suspend fun delete(reminder: Reminder) {
         reminderCache.remove(reminder)

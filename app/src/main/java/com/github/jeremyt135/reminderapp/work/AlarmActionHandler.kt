@@ -33,6 +33,7 @@ class AlarmActionHandler @AssistedInject constructor(
 ) :
     CoroutineWorker(context, workerParameters) {
 
+    // Using pimpl because the test worker builders don't work well with injection
     private val impl = AlarmActionHandlerImpl(
         context, inputData, alarmRepository, reminderRepository, historyRepository
     )
@@ -40,7 +41,7 @@ class AlarmActionHandler @AssistedInject constructor(
     override suspend fun doWork(): Result = impl.doWork()
 
     companion object {
-        fun createForAction(action: String, reminderId: Long) =
+        fun createForAction(action: String, reminderId: String) =
             OneTimeWorkRequestBuilder<AlarmActionHandler>()
                 .setInputData(
                     workDataOf(
@@ -76,10 +77,10 @@ class AlarmActionHandlerImpl(
 
     suspend fun doWork(): Result {
         Timber.d("Started doWork")
-        val action = inputData.getString(EXTRA_ALARM_ACTION_NAME)
-        val reminderId = inputData.getLong(EXTRA_REMINDER_ID, 0L)
+        val action = inputData.getString(EXTRA_ALARM_ACTION_NAME) ?: return Result.failure()
+        val reminderId = inputData.getString(EXTRA_REMINDER_ID) ?: ""
         return try {
-            if (action == null || action !in actions) {
+            if (action !in actions) {
                 Timber.e("Invalid action for doWork: $action")
                 Result.failure()
             } else {
@@ -94,7 +95,7 @@ class AlarmActionHandlerImpl(
     /**
      * Attempts to handle an action
      */
-    private suspend fun handleAction(action: String, reminderId: Long): Result {
+    private suspend fun handleAction(action: String, reminderId: String): Result {
         if (action == ACTION_ALARM_SCHEDULE_NEXT) {
             return if (reminderRepository.getAll().first().isNotEmpty()) {
                 scheduleNext()
@@ -189,12 +190,13 @@ class AlarmActionHandlerImpl(
         // Delete previous, save changes
         nextAlarm.id = alarmRepository.save(nextAlarm)
         Timber.d("Saved next alarm: $nextAlarm")
-
-        NotificationManagerCompat.from(context).cancel(alarm.id.toInt())
+        Timber.d("Cancelling previous notification: ${alarm.notificationId}")
+        NotificationManagerCompat.from(context).cancel(alarm.notificationId)
         showSnoozeNotifications(context, reminder, nextAlarm)
     }
 
     private fun showSnoozeNotifications(context: Context, reminder: Reminder, alarm: Alarm) {
+        Timber.d("Creating notification: ${alarm.notificationId}")
         triggerSnoozeNotification(
             context,
             reminder,

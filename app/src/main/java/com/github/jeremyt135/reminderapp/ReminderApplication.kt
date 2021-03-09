@@ -6,7 +6,6 @@ import androidx.work.Configuration
 import androidx.work.WorkManager
 import com.github.jeremyt135.BuildConfig
 import com.github.jeremyt135.reminderapp.broadcast.ACTION_ALARM_SCHEDULE_NEXT
-import com.github.jeremyt135.reminderapp.broadcast.scheduleNextAlarm
 import com.github.jeremyt135.reminderapp.data.AlarmRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.di.AppCoroutineScope
@@ -47,7 +46,7 @@ class ReminderApplication : Application(), Configuration.Provider {
         alarmRepository.deleteAllInPast(currentEpochMilli())
         alarmRepository.clearAllScheduled()
 
-        AlarmActionHandler.createForAction(ACTION_ALARM_SCHEDULE_NEXT, 0).let {
+        AlarmActionHandler.createForAction(ACTION_ALARM_SCHEDULE_NEXT, "").let {
             WorkManager.getInstance(this).enqueue(it)
         }
     }

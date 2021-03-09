@@ -2,13 +2,10 @@ package com.github.jeremyt135.reminderapp.worker
 
 import android.content.Context
 import androidx.core.app.NotificationManagerCompat
-import androidx.lifecycle.SavedStateHandle
 import androidx.work.Data
 import androidx.work.ListenableWorker.Result
-import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.github.jeremyt135.reminderapp.MainCoroutineRule
-import com.github.jeremyt135.reminderapp.ReminderApplication
 import com.github.jeremyt135.reminderapp.broadcast.*
 import com.github.jeremyt135.reminderapp.data.AlarmRepository
 import com.github.jeremyt135.reminderapp.data.HistoryRepository
@@ -16,11 +13,11 @@ import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.*
 import com.github.jeremyt135.reminderapp.util.currentEpochMilli
 import com.github.jeremyt135.reminderapp.util.currentLocalDateTime
-import com.github.jeremyt135.reminderapp.work.AlarmActionHandler
 import com.github.jeremyt135.reminderapp.work.AlarmActionHandlerImpl
 import com.google.common.truth.Truth.assertThat
 import io.mockk.*
 import io.mockk.impl.annotations.MockK
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Rule
@@ -29,6 +26,7 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 
 class AlarmActionHandlerTest {
+    @ExperimentalCoroutinesApi
     @get:Rule
     var mainCoroutineRule = MainCoroutineRule()
 
@@ -42,23 +40,14 @@ class AlarmActionHandlerTest {
     lateinit var mockHistoryRepository: HistoryRepository
 
     @MockK
-    lateinit var mockSavedStateHandle: SavedStateHandle
-
-    @MockK
-    lateinit var mockApplication: ReminderApplication
-
-    @MockK
     lateinit var mockContext: Context
-
-    @MockK
-    lateinit var mockWorkerParameters: WorkerParameters
 
     @Before
     fun setup() {
         MockKAnnotations.init(this)
     }
 
-    fun createWorker(inputData: Data = workDataOf()): AlarmActionHandlerImpl {
+    private fun createWorker(inputData: Data = workDataOf()): AlarmActionHandlerImpl {
         return AlarmActionHandlerImpl(
             mockContext,
             inputData,
@@ -92,22 +81,21 @@ class AlarmActionHandlerTest {
 
     @Test
     fun actionSnooze_snoozesAlarm_showsNotification() {
-        val reminder = Reminder(id = 1)
+        val reminder = Reminder()
         val alarm = Alarm(id = 1, reminderId = reminder.id, triggerAt = currentLocalDateTime())
+        val nextAlarm = slot<Alarm>()
 
-        coEvery { mockReminderRepo.getReminderAndAlarm(reminder.id) } returns ReminderAndAlarm(
-            reminder,
-            alarm
-        )
+        coEvery { mockReminderRepo.findById(reminder.id) } returns reminder
+        coEvery { mockAlarmRepository.findByReminderId(reminder.id) } returns alarm
         coJustRun { mockAlarmRepository.delete(alarm) }
-        coEvery { mockAlarmRepository.save(any()) } returns 2L
+        coEvery { mockAlarmRepository.save(capture(nextAlarm)) } returns 2L
 
         mockkStatic(::triggerSnoozeNotification, ::scheduleNextAlarm)
         mockkStatic(NotificationManagerCompat::class)
         val notifManager = mockkClass(NotificationManagerCompat::class)
         every { NotificationManagerCompat.from(any()) } returns notifManager
         justRun { notifManager.cancel(any()) }
-        coJustRun { scheduleNextAlarm(any(), any(), any()) }
+        coEvery { scheduleNextAlarm(any(), any(), any()) } returns true
         justRun { triggerSnoozeNotification(any(), any(), any()) }
 
         val worker = createWorker(
@@ -121,36 +109,39 @@ class AlarmActionHandlerTest {
             assertThat(result).isEqualTo(Result.success())
         }
 
-        val nextAlarm = Alarm(
-            id = 2,
-            reminderId = reminder.id,
-            triggerAt = alarm.triggerAt.plusMinutes(SNOOZE_TIME_MIN)
-        )
+
         coVerify {
-            mockReminderRepo.getReminderAndAlarm(reminder.id)
-            mockAlarmRepository.save(nextAlarm)
+            mockReminderRepo.findById(reminder.id)
+            mockAlarmRepository.findByReminderId(reminder.id)
+            mockAlarmRepository.save(any())
             NotificationManagerCompat.from(any())
-            notifManager.cancel(alarm.id.toInt())
-            triggerSnoozeNotification(any(), reminder, nextAlarm)
+            notifManager.cancel(alarm.notificationId)
+            triggerSnoozeNotification(any(), reminder, any())
             mockAlarmRepository.delete(alarm)
         }
+
+        assertThat(nextAlarm.captured.reminderId).isEqualTo(reminder.id)
+        assertThat(nextAlarm.captured.triggerAt).isEqualTo(
+            alarm.triggerAt.plusMinutes(
+                SNOOZE_TIME_MIN
+            )
+        )
     }
 
     @Test
     fun actionSkip_savesHistoryAsSkip_schedulesNext() {
-        val reminder = Reminder(id = 1, daysOfWeek = sortedSetOf(*DayOfWeek.values()))
+        val reminder = Reminder(daysOfWeek = sortedSetOf(*DayOfWeek.values()))
         val alarm = Alarm(id = 1, reminderId = reminder.id, triggerAt = currentLocalDateTime())
-
-        coEvery { mockReminderRepo.getReminderAndAlarm(reminder.id) } returns ReminderAndAlarm(
-            reminder,
-            alarm
-        )
+        val history = slot<History>()
+        val nextAlarm = slot<Alarm>()
+        coEvery { mockReminderRepo.findById(reminder.id) } returns reminder
+        coEvery { mockAlarmRepository.findByReminderId(reminder.id) } returns alarm
         coJustRun { mockAlarmRepository.delete(alarm) }
-        coJustRun {  mockHistoryRepository.save(any()) }
-        coEvery { mockAlarmRepository.save(any()) } returns 2L
+        coJustRun { mockHistoryRepository.save(capture(history)) }
+        coEvery { mockAlarmRepository.save(capture(nextAlarm)) } returns 2L
 
         mockkStatic(::scheduleNextAlarm)
-        coJustRun { scheduleNextAlarm(any(), any(), any()) }
+        coEvery { scheduleNextAlarm(any(), any(), any()) } returns true
 
         val worker = createWorker(
             workDataOf(
@@ -163,41 +154,47 @@ class AlarmActionHandlerTest {
             assertThat(result).isEqualTo(Result.success())
         }
 
-        val nextAlarm = Alarm(
-            id = 2,
-            reminderId = reminder.id,
-            triggerAt = reminder.getNextTimeForAlarm(LocalDate.now().dayOfWeek, false)!!
-        )
         coVerify {
-            mockReminderRepo.getReminderAndAlarm(reminder.id)
-            mockHistoryRepository.save(
-                History(
-                    reminderId = reminder.id,
-                    description = reminder.description,
-                    completionStatus = ReminderStatus.SKIPPED,
-                    completedAt = currentEpochMilli()
-                )
-            )
-            mockAlarmRepository.save(nextAlarm)
+            mockReminderRepo.findById(reminder.id)
+            mockAlarmRepository.findByReminderId(reminder.id)
+            mockHistoryRepository.save(any())
+            mockAlarmRepository.save(any())
             mockAlarmRepository.delete(alarm)
         }
+
+        assertThat(history.captured.copy(id = "")).isEqualTo(
+            History(
+                id = "",
+                reminderId = reminder.id,
+                description = reminder.description,
+                completionStatus = ReminderStatus.SKIPPED,
+                completedAt = currentEpochMilli()
+            )
+        )
+
+        assertThat(nextAlarm.captured.reminderId).isEqualTo(reminder.id)
+        assertThat(nextAlarm.captured.triggerAt).isEqualTo(
+            reminder.getNextTimeForAlarm(
+                LocalDate.now().dayOfWeek,
+                false
+            )!!
+        )
     }
 
     @Test
     fun actionComplete_savesHistoryAsComplete_schedulesNext() {
-        val reminder = Reminder(id = 1, daysOfWeek = sortedSetOf(*DayOfWeek.values()))
+        val reminder = Reminder(daysOfWeek = sortedSetOf(*DayOfWeek.values()))
         val alarm = Alarm(id = 1, reminderId = reminder.id, triggerAt = currentLocalDateTime())
-
-        coEvery { mockReminderRepo.getReminderAndAlarm(reminder.id) } returns ReminderAndAlarm(
-            reminder,
-            alarm
-        )
+        val history = slot<History>()
+        val nextAlarm = slot<Alarm>()
+        coEvery { mockReminderRepo.findById(reminder.id) } returns reminder
+        coEvery { mockAlarmRepository.findByReminderId(reminder.id) } returns alarm
         coJustRun { mockAlarmRepository.delete(alarm) }
-        coJustRun {  mockHistoryRepository.save(any()) }
-        coEvery { mockAlarmRepository.save(any()) } returns 2L
+        coJustRun { mockHistoryRepository.save(capture(history)) }
+        coEvery { mockAlarmRepository.save(capture(nextAlarm)) } returns 2L
 
         mockkStatic(::scheduleNextAlarm)
-        coJustRun { scheduleNextAlarm(any(), any(), any()) }
+        coEvery { scheduleNextAlarm(any(), any(), any()) } returns true
 
         val worker = createWorker(
             workDataOf(
@@ -210,23 +207,30 @@ class AlarmActionHandlerTest {
             assertThat(result).isEqualTo(Result.success())
         }
 
-        val nextAlarm = Alarm(
-            id = 2,
-            reminderId = reminder.id,
-            triggerAt = reminder.getNextTimeForAlarm(LocalDate.now().dayOfWeek, false)!!
-        )
         coVerify {
-            mockReminderRepo.getReminderAndAlarm(reminder.id)
-            mockHistoryRepository.save(
-                History(
-                    reminderId = reminder.id,
-                    description = reminder.description,
-                    completionStatus = ReminderStatus.COMPLETED,
-                    completedAt = currentEpochMilli()
-                )
-            )
-            mockAlarmRepository.save(nextAlarm)
+            mockReminderRepo.findById(reminder.id)
+            mockAlarmRepository.findByReminderId(reminder.id)
+            mockHistoryRepository.save(any())
+            mockAlarmRepository.save(any())
             mockAlarmRepository.delete(alarm)
         }
+
+        assertThat(history.captured.copy(id = "")).isEqualTo(
+            History(
+                id = "",
+                reminderId = reminder.id,
+                description = reminder.description,
+                completionStatus = ReminderStatus.COMPLETED,
+                completedAt = currentEpochMilli()
+            )
+        )
+
+        assertThat(nextAlarm.captured.reminderId).isEqualTo(reminder.id)
+        assertThat(nextAlarm.captured.triggerAt).isEqualTo(
+            reminder.getNextTimeForAlarm(
+                LocalDate.now().dayOfWeek,
+                false
+            )!!
+        )
     }
 }

@@ -6,7 +6,10 @@ import android.widget.Toast
 import androidx.lifecycle.*
 import androidx.work.WorkManager
 import com.github.jeremyt135.BuildConfig
-import com.github.jeremyt135.reminderapp.broadcast.*
+import com.github.jeremyt135.reminderapp.broadcast.ACTION_ALARM_SCHEDULE_NEXT
+import com.github.jeremyt135.reminderapp.broadcast.EXTRA_REMINDER_ID
+import com.github.jeremyt135.reminderapp.broadcast.cancelAlarmIntentsForReminder
+import com.github.jeremyt135.reminderapp.broadcast.showToast
 import com.github.jeremyt135.reminderapp.data.AlarmRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.Alarm
@@ -48,11 +51,11 @@ class ReminderEditorViewModel @Inject constructor(
     private val _navigateToReminders = MutableEventFlow<Unit>()
     val navigateToReminders = _navigateToReminders.asEventFlow()
 
-    private var savedReminderId by Delegates.notNull<Long>()
+    private var savedReminderId: String = ""
     var isEditing by Delegates.notNull<Boolean>()
 
     init {
-        savedReminderId = savedStateHandle.get(EXTRA_REMINDER_ID) ?: run {
+        savedReminderId = savedStateHandle.get<String>(EXTRA_REMINDER_ID) ?: run {
             if (BuildConfig.DEBUG) {
                 showToast(
                     getApplication<Application>().applicationContext,
@@ -60,9 +63,9 @@ class ReminderEditorViewModel @Inject constructor(
                     Toast.LENGTH_LONG
                 )
             }
-            0L
+            ""
         }
-        isEditing = savedReminderId != 0L
+        isEditing = savedReminderId.isNotEmpty()
 
         Timber.d("reminderId = $savedReminderId")
         if (isEditing) {
@@ -97,7 +100,7 @@ class ReminderEditorViewModel @Inject constructor(
     fun saveReminder() {
         applicationScope.launch {
             _reminder.value.copy().let { reminder ->
-                reminder.id = reminderRepository.save(reminder)
+                reminderRepository.save(reminder)
 
                 val wasScheduled = stopAlarmsForReminder(getApplication(), reminder)
 
@@ -148,7 +151,7 @@ class ReminderEditorViewModel @Inject constructor(
     }
 
     private fun scheduleNextAlarm() {
-        AlarmActionHandler.createForAction(ACTION_ALARM_SCHEDULE_NEXT, 0).let {
+        AlarmActionHandler.createForAction(ACTION_ALARM_SCHEDULE_NEXT, "").let {
             WorkManager.getInstance(getApplication()).enqueue(it)
         }
     }

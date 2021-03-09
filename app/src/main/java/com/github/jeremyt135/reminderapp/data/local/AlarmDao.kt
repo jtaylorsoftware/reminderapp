@@ -13,7 +13,7 @@ interface AlarmDao {
     suspend fun findById(id: Long): Alarm?
 
     @Query("SELECT * FROM alarm WHERE reminder_id = :reminderId")
-    suspend fun findByReminderId(reminderId: Long): Alarm?
+    suspend fun findByReminderId(reminderId: String): Alarm?
 
     @Query("SELECT alarm.* FROM alarm LEFT JOIN reminder ON alarm.reminder_id = reminder.id ORDER BY trigger_at ASC LIMIT 1")
     suspend fun getFirstByTimeAscending(): Alarm?

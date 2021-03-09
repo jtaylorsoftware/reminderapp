@@ -36,7 +36,6 @@ class ReminderLocalDataSourceTest {
         val reminders = (1..3).map { i ->
             Reminder(
                 "Reminder $i",
-                id = i.toLong()
             )
         }
         reminders.forEach {
@@ -52,9 +51,8 @@ class ReminderLocalDataSourceTest {
     fun findById_returnsSavedReminder() = runBlockingTest{
         val reminder = Reminder("My reminder")
 
-        val id = localDataSource.save(reminder)
-        reminder.id = id
-        val savedReminder = localDataSource.findById(id)
+        localDataSource.save(reminder)
+        val savedReminder = localDataSource.findById(reminder.id)
 
         assertThat(savedReminder).isEqualTo(reminder)
     }
@@ -63,9 +61,8 @@ class ReminderLocalDataSourceTest {
     fun delete_then_findReturnsNull() = runBlockingTest {
         val reminder = Reminder("My reminder")
 
-        val id = localDataSource.save(reminder)
-        reminder.id = id
-
+        localDataSource.save(reminder)
+        assertThat(localDataSource.findById(reminder.id)).isNotNull()
         localDataSource.delete(reminder)
 
         assertThat(localDataSource.findById(reminder.id)).isNull()

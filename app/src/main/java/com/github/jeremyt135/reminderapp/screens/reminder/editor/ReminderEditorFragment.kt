@@ -24,7 +24,7 @@ class ReminderEditorFragment : Fragment(R.layout.fragment_reminder_editor) {
 
         with(requireActivity()) {
             (this as AppCompatActivity).supportActionBar?.title =
-                if (intent.getLongExtra(EXTRA_REMINDER_ID, 0L) != 0L) {
+                if ((intent.getStringExtra(EXTRA_REMINDER_ID) ?: "").isNotEmpty()) {
                     getString(R.string.editor_heading_edit)
                 } else {
                     getString(R.string.editor_heading_add)

@@ -60,7 +60,7 @@ class AlarmActionReceiverTest {
         receiver.onReceive(mockContext, intent)
 
         verify(exactly = 0) {
-            intent.getLongExtra(EXTRA_REMINDER_ID, 0)
+            intent.getStringExtra(EXTRA_REMINDER_ID)
         }
     }
 
@@ -72,19 +72,19 @@ class AlarmActionReceiverTest {
         receiver.onReceive(mockContext, intent)
 
         verify(exactly = 0) {
-            intent.getLongExtra(EXTRA_REMINDER_ID, 0)
+            intent.getStringExtra(EXTRA_REMINDER_ID)
         }
     }
 
     @Test
     fun stopsAlarmService_andCreatesWorker() {
-        val reminder = Reminder(id = 1)
+        val reminder = Reminder()
 
         val action = ACTION_ALARM_SNOOZE
         val intent = mockk<Intent>()
 
         every { intent.action } returns action
-        every { intent.getLongExtra(EXTRA_REMINDER_ID, 0) } returns reminder.id
+        every { intent.getStringExtra(EXTRA_REMINDER_ID) } returns reminder.id
 
         receiver.onReceive(mockContext, intent)
 

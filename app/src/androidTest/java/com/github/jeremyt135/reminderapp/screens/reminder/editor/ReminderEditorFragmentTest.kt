@@ -83,7 +83,7 @@ class ReminderEditorFragmentTest {
     }
 
     private fun launchEditorFragmentWithReminder(
-        reminderId: Long,
+        reminderId: String,
         action: ReminderEditorFragment.() -> Unit = {}
     ) {
         val context = ApplicationProvider.getApplicationContext<Context>()
@@ -121,15 +121,13 @@ class ReminderEditorFragmentTest {
 
     private val reminders =
         listOf(
-            Reminder(id = 1),
+            Reminder(),
             Reminder(
                 "My Reminder",
                 daysOfWeek = sortedSetOf(DayOfWeek.MONDAY, DayOfWeek.TUESDAY),
                 vibrate = true,
-                id = 2
             ),
             Reminder(
-                id = 3,
                 time = LocalTime.now().plusHours(1).plusMinutes(10),
             ),
         )
@@ -144,7 +142,7 @@ class ReminderEditorFragmentTest {
     @Test
     fun withNoId_displaysEmptyReminder() {
         val time = LocalTime.now()
-        launchEditorFragmentWithReminder(0L)
+        launchEditorFragmentWithReminder("")
 
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val hintString = context.getString(R.string.editor_descriptionEdit_hint)
@@ -175,7 +173,7 @@ class ReminderEditorFragmentTest {
     fun cancel_navigatesUpWithoutSaving() = runBlockingTest {
         val initialReminders = reminderRepository.getAll().first()
 
-        launchEditorFragmentWithReminder(0L) {
+        launchEditorFragmentWithReminder("") {
             fragmentVM = this.viewModel
         }
 
@@ -191,7 +189,7 @@ class ReminderEditorFragmentTest {
     @ExperimentalCoroutinesApi
     @Test
     fun save_navigatesUp() = runBlockingTest {
-        launchEditorFragmentWithReminder(3L) {
+        launchEditorFragmentWithReminder(reminders[2].id) {
             fragmentVM = this.viewModel
         }
 
@@ -238,14 +236,15 @@ class ReminderEditorFragmentTest {
 
     @Test
     fun deleteButton_notEditing_isNotVisible() {
-        launchEditorFragmentWithReminder(0L)
+        launchEditorFragmentWithReminder("")
 
         onView(withText("Delete")).check(matches(not(isDisplayed())))
     }
 
     @Test
     fun deleteButton_editing_deletesReminderAndAlarm() = runBlocking {
-        val reminder = Reminder(id = reminderRepository.save(Reminder()))
+        val reminder = Reminder()
+        reminderRepository.save(reminder)
         val alarm = Alarm(id = 1, reminderId = reminder.id, triggerAt = currentLocalDateTime())
         alarmRepository.save(alarm)
 
@@ -255,6 +254,6 @@ class ReminderEditorFragmentTest {
         onView(withId(R.id.button_editor_delete)).perform(click())
 
         assertThat(reminderRepository.findById(reminder.id)).isNull()
-        assertThat(alarmRepository.findById(reminder.id)).isNull()
+        assertThat(alarmRepository.findByReminderId(reminder.id)).isNull()
     }
 }

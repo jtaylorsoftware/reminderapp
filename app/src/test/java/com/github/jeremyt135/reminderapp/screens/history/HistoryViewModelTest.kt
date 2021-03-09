@@ -29,7 +29,7 @@ class HistoryViewModelTest {
     private lateinit var viewModel: HistoryViewModel
 
     private val historyEntries = mutableListOf(
-        History(reminderId = 1), History(reminderId = 0), History(reminderId = 2)
+        History(),History(),History()
     )
 
     @Before
@@ -37,9 +37,7 @@ class HistoryViewModelTest {
         val localDataSource = FakeHistoryLocalDataSource(historyEntries)
         repository = FakeHistoryRepository(localDataSource)
         runBlocking {
-            repository.saveAll(historyEntries).forEachIndexed { i, id ->
-                historyEntries[i] = historyEntries[i].copy(id = id)
-            }
+            repository.saveAll(historyEntries)
         }
         viewModel = HistoryViewModel(repository)
     }

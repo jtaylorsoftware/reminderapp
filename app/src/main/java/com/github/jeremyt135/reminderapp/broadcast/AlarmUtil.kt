@@ -116,7 +116,7 @@ fun scheduleAlarmForReminder(
  * Cancels previously scheduled PendingIntents associated with the given alarm.
  */
 fun cancelAlarmIntentsForReminder(context: Context, reminder: Reminder) {
-    if (reminder.id == 0L) {
+    if (reminder.id.isEmpty()) {
         return
     }
 
@@ -133,21 +133,10 @@ fun cancelAlarmIntentsForReminder(context: Context, reminder: Reminder) {
     }
 }
 
-/**
- * Cancels the notification associated with alarmId
- */
-fun cancelNotification(context: Context, alarmId: Long) {
-    with(NotificationManagerCompat.from(context)) {
-        cancel(alarmId.toInt())
-    }
-    Timber.d("Cancelled current notification")
-}
-
-
 fun triggerSnoozeNotification(context: Context, reminder: Reminder, alarm: Alarm) {
     val notification = buildNotificationForSnooze(context, reminder, alarm)
     with(NotificationManagerCompat.from(context)) {
-        notify(alarm.id.toInt(), notification)
+        notify(alarm.notificationId, notification)
     }
 }
 
@@ -160,53 +149,53 @@ fun showToast(context: Context, text: String, duration: Int = Toast.LENGTH_SHORT
 /**
  * Creates and immediately fires a fullscreen alarm notification for the Reminder.
  */
-fun triggerNotification(context: Context, reminder: Reminder, alarmId: Long) {
+fun triggerNotification(context: Context, reminder: Reminder, alarm: Alarm) {
     val notification = getIntentForAlarmActivity(context, reminder.id).let {
         buildNotificationForAlarm(context, it, reminder)
     }
     with(NotificationManagerCompat.from(context)) {
-        notify(alarmId.toInt(), notification)
+        notify(alarm.notificationId, notification)
     }
 }
 
 @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-fun getIntentForEditorActivity(context: Context, reminderId: Long): PendingIntent =
+fun getIntentForEditorActivity(context: Context, reminderId: String): PendingIntent =
     Intent(context, ReminderEditorActivity::class.java).run {
 //        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
         flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_HISTORY
         putExtra(EXTRA_REMINDER_ID, reminderId)
         PendingIntent.getActivity(
             context,
-            reminderId.toInt(),
+            reminderId.hashCode(),
             this,
             PendingIntent.FLAG_UPDATE_CURRENT
         )
     }
 
 @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-fun getCreatedIntentForEditorActivity(context: Context, reminderId: Long): PendingIntent? =
+fun getCreatedIntentForEditorActivity(context: Context, reminderId: String): PendingIntent? =
     Intent(context, ReminderEditorActivity::class.java).run {
 //        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
         flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_HISTORY
         putExtra(EXTRA_REMINDER_ID, reminderId)
         PendingIntent.getActivity(
             context,
-            reminderId.toInt(),
+            reminderId.hashCode(),
             this,
             PendingIntent.FLAG_NO_CREATE
         )
     }
 
-fun getIntentForAlarmActivity(context: Context, reminderId: Long): PendingIntent =
+fun getIntentForAlarmActivity(context: Context, reminderId: String): PendingIntent =
     createAlarmActivityIntent(context, reminderId, PendingIntent.FLAG_UPDATE_CURRENT)!!
 
 @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-fun getCreatedIntentForAlarmActivity(context: Context, reminderId: Long): PendingIntent? =
+fun getCreatedIntentForAlarmActivity(context: Context, reminderId: String): PendingIntent? =
     createAlarmActivityIntent(context, reminderId, PendingIntent.FLAG_NO_CREATE)
 
 private fun createAlarmActivityIntent(
     context: Context,
-    reminderId: Long,
+    reminderId: String,
     pendingIntentFlags: Int
 ): PendingIntent? =
     Intent(context, AlarmActivity::class.java).run {
@@ -216,42 +205,42 @@ private fun createAlarmActivityIntent(
         putExtra(EXTRA_REMINDER_ID, reminderId)
         PendingIntent.getActivity(
             context,
-            reminderId.toInt(),
+            reminderId.hashCode(),
             this,
             pendingIntentFlags
         )
     }
 
 @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-fun getIntentForAlarmStart(context: Context, reminderId: Long): PendingIntent =
+fun getIntentForAlarmStart(context: Context, reminderId: String): PendingIntent =
     createAlarmStartIntent(context, reminderId, 0)!!
 
 @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-fun getCreatedIntentForAlarmStart(context: Context, reminderId: Long): PendingIntent? =
+fun getCreatedIntentForAlarmStart(context: Context, reminderId: String): PendingIntent? =
     createAlarmStartIntent(context, reminderId, PendingIntent.FLAG_NO_CREATE)
 
 @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-fun getIntentForAlarmSkip(context: Context, reminderId: Long): PendingIntent =
+fun getIntentForAlarmSkip(context: Context, reminderId: String): PendingIntent =
     createAlarmActionIntent(context, ACTION_ALARM_SKIP, reminderId, 0)!!
 
 @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-fun getCreatedIntentForAlarmSkip(context: Context, reminderId: Long): PendingIntent? =
+fun getCreatedIntentForAlarmSkip(context: Context, reminderId: String): PendingIntent? =
     createAlarmActionIntent(context, ACTION_ALARM_SKIP, reminderId, PendingIntent.FLAG_NO_CREATE)
 
 @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-fun getIntentForAlarmSnooze(context: Context, reminderId: Long): PendingIntent =
+fun getIntentForAlarmSnooze(context: Context, reminderId: String): PendingIntent =
     createAlarmActionIntent(context, ACTION_ALARM_SNOOZE, reminderId, 0)!!
 
 @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-fun getCreatedIntentForAlarmSnooze(context: Context, reminderId: Long): PendingIntent? =
+fun getCreatedIntentForAlarmSnooze(context: Context, reminderId: String): PendingIntent? =
     createAlarmActionIntent(context, ACTION_ALARM_SNOOZE, reminderId, PendingIntent.FLAG_NO_CREATE)
 
 @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-fun getIntentForAlarmComplete(context: Context, reminderId: Long): PendingIntent =
+fun getIntentForAlarmComplete(context: Context, reminderId: String): PendingIntent =
     createAlarmActionIntent(context, ACTION_ALARM_COMPLETE, reminderId, 0)!!
 
 @VisibleForTesting(otherwise = VisibleForTesting.NONE)
-fun getCreatedIntentForAlarmComplete(context: Context, reminderId: Long): PendingIntent? =
+fun getCreatedIntentForAlarmComplete(context: Context, reminderId: String): PendingIntent? =
     createAlarmActionIntent(
         context,
         ACTION_ALARM_COMPLETE,
@@ -261,25 +250,25 @@ fun getCreatedIntentForAlarmComplete(context: Context, reminderId: Long): Pendin
 
 private fun createAlarmStartIntent(
     context: Context,
-    reminderId: Long,
+    reminderId: String,
     pendingIntentFlags: Int
 ): PendingIntent? =
     Intent(context, AlarmStartReceiver::class.java).run {
         this.action = ACTION_ALARM_START
         putExtra(EXTRA_REMINDER_ID, reminderId)
-        PendingIntent.getBroadcast(context, reminderId.toInt(), this, pendingIntentFlags)
+        PendingIntent.getBroadcast(context, reminderId.hashCode(), this, pendingIntentFlags)
     }
 
 private fun createAlarmActionIntent(
     context: Context,
     action: String,
-    reminderId: Long,
+    reminderId: String,
     pendingIntentFlags: Int
 ): PendingIntent? =
     Intent(context, AlarmActionReceiver::class.java).run {
         this.action = action
         putExtra(EXTRA_REMINDER_ID, reminderId)
-        PendingIntent.getBroadcast(context, reminderId.toInt(), this, pendingIntentFlags)
+        PendingIntent.getBroadcast(context, reminderId.hashCode(), this, pendingIntentFlags)
     }
 
 fun buildNotificationForAlarm(

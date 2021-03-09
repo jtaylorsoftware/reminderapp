@@ -23,14 +23,11 @@ import com.github.jeremyt135.reminderapp.data.local.AlarmEntity as Alarm
 class AlarmDaoTest {
     private lateinit var alarmDao: AlarmDao
 
-    private val reminders = listOf(
-        ReminderEntity(id = 1), ReminderEntity(id = 2)
-    )
-
-    private val alarms = listOf(
-        Alarm(0, 1, triggerAt = currentLocalDateTime().plusMinutes(1)),
-        Alarm(0, 2, triggerAt = currentLocalDateTime().plusMinutes(2)),
-    )
+    private val reminders = (1..10).map { ReminderEntity() }
+    val now = currentLocalDateTime()
+    private val alarms = reminders.mapIndexed { i, reminder ->
+        Alarm(reminderId = reminder.id, triggerAt = now.plusMinutes(i.toLong()))
+    }
 
     @get:Rule
     var instantTaskExecutorRule = InstantTaskExecutorRule()
@@ -54,13 +51,13 @@ class AlarmDaoTest {
 
     @Test
     fun getAll_returnsInsertedAlarms() = runBlockingTest {
-        val alarms = alarms.map {
-            it.copy(id = alarmDao.insert(it))
-        }
+        alarms.forEach { alarmDao.insert(it) }
 
         val dbAlarms = alarmDao.getAll().first()
 
-        assertThat(dbAlarms).containsExactlyElementsIn(alarms)
+        assertThat(dbAlarms).containsExactlyElementsIn(alarms.mapIndexed { i, it ->
+            it.copy(id=i.toLong()+1)
+        })
     }
 
     @Test
@@ -89,7 +86,7 @@ class AlarmDaoTest {
 
     @Test
     fun findByReminderId_emptyDb_returnsNull() = runBlockingTest {
-        assertThat(alarmDao.findByReminderId(1)).isNull()
+        assertThat(alarmDao.findByReminderId("")).isNull()
     }
 
     @Test
@@ -113,7 +110,11 @@ class AlarmDaoTest {
             temp.toList()
         }
         val alarms = (1..10).map { i ->
-            Alarm(id = i.toLong(), reminderId = 1, triggerAt = times[i - 1]).also {
+            Alarm(
+                id = i.toLong(),
+                reminderId = reminders[i - 1].id,
+                triggerAt = times[i - 1]
+            ).also {
                 alarmDao.insert(it)
             }
         }
@@ -127,7 +128,11 @@ class AlarmDaoTest {
     fun getFirstScheduledAlarm_noneScheduled_returnsNull() = runBlockingTest {
         val now = currentLocalDateTime()
         val alarms = (1..3L).map { i ->
-            Alarm(id = i, reminderId = 1, triggerAt = now.plusMinutes(i)).also {
+            Alarm(
+                id = i,
+                reminderId = reminders[i.toInt() - 1].id,
+                triggerAt = now.plusMinutes(i)
+            ).also {
                 alarmDao.insert(it)
             }
         }
@@ -141,7 +146,7 @@ class AlarmDaoTest {
         val alarms = (1..6L).map { i ->
             Alarm(
                 id = i,
-                reminderId = 1,
+                reminderId = reminders[i.toInt()-1].id,
                 triggerAt = now.plusMinutes(i),
                 scheduled = if (i % 2 == 0L) true else null
             ).also {
@@ -155,12 +160,13 @@ class AlarmDaoTest {
     @Test
     fun deleteAllInPast_deletesOnlyAlarmsBeforeTime() = runBlockingTest {
         val now = currentLocalDateTime()
-        val alarms = (1..5L).map { i ->
+
+        val alarms = (1..5).map { i ->
             Alarm(
-                id = i,
-                reminderId = 1,
-                triggerAt = now.plusMinutes(i),
-                scheduled = if (i % 2 == 0L) true else null
+                id = i.toLong(),
+                reminderId = reminders[i - 1].id,
+                triggerAt = now.plusMinutes(i.toLong()),
+                scheduled = if (i % 2 == 0) true else null
             ).also {
                 alarmDao.insert(it)
             }
@@ -179,7 +185,7 @@ class AlarmDaoTest {
         (1..5L).map { i ->
             Alarm(
                 id = i,
-                reminderId = 1,
+                reminderId = reminders[i.toInt() - 1].id,
                 triggerAt = now.plusMinutes(i),
                 scheduled = true
             ).also {
@@ -194,7 +200,7 @@ class AlarmDaoTest {
 
     @Test
     fun setScheduled_changesValue() = runBlockingTest {
-        val alarm = Alarm(id = 1, reminderId = 1, triggerAt = currentLocalDateTime())
+        val alarm = Alarm(id = 1, reminderId = reminders[0].id, triggerAt = currentLocalDateTime())
         alarmDao.insert(alarm)
 
         alarmDao.setScheduled(AlarmScheduleFlag(alarm.id, true))

@@ -22,8 +22,11 @@ import com.github.jeremyt135.reminderapp.util.asEventFlow
 import com.github.jeremyt135.reminderapp.util.getShortLocalTimeDisplay
 import com.github.jeremyt135.reminderapp.work.AlarmActionHandler
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
@@ -38,7 +41,7 @@ class AlarmViewModel @Inject constructor(
     private val _reminder = MutableStateFlow(Reminder())
     val reminder = _reminder.asLiveData(viewModelScope.coroutineContext)
 
-    private val _alarm = MutableStateFlow(Alarm(0, 0))
+    private val _alarm = MutableStateFlow(Alarm(0, ""))
     val alarm = _alarm.asLiveData(viewModelScope.coroutineContext)
 
     private val _time = MutableStateFlow("")
@@ -78,7 +81,7 @@ class AlarmViewModel @Inject constructor(
     private var handled: Boolean = false
 
     init {
-        savedStateHandle.get<Long>(EXTRA_REMINDER_ID)?.let { id ->
+        savedStateHandle.get<String>(EXTRA_REMINDER_ID)?.let { id ->
             viewModelScope.launch {
                 loadReminderData(id)?.let { (reminder, alarm) ->
                     startAutoSnooze(reminder.id, alarm.id, applicationScope)
@@ -107,7 +110,7 @@ class AlarmViewModel @Inject constructor(
     /**
      * Loads the reminder and alarm data for the associated reminder
      */
-    private suspend fun loadReminderData(id: Long): ReminderAndAlarm? =
+    private suspend fun loadReminderData(id: String): ReminderAndAlarm? =
         reminderRepository.getReminderAndAlarm(id)?.let { reminderAndAlarm ->
             val (reminder, alarm) = reminderAndAlarm
             _reminder.value = reminder
@@ -124,7 +127,7 @@ class AlarmViewModel @Inject constructor(
     }
 
     private fun startAutoSnooze(
-        reminderId: Long,
+        reminderId: String,
         alarmId: Long,
         scope: CoroutineScope,
         snoozeDelay: Long = DELAY_UNTIL_SNOOZE_MILLI
@@ -168,7 +171,7 @@ class AlarmViewModel @Inject constructor(
      */
     private fun tryStartWorkerForAction(action: String) {
         tryHandleAlarm {
-            if(autoSnoozeHandler?.stop() == true) {
+            if (autoSnoozeHandler?.stop() == true) {
                 startWorkerForAction(action)
             } else {
                 Timber.d("AutoSnoozeHandler already snoozed Alarm")
@@ -203,7 +206,7 @@ class AlarmViewModel @Inject constructor(
 }
 
 private class AlarmAutoSnoozeHandler(
-    val reminderId: Long,
+    val reminderId: String,
     val alarmId: Long,
     val applicationScope: CoroutineScope,
 ) {

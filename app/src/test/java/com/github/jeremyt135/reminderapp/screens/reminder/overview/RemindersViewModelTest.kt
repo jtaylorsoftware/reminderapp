@@ -24,8 +24,8 @@ class RemindersViewModelTest {
     private lateinit var fakeReminderRepository: ReminderRepository
     private lateinit var viewModel: RemindersViewModel
     private val reminders = listOf(
-        Reminder("1", id = 1),
-        Reminder("2", id = 2)
+        Reminder("1"),
+        Reminder("2")
     )
     private val alarms = listOf<Alarm>()
     private val history = listOf<History>()

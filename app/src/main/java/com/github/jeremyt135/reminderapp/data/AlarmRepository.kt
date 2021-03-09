@@ -11,7 +11,7 @@ import javax.inject.Singleton
 interface AlarmRepository {
     fun getAll(): Flow<List<Alarm>>
     suspend fun findById(id: Long): Alarm?
-    suspend fun findByReminderId(reminderId: Long): Alarm?
+    suspend fun findByReminderId(reminderId: String): Alarm?
     suspend fun getFirstScheduledAlarm(): Alarm?
     suspend fun getFirstByTimeAscending(): Alarm?
     suspend fun setScheduled(alarm: Alarm)
@@ -30,7 +30,7 @@ class AlarmRepositoryImpl @Inject constructor(
     override fun getAll(): Flow<List<Alarm>> = alarmDao.getAll().map { it.asDomainModel() }
 
     override suspend fun findById(id: Long): Alarm? = alarmDao.findById(id)?.asDomainModel()
-    override suspend fun findByReminderId(reminderId: Long): Alarm? =
+    override suspend fun findByReminderId(reminderId: String): Alarm? =
         alarmDao.findByReminderId(reminderId)?.asDomainModel()
 
     override suspend fun getFirstScheduledAlarm() =

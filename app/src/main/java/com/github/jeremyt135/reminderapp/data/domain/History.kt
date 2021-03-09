@@ -5,10 +5,11 @@ import com.github.jeremyt135.reminderapp.data.local.HistoryEntity
 import com.github.jeremyt135.reminderapp.util.getShortLocalDateDisplay
 import com.github.jeremyt135.reminderapp.util.getShortLocalTimeDisplay
 import com.github.jeremyt135.reminderapp.util.toLocalDateTime
+import com.github.jeremyt135.reminderapp.util.uuid
 
 data class History(
-    val id: Long = 0,
-    val reminderId: Long = 0,
+    val id: String = uuid(),
+    val reminderId: String = "",
     val description: String = "",
     val completionStatus: ReminderStatus = ReminderStatus.PENDING,
     val completedAt: Long = 0,

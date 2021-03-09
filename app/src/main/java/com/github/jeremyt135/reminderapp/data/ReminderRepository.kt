@@ -12,9 +12,10 @@ import javax.inject.Singleton
 interface ReminderRepository {
     fun getAll(): Flow<List<Reminder>>
     fun getAllWithTodayHistory(): Flow<List<ReminderAndHistory>>
-    suspend fun save(reminder: Reminder): Long
-    suspend fun getReminderAndAlarm(reminderId: Long): ReminderAndAlarm?
-    suspend fun findById(id: Long): Reminder?
+    suspend fun save(reminder: Reminder)
+    suspend fun saveAll(reminders: List<Reminder>)
+    suspend fun getReminderAndAlarm(reminderId: String): ReminderAndAlarm?
+    suspend fun findById(id: String): Reminder?
     suspend fun delete(reminder: Reminder)
 }
 
@@ -26,10 +27,17 @@ class ReminderRepositoryImpl @Inject constructor(
     override fun getAllWithTodayHistory(): Flow<List<ReminderAndHistory>> =
         reminderLocalDataSource.getAllWithTodayHistory()
 
-    override suspend fun save(reminder: Reminder) = reminderLocalDataSource.save(reminder)
-    override suspend fun getReminderAndAlarm(reminderId: Long): ReminderAndAlarm? =
+    override suspend fun save(reminder: Reminder) {
+        reminderLocalDataSource.save(reminder)
+    }
+
+    override suspend fun saveAll(reminders: List<Reminder>) {
+        reminderLocalDataSource.saveAll(reminders)
+    }
+
+    override suspend fun getReminderAndAlarm(reminderId: String): ReminderAndAlarm? =
         reminderLocalDataSource.getReminderAndAlarm(reminderId)
 
-    override suspend fun findById(id: Long): Reminder? = reminderLocalDataSource.findById(id)
+    override suspend fun findById(id: String): Reminder? = reminderLocalDataSource.findById(id)
     override suspend fun delete(reminder: Reminder) = reminderLocalDataSource.delete(reminder)
 }

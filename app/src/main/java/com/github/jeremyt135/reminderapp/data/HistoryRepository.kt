@@ -9,13 +9,13 @@ import javax.inject.Singleton
 interface HistoryRepository {
     fun getAll(): Flow<List<History>>
 
-    fun findByReminderId(reminderId: Long): Flow<List<History>>
+    fun findByReminderId(reminderId: String): Flow<List<History>>
 
-    suspend fun findById(id: Long): History?
+    suspend fun findById(id: String): History?
 
-    suspend fun save(history: History): Long
+    suspend fun save(history: History)
 
-    suspend fun saveAll(historyEntries: List<History>): List<Long>
+    suspend fun saveAll(historyEntries: List<History>)
 
     suspend fun deleteAll()
 }
@@ -26,14 +26,14 @@ class HistoryRepositoryImpl @Inject constructor(
 ) : HistoryRepository {
     override fun getAll(): Flow<List<History>> = historyLocalDataSource.getAll()
 
-    override fun findByReminderId(reminderId: Long) =
+    override fun findByReminderId(reminderId: String) =
         historyLocalDataSource.findByReminderId(reminderId)
 
-    override suspend fun findById(id: Long): History? = historyLocalDataSource.findById(id)
+    override suspend fun findById(id: String): History? = historyLocalDataSource.findById(id)
 
-    override suspend fun save(history: History): Long = historyLocalDataSource.save(history)
+    override suspend fun save(history: History) = historyLocalDataSource.save(history)
 
-    override suspend fun saveAll(historyEntries: List<History>): List<Long> =
+    override suspend fun saveAll(historyEntries: List<History>) =
         historyLocalDataSource.saveAll(historyEntries)
 
     override suspend fun deleteAll() = historyLocalDataSource.deleteAll()

@@ -5,14 +5,15 @@ import com.github.jeremyt135.reminderapp.data.DataModel
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.ReminderAndAlarm
 import com.github.jeremyt135.reminderapp.data.domain.ReminderAndHistory
+import com.github.jeremyt135.reminderapp.util.uuid
 import java.time.DayOfWeek
 import java.time.LocalTime
 import java.util.*
 
 @Entity(tableName = "reminder")
 data class ReminderEntity(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0L,
+    @PrimaryKey
+    val id: String = uuid(),
     val description: String = "",
     val time: LocalTime = LocalTime.now(),
     @ColumnInfo(name = "days_of_week")

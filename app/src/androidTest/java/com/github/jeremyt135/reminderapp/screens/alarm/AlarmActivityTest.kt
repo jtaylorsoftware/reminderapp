@@ -42,7 +42,7 @@ class AlarmActivityTest {
     lateinit var database: AppDatabase
 
     val time: LocalDateTime = currentLocalDateTime().plusHours(2)
-    val reminder = Reminder(id = 1, time = time.toLocalTime(), description = "My Reminder")
+    val reminder = Reminder(time = time.toLocalTime(), description = "My Reminder")
     val alarm = Alarm(id = 1, reminderId = reminder.id, triggerAt = time)
 
     @Before

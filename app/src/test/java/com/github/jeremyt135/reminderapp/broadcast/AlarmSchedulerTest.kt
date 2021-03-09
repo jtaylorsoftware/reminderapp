@@ -80,7 +80,7 @@ class AlarmSchedulerTest {
         coVerifyOrder {
             mockAlarmRepository.deleteAllInPast(any())
             mockAlarmRepository.clearAllScheduled()
-            AlarmActionHandler.createForAction(ACTION_ALARM_SCHEDULE_NEXT, 0)
+            AlarmActionHandler.createForAction(ACTION_ALARM_SCHEDULE_NEXT, "")
         }
     }
 
@@ -94,7 +94,7 @@ class AlarmSchedulerTest {
         coVerifyOrder {
             mockAlarmRepository.deleteAllInPast(any())
             mockAlarmRepository.clearAllScheduled()
-            AlarmActionHandler.createForAction(ACTION_ALARM_SCHEDULE_NEXT, 0)
+            AlarmActionHandler.createForAction(ACTION_ALARM_SCHEDULE_NEXT, "")
         }
     }
 }
