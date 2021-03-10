@@ -1,6 +1,8 @@
 package com.github.jeremyt135.reminderapp.data.local
 
 import androidx.room.TypeConverter
+import com.github.jeremyt135.reminderapp.data.domain.SnoozeDuration
+import com.github.jeremyt135.reminderapp.data.domain.SnoozeInterval
 import com.github.jeremyt135.reminderapp.util.toEpochMilli
 import com.github.jeremyt135.reminderapp.util.toLocalDateTime
 import java.time.DayOfWeek
@@ -32,4 +34,16 @@ class Converters {
         val days = """,\s+""".toRegex().split(value)
         return days.map { DayOfWeek.valueOf(it) }.toSortedSet()
     }
+
+    @TypeConverter
+    fun snoozeDurationToLong(value: SnoozeDuration): Long = value.value
+
+    @TypeConverter
+    fun longToSnoozeDuration(value: Long): SnoozeDuration = SnoozeDuration.fromLong(value)
+
+    @TypeConverter
+    fun snoozeIntervalToInt(value: SnoozeInterval): Int = value.value
+
+    @TypeConverter
+    fun intToSnoozeInterval(value: Int): SnoozeInterval = SnoozeInterval.fromInt(value)
 }

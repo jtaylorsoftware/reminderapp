@@ -13,7 +13,6 @@ import com.github.jeremyt135.reminderapp.broadcast.*
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.Alarm
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
-import com.github.jeremyt135.reminderapp.data.domain.ReminderAndAlarm
 import com.github.jeremyt135.reminderapp.di.AppCoroutineScope
 import com.github.jeremyt135.reminderapp.service.AlarmService
 import com.github.jeremyt135.reminderapp.util.EventFlow
@@ -110,13 +109,16 @@ class AlarmViewModel @Inject constructor(
     /**
      * Loads the reminder and alarm data for the associated reminder
      */
-    private suspend fun loadReminderData(id: String): ReminderAndAlarm? =
-        reminderRepository.getReminderAndAlarm(id)?.let { reminderAndAlarm ->
-            val (reminder, alarm) = reminderAndAlarm
+    private suspend fun loadReminderData(id: String): Pair<Reminder, Alarm>? =
+        reminderRepository.getReminderAndAlarm(id)?.let { (reminder, alarm) ->
             _reminder.value = reminder
-            _alarm.value = alarm
-            _time.value = alarm.triggerAt.getShortLocalTimeDisplay()
-            reminderAndAlarm
+            alarm?.let {
+                _alarm.value = alarm
+                _time.value = alarm.triggerAt.getShortLocalTimeDisplay()
+            } ?: run {
+                return@let null
+            }
+           reminder to alarm
         }
 
 
@@ -130,11 +132,10 @@ class AlarmViewModel @Inject constructor(
         reminderId: String,
         alarmId: Long,
         scope: CoroutineScope,
-        snoozeDelay: Long = DELAY_UNTIL_SNOOZE_MILLI
     ) {
         autoSnoozeHandler =
             AlarmAutoSnoozeHandler(reminderId, alarmId, scope)
-        autoSnoozeHandler!!.start(snoozeDelay) {
+        autoSnoozeHandler!!.start {
             tryHandleAlarm { startWorkerForAction(ACTION_ALARM_SNOOZE) }
         }
     }
@@ -219,7 +220,7 @@ private class AlarmAutoSnoozeHandler(
      * Starts the countdown to automatic snooze
      */
     inline fun start(
-        timeUntilSnoozeMilli: Long,
+        timeUntilSnoozeMilli: Long = DEFAULT_SNOOZE_DELAY_MILLI,
         crossinline onSnooze: suspend () -> Unit
     ): EventFlow<Unit> {
         job = applicationScope.launch {
@@ -245,4 +246,11 @@ private class AlarmAutoSnoozeHandler(
         } else {
             false
         }
+
+    companion object {
+        /**
+         * Default value for how long an Alarm should wait until auto-snoozing in milliseconds.
+         */
+        const val DEFAULT_SNOOZE_DELAY_MILLI: Long = 30L * 1000
+    }
 }

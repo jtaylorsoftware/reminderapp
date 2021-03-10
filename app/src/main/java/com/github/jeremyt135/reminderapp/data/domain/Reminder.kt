@@ -48,7 +48,9 @@ class Reminder(
     time: LocalTime = LocalTime.now(),
     val daysOfWeek: SortedSet<DayOfWeek> = sortedSetOf(),
     vibrate: Boolean = false,
-    var id: String = uuid()
+    var id: String = uuid(),
+    var snoozeInterval: SnoozeInterval = SnoozeInterval.FOREVER,
+    var snoozeDuration: SnoozeDuration = SnoozeDuration.FIVE,
 ) : BaseObservable(), DomainModel<ReminderEntity> {
     @get:Bindable
     var description: String = description
@@ -156,7 +158,9 @@ class Reminder(
         daysOfWeek: SortedSet<DayOfWeek> = this.daysOfWeek.toSortedSet(),
         vibrate: Boolean = this.vibrate,
         id: String = this.id,
-    ) = Reminder(description, time, daysOfWeek, vibrate, id)
+        snoozeInterval: SnoozeInterval = this.snoozeInterval,
+        snoozeDuration: SnoozeDuration = this.snoozeDuration,
+    ) = Reminder(description, time, daysOfWeek, vibrate, id, snoozeInterval, snoozeDuration)
 
     override fun asDataModel(): ReminderEntity =
         ReminderEntity(
@@ -165,6 +169,8 @@ class Reminder(
             time = LocalTime.of(hour, minute),
             daysOfWeek = this.daysOfWeek.toSortedSet(),
             vibrate = this.vibrate,
+            snoozeInterval = this.snoozeInterval,
+            snoozeDuration = this.snoozeDuration,
         )
 
     override fun equals(other: Any?): Boolean {
@@ -179,6 +185,8 @@ class Reminder(
         if (vibrate != other.vibrate) return false
         if (hour != other.hour) return false
         if (minute != other.minute) return false
+        if (snoozeInterval != other.snoozeInterval) return false
+        if (snoozeDuration != other.snoozeDuration) return false
 
         return true
     }
@@ -190,6 +198,8 @@ class Reminder(
         result = 31 * result + vibrate.hashCode()
         result = 31 * result + hour
         result = 31 * result + minute
+        result = 31 * result + snoozeInterval.hashCode()
+        result = 31 * result + snoozeDuration.hashCode()
         return result
     }
 
@@ -200,17 +210,19 @@ class Reminder(
                 "description='$description', " +
                 "vibrate=$vibrate, " +
                 "hour=$hour, " +
-                "minute=$minute" +
+                "minute=$minute, " +
+                "snoozeInterval=$snoozeInterval, " +
+                "snoozeDuration=$snoozeDuration, " +
                 ")"
     }
 
 }
 
-data class ReminderAndAlarm(val reminder: Reminder, val alarm: Alarm) :
+data class ReminderAndAlarm(val reminder: Reminder, val alarm: Alarm?) :
     DomainModel<ReminderAndAlarmEntity> {
     override fun asDataModel() = ReminderAndAlarmEntity(
         reminder = this.reminder.asDataModel(),
-        alarm = this.alarm.asDataModel()
+        alarm = this.alarm?.asDataModel()
     )
 }
 

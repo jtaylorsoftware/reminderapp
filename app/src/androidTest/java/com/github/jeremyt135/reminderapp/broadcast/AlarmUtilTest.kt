@@ -53,7 +53,8 @@ class AlarmUtilTest {
     @Test
     fun scheduleAlarmForReminder_setsAlarm() {
         val reminder = Reminder()
-        val alarm = Alarm(1, reminderId = reminder.id, triggerAt = currentLocalDateTime().plusHours(1))
+        val alarm =
+            Alarm(1, reminderId = reminder.id, triggerAt = currentLocalDateTime().plusHours(1))
 
         scheduleAlarmForReminder(context, alarm, reminder)
 
@@ -71,25 +72,24 @@ class AlarmUtilTest {
         // Save alarms with descending id but ascending time
         val alarms = reminders.mapIndexed { i, reminder ->
             Alarm(
-                id = i.toLong(),
                 reminderId = reminder.id,
                 triggerAt = now.plusMinutes(10L * (i + 1))
             )
         }
-        alarms.forEach { runBlocking { alarmRepo.save(it) } }
 
         runBlocking {
             reminderRepository.saveAll(reminders)
-            scheduleNextAlarm(
-                context,
-                alarmRepo,
-                reminderRepository,
-            )
+            alarms.forEach { runBlocking { alarmRepo.save(it) } }
+            assertThat(scheduleNextAlarm(context, alarmRepo, reminderRepository)).isTrue()
 
             intent = getCreatedIntentForAlarmStart(context, reminders[0].id)
 
             assertThat(intent).isNotNull()
-            assertThat(alarmRepo.getFirstScheduledAlarm()!!.copy(id=0)).isEqualTo(alarms[0].copy(scheduled = true))
+            assertThat(alarmRepo.getFirstScheduledAlarm()!!.copy(id = 0)).isEqualTo(
+                alarms[0].copy(
+                    scheduled = true
+                )
+            )
         }
     }
 
@@ -104,20 +104,16 @@ class AlarmUtilTest {
 
         // Save alarms with descending id but ascending time
         val alarms = reminders.mapIndexed { i, reminder ->
-            Alarm(
-                id = i.toLong(), reminderId = reminder.id, triggerAt = now.plusMinutes(i.toLong()),
+            Alarm(reminderId = reminder.id, triggerAt = now.plusMinutes(i.toLong()),
                 scheduled = if (i == 4) true else null
             )
         }
-        alarms.forEach { runBlocking { alarmRepo.save(it) } }
 
         runBlocking {
             reminderRepository.saveAll(reminders)
-            scheduleNextAlarm(
-                context,
-                alarmRepo,
-                reminderRepository,
-            )
+            alarms.forEach { runBlocking { alarmRepo.save(it) } }
+
+            assertThat(scheduleNextAlarm(context, alarmRepo, reminderRepository)).isTrue()
 
             assertThat(alarmRepo.findById(4)!!.scheduled).isNull()
         }

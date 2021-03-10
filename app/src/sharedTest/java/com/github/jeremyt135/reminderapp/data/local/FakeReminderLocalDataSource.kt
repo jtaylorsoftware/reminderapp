@@ -36,7 +36,6 @@ class FakeReminderLocalDataSource(
     override suspend fun getReminderAndAlarm(reminderId: String): ReminderAndAlarm? {
         return findById(reminderId)?.let {
             val alarm = alarmCache.firstOrNull { alarm -> alarm.reminderId == reminderId }
-                ?: throw IllegalStateException("FakeReminderLocalDataSource has no matching alarm for reminder $reminderId")
             ReminderAndAlarm(
                 it,
                 alarm

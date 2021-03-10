@@ -172,7 +172,7 @@ class AlarmViewModelTest {
             AlarmViewModel(mockApplication, mockReminderRepo, mockSavedStateHandle, this)
         serviceConnection.captured.onServiceConnected(mockk(), fakeBinder)
 
-        advanceTimeBy(DELAY_UNTIL_SNOOZE_MILLI + 1)
+        advanceTimeBy(60 * 1000L)
 
         assertThat(viewModel.finished.peek()).isNotNull()
         assertThat(actionSlot.isCaptured).isTrue()

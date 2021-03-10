@@ -4,7 +4,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import androidx.work.WorkManager
-import com.github.jeremyt135.reminderapp.data.AlarmRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.di.AppCoroutineScope
 import com.github.jeremyt135.reminderapp.service.AlarmService
@@ -23,9 +22,6 @@ class AlarmStartReceiver : BroadcastReceiver() {
     @Inject
     lateinit var reminderRepository: ReminderRepository
 
-    @Inject
-    lateinit var alarmRepository: AlarmRepository
-
     @AppCoroutineScope
     @Inject
     lateinit var applicationScope: CoroutineScope
@@ -40,8 +36,8 @@ class AlarmStartReceiver : BroadcastReceiver() {
 
         val pendingResult = goAsync()
         applicationScope.launch {
-            reminderRepository.getReminderAndAlarm(reminderId)?.let { (reminder, _) ->
-                AlarmService.start(context, reminder)
+            reminderRepository.getReminderAndAlarm(reminderId)?.let { (reminder, alarm) ->
+                alarm?.let { AlarmService.start(context, reminder, alarm) }
             } ?: run {
                 Timber.e("Could not get ReminderAndAlarm")
                 scheduleNext(context)

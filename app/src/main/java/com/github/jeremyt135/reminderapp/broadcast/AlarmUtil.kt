@@ -17,6 +17,7 @@ import com.github.jeremyt135.reminderapp.data.AlarmRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.Alarm
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
+import com.github.jeremyt135.reminderapp.data.domain.neverRepeats
 import com.github.jeremyt135.reminderapp.screens.alarm.AlarmActivity
 import com.github.jeremyt135.reminderapp.screens.reminder.editor.ReminderEditorActivity
 import com.github.jeremyt135.reminderapp.util.getShortLocalDateDisplay
@@ -24,25 +25,67 @@ import com.github.jeremyt135.reminderapp.util.getShortLocalTimeDisplay
 import com.github.jeremyt135.reminderapp.util.toEpochMilli
 import timber.log.Timber
 
+/**
+ * Action to schedule the next Alarm
+ */
 const val ACTION_ALARM_SCHEDULE_NEXT =
-    "com.github.jeremyt135.reminderapp.ACTION_ALARM_SCHEUDLE_NEXT"
+    "com.github.jeremyt135.reminderapp.ACTION_ALARM_SCHEDULE_NEXT"
+
+/**
+ * Action to start AlarmService
+ */
 const val ACTION_ALARM_START = "com.github.jeremyt135.reminderapp.ACTION_ALARM_START"
+
+/**
+ * Action to request AlarmService stops
+ */
 const val ACTION_ALARM_STOP = "com.github.jeremyt135.reminderapp.ACTION_ALARM_STOP"
+
+/**
+ * Action to snooze an Alarm
+ */
 const val ACTION_ALARM_SNOOZE = "com.github.jeremyt135.reminderapp.ACTION_ALARM_SNOOZE"
+
+/**
+ * Action to mark an Alarm as ReminderStatus.SKIPPED
+ */
 const val ACTION_ALARM_SKIP = "com.github.jeremyt135.reminderapp.ACTION_ALARM_SKIP"
+
+/**
+ * Action to mark an Alarm as ReminderStatus.COMPLETED
+ */
 const val ACTION_ALARM_COMPLETE = "com.github.jeremyt135.reminderapp.ACTION_ALARM_COMPLETE"
 
+/**
+ * String: The name of the Alarm action being taken (used in workers or where there is no Intent)
+ */
 const val EXTRA_ALARM_ACTION_NAME = "com.github.jeremyt135.reminderapp.EXTRA_ALARM_ACTION_NAME"
 
+/**
+ * String: The UUID of the Reminder
+ */
 const val EXTRA_REMINDER_ID = "com.github.jeremyt135.reminderapp.EXTRA_REMINDER_ID"
+
+/**
+ * Bool: The on-off should-vibrate setting from the Reminder as entered into the editor.
+ */
 const val EXTRA_REMINDER_VIBRATE = "com.github.jeremyt135.reminderapp.EXTRA_REMINDER_VIBRATE"
+
+/**
+ * String: The description of the Reminder as entered into the editor.
+ */
 const val EXTRA_REMINDER_DESCRIPTION =
     "com.github.jeremyt135.reminderapp.EXTRA_REMINDER_DESCRIPTION"
+
+/**
+ * String: The sound played by the Reminder
+ */
 const val EXTRA_REMINDER_SOUND = "com.github.jeremyt135.reminderapp.EXTRA_REMINDER_SOUND"
 
-
-const val SNOOZE_TIME_MIN: Long = 2L
-const val DELAY_UNTIL_SNOOZE_MILLI: Long = 30L * 1000
+/**
+ * Int: The remaining snoozes for the Alarm
+ */
+const val EXTRA_ALARM_SNOOZES = "com.github.jeremyt135.reminderapp.EXTRA_ALARM_SNOOZES"
 
 /**
  * A 30 seconds long vibration pattern
@@ -133,8 +176,15 @@ fun cancelAlarmIntentsForReminder(context: Context, reminder: Reminder) {
     }
 }
 
-fun triggerSnoozeNotification(context: Context, reminder: Reminder, alarm: Alarm) {
-    val notification = buildNotificationForSnooze(context, reminder, alarm)
+fun showSnoozeNotification(context: Context, reminder: Reminder, alarm: Alarm) {
+    val notification = buildSnoozeNotification(context, reminder, alarm)
+    with(NotificationManagerCompat.from(context)) {
+        notify(alarm.notificationId, notification)
+    }
+}
+
+fun showSkipNotification(context: Context, reminder: Reminder, alarm: Alarm) {
+    val notification = buildSkipNotification(context, reminder)
     with(NotificationManagerCompat.from(context)) {
         notify(alarm.notificationId, notification)
     }
@@ -275,70 +325,89 @@ fun buildNotificationForAlarm(
     context: Context,
     intent: PendingIntent,
     reminder: Reminder,
-): Notification {
-    val builder = NotificationCompat.Builder(
+): Notification =
+    NotificationCompat.Builder(
         context,
         context.getString(R.string.alarm_notification_channel_id)
-    )
+    ).run {
+        setAutoCancel(true)
+        setOngoing(true)
+        setSmallIcon(R.drawable.ic_notification_alarm)
+        setContentTitle("Reminder Notification")
 
-    builder
-        .setAutoCancel(true)
-        .setOngoing(true)
-        .setSmallIcon(R.drawable.ic_notification_alarm)
-        .setContentTitle("Reminder Notification")
-        .setContentText("Remember to do: ${reminder.description}")
-        .setPriority(NotificationCompat.PRIORITY_MAX)
-        .setCategory(NotificationCompat.CATEGORY_ALARM)
-        .setContentIntent(intent)
-        .setFullScreenIntent(intent, true)
+        val message = "Remember to do: ${reminder.description}"
+        setContentText(message)
+        setStyle(NotificationCompat.BigTextStyle().bigText(message))
 
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-        builder.setLights(NOTIFICATION_LED_ARGB, NOTIFICATION_LED_ONMS, NOTIFICATION_LED_OFFMS)
-    }
+        setPriority(NotificationCompat.PRIORITY_MAX)
+        setCategory(NotificationCompat.CATEGORY_ALARM)
+        setContentIntent(intent)
+        setFullScreenIntent(intent, true)
 
-    val snoozeIntent = getIntentForAlarmSnooze(context, reminder.id)
-    val skipIntent = getIntentForAlarmSkip(context, reminder.id)
-    val completeIntent = getIntentForAlarmComplete(context, reminder.id)
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            setLights(NOTIFICATION_LED_ARGB, NOTIFICATION_LED_ONMS, NOTIFICATION_LED_OFFMS)
+        }
 
-    builder
-        .addAction(
-            R.drawable.ic_notification_snooze,
-            context.getString(R.string.action_alarm_snooze_name),
-            snoozeIntent
-        )
-        .addAction(
+        if (!reminder.snoozeInterval.neverRepeats) {
+            addAction(
+                R.drawable.ic_notification_snooze,
+                context.getString(R.string.action_alarm_snooze_name),
+                getIntentForAlarmSnooze(context, reminder.id)
+            )
+        }
+        addAction(
             R.drawable.ic_notification_skip,
             context.getString(R.string.action_alarm_skip_name),
-            skipIntent
+            getIntentForAlarmSkip(context, reminder.id)
         )
-        .addAction(
+        addAction(
             R.drawable.ic_notification_complete,
             context.getString(R.string.action_alarm_complete_name),
-            completeIntent
+            getIntentForAlarmComplete(context, reminder.id)
         )
 
-    return builder.build()
-}
+        build()
+    }
 
 
 @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-fun buildNotificationForSnooze(context: Context, reminder: Reminder, alarm: Alarm): Notification {
-    val builder = NotificationCompat.Builder(
+fun buildSnoozeNotification(context: Context, reminder: Reminder, alarm: Alarm): Notification =
+    NotificationCompat.Builder(
         context,
         context.getString(R.string.alarm_notification_channel_id)
-    )
-    val editorIntent = getIntentForEditorActivity(context, reminder.id)
-    builder
-        .setAutoCancel(true)
-        .setSmallIcon(R.drawable.ic_notification_snooze)
-        .setContentIntent(editorIntent)
-        .setContentTitle("Reminder Snoozed")
-        .setContentText(
-            "Reminder for ${reminder.description} was snoozed until ${
-                alarm.triggerAt.getShortLocalTimeDisplay()
-            }"
-        )
-        .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+    ).run {
+        setAutoCancel(true)
+        setSmallIcon(R.drawable.ic_notification_snooze)
+        setContentIntent(getIntentForEditorActivity(context, reminder.id))
+        setContentTitle("Reminder Snoozed")
 
-    return builder.build()
-}
+        val message =
+            "Reminder for ${reminder.description} was snoozed until ${alarm.triggerAt.getShortLocalTimeDisplay()}"
+        setContentText(message)
+        setStyle(NotificationCompat.BigTextStyle().bigText(message))
+        setPriority(NotificationCompat.PRIORITY_DEFAULT)
+
+        build()
+    }
+
+
+@VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+fun buildSkipNotification(context: Context, reminder: Reminder): Notification =
+    NotificationCompat.Builder(
+        context,
+        context.getString(R.string.alarm_notification_channel_id)
+    ).run {
+        setAutoCancel(true)
+        setSmallIcon(R.drawable.ic_notification_snooze)
+        setContentIntent(getIntentForEditorActivity(context, reminder.id))
+        setContentTitle("Reminder Snoozed")
+
+        val message =
+            "Reminder for ${reminder.description} has been skipped (missed too many snoozes)"
+        setContentText(message)
+        setStyle(NotificationCompat.BigTextStyle().bigText(message))
+        setPriority(NotificationCompat.PRIORITY_DEFAULT)
+
+        build()
+    }
+

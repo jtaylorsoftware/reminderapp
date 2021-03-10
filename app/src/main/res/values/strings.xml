@@ -31,4 +31,6 @@
     <string name="today">Today</string>
     <string name="reminder_menu_history">History</string>
     <string name="notification_icon_description">Reminder status icon</string>
+    <string name="editor_snooze_interval">Snooze Interval</string>
+    <string name="editor_snooze_duration">Snooze duration</string>
 </resources>

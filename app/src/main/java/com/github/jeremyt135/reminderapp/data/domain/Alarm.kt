@@ -11,13 +11,21 @@ data class Alarm(
     val reminderId: String,
     val triggerAt: LocalDateTime = currentLocalDateTime(),
     val scheduled: Boolean? = null,
-    val notificationId: Int = NotificationId.next
+    val notificationId: Int = NotificationId.next,
+    val snoozeInterval: SnoozeInterval = SnoozeInterval.FOREVER,
+    val snoozeDuration: SnoozeDuration = SnoozeDuration.FIVE,
+    val snoozeCount: Int = 0
 ) : DomainModel<AlarmEntity> {
     override fun asDataModel(): AlarmEntity = AlarmEntity(
         id = this.id,
         reminderId = this.reminderId,
         triggerAt = this.triggerAt,
         scheduled = this.scheduled,
-        notificationId = this.notificationId
+        notificationId = this.notificationId,
+        snoozeInterval = this.snoozeInterval,
+        snoozeDuration = this.snoozeDuration,
+        snoozeCount = this.snoozeCount
     )
+
+    val remainingSnoozes = snoozeInterval.remainingSnoozes(snoozeCount)
 }

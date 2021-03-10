@@ -112,7 +112,7 @@ class ReminderEditorViewModelTest {
 
         createViewModel()
 
-        assertThat(viewModel.reminder.getOrAwaitValue().copy(id = "")).isEqualTo(Reminder(id = ""))
+        assertThat(viewModel.reminder.value.copy(id = "")).isEqualTo(Reminder(id = ""))
     }
 
     @Test
@@ -126,7 +126,7 @@ class ReminderEditorViewModelTest {
 
         createViewModel()
 
-        assertThat(viewModel.reminder.getOrAwaitValue()).isEqualTo(reminder)
+        assertThat(viewModel.reminder.value).isEqualTo(reminder)
     }
 
     @Test

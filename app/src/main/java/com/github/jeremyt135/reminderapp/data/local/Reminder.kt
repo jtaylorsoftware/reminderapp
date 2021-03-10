@@ -2,9 +2,7 @@ package com.github.jeremyt135.reminderapp.data.local
 
 import androidx.room.*
 import com.github.jeremyt135.reminderapp.data.DataModel
-import com.github.jeremyt135.reminderapp.data.domain.Reminder
-import com.github.jeremyt135.reminderapp.data.domain.ReminderAndAlarm
-import com.github.jeremyt135.reminderapp.data.domain.ReminderAndHistory
+import com.github.jeremyt135.reminderapp.data.domain.*
 import com.github.jeremyt135.reminderapp.util.uuid
 import java.time.DayOfWeek
 import java.time.LocalTime
@@ -14,11 +12,21 @@ import java.util.*
 data class ReminderEntity(
     @PrimaryKey
     val id: String = uuid(),
+
     val description: String = "",
+
     val time: LocalTime = LocalTime.now(),
+
     @ColumnInfo(name = "days_of_week")
     val daysOfWeek: SortedSet<DayOfWeek> = sortedSetOf(),
+
     val vibrate: Boolean = false,
+
+    @ColumnInfo(name = "max_snooze")
+    val snoozeInterval: SnoozeInterval = SnoozeInterval.FOREVER,
+
+    @ColumnInfo(name = "snooze_time")
+    val snoozeDuration: SnoozeDuration = SnoozeDuration.FIVE,
 ) : DataModel<Reminder> {
     override fun asDomainModel(): Reminder =
         Reminder(
@@ -27,6 +35,8 @@ data class ReminderEntity(
             time = this.time,
             daysOfWeek = this.daysOfWeek.toSortedSet(),
             vibrate = this.vibrate,
+            snoozeInterval = this.snoozeInterval,
+            snoozeDuration = this.snoozeDuration,
         )
 }
 
@@ -36,12 +46,12 @@ data class ReminderAndAlarmEntity(
         parentColumn = "id",
         entityColumn = "reminder_id"
     )
-    val alarm: AlarmEntity
+    val alarm: AlarmEntity?
 ) : DataModel<ReminderAndAlarm> {
     override fun asDomainModel(): ReminderAndAlarm =
         ReminderAndAlarm(
             reminder = this.reminder.asDomainModel(),
-            alarm = this.alarm.asDomainModel()
+            alarm = this.alarm?.asDomainModel()
         )
 }
 

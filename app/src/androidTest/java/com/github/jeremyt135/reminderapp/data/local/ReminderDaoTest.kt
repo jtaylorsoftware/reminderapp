@@ -121,7 +121,7 @@ class ReminderDaoTest {
     }
 
     @Test
-    fun getReminderAndAlarm() = runBlockingTest {
+    fun getReminderAndAlarm_bothInserted_returnsValue() = runBlockingTest {
         val reminder = Reminder().asDataModel()
         reminderDao.insert(reminder)
 
@@ -131,8 +131,19 @@ class ReminderDaoTest {
         val reminderAndAlarm = reminderDao.getReminderAndAlarm(reminder.id)
         assertThat(reminderAndAlarm).isNotNull()
         reminderAndAlarm!!
+        assertThat(reminderAndAlarm.alarm).isNotNull()
         assertThat(reminderAndAlarm.reminder.id).isEqualTo(reminder.id)
-        assertThat(reminderAndAlarm.alarm.id).isEqualTo(alarm.id)
-        assertThat(reminderAndAlarm.alarm.reminderId).isEqualTo(reminder.id)
+        assertThat(reminderAndAlarm.alarm!!.id).isEqualTo(alarm.id)
+        assertThat(reminderAndAlarm.alarm!!.reminderId).isEqualTo(reminder.id)
+    }
+
+    @Test
+    fun getReminderAndAlarm_noAlarm_returnsNullAlarm() = runBlockingTest {
+        val reminder = Reminder().asDataModel()
+        reminderDao.insert(reminder)
+
+        val reminderAndAlarm = reminderDao.getReminderAndAlarm(reminder.id)
+        assertThat(reminderAndAlarm).isNotNull()
+        assertThat(reminderAndAlarm?.alarm).isNull()
     }
 }

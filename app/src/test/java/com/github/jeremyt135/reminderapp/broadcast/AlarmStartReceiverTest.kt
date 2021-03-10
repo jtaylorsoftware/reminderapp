@@ -48,14 +48,13 @@ class AlarmStartReceiverTest {
         every { WorkManager.getInstance(any()) } returns mockWorkManager
 
         mockkObject(AlarmService.Companion)
-        justRun { AlarmService.start(any(), any()) }
+        justRun { AlarmService.start(any(), any(), any()) }
 
         coJustRun { mockAlarmRepository.deleteAllInPast(any()) }
         coJustRun { mockAlarmRepository.clearAllScheduled() }
 
         receiver = spyk(AlarmStartReceiver().apply {
             applicationScope = mainCoroutineRule
-            alarmRepository = mockAlarmRepository
             reminderRepository = mockReminderRepository
         })
 
@@ -109,7 +108,7 @@ class AlarmStartReceiverTest {
 
         verify {
             AlarmActionHandler.createForAction(ACTION_ALARM_SCHEDULE_NEXT, "")
-            AlarmService.start(mockContext, reminder)
+            AlarmService.start(mockContext, reminder, alarm)
         }
     }
 }

@@ -10,7 +10,9 @@ import android.os.*
 import com.github.jeremyt135.reminderapp.broadcast.*
 import com.github.jeremyt135.reminderapp.data.AlarmRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
+import com.github.jeremyt135.reminderapp.data.domain.Alarm
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
+import com.github.jeremyt135.reminderapp.data.domain.SnoozeInterval
 import com.github.jeremyt135.reminderapp.di.AppCoroutineScope
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
@@ -73,7 +75,7 @@ class AlarmService : Service() {
     }
 
     private fun start(intent: Intent) {
-        if(!running.compareAndSet(false, true)){
+        if (!running.compareAndSet(false, true)) {
             Timber.w("Service already running")
             return
         }
@@ -82,12 +84,19 @@ class AlarmService : Service() {
         val description = intent.getStringExtra(EXTRA_REMINDER_DESCRIPTION) ?: ""
         val vibrate = intent.getBooleanExtra(EXTRA_REMINDER_VIBRATE, false)
         val sound = intent.getStringExtra(EXTRA_REMINDER_SOUND)
-
+        val snoozeInterval = intent.getIntExtra(EXTRA_ALARM_SNOOZES, 0).let{
+            if (it > 0) SnoozeInterval.FOREVER else SnoozeInterval.NEVER
+        }
         startForeground(
             reminderId.hashCode(),
             createNotificationForAlarm(
                 this,
-                Reminder(id = reminderId, description = description, vibrate = vibrate)
+                Reminder(
+                    id = reminderId,
+                    description = description,
+                    vibrate = vibrate,
+                    snoozeInterval = snoozeInterval
+                )
             )
         )
 
@@ -127,7 +136,7 @@ class AlarmService : Service() {
     }
 
     private fun stopVibrateAndPlayback() {
-        if(!running.get()){
+        if (!running.get()) {
             Timber.w("Service was not running")
         }
 
@@ -176,13 +185,14 @@ class AlarmService : Service() {
         /**
          * Starts the Service using a Reminder to determine vibration & sound settings.
          */
-        fun start(context: Context, reminder: Reminder) {
+        fun start(context: Context, reminder: Reminder, alarm: Alarm) {
             Intent(context, AlarmService::class.java).apply {
                 action = ACTION_ALARM_START
                 putExtra(EXTRA_REMINDER_ID, reminder.id)
                 putExtra(EXTRA_REMINDER_DESCRIPTION, reminder.description)
                 putExtra(EXTRA_REMINDER_VIBRATE, reminder.vibrate)
                 putExtra(EXTRA_REMINDER_SOUND, "")
+                putExtra(EXTRA_ALARM_SNOOZES, alarm.remainingSnoozes)
             }.also {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     context.startForegroundService(it)

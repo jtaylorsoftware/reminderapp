@@ -1,6 +1,5 @@
 package com.github.jeremyt135.reminderapp.screens.reminder.editor
 
-import android.content.Context
 import android.content.Intent
 import androidx.fragment.app.add
 import androidx.fragment.app.commitNow
@@ -34,6 +33,7 @@ import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.UninstallModules
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runBlockingTest
@@ -86,9 +86,8 @@ class ReminderEditorFragmentTest {
         reminderId: String,
         action: ReminderEditorFragment.() -> Unit = {}
     ) {
-        val context = ApplicationProvider.getApplicationContext<Context>()
         val intent = Intent(
-            context,
+            ApplicationProvider.getApplicationContext(),
             ReminderEditorTestActivity::class.java
         ).apply {
             putExtra(EXTRA_REMINDER_ID, reminderId)
@@ -206,12 +205,11 @@ class ReminderEditorFragmentTest {
         launchEditorFragmentWithReminder(id)
 
         // Create a new reminder that edits fields of current repo version
-        val editedReminder = Reminder(
+        val editedReminder = reminder.copy(
             reminder.description + "edited",
-            time = LocalTime.of(reminder.hour, reminder.minute).plusHours(12),
+            time = LocalTime.of(reminder.hour, reminder.minute).plusHours(12).plusMinutes(1),
             daysOfWeek = sortedSetOf(DayOfWeek.MONDAY, DayOfWeek.TUESDAY),
             vibrate = true,
-            id = reminder.id
         )
 
         // Apply edits
@@ -227,11 +225,12 @@ class ReminderEditorFragmentTest {
         onView(withId(R.id.button_editor_save)).perform(click())
 
         // Verify save happened
-        lateinit var savedReminder: Reminder
-        runBlocking {
-            savedReminder = reminderRepository.findById(id)!!
+        val savedReminder: Reminder = runBlocking {
+            delay(1000)
+            reminderRepository.findById(id)!!
         }
         assertThat(savedReminder).isEqualTo(editedReminder)
+
     }
 
     @Test
