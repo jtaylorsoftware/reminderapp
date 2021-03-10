@@ -222,7 +222,7 @@ class AlarmActionHandlerImpl(
             Timber.d("Saved next alarm: $nextAlarm")
 
             Timber.d("Creating notification: ${nextAlarm.notificationId}")
-            showSnoozeNotification(context, reminder, alarm)
+            showSnoozeNotification(context, reminder, nextAlarm)
 
             Result.success()
         }
