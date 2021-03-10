@@ -47,7 +47,7 @@ class FakeReminderLocalDataSource(
     override suspend fun findById(id: String): Reminder? = reminderCache.find { it.id == id }
 
     override suspend fun save(reminder: Reminder) {
-        when (val index = reminderCache.indexOf(reminder)) {
+        when (val index = reminderCache.indexOfFirst { it.id == reminder.id }) {
             -1 -> {
                 reminderCache.add(reminder.copy())
             }

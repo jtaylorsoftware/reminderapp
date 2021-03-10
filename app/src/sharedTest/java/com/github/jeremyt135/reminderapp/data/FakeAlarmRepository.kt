@@ -47,7 +47,7 @@ class FakeAlarmRepository @Inject constructor(private val cache: MutableList<Ala
         cache.find { it.reminderId == reminderId }
 
     override suspend fun save(alarm: Alarm): Long =
-        when (val index = cache.indexOf(alarm)) {
+        when (val index = cache.indexOfFirst { it.id == alarm.id }) {
             -1 -> {
                 cache.add(alarm.copy(id = cache.size + 1L))
                 cache.size.toLong()

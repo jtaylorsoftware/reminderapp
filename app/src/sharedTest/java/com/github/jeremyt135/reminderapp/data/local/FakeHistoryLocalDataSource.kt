@@ -19,7 +19,7 @@ class FakeHistoryLocalDataSource(private val cache: MutableList<History> = mutab
     override suspend fun findById(id: String): History? = cache.find { it.id == id }
 
     override suspend fun save(history: History) {
-        when (val index = cache.indexOf(history)) {
+        when (val index = cache.indexOfFirst { it.id == history.id }) {
             -1 -> {
                 cache.add(history.copy())
             }
