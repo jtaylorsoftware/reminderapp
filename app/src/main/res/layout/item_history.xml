@@ -35,6 +35,7 @@
                 android:textColor="?android:attr/textColorPrimary"
                 android:textSize="16sp"
                 app:layout_constraintBottom_toTopOf="@+id/text_item_history_completionDate"
+                app:layout_constraintEnd_toStartOf="@+id/divider_item_history"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 tools:text="Reminder text" />
