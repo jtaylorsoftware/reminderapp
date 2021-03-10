@@ -13,7 +13,6 @@ class AlarmActionReceiver : BroadcastReceiver() {
         ACTION_ALARM_COMPLETE,
         ACTION_ALARM_SKIP,
         ACTION_ALARM_SNOOZE,
-        ACTION_ALARM_SCHEDULE_NEXT,
     )
 
     override fun onReceive(context: Context, intent: Intent) {
