@@ -6,16 +6,20 @@
     <data>
 
         <import type="android.view.View" />
+
         <import type="androidx.lifecycle.LiveData" />
+
         <import type="com.github.jeremyt135.reminderapp.data.domain.SnoozeInterval" />
+
         <import type="com.github.jeremyt135.reminderapp.data.domain.Reminder" />
+
         <variable
             name="model"
             type="com.github.jeremyt135.reminderapp.screens.reminder.editor.ReminderEditorViewModel" />
 
         <variable
             name="reminder"
-            type="LiveData&lt;Reminder&gt;"/>
+            type="LiveData&lt;Reminder&gt;" />
     </data>
 
     <ScrollView
@@ -169,23 +173,28 @@
             <com.google.android.material.switchmaterial.SwitchMaterial
                 android:id="@+id/switch_editor_vibrate"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/margin_editor_medium"
+                android:layout_height="0dp"
+                android:layout_marginEnd="8dp"
                 android:checked="@={reminder.vibrate}"
                 android:text="@string/editor_switch_vibrate"
-                app:layout_constraintEnd_toEndOf="@+id/textinput_editor_snooze_interval"
-                app:layout_constraintStart_toStartOf="@+id/textinput_editor_snooze_interval"
-                app:layout_constraintTop_toBottomOf="@+id/toggle_editor_sunday" />
+                app:layout_constraintBottom_toBottomOf="@+id/textinput_editor_snooze_interval"
+                app:layout_constraintEnd_toStartOf="@+id/divider"
+                app:layout_constraintHorizontal_chainStyle="spread_inside"
+                app:layout_constraintStart_toStartOf="@+id/toggle_editor_sunday"
+                app:layout_constraintTop_toTopOf="@+id/textinput_editor_snooze_interval"
+                app:layout_constraintVertical_bias="0.0" />
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/textinput_editor_snooze_interval"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="32dp"
                 android:hint="@string/editor_snooze_interval"
-                app:layout_constraintStart_toStartOf="@+id/toggle_editor_sunday"
-                app:layout_constraintTop_toBottomOf="@+id/switch_editor_vibrate">
+                app:layout_constraintEnd_toEndOf="@+id/toggle_editor_saturday"
+                app:layout_constraintStart_toEndOf="@+id/divider"
+                app:layout_constraintTop_toBottomOf="@+id/toggle_editor_sunday">
 
                 <AutoCompleteTextView
                     android:layout_width="180dp"
@@ -200,10 +209,12 @@
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/margin_editor_small"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="16dp"
                 android:hint="@string/editor_snooze_duration"
                 android:visibility="@{reminder.snoozeInterval != SnoozeInterval.NEVER ? View.VISIBLE : View.GONE}"
-                app:layout_constraintStart_toStartOf="@+id/textinput_editor_snooze_interval"
+                app:layout_constraintEnd_toEndOf="@+id/toggle_editor_saturday"
+                app:layout_constraintStart_toEndOf="@+id/divider2"
                 app:layout_constraintTop_toBottomOf="@+id/textinput_editor_snooze_interval">
 
                 <AutoCompleteTextView
@@ -214,6 +225,21 @@
                     android:visibility="@{reminder.snoozeInterval != SnoozeInterval.NEVER ? View.VISIBLE : View.GONE}" />
 
             </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/switch_editor_sound"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_marginEnd="8dp"
+                android:checked="@{!model.selectedSound.equals(`None`)}"
+                android:text="@{`Sound: ` + model.selectedSound}"
+                app:layout_constraintBottom_toBottomOf="@+id/textinput_editor_snooze_duration"
+                app:layout_constraintEnd_toStartOf="@+id/divider2"
+                app:layout_constraintHorizontal_chainStyle="spread_inside"
+                app:layout_constraintStart_toStartOf="@+id/switch_editor_vibrate"
+                app:layout_constraintTop_toTopOf="@+id/textinput_editor_snooze_duration"
+                app:layout_constraintVertical_bias="0.0"
+                tools:text="Sound: None" />
 
             <LinearLayout
                 android:layout_width="0dp"
@@ -263,6 +289,30 @@
                     app:cornerRadius="8dp" />
 
             </LinearLayout>
+
+            <View
+                android:id="@+id/divider"
+                android:layout_width="1dp"
+                android:layout_height="0dp"
+                android:background="?android:attr/listDivider"
+                android:visibility="invisible"
+                app:layout_constraintBottom_toBottomOf="@+id/switch_editor_vibrate"
+                app:layout_constraintEnd_toStartOf="@+id/textinput_editor_snooze_interval"
+                app:layout_constraintHorizontal_bias="0.5"
+                app:layout_constraintStart_toEndOf="@+id/switch_editor_vibrate"
+                app:layout_constraintTop_toTopOf="@+id/switch_editor_vibrate" />
+
+            <View
+                android:id="@+id/divider2"
+                android:layout_width="1dp"
+                android:layout_height="0dp"
+                android:background="?android:attr/listDivider"
+                android:visibility="invisible"
+                app:layout_constraintBottom_toBottomOf="@+id/switch_editor_sound"
+                app:layout_constraintEnd_toStartOf="@+id/textinput_editor_snooze_duration"
+                app:layout_constraintHorizontal_bias="0.5"
+                app:layout_constraintStart_toEndOf="@+id/switch_editor_sound"
+                app:layout_constraintTop_toTopOf="@+id/switch_editor_sound" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 

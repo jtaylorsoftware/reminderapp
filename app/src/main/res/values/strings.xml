@@ -33,4 +33,5 @@
     <string name="notification_icon_description">Reminder status icon</string>
     <string name="editor_snooze_interval">Snooze Interval</string>
     <string name="editor_snooze_duration">Snooze duration</string>
+    <string name="editor_pick_sound">Pick Sound</string>
 </resources>

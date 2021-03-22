@@ -80,7 +80,7 @@ const val EXTRA_REMINDER_DESCRIPTION =
 /**
  * String: The sound played by the Reminder
  */
-const val EXTRA_REMINDER_SOUND = "com.github.jeremyt135.reminderapp.EXTRA_REMINDER_SOUND"
+const val EXTRA_REMINDER_SOUND_URI = "com.github.jeremyt135.reminderapp.EXTRA_REMINDER_SOUND"
 
 /**
  * Int: The remaining snoozes for the Alarm

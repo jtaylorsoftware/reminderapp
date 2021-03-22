@@ -27,6 +27,9 @@ data class ReminderEntity(
 
     @ColumnInfo(name = "snooze_time")
     val snoozeDuration: SnoozeDuration = SnoozeDuration.FIVE,
+
+    @ColumnInfo(name = "notif_sound_uri")
+    val notifSoundUri: String = "",
 ) : DataModel<Reminder> {
     override fun asDomainModel(): Reminder =
         Reminder(
@@ -37,6 +40,7 @@ data class ReminderEntity(
             vibrate = this.vibrate,
             snoozeInterval = this.snoozeInterval,
             snoozeDuration = this.snoozeDuration,
+            notifSoundUri = this.notifSoundUri,
         )
 }
 

@@ -2,6 +2,8 @@ package com.github.jeremyt135.reminderapp.screens.reminder.editor
 
 import android.app.Application
 import android.content.Context
+import android.media.RingtoneManager
+import android.net.Uri
 import android.widget.Toast
 import androidx.lifecycle.*
 import androidx.work.WorkManager
@@ -49,15 +51,18 @@ class ReminderEditorViewModel @Inject constructor(
     val reminderDaysDisplayString: LiveData<String> =
         _reminder.map { it.getDaysDisplayString() }.asLiveData(viewModelScope.coroutineContext)
 
+    val selectedSound: LiveData<String> =
+        _reminder.map { getSoundTitle(it.notifSoundUri) }
+            .asLiveData(viewModelScope.coroutineContext)
+
     private val _navigateToReminders = MutableEventFlow<Unit>()
     val navigateToReminders = _navigateToReminders.asEventFlow()
 
-    private var savedReminderId: String = ""
     var isEditing by Delegates.notNull<Boolean>()
         private set
 
     init {
-        savedReminderId = savedStateHandle.get<String>(EXTRA_REMINDER_ID) ?: run {
+        val savedReminderId = savedStateHandle.get<String>(EXTRA_REMINDER_ID) ?: run {
             if (BuildConfig.DEBUG) {
                 showToast(
                     getApplication<Application>().applicationContext,
@@ -100,7 +105,7 @@ class ReminderEditorViewModel @Inject constructor(
     fun onTimeChanged(newHour: Int, newMinute: Int) {
         val (oldHour, oldMinute) = _reminder.value.hour to _reminder.value.minute
         if (newHour != oldHour || newMinute != oldMinute) {
-            _reminder.value = _reminder.value.copy(time= LocalTime.of(newHour,newMinute))
+            _reminder.value = _reminder.value.copy(time = LocalTime.of(newHour, newMinute))
         }
     }
 
@@ -112,6 +117,11 @@ class ReminderEditorViewModel @Inject constructor(
     fun onSnoozeDurationChanged(newDuration: SnoozeDuration) {
         Timber.d("Setting snooze duration to ${newDuration.value} minutes")
         _reminder.value = _reminder.value.copy(snoozeDuration = newDuration)
+    }
+
+    fun setAlarmSound(sound: Uri) {
+        Timber.d("Setting snooze sound to $sound")
+        _reminder.value = _reminder.value.copy(notifSoundUri = sound.toString())
     }
 
     fun saveReminder() {
@@ -166,6 +176,11 @@ class ReminderEditorViewModel @Inject constructor(
         _navigateToReminders.value = Unit
     }
 
+    private fun getSoundTitle(soundUri: String) = if (soundUri.isEmpty()) "None" else
+        RingtoneManager.getRingtone(getApplication(), Uri.parse(soundUri))
+            .getTitle(getApplication())
+
+
     private fun scheduleNextAlarm() {
         AlarmActionHandler.createForAction(ACTION_ALARM_SCHEDULE_NEXT, "").let {
             WorkManager.getInstance(getApplication()).enqueue(it)
@@ -174,7 +189,7 @@ class ReminderEditorViewModel @Inject constructor(
 
     // Cancels & deletes Reminder, returning value of alarm.scheduled
     private suspend fun stopAlarmsForReminder(context: Context, reminder: Reminder): Boolean =
-        alarmRepository.findByReminderId(savedReminderId)?.let {
+        alarmRepository.findByReminderId(reminder.id)?.let {
             Timber.d("Cancelling previous alarm")
             cancelAlarmIntentsForReminder(context, reminder)
             alarmRepository.delete(it)

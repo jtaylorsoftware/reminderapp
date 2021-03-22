@@ -51,6 +51,7 @@ class Reminder(
     var id: String = uuid(),
     var snoozeInterval: SnoozeInterval = SnoozeInterval.FOREVER,
     var snoozeDuration: SnoozeDuration = SnoozeDuration.FIVE,
+    var notifSoundUri: String = "",
 ) : BaseObservable(), DomainModel<ReminderEntity> {
     @get:Bindable
     var description: String = description
@@ -160,7 +161,17 @@ class Reminder(
         id: String = this.id,
         snoozeInterval: SnoozeInterval = this.snoozeInterval,
         snoozeDuration: SnoozeDuration = this.snoozeDuration,
-    ) = Reminder(description, time, daysOfWeek, vibrate, id, snoozeInterval, snoozeDuration)
+        notifSoundUri: String = this.notifSoundUri
+    ) = Reminder(
+        description,
+        time,
+        daysOfWeek,
+        vibrate,
+        id,
+        snoozeInterval,
+        snoozeDuration,
+        notifSoundUri
+    )
 
     override fun asDataModel(): ReminderEntity =
         ReminderEntity(
@@ -171,6 +182,7 @@ class Reminder(
             vibrate = this.vibrate,
             snoozeInterval = this.snoozeInterval,
             snoozeDuration = this.snoozeDuration,
+            notifSoundUri = this.notifSoundUri
         )
 
     override fun equals(other: Any?): Boolean {
@@ -187,6 +199,7 @@ class Reminder(
         if (minute != other.minute) return false
         if (snoozeInterval != other.snoozeInterval) return false
         if (snoozeDuration != other.snoozeDuration) return false
+        if (notifSoundUri != other.notifSoundUri) return false
 
         return true
     }
@@ -200,6 +213,7 @@ class Reminder(
         result = 31 * result + minute
         result = 31 * result + snoozeInterval.hashCode()
         result = 31 * result + snoozeDuration.hashCode()
+        result = 31 * result + notifSoundUri.hashCode()
         return result
     }
 
@@ -213,6 +227,7 @@ class Reminder(
                 "minute=$minute, " +
                 "snoozeInterval=$snoozeInterval, " +
                 "snoozeDuration=$snoozeDuration, " +
+                "notifSoundUri=$notifSoundUri, " +
                 ")"
     }
 

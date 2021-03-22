@@ -1,10 +1,18 @@
 package com.github.jeremyt135.reminderapp.screens.reminder.editor
 
+import android.app.Activity
+import android.content.Context
+import android.content.Intent
+import android.media.RingtoneManager
+import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import android.widget.TimePicker
+import androidx.activity.result.contract.ActivityResultContract
+import androidx.activity.result.launch
+import androidx.activity.result.registerForActivityResult
 import androidx.annotation.VisibleForTesting
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.widget.doAfterTextChanged
@@ -33,6 +41,14 @@ class ReminderEditorFragment : Fragment(R.layout.fragment_reminder_editor) {
     private lateinit var snoozeIntervalText: AutoCompleteTextView
     private lateinit var snoozeDurationText: AutoCompleteTextView
 
+    private val getAlarmSound =
+        registerForActivityResult(PickRingtone(), RingtoneManager.TYPE_ALL) { uri ->
+            Timber.d("Finished ringtone activity: $uri")
+            uri?.let {
+                viewModel.setAlarmSound(it)
+            }
+        }
+
     init {
         lifecycleScope.launch {
             whenStarted {
@@ -58,7 +74,6 @@ class ReminderEditorFragment : Fragment(R.layout.fragment_reminder_editor) {
             }
         }
     }
-
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -111,7 +126,29 @@ class ReminderEditorFragment : Fragment(R.layout.fragment_reminder_editor) {
                 }
             }
 
+            switchEditorSound.setOnClickListener { getAlarmSound.launch() }
+
             this@ReminderEditorFragment.timePickerEditor = timePickerEditor
+        }
+    }
+
+    class PickRingtone : ActivityResultContract<Int, Uri?>() {
+        override fun createIntent(context: Context, ringtoneType: Int) =
+            Intent(RingtoneManager.ACTION_RINGTONE_PICKER).apply {
+                putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, ringtoneType)
+                putExtra(RingtoneManager.EXTRA_RINGTONE_TITLE, "Select Alarm Sound")
+                putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, Uri.EMPTY)
+            }
+
+        override fun parseResult(resultCode: Int, result: Intent?): Uri? {
+            if (resultCode != Activity.RESULT_OK) {
+                Timber.e("Result was $resultCode")
+                return null
+            }
+            return result?.getParcelableExtra<Uri>(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
+                ?.also {
+                    Timber.d("Result was $it")
+                }
         }
     }
 }

@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.ServiceConnection
 import android.media.AudioAttributes
 import android.media.MediaPlayer
+import android.net.Uri
 import android.os.*
 import com.github.jeremyt135.reminderapp.broadcast.*
 import com.github.jeremyt135.reminderapp.data.AlarmRepository
@@ -24,7 +25,7 @@ import javax.inject.Inject
  * Service that creates the notification and plays vibration & sound for an Alarm.
  */
 @AndroidEntryPoint
-class AlarmService : Service() {
+class AlarmService : Service(), MediaPlayer.OnPreparedListener, MediaPlayer.OnErrorListener {
     @Inject
     lateinit var reminderRepository: ReminderRepository
 
@@ -83,7 +84,7 @@ class AlarmService : Service() {
         val reminderId = intent.getStringExtra(EXTRA_REMINDER_ID) ?: ""
         val description = intent.getStringExtra(EXTRA_REMINDER_DESCRIPTION) ?: ""
         val vibrate = intent.getBooleanExtra(EXTRA_REMINDER_VIBRATE, false)
-        val sound = intent.getStringExtra(EXTRA_REMINDER_SOUND)
+        val sound = intent.getStringExtra(EXTRA_REMINDER_SOUND_URI) ?: ""
         val snoozeInterval = intent.getIntExtra(EXTRA_ALARM_SNOOZES, 0).let{
             if (it > 0) SnoozeInterval.FOREVER else SnoozeInterval.NEVER
         }
@@ -110,12 +111,12 @@ class AlarmService : Service() {
             reminder
         )
 
-    private fun startVibrateAndPlayback(vibrate: Boolean, sound: String?) {
+    private fun startVibrateAndPlayback(vibrate: Boolean, soundUri: String) {
         if (vibrate) {
             startVibrate()
         }
-        if (sound != null) {
-            startPlayback(sound)
+        if (soundUri.isNotEmpty()) {
+            startPlayback(soundUri)
         }
     }
 
@@ -128,11 +129,31 @@ class AlarmService : Service() {
         }
     }
 
-    private fun startPlayback(sound: String) {
+    private fun startPlayback(soundUri: String) {
         Timber.d("Starting playback")
         mediaPlayer = MediaPlayer().apply {
-            // TODO
+            setOnPreparedListener(this@AlarmService)
+            setOnErrorListener(this@AlarmService)
+            setAudioAttributes(
+                AudioAttributes.Builder()
+                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                    .setUsage(AudioAttributes.USAGE_ALARM)
+                    .build()
+            )
+            isLooping = true
+            setDataSource(this@AlarmService, Uri.parse(soundUri))
+            prepareAsync()
         }
+    }
+
+    override fun onPrepared(mediaPlayer: MediaPlayer) {
+        mediaPlayer.start()
+    }
+
+    override fun onError(mediaPlayer: MediaPlayer, what: Int, extra: Int): Boolean {
+        Timber.e("Error using MediaPlayer: $what $extra")
+        mediaPlayer.reset()
+        return true
     }
 
     private fun stopVibrateAndPlayback() {
@@ -152,7 +173,10 @@ class AlarmService : Service() {
 
     private fun stopPlayback() {
         Timber.d("Stopping playback")
-        mediaPlayer?.stop()
+        mediaPlayer?.let {
+            it.stop()
+            it.release()
+        }
     }
 
     abstract class AlarmServiceBinder : Binder() {
@@ -191,7 +215,7 @@ class AlarmService : Service() {
                 putExtra(EXTRA_REMINDER_ID, reminder.id)
                 putExtra(EXTRA_REMINDER_DESCRIPTION, reminder.description)
                 putExtra(EXTRA_REMINDER_VIBRATE, reminder.vibrate)
-                putExtra(EXTRA_REMINDER_SOUND, "")
+                putExtra(EXTRA_REMINDER_SOUND_URI, reminder.notifSoundUri)
                 putExtra(EXTRA_ALARM_SNOOZES, alarm.remainingSnoozes)
             }.also {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
