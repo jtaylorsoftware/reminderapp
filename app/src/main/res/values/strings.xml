@@ -34,4 +34,5 @@
     <string name="editor_snooze_interval">Snooze Interval</string>
     <string name="editor_snooze_duration">Snooze duration</string>
     <string name="editor_pick_sound">Pick Sound</string>
+    <string name="reminders_empty_hint">You have no reminders. Click the + button or tap here to add a reminder.</string>
 </resources>
