@@ -13,11 +13,13 @@ import com.github.jeremyt135.reminderapp.data.domain.Alarm
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.ReminderAndAlarm
 import com.github.jeremyt135.reminderapp.service.AlarmService
+import com.github.jeremyt135.reminderapp.service.AlarmTimerManager
 import com.github.jeremyt135.reminderapp.util.currentLocalDateTime
 import com.github.jeremyt135.reminderapp.work.AlarmActionHandler
 import io.mockk.*
 import io.mockk.impl.annotations.MockK
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -34,6 +36,9 @@ class AlarmStartReceiverTest {
 
     @MockK
     lateinit var mockAlarmRepository: AlarmRepository
+
+    @MockK
+    lateinit var mockTimerManager: AlarmTimerManager
 
     @MockK
     lateinit var mockContext: Context
@@ -56,9 +61,11 @@ class AlarmStartReceiverTest {
         receiver = spyk(AlarmStartReceiver().apply {
             applicationScope = mainCoroutineRule
             reminderRepository = mockReminderRepository
+            timerManager = mockTimerManager
         })
 
         val mockPendingResult = mockk<BroadcastReceiver.PendingResult>()
+        every { mockTimerManager.startTimer(any(), any(), any()) } returns true
         every { receiver.goAsync() } returns mockPendingResult
         every { mockPendingResult.finish() } returns Unit
     }

@@ -17,6 +17,9 @@ import com.github.jeremyt135.reminderapp.data.domain.SnoozeInterval
 import com.github.jeremyt135.reminderapp.di.AppCoroutineScope
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
@@ -32,6 +35,9 @@ class AlarmService : Service(), MediaPlayer.OnPreparedListener, MediaPlayer.OnEr
     @Inject
     lateinit var alarmRepository: AlarmRepository
 
+    @Inject
+    lateinit var timerManager: AlarmTimerManager
+
     @AppCoroutineScope
     @Inject
     lateinit var applicationScope: CoroutineScope
@@ -41,14 +47,31 @@ class AlarmService : Service(), MediaPlayer.OnPreparedListener, MediaPlayer.OnEr
 
     private val running = AtomicBoolean(false)
 
+    private var timerJob: Job? = null
+
     override fun onBind(intent: Intent?): IBinder = binder
 
     override fun onCreate() {
         super.onCreate()
         Timber.d("Created service")
+
+        // Stop the service & its notification when timer ends
+        timerManager.timer?.let { timer ->
+            timerJob = applicationScope.launch {
+                timer.timerFinished.flow.collect { finished ->
+                    finished.peek()?.let {
+                        Timber.d("AlarmService received AlarmTimer finished event")
+                        stopSelf()
+                    }
+                }
+            }
+        } ?: run {
+            Timber.w("AlarmTimerManager.timer was null when creating AlarmService")
+        }
     }
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
+        Timber.d("AlarmService onStartCommand for ${intent.action}")
         when (intent.action) {
             ACTION_ALARM_START -> {
                 start(intent)
@@ -72,6 +95,7 @@ class AlarmService : Service(), MediaPlayer.OnPreparedListener, MediaPlayer.OnEr
     override fun onDestroy() {
         super.onDestroy()
         Timber.d("Service destroyed")
+        timerJob?.cancel()
         stopVibrateAndPlayback()
     }
 
@@ -159,6 +183,7 @@ class AlarmService : Service(), MediaPlayer.OnPreparedListener, MediaPlayer.OnEr
     private fun stopVibrateAndPlayback() {
         if (!running.get()) {
             Timber.w("Service was not running")
+            return
         }
 
         stopVibrate()
@@ -227,7 +252,7 @@ class AlarmService : Service(), MediaPlayer.OnPreparedListener, MediaPlayer.OnEr
         }
 
         /**
-         * Requests the Service stops, allowing for cleanup to happen if necessary.
+         * Requests the Service stops.
          */
         fun requestStop(context: Context) {
             context.startService(

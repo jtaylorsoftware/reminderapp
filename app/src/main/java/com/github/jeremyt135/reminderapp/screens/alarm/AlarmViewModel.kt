@@ -1,9 +1,6 @@
 package com.github.jeremyt135.reminderapp.screens.alarm
 
 import android.app.Application
-import android.content.ComponentName
-import android.content.ServiceConnection
-import android.os.IBinder
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.asLiveData
@@ -13,21 +10,17 @@ import com.github.jeremyt135.reminderapp.broadcast.*
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.Alarm
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
-import com.github.jeremyt135.reminderapp.di.AppCoroutineScope
 import com.github.jeremyt135.reminderapp.service.AlarmService
-import com.github.jeremyt135.reminderapp.util.EventFlow
+import com.github.jeremyt135.reminderapp.service.AlarmTimerManager
 import com.github.jeremyt135.reminderapp.util.MutableEventFlow
 import com.github.jeremyt135.reminderapp.util.asEventFlow
 import com.github.jeremyt135.reminderapp.util.getShortLocalTimeDisplay
 import com.github.jeremyt135.reminderapp.work.AlarmActionHandler
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.collect
 import timber.log.Timber
-import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 
 @HiltViewModel
@@ -35,7 +28,7 @@ class AlarmViewModel @Inject constructor(
     application: Application,
     private val reminderRepository: ReminderRepository,
     savedStateHandle: SavedStateHandle,
-    @AppCoroutineScope private val applicationScope: CoroutineScope
+    private val timerManager: AlarmTimerManager,
 ) : AndroidViewModel(application) {
     private val _reminder = MutableStateFlow(Reminder())
     val reminder = _reminder.asLiveData(viewModelScope.coroutineContext)
@@ -54,61 +47,46 @@ class AlarmViewModel @Inject constructor(
      */
     val finished = _finished.asEventFlow()
 
-    private var autoSnoozeHandler: AlarmAutoSnoozeHandler? = null
+    private var timerJob: Job? = null
 
-    // --- Service binding ---
-    private lateinit var alarmService: AlarmService.AlarmServiceBinder
-    private var bound = false
-    private val serviceConnection = object : ServiceConnection {
-        override fun onServiceConnected(className: ComponentName, service: IBinder) {
-            Timber.d("AlarmViewModel bound to service")
-            alarmService = service as AlarmService.AlarmServiceBinder
-            bound = true
-
-        }
-
-        override fun onServiceDisconnected(className: ComponentName) {
-            Timber.d("AlarmViewModel unbound from service")
-            bound = false
-        }
-    }
-    // -------
-
-    /**
-     * Flag indicating that the user clicked a button
-     */
+    // Flag indicating that the user clicked a button
     private var handled: Boolean = false
 
     init {
+        // Load the reminder so it can be displayed
         savedStateHandle.get<String>(EXTRA_REMINDER_ID)?.let { id ->
             viewModelScope.launch {
-                loadReminderData(id)?.let { (reminder, alarm) ->
-                    startAutoSnooze(reminder.id, alarm.id, applicationScope)
-                    bindToAlarmService()
-                } ?: run {
+                loadReminderData(id) ?: run {
                     Timber.e("Couldn't load reminder $id")
-                    tryStartWorkerForAction(ACTION_ALARM_SCHEDULE_NEXT)
+                    finish()
                 }
             }
         } ?: run {
             Timber.e("savedStateHandle had no value for $EXTRA_REMINDER_ID")
-            tryStartWorkerForAction(ACTION_ALARM_SCHEDULE_NEXT)
+            finish()
+        }
+
+        // Finish the activity when the timer ends
+        timerManager.timer?.let { timer ->
+            timerJob = viewModelScope.launch {
+                timer.timerFinished.flow.collect { finished ->
+                    finished.peek()?.let {
+                        finish()
+                    }
+                }
+            }
+        } ?: run {
+            Timber.w("AlarmTimerManager.timer was null when creating AlarmViewModel")
         }
     }
 
     override fun onCleared() {
         super.onCleared()
-
-        tryStartWorkerForAction(ACTION_ALARM_SNOOZE)
-
-        if (bound) {
-            alarmService.stop()
-        }
+        Timber.d("AlarmViewModel cleared")
+        AlarmService.requestStop(getApplication())
     }
 
-    /**
-     * Loads the reminder and alarm data for the associated reminder
-     */
+    // Loads the reminder and alarm data for the associated reminder
     private suspend fun loadReminderData(id: String): Pair<Reminder, Alarm>? =
         reminderRepository.getReminderAndAlarm(id)?.let { (reminder, alarm) ->
             _reminder.value = reminder
@@ -120,25 +98,6 @@ class AlarmViewModel @Inject constructor(
             }
            reminder to alarm
         }
-
-
-    private fun bindToAlarmService() {
-        with(getApplication<Application>()) {
-            AlarmService.bind(this, serviceConnection)
-        }
-    }
-
-    private fun startAutoSnooze(
-        reminderId: String,
-        alarmId: Long,
-        scope: CoroutineScope,
-    ) {
-        autoSnoozeHandler =
-            AlarmAutoSnoozeHandler(reminderId, alarmId, scope)
-        autoSnoozeHandler!!.start {
-            tryHandleAlarm { startWorkerForAction(ACTION_ALARM_SNOOZE) }
-        }
-    }
 
     /**
      * Snoozes the alarm
@@ -172,7 +131,7 @@ class AlarmViewModel @Inject constructor(
      */
     private fun tryStartWorkerForAction(action: String) {
         tryHandleAlarm {
-            if (autoSnoozeHandler?.stop() == true) {
+            if (timerManager.timer?.stop() == true) {
                 startWorkerForAction(action)
             } else {
                 Timber.d("AutoSnoozeHandler already snoozed Alarm")
@@ -180,16 +139,7 @@ class AlarmViewModel @Inject constructor(
         }
     }
 
-    private fun startWorkerForAction(action: String) {
-        Timber.d("AlarmViewModel starting worker")
-        AlarmActionHandler.createForAction(action, _reminder.value.id).let {
-            WorkManager.getInstance(getApplication()).enqueue(it)
-        }
-    }
-
-    /**
-     * Performs action if the Alarm is currently unhandled.
-     */
+    // Performs action if the Alarm is currently unhandled.
     private inline fun tryHandleAlarm(crossinline handler: () -> Unit) {
         if (handled || _finished.peek() != null) {
             Timber.w("Already handled Alarm")
@@ -201,56 +151,19 @@ class AlarmViewModel @Inject constructor(
 
     private inline fun handleAlarm(crossinline handler: () -> Unit) {
         handled = true
+        timerJob?.cancel()
         handler()
+        finish()
+    }
+
+    private fun startWorkerForAction(action: String) {
+        Timber.d("AlarmViewModel starting worker")
+        AlarmActionHandler.createForAction(action, _reminder.value.id).let {
+            WorkManager.getInstance(getApplication()).enqueue(it)
+        }
+    }
+
+    private fun finish() {
         _finished.value = Unit
-    }
-}
-
-private class AlarmAutoSnoozeHandler(
-    val reminderId: String,
-    val alarmId: Long,
-    val applicationScope: CoroutineScope,
-) {
-    private val snoozeHandled: AtomicBoolean = AtomicBoolean(false)
-    private lateinit var job: Job
-    private val snoozeTimeoutEvent = MutableEventFlow<Unit>()
-    val snoozeTimeout: EventFlow<Unit> = snoozeTimeoutEvent
-
-    /**
-     * Starts the countdown to automatic snooze
-     */
-    inline fun start(
-        timeUntilSnoozeMilli: Long = DEFAULT_SNOOZE_DELAY_MILLI,
-        crossinline onSnooze: suspend () -> Unit
-    ): EventFlow<Unit> {
-        job = applicationScope.launch {
-            Timber.d("Started command auto-snooze job")
-            delay(timeUntilSnoozeMilli)
-            if (snoozeHandled.compareAndSet(false, true)) {
-                snoozeTimeoutEvent.value = Unit
-                Timber.d("Reminder $reminderId alarm $alarmId auto-snoozing (startId:$alarmId)")
-                onSnooze()
-            }
-        }
-        return snoozeTimeout
-    }
-
-    /**
-     * Stops the automatic snooze if it has not begun.
-     * Returns true if the snooze was stopped or if it was already snoozed.
-     */
-    fun stop(): Boolean =
-        if (snoozeHandled.compareAndSet(false, true)) {
-            job.cancel()
-            true
-        } else {
-            false
-        }
-
-    companion object {
-        /**
-         * Default value for how long an Alarm should wait until auto-snoozing in milliseconds.
-         */
-        const val DEFAULT_SNOOZE_DELAY_MILLI: Long = 30L * 1000
     }
 }

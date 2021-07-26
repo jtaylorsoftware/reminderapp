@@ -5,10 +5,30 @@ import android.content.Context
 import android.content.Intent
 import androidx.work.WorkManager
 import com.github.jeremyt135.reminderapp.service.AlarmService
+import com.github.jeremyt135.reminderapp.service.AlarmTimerManager
 import com.github.jeremyt135.reminderapp.work.AlarmActionHandler
+import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
+import javax.inject.Inject
 
+/**
+ * AlarmActionReceiver receives one of:
+ *
+ *  - ACTION_ALARM_COMPLETE,
+ *  - ACTION_ALARM_SKIP,
+ *  - ACTION_ALARM_SNOOZE,
+ *
+ *  and creates a WorkRequest for an AlarmActionHandler (CoroutineWorker)
+ *  to handle the received action. Typically the receiver runs
+ *  as a result of the user pressing a button on the AlarmService
+ *  notification; other classes directly create the work they want
+ *  to start.
+ */
+@AndroidEntryPoint
 class AlarmActionReceiver : BroadcastReceiver() {
+    @Inject
+    lateinit var timerManager: AlarmTimerManager
+
     private val actions = arrayOf(
         ACTION_ALARM_COMPLETE,
         ACTION_ALARM_SKIP,
@@ -21,7 +41,13 @@ class AlarmActionReceiver : BroadcastReceiver() {
             return
         }
 
+        // Stop the AlarmService responsible for media playback & notification
         stopAlarmService(context)
+
+        // Stop the AlarmTimer so it doesn't auto snooze
+        if (timerManager.timer?.stop() == false){
+            Timber.w("Could not stop AlarmTimer in receiver")
+        }
 
         val reminderId = intent.getStringExtra(EXTRA_REMINDER_ID) ?: return
         createWorkerForAction(context, intent.action!!, reminderId)

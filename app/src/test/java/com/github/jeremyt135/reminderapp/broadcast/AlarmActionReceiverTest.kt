@@ -10,6 +10,8 @@ import androidx.work.WorkRequest
 import com.github.jeremyt135.reminderapp.MainCoroutineRule
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.service.AlarmService
+import com.github.jeremyt135.reminderapp.service.AlarmTimer
+import com.github.jeremyt135.reminderapp.service.AlarmTimerManager
 import com.github.jeremyt135.reminderapp.work.AlarmActionHandler
 import io.mockk.*
 import io.mockk.impl.annotations.MockK
@@ -28,6 +30,12 @@ class AlarmActionReceiverTest {
     @MockK
     lateinit var mockContext: Context
 
+    @MockK
+    lateinit var mockTimerManager: AlarmTimerManager
+
+    @MockK
+    lateinit var mockTimer: AlarmTimer
+
     @Before
     fun setup() {
         MockKAnnotations.init(this)
@@ -45,7 +53,12 @@ class AlarmActionReceiverTest {
         every { AlarmActionHandler.createForAction(any(), any()) } returns
                 OneTimeWorkRequestBuilder<AlarmActionHandler>().build()
 
-        receiver = spyk(AlarmActionReceiver())
+        receiver = spyk(AlarmActionReceiver()).apply {
+            timerManager = mockTimerManager
+        }
+
+        every { mockTimerManager.timer } returns mockTimer
+        every { mockTimer.stop() } returns true
 
         val mockPendingResult = mockk<BroadcastReceiver.PendingResult>()
         every { receiver.goAsync() } returns mockPendingResult
@@ -91,6 +104,23 @@ class AlarmActionReceiverTest {
         verify {
             AlarmService.requestStop(mockContext)
             AlarmActionHandler.createForAction(action, reminder.id)
+        }
+    }
+
+    @Test
+    fun stopsAlarmManagerTimerInstance() {
+        val action = ACTION_ALARM_SNOOZE
+        val intent = mockk<Intent>()
+
+        every { intent.action } returns action
+        every { intent.getStringExtra(EXTRA_REMINDER_ID) } returns ""
+
+        receiver.onReceive(mockContext, intent)
+
+        verify {
+            mockTimer.stop()
+            AlarmService.requestStop(mockContext)
+            AlarmActionHandler.createForAction(action, "")
         }
     }
 }
