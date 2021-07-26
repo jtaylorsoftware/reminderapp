@@ -10,6 +10,7 @@ import com.github.jeremyt135.reminderapp.util.currentEpochMilli
 import com.github.jeremyt135.reminderapp.util.currentLocalDateTime
 import com.github.jeremyt135.reminderapp.util.uuid
 import com.google.common.truth.Truth.assertThat
+import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -26,10 +27,13 @@ class ReminderDaoTest {
     private lateinit var alarmDao: AlarmDao
     private lateinit var historyDao: HistoryDao
 
-    @get:Rule
+    @get:Rule(order = 0)
+    var hiltAndroidRule = HiltAndroidRule(this)
+
+    @get:Rule(order = 1)
     var instantTaskExecutorRule = InstantTaskExecutorRule()
 
-    @get:Rule
+    @get:Rule(order = 2)
     var inMemoryDatabaseRule = InMemoryDatabaseRule()
 
     @Before

@@ -4,28 +4,30 @@ import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.test.filters.SmallTest
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.ReminderStatus
-import com.github.jeremyt135.reminderapp.data.local.HistoryEntity as History
 import com.github.jeremyt135.reminderapp.util.InMemoryDatabaseRule
-import com.github.jeremyt135.reminderapp.util.uuid
-import com.google.common.truth.Truth.*
+import com.google.common.truth.Truth.assertThat
+import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import com.github.jeremyt135.reminderapp.data.local.HistoryEntity as History
 
 
 @ExperimentalCoroutinesApi
 @HiltAndroidTest
 @SmallTest
 class HistoryDaoTest {
-    @get:Rule
+    @get:Rule(order = 0)
+    var hiltAndroidRule = HiltAndroidRule(this)
+
+    @get:Rule(order = 1)
     val instantTaskExecutorRule = InstantTaskExecutorRule()
 
-    @get:Rule
+    @get:Rule(order = 2)
     val inMemoryDb = InMemoryDatabaseRule()
 
     private lateinit var historyDao: HistoryDao

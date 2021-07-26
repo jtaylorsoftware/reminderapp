@@ -5,6 +5,7 @@ import androidx.test.filters.MediumTest
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.util.InMemoryDatabaseRule
 import com.google.common.truth.Truth.assertThat
+import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -19,10 +20,13 @@ import org.junit.Test
 class ReminderLocalDataSourceTest {
     private lateinit var localDataSource: ReminderLocalDataSource
 
-    @get:Rule
+    @get:Rule(order = 0)
+    var hiltAndroidRule = HiltAndroidRule(this)
+
+    @get:Rule(order = 1)
     var instantTaskExecutorRule = InstantTaskExecutorRule()
 
-    @get:Rule
+    @get:Rule(order = 2)
     var inMemoryDatabaseRule = InMemoryDatabaseRule()
 
     @Before
