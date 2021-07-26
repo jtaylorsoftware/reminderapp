@@ -21,6 +21,10 @@ import timber.log.Timber
 import java.time.LocalDate
 import java.util.concurrent.TimeUnit
 
+/**
+ * Performs the necessary work to handle an Alarm action like
+ * snooze, schedule-next, skip, and complete.
+ */
 @HiltWorker
 class AlarmActionHandler @AssistedInject constructor(
     @Assisted context: Context,
@@ -94,16 +98,16 @@ class AlarmActionHandlerImpl(
      * Attempts to handle an action
      */
     private suspend fun handleAction(action: String, reminderId: String): Result {
-        if (action != ACTION_ALARM_SCHEDULE_NEXT) {
+        return if (action != ACTION_ALARM_SCHEDULE_NEXT) {
             // Do action
-            return when (action) {
+            when (action) {
                 ACTION_ALARM_SNOOZE -> handleSnooze(reminderId)
                 ACTION_ALARM_SKIP -> handleSkip(reminderId)
                 ACTION_ALARM_COMPLETE -> handleCompleted(reminderId)
                 else -> Result.failure()
             }
         } else {
-            return scheduleNext()
+            scheduleNext()
         }
     }
 
