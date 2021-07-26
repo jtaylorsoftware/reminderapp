@@ -15,9 +15,9 @@ annotation class IoDispatcher
 @Qualifier
 annotation class DefaultDispatcher
 
-@Qualifier
-annotation class MainDispatcher
-
+/**
+ * Dispatchers.main bound scope
+ */
 @Qualifier
 annotation class AppCoroutineScope
 
@@ -34,15 +34,9 @@ object DispatcherModule {
     @Singleton
     fun provideDefaultDispatcher(): CoroutineDispatcher = Dispatchers.Default
 
-    @MainDispatcher
-    @Provides
-    @Singleton
-    fun provideMainDispatcher(): CoroutineDispatcher = Dispatchers.Main
-
     @AppCoroutineScope
     @Provides
     @Singleton
     fun provideApplicationScope() =
         MainScope() + CoroutineName("ReminderApplication:applicationScope")
-
 }
