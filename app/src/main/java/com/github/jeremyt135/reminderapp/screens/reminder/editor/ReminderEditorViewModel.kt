@@ -110,18 +110,24 @@ class ReminderEditorViewModel @Inject constructor(
     }
 
     fun onSnoozeIntervalChanged(newInterval: SnoozeInterval) {
-        Timber.d("Setting snooze interval to ${newInterval.name}")
-        _reminder.value = _reminder.value.copy(snoozeInterval = newInterval)
+        if (newInterval != _reminder.value.snoozeInterval) {
+            Timber.d("Setting snooze interval to ${newInterval.name}")
+            _reminder.value = _reminder.value.copy(snoozeInterval = newInterval)
+        }
     }
 
     fun onSnoozeDurationChanged(newDuration: SnoozeDuration) {
-        Timber.d("Setting snooze duration to ${newDuration.value} minutes")
-        _reminder.value = _reminder.value.copy(snoozeDuration = newDuration)
+        if (newDuration != _reminder.value.snoozeDuration) {
+            Timber.d("Setting snooze duration to ${newDuration.value} minutes")
+            _reminder.value = _reminder.value.copy(snoozeDuration = newDuration)
+        }
     }
 
     fun setAlarmSound(sound: Uri) {
-        Timber.d("Setting snooze sound to $sound")
-        _reminder.value = _reminder.value.copy(notifSoundUri = sound.toString())
+        if (sound.toString() != _reminder.value.notifSoundUri) {
+            Timber.d("Setting snooze sound to $sound")
+            _reminder.value = _reminder.value.copy(notifSoundUri = sound.toString())
+        }
     }
 
     fun saveReminder() {
