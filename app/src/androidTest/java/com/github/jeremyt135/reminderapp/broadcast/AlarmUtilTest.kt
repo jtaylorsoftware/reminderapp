@@ -14,17 +14,22 @@ import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.util.currentLocalDateTime
 import com.google.common.truth.Truth.assertThat
 import dagger.hilt.android.testing.HiltAndroidTest
+import dagger.hilt.android.testing.HiltAndroidRule
 import io.mockk.justRun
 import io.mockk.mockkStatic
 import io.mockk.verify
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 
 @HiltAndroidTest
 @SmallTest
 class AlarmUtilTest {
+    @get:Rule
+    var hiltAndroidRule = HiltAndroidRule(this)
+
     lateinit var context: Context
 
     private var intent: PendingIntent? = null
@@ -93,9 +98,6 @@ class AlarmUtilTest {
         }
     }
 
-    // Sometimes (always?) runs twice, once fails with error:
-    // java.lang.IllegalStateException: The component was not created. Check that you have added the HiltAndroidRule.
-    // TODO: See if there's a way to fix, but the 2nd run succeeds so not vital
     @Test
     fun scheduleNextAlarm_clearsPreviouslyScheduled() {
         val now = currentLocalDateTime()
