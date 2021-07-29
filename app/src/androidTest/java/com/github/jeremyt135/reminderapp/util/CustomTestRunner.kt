@@ -14,6 +14,18 @@ import dagger.hilt.android.testing.CustomTestApplication
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Inject
 
+/**
+ * Workaround to get injected WorkManager working in tests without using a common
+ * base class. Also contains related workaround with CustomTestApplication (using
+ * generated Application class directly)
+ *
+ * Relevant:
+ * https://github.com/google/dagger/issues/2033
+ * https://stackoverflow.com/questions/65662835/injecting-coroutineworker-using-hilt
+ * https://developer.android.com/training/dependency-injection/hilt-jetpack#workmanager
+ */
+
+
 @EarlyEntryPoint
 @InstallIn(SingletonComponent::class)
 interface WorkerFactoryEntryPoint {
