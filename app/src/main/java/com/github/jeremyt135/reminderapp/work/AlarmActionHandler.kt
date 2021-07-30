@@ -2,10 +2,12 @@ package com.github.jeremyt135.reminderapp.work
 
 import android.content.Context
 import androidx.annotation.VisibleForTesting
+import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.hilt.work.HiltWorker
 import androidx.work.*
 import androidx.work.ListenableWorker.Result
+import com.github.jeremyt135.R
 import com.github.jeremyt135.reminderapp.broadcast.*
 import com.github.jeremyt135.reminderapp.data.AlarmRepository
 import com.github.jeremyt135.reminderapp.data.HistoryRepository
@@ -32,15 +34,31 @@ class AlarmActionHandler @AssistedInject constructor(
     alarmRepository: AlarmRepository,
     reminderRepository: ReminderRepository,
     historyRepository: HistoryRepository
-) :
-    CoroutineWorker(context, workerParameters) {
+) : CoroutineWorker(context, workerParameters) {
 
-    // Using pimpl because the test worker builders don't work well with injection
+    // Using pimpl because the test worker builders don't work well with injection & easier to test
     private val impl = AlarmActionHandlerImpl(
         context, inputData, alarmRepository, reminderRepository, historyRepository
     )
 
-    override suspend fun doWork(): Result = impl.doWork()
+    override suspend fun doWork(): Result {
+        setForeground(createForegroundInfo())
+        return impl.doWork()
+    }
+
+    private fun createForegroundInfo(): ForegroundInfo {
+        val channel = applicationContext.getString(R.string.scheduling_notification_channel_id)
+        val title = "Reminders scheduling"
+        val notification = NotificationCompat.Builder(applicationContext, channel).apply {
+            setContentTitle(title)
+            setSmallIcon(R.drawable.ic_notification_alarm)
+            setContentText("Reminders app is scheduling your reminder")
+            setPriority(NotificationCompat.PRIORITY_LOW)
+            setCategory(NotificationCompat.CATEGORY_SERVICE)
+            setOngoing(true)
+        }.build()
+        return ForegroundInfo(Int.MAX_VALUE, notification)
+    }
 
     companion object {
         fun createForAction(action: String, reminderId: String) =

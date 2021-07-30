@@ -10,10 +10,8 @@ import androidx.navigation.findNavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.NavigationUI
-import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
 import com.github.jeremyt135.R
-import com.github.jeremyt135.reminderapp.broadcast.EXTRA_REMINDER_ID
 import com.github.jeremyt135.reminderapp.broadcast.NOTIFICATION_LED_ARGB
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -31,19 +29,17 @@ class RemindersActivity : AppCompatActivity() {
         appBarConfiguration = AppBarConfiguration(navController.graph)
         setupActionBarWithNavController(navController, appBarConfiguration)
 
-        createNotificationChannel()
+        createNotificationChannels()
     }
 
-    private fun createNotificationChannel() {
+    private fun createNotificationChannels() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val name = getString(R.string.alarm_notification_channel_name)
-            val descriptionText = getString(R.string.alarm_notification_channel_description)
             val alarmChannel = NotificationChannel(
                 getString(R.string.alarm_notification_channel_id),
-                name,
+                getString(R.string.alarm_notification_channel_name),
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
-                description = descriptionText
+                description = getString(R.string.alarm_notification_channel_description)
 
                 vibrationPattern = null
                 enableVibration(false)
@@ -53,8 +49,16 @@ class RemindersActivity : AppCompatActivity() {
                 enableLights(true)
                 lightColor = NOTIFICATION_LED_ARGB
             }
+            val schedulingChannel = NotificationChannel(
+                getString(R.string.scheduling_notification_channel_id),
+                getString(R.string.scheduling_notification_channel_name),
+                NotificationManager.IMPORTANCE_LOW
+            ).apply {
+                description = getString(R.string.scheduling_notification_channel_description)
+            }
             with((getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager)) {
                 createNotificationChannel(alarmChannel)
+                createNotificationChannel(schedulingChannel)
             }
         }
     }
