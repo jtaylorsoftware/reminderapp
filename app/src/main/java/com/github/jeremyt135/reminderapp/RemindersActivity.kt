@@ -4,20 +4,27 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import androidx.navigation.findNavController
+import androidx.activity.viewModels
+import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.NavigationUI
 import androidx.navigation.ui.setupActionBarWithNavController
 import com.github.jeremyt135.R
 import com.github.jeremyt135.reminderapp.broadcast.NOTIFICATION_LED_ARGB
+import com.github.jeremyt135.reminderapp.screens.reminder.overview.RemindersViewModel
+import com.github.jeremyt135.reminderapp.screens.reminder.overview.dialog.RemindersFilterDialogFragment
+import com.github.jeremyt135.reminderapp.screens.reminder.overview.dialog.RemindersSortDialogFragment
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
-class RemindersActivity : AppCompatActivity() {
+class RemindersActivity : AppCompatActivity(), RemindersSortDialogFragment.DialogListener,
+    RemindersFilterDialogFragment.DialogListener {
     private lateinit var appBarConfiguration: AppBarConfiguration
+
+    private val viewModel: RemindersViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -26,8 +33,12 @@ class RemindersActivity : AppCompatActivity() {
         val navHostFragment =
             supportFragmentManager.findFragmentById(R.id.nav_host_fragment_main) as NavHostFragment
         val navController = navHostFragment.navController
-        appBarConfiguration = AppBarConfiguration(navController.graph)
+        appBarConfiguration =
+            AppBarConfiguration(setOf(R.id.fragment_reminders, R.id.fragment_history))
         setupActionBarWithNavController(navController, appBarConfiguration)
+
+        val bottomNav: BottomNavigationView = findViewById(R.id.bottom_navigation)
+        NavigationUI.setupWithNavController(bottomNav, navController)
 
         createNotificationChannels()
     }
@@ -63,10 +74,11 @@ class RemindersActivity : AppCompatActivity() {
         }
     }
 
-    override fun onSupportNavigateUp(): Boolean =
-        NavigationUI.navigateUp(
-            findNavController(R.id.nav_host_fragment_main),
-            appBarConfiguration
-        ) || super.onSupportNavigateUp()
+    override fun onSortRulesChange(dialog: RemindersSortDialogFragment) {
+        viewModel.changeSortRules(dialog.reminderSortRules)
+    }
 
+    override fun onFilterRulesChange(dialog: RemindersFilterDialogFragment) {
+        viewModel.changeFilterRules(dialog.reminderFilterRules)
+    }
 }

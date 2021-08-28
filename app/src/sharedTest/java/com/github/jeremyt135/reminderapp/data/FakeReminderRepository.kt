@@ -36,4 +36,7 @@ class FakeReminderRepository @Inject constructor(
     override suspend fun findById(id: String): Reminder? = cache.find { it.id == id }
 
     override suspend fun delete(reminder: Reminder) = fakeLocalDataSource.delete(reminder)
+    override suspend fun deleteAll() {
+        fakeLocalDataSource.deleteAll()
+    }
 }

@@ -26,6 +26,7 @@
         </activity>
         <activity
             android:name=".reminderapp.screens.reminder.editor.ReminderEditorActivity"
+            android:parentActivityName=".reminderapp.RemindersActivity"
             android:windowSoftInputMode="adjustPan" />
         <activity android:name=".reminderapp.screens.reminder.editor.ReminderEditorTestActivity" />
         <activity android:name=".reminderapp.HiltTestActivity" />

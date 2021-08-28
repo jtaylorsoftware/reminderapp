@@ -17,6 +17,7 @@ interface ReminderRepository {
     suspend fun getReminderAndAlarm(reminderId: String): ReminderAndAlarm?
     suspend fun findById(id: String): Reminder?
     suspend fun delete(reminder: Reminder)
+    suspend fun deleteAll()
 }
 
 @Singleton
@@ -40,4 +41,6 @@ class ReminderRepositoryImpl @Inject constructor(
 
     override suspend fun findById(id: String): Reminder? = reminderLocalDataSource.findById(id)
     override suspend fun delete(reminder: Reminder) = reminderLocalDataSource.delete(reminder)
+    override suspend fun deleteAll() = reminderLocalDataSource.deleteAll()
+
 }

@@ -3,6 +3,7 @@ package com.github.jeremyt135.reminderapp.screens.reminder.editor
 import android.os.Bundle
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.NavUtils
 import androidx.lifecycle.asLiveData
 import androidx.navigation.findNavController
 import androidx.navigation.fragment.NavHostFragment
@@ -24,37 +25,9 @@ class ReminderEditorActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_reminder_editor)
-        configureActionBar()
 
         viewModel.navigateToReminders.asLiveData().observe(this) { event ->
-            event.value?.let{ goToReminders() }
+            event.value?.let{ NavUtils.navigateUpFromSameTask(this) }
         }
     }
-
-    private fun configureActionBar() {
-        val navHostFragment =
-            supportFragmentManager.findFragmentById(R.id.nav_host_fragment_reminder_editor) as NavHostFragment
-        val navController = navHostFragment.navController
-        appBarConfiguration = AppBarConfiguration.Builder()
-            .setFallbackOnNavigateUpListener {
-                goToReminders()
-                true
-            }
-            .build()
-        setupActionBarWithNavController(navController, appBarConfiguration)
-    }
-
-    private fun goToReminders() =
-        findNavController(R.id.nav_host_fragment_reminder_editor).navigate(
-            ReminderEditorFragmentDirections.actionReminderEditorFragmentToRemindersActivity()
-        )
-
-    override fun onSupportNavigateUp(): Boolean {
-        Timber.d("ATTEMPTING NAVIGATEUP")
-        return NavigationUI.navigateUp(
-            findNavController(R.id.nav_host_fragment_reminder_editor),
-            appBarConfiguration
-        ) || super.onSupportNavigateUp()
-    }
-
 }

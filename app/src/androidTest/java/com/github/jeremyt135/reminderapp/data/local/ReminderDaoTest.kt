@@ -41,6 +41,7 @@ class ReminderDaoTest {
         reminderDao = inMemoryDatabaseRule.db.reminderDao()
         alarmDao = inMemoryDatabaseRule.db.alarmDao()
         historyDao = inMemoryDatabaseRule.db.historyDao()
+        hiltAndroidRule.inject()
     }
 
     @Test

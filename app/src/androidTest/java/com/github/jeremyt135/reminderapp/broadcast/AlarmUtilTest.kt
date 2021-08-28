@@ -44,6 +44,7 @@ class AlarmUtilTest {
     @Before
     fun setup() {
         context = ApplicationProvider.getApplicationContext()
+        hiltAndroidRule.inject()
     }
 
     @After

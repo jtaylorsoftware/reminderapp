@@ -39,7 +39,7 @@ class HistoryViewModelTest {
         runBlocking {
             repository.saveAll(historyEntries)
         }
-        viewModel = HistoryViewModel(repository)
+        viewModel = HistoryViewModel(repository, mainCoroutineRule)
     }
 
     @Test

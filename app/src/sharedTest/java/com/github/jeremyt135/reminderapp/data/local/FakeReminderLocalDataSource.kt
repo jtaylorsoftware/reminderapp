@@ -63,4 +63,8 @@ class FakeReminderLocalDataSource(
     override suspend fun delete(reminder: Reminder) {
         reminderCache.remove(reminder)
     }
+
+    override suspend fun deleteAll() {
+        reminderCache.clear()
+    }
 }

@@ -34,4 +34,7 @@ class ReminderLocalDataSource @Inject constructor(private val reminderDao: Remin
         reminderDao.insertAll(reminders.asDataModel())
 
     override suspend fun delete(reminder: Reminder) = reminderDao.delete(reminder.asDataModel())
+    override suspend fun deleteAll() {
+        reminderDao.clearTable()
+    }
 }

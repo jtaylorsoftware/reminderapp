@@ -33,6 +33,7 @@ class ReminderLocalDataSourceTest {
     fun setup() {
         val reminderDao = inMemoryDatabaseRule.db.reminderDao()
         localDataSource = ReminderLocalDataSource(reminderDao)
+        hiltAndroidRule.inject()
     }
 
     @Test

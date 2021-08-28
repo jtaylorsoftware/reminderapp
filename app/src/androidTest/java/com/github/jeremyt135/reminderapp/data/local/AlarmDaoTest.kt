@@ -43,6 +43,7 @@ class AlarmDaoTest {
     fun setup() = runBlocking {
         alarmDao = inMemoryDatabaseRule.db.alarmDao()
         val reminderDao = inMemoryDatabaseRule.db.reminderDao()
+        hiltAndroidRule.inject()
         reminders.forEach {
             reminderDao.insert(it)
         }

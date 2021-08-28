@@ -42,6 +42,7 @@ class HistoryDaoTest {
     @Before
     fun setup() = runBlockingTest {
         historyDao = inMemoryDb.db.historyDao()
+        hiltAndroidRule.inject()
         historyDao.insertAll(historyEntries)
     }
 

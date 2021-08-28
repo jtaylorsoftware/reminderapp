@@ -58,8 +58,8 @@ class RemindersActivityTest {
 
     @Before
     fun setup() {
-        hiltRule.inject()
         context = ApplicationProvider.getApplicationContext()
+        hiltRule.inject()
     }
 
     @After

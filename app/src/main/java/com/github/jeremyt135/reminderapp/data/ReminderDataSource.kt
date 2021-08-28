@@ -13,4 +13,5 @@ interface ReminderDataSource {
     suspend fun save(reminder: Reminder)
     suspend fun saveAll(reminders: List<Reminder>)
     suspend fun delete(reminder: Reminder)
+    suspend fun deleteAll()
 }
