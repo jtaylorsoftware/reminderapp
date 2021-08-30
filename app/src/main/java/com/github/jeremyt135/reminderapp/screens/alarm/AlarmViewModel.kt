@@ -83,7 +83,10 @@ class AlarmViewModel @Inject constructor(
     override fun onCleared() {
         super.onCleared()
         Timber.d("AlarmViewModel cleared")
+        // stop AlarmService (sounds and notif)
         AlarmService.requestStop(getApplication())
+        // try to snooze
+        snooze()
     }
 
     // Loads the reminder and alarm data for the associated reminder
