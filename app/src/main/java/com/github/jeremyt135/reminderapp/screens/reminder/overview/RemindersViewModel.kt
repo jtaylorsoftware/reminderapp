@@ -1,30 +1,44 @@
 package com.github.jeremyt135.reminderapp.screens.reminder.overview
 
+import android.app.Application
+import android.content.Context
 import android.content.SharedPreferences
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
+import androidx.work.WorkManager
+import com.github.jeremyt135.reminderapp.broadcast.ACTION_ALARM_SCHEDULE_NEXT
+import com.github.jeremyt135.reminderapp.broadcast.cancelAlarmIntentsForReminder
+import com.github.jeremyt135.reminderapp.data.AlarmRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.ReminderAndHistory
 import com.github.jeremyt135.reminderapp.data.domain.ReminderStatus
 import com.github.jeremyt135.reminderapp.di.DefaultDispatcher
+import com.github.jeremyt135.reminderapp.service.AlarmService
 import com.github.jeremyt135.reminderapp.util.MutableEventFlow
 import com.github.jeremyt135.reminderapp.util.asEventFlow
+import com.github.jeremyt135.reminderapp.work.AlarmActionHandler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import java.time.DayOfWeek
 import javax.inject.Inject
 
 @HiltViewModel
 class RemindersViewModel @Inject constructor(
+    application: Application,
     private val reminderRepository: ReminderRepository,
+    private val alarmRepository: AlarmRepository,
     private val preferences: SharedPreferences,
     @DefaultDispatcher private val dispatcher: CoroutineDispatcher
-) : ViewModel() {
+) : AndroidViewModel(application) {
     /**
      * Determines how to sort `reminders`
      */
@@ -114,6 +128,7 @@ class RemindersViewModel @Inject constructor(
      */
     fun deleteReminder(reminder: Reminder) {
         viewModelScope.launch {
+            rescheduleAlarms(reminder)
             reminderRepository.delete(reminder)
         }
     }
@@ -124,6 +139,35 @@ class RemindersViewModel @Inject constructor(
     fun deleteAllReminders() {
         viewModelScope.launch {
             reminderRepository.deleteAll()
+            AlarmService.requestStop(getApplication())
+            scheduleNextAlarm()
+        }
+    }
+
+    /**
+     * Cancels alarms for `reminder` and reschedules next alarm.
+     */
+    private suspend fun rescheduleAlarms(reminder: Reminder) {
+        if (stopAlarmsForReminder(getApplication(), reminder)) {
+            AlarmService.requestStop(getApplication())
+            scheduleNextAlarm()
+        }
+    }
+
+    /**
+     * Cancels & deletes Reminder, returning value of alarm.scheduled
+     */
+    private suspend fun stopAlarmsForReminder(context: Context, reminder: Reminder): Boolean =
+        alarmRepository.findByReminderId(reminder.id)?.let {
+            Timber.d("Cancelling previous alarm")
+            cancelAlarmIntentsForReminder(context, reminder)
+            alarmRepository.delete(it)
+            it.scheduled // nullable bool
+        } == true // force to nonnull bool
+
+    private fun scheduleNextAlarm() {
+        AlarmActionHandler.createForAction(ACTION_ALARM_SCHEDULE_NEXT, "").let {
+            WorkManager.getInstance(getApplication()).enqueue(it)
         }
     }
 
