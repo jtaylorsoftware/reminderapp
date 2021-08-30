@@ -45,7 +45,7 @@ constructor(previousFilterRules: ReminderFilterRules) : DialogFragment() {
             setupView(view)
             builder.apply {
                 setView(view)
-                setTitle(R.string.dialog_reminderSort_title)
+                setTitle(R.string.dialog_reminderFilter_title)
                 setPositiveButton(R.string.dialog_apply) { _, _ ->
                     listener.onFilterRulesChange(this@RemindersFilterDialogFragment)
                 }
@@ -72,82 +72,36 @@ constructor(previousFilterRules: ReminderFilterRules) : DialogFragment() {
     }
 
     private fun setupDaysOfWeek(view: View) {
-        // TODO - programatically make checkboxes or set from a viewmodel
+        // set up initial value and listener for "today" checkbox
         view.findViewById<CheckBox>(R.id.checkbox_dialogReminderFilter_today).let {
             it.isChecked = reminderFilterRules.includeToday
             it.setOnCheckedChangeListener { _, isChecked ->
                 reminderFilterRules = reminderFilterRules.copy(includeToday = isChecked)
             }
         }
-        view.findViewById<CheckBox>(R.id.checkbox_dialogReminderFilter_monday).let {
-            it.isChecked = reminderFilterRules.daysOfWeek.contains(DayOfWeek.MONDAY)
-            it.setOnCheckedChangeListener { _, isChecked ->
-                onDayOfWeekChecked(
-                    DayOfWeek.MONDAY,
-                    isChecked
-                )
-            }
-        }
-        view.findViewById<CheckBox>(R.id.checkbox_dialogReminderFilter_tuesday).let {
-            it.isChecked = reminderFilterRules.daysOfWeek.contains(DayOfWeek.TUESDAY)
-            it.setOnCheckedChangeListener { _, isChecked ->
-                onDayOfWeekChecked(
-                    DayOfWeek.TUESDAY,
-                    isChecked
-                )
-            }
-        }
-        view.findViewById<CheckBox>(R.id.checkbox_dialogReminderFilter_wednesday).let {
-            it.isChecked = reminderFilterRules.daysOfWeek.contains(DayOfWeek.WEDNESDAY)
-            it.setOnCheckedChangeListener { _, isChecked ->
-                onDayOfWeekChecked(
-                    DayOfWeek.WEDNESDAY,
-                    isChecked
-                )
-            }
-        }
-        view.findViewById<CheckBox>(R.id.checkbox_dialogReminderFilter_thursday).let {
-            it.isChecked = reminderFilterRules.daysOfWeek.contains(DayOfWeek.THURSDAY)
-            it.setOnCheckedChangeListener { _, isChecked ->
-                onDayOfWeekChecked(
-                    DayOfWeek.THURSDAY,
-                    isChecked
-                )
-            }
-        }
-        view.findViewById<CheckBox>(R.id.checkbox_dialogReminderFilter_friday).let {
-            it.isChecked = reminderFilterRules.daysOfWeek.contains(DayOfWeek.FRIDAY)
-            it.setOnCheckedChangeListener { _, isChecked ->
-                onDayOfWeekChecked(
-                    DayOfWeek.FRIDAY,
-                    isChecked
-                )
-            }
-        }
-        view.findViewById<CheckBox>(R.id.checkbox_dialogReminderFilter_saturday).let {
-            it.isChecked = reminderFilterRules.daysOfWeek.contains(DayOfWeek.SATURDAY)
-            it.setOnCheckedChangeListener { _, isChecked ->
-                onDayOfWeekChecked(
-                    DayOfWeek.SATURDAY,
-                    isChecked
-                )
-            }
-        }
-        view.findViewById<CheckBox>(R.id.checkbox_dialogReminderFilter_sunday).let {
-            it.isChecked = reminderFilterRules.daysOfWeek.contains(DayOfWeek.SUNDAY)
-            it.setOnCheckedChangeListener { _, isChecked ->
-                onDayOfWeekChecked(
-                    DayOfWeek.SUNDAY,
-                    isChecked
-                )
+
+        // set up initial value and listeners for day of week checkboxes
+        listOf(
+            (R.id.checkbox_dialogReminderFilter_monday to DayOfWeek.MONDAY),
+            (R.id.checkbox_dialogReminderFilter_tuesday to DayOfWeek.TUESDAY),
+            (R.id.checkbox_dialogReminderFilter_wednesday to DayOfWeek.WEDNESDAY),
+            (R.id.checkbox_dialogReminderFilter_thursday to DayOfWeek.THURSDAY),
+            (R.id.checkbox_dialogReminderFilter_friday to DayOfWeek.FRIDAY),
+            (R.id.checkbox_dialogReminderFilter_saturday to DayOfWeek.SATURDAY),
+            (R.id.checkbox_dialogReminderFilter_sunday to DayOfWeek.SUNDAY)
+        ).forEach { (id, dayOfWeek) ->
+            view.findViewById<CheckBox>(id).let {
+                it.isChecked = reminderFilterRules.daysOfWeek.contains(dayOfWeek)
+                it.setOnCheckedChangeListener { _, isChecked ->
+                    onDayOfWeekChecked(dayOfWeek, isChecked)
+                }
             }
         }
     }
 
     private fun onDayOfWeekChecked(dayOfWeek: DayOfWeek, checked: Boolean) {
         reminderFilterRules = if (checked) {
-            val daysOfWeek = reminderFilterRules.daysOfWeek.toMutableSet()
-            daysOfWeek.add(dayOfWeek)
+            val daysOfWeek = reminderFilterRules.daysOfWeek + setOf(dayOfWeek)
             reminderFilterRules.copy(daysOfWeek = daysOfWeek)
         } else {
             reminderFilterRules.copy(
@@ -158,40 +112,27 @@ constructor(previousFilterRules: ReminderFilterRules) : DialogFragment() {
     }
 
     private fun setupStatus(view: View) {
-        // TODO - programatically make checkboxes or set from a viewmodel
-        view.findViewById<CheckBox>(R.id.checkbox_dialogReminderFilter_pending).let {
-            it.isChecked = reminderFilterRules.reminderStatuses.contains(ReminderStatus.PENDING)
-            it.setOnCheckedChangeListener { _, isChecked ->
-                onStatusChecked(
-                    ReminderStatus.PENDING,
-                    isChecked
-                )
-            }
-        }
-        view.findViewById<CheckBox>(R.id.checkbox_dialogReminderFilter_skipped).let {
-            it.isChecked = reminderFilterRules.reminderStatuses.contains(ReminderStatus.SKIPPED)
-            it.setOnCheckedChangeListener { _, isChecked ->
-                onStatusChecked(
-                    ReminderStatus.SKIPPED,
-                    isChecked
-                )
-            }
-        }
-        view.findViewById<CheckBox>(R.id.checkbox_dialogReminderFilter_completed).let {
-            it.isChecked = reminderFilterRules.reminderStatuses.contains(ReminderStatus.COMPLETED)
-            it.setOnCheckedChangeListener { _, isChecked ->
-                onStatusChecked(
-                    ReminderStatus.COMPLETED,
-                    isChecked
-                )
+        // set up default value and listeners for each status enum
+        listOf(
+            (R.id.checkbox_dialogReminderFilter_pending to ReminderStatus.PENDING),
+            (R.id.checkbox_dialogReminderFilter_skipped to ReminderStatus.SKIPPED),
+            (R.id.checkbox_dialogReminderFilter_completed to ReminderStatus.COMPLETED)
+        ).forEach { (id, status) ->
+            view.findViewById<CheckBox>(id).let {
+                it.isChecked = reminderFilterRules.reminderStatuses.contains(status)
+                it.setOnCheckedChangeListener { _, isChecked ->
+                    onStatusChecked(
+                        status,
+                        isChecked
+                    )
+                }
             }
         }
     }
 
     private fun onStatusChecked(status: ReminderStatus, checked: Boolean) {
         reminderFilterRules = if (checked) {
-            val statuses = reminderFilterRules.reminderStatuses.toMutableSet()
-            statuses.add(status)
+            val statuses = reminderFilterRules.reminderStatuses + setOf(status)
             reminderFilterRules.copy(reminderStatuses = statuses)
         } else {
             reminderFilterRules.copy(
