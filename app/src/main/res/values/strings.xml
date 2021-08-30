@@ -58,6 +58,7 @@
     <string name="dialog_reminderSort_description_alpha">Alphabetical</string>
     <string name="dialog_reminderSort_description_revAlpha">Reverse alphabetical</string>
     <string name="preference_file_key">com.github.jeremyt135.PREFERENCES</string>
+    <string name="dialog_reminderFilter_title">Filter Reminders</string>
     <string name="dialog_reminderFilter_dayOfWeek_title">Days of Week</string>
     <string name="dialog_reminderFilter_completion_title">Reminder Status</string>
     <string name="dialog_reminderFilter_today">Today</string>
