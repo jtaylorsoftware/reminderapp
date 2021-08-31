@@ -140,7 +140,6 @@ class RemindersViewModel @Inject constructor(
         viewModelScope.launch {
             reminderRepository.deleteAll()
             AlarmService.requestStop(getApplication())
-            scheduleNextAlarm()
         }
     }
 
