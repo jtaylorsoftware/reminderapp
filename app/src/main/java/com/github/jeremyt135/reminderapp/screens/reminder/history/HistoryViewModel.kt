@@ -19,7 +19,7 @@ class HistoryViewModel @Inject constructor(
     ViewModel() {
 
     val historyEntries = historyRepository.getAll().map { historyList ->
-        historyList.sortedByDescending { history -> history.id }
+        historyList.sortedByDescending { it.completedAt }
     }.asLiveData(viewModelScope.coroutineContext)
 
     fun clearHistory() {
