@@ -12,14 +12,17 @@ import com.github.jeremyt135.reminderapp.broadcast.*
 import com.github.jeremyt135.reminderapp.data.AlarmRepository
 import com.github.jeremyt135.reminderapp.data.HistoryRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
-import com.github.jeremyt135.reminderapp.data.domain.*
+import com.github.jeremyt135.reminderapp.data.domain.Alarm
+import com.github.jeremyt135.reminderapp.data.domain.History
+import com.github.jeremyt135.reminderapp.data.domain.Reminder
+import com.github.jeremyt135.reminderapp.data.domain.ReminderStatus
 import com.github.jeremyt135.reminderapp.util.NotificationId
-import com.github.jeremyt135.reminderapp.util.currentEpochMilli
 import com.github.jeremyt135.reminderapp.util.currentLocalDateTime
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.flow.first
 import timber.log.Timber
+import java.time.Instant
 import java.time.LocalDate
 import java.util.concurrent.TimeUnit
 
@@ -199,7 +202,7 @@ class AlarmActionHandlerImpl(
             reminderId = reminder.id,
             description = reminder.description,
             completionStatus = completionStatus,
-            completedAt = currentEpochMilli()
+            completedAt = Instant.now().toEpochMilli()
         )
         historyRepository.save(history)
     }
