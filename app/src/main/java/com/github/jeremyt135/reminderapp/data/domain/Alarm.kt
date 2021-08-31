@@ -5,6 +5,7 @@ import com.github.jeremyt135.reminderapp.data.local.AlarmEntity
 import com.github.jeremyt135.reminderapp.util.NotificationId
 import com.github.jeremyt135.reminderapp.util.currentLocalDateTime
 import java.time.LocalDateTime
+import kotlin.math.min
 
 data class Alarm(
     var id: Long = 0L,
@@ -12,9 +13,9 @@ data class Alarm(
     val triggerAt: LocalDateTime = currentLocalDateTime(),
     val scheduled: Boolean? = null,
     val notificationId: Int = NotificationId.next,
-    val snoozeInterval: SnoozeInterval = SnoozeInterval.FOREVER,
-    val snoozeDuration: SnoozeDuration = SnoozeDuration.FIVE,
-    val snoozeCount: Int = 0
+    val maxSnoozeRepeats: Long = SnoozeRules.DEFAULT_SNOOZE_REPEATS,
+    val snoozeDuration: Long = SnoozeRules.DEFAULT_SNOOZE_DURATION,
+    val snoozeCount: Long = 0
 ) : DomainModel<AlarmEntity> {
     override fun asDataModel(): AlarmEntity = AlarmEntity(
         id = this.id,
@@ -22,10 +23,12 @@ data class Alarm(
         triggerAt = this.triggerAt,
         scheduled = this.scheduled,
         notificationId = this.notificationId,
-        snoozeInterval = this.snoozeInterval,
+        maxSnoozeRepeats = this.maxSnoozeRepeats,
         snoozeDuration = this.snoozeDuration,
         snoozeCount = this.snoozeCount
     )
 
-    val remainingSnoozes = snoozeInterval.remainingSnoozes(snoozeCount)
+    val snoozeRules = SnoozeRules(maxRepeats = maxSnoozeRepeats, duration = snoozeDuration)
+
+    val remainingSnoozes = min(0, maxSnoozeRepeats - snoozeCount)
 }

@@ -33,8 +33,7 @@
     <string name="every_day">Every day</string>
     <string name="today">Today</string>
     <string name="notification_icon_description">Reminder status icon</string>
-    <string name="editor_snooze_interval">Snooze Interval</string>
-    <string name="editor_snooze_duration">Snooze duration</string>
+    <string name="editor_hint_snoozeMaxRepeats">Max snoozes</string>
     <string name="editor_pick_sound">Pick Sound</string>
     <string name="reminders_empty_hint">You have no reminders. Click the + button or tap here to add a reminder.</string>
     <string name="bottomnav_reminders">Reminders</string>
@@ -76,4 +75,7 @@
     <string name="menu_sort_options">Sort Options</string>
     <string name="menu_filter_options">Filter Options</string>
     <string name="menu_reminders_delete">Delete</string>
+    <string name="editor_label_maxSnoozeRepeats">Snooze repetitions:</string>
+    <string name="editor_label_snoozeDuration">Snooze duration:</string>
+    <string name="editor_label_snoozeDurationUnit">minutes</string>
 </resources>

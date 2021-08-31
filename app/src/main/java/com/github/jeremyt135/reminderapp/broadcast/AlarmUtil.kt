@@ -17,7 +17,6 @@ import com.github.jeremyt135.reminderapp.data.AlarmRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.Alarm
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
-import com.github.jeremyt135.reminderapp.data.domain.neverRepeats
 import com.github.jeremyt135.reminderapp.screens.alarm.AlarmActivity
 import com.github.jeremyt135.reminderapp.screens.reminder.editor.ReminderEditorActivity
 import com.github.jeremyt135.reminderapp.util.getShortLocalDateDisplay
@@ -81,11 +80,6 @@ const val EXTRA_REMINDER_DESCRIPTION =
  * String: The sound played by the Reminder
  */
 const val EXTRA_REMINDER_SOUND_URI = "com.github.jeremyt135.reminderapp.EXTRA_REMINDER_SOUND"
-
-/**
- * Int: The remaining snoozes for the Alarm
- */
-const val EXTRA_ALARM_SNOOZES = "com.github.jeremyt135.reminderapp.EXTRA_ALARM_SNOOZES"
 
 /**
  * A 30 seconds long vibration pattern
@@ -348,7 +342,7 @@ fun buildNotificationForAlarm(
             setLights(NOTIFICATION_LED_ARGB, NOTIFICATION_LED_ONMS, NOTIFICATION_LED_OFFMS)
         }
 
-        if (!reminder.snoozeInterval.neverRepeats) {
+        if (!reminder.snoozeRules.neverRepeats) {
             addAction(
                 R.drawable.ic_notification_snooze,
                 context.getString(R.string.action_alarm_snooze_name),

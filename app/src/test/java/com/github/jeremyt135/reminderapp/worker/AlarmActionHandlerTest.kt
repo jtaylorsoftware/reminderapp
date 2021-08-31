@@ -96,7 +96,7 @@ class AlarmActionHandlerTest {
             id = 1,
             reminderId = reminder.id,
             triggerAt = currentLocalDateTime(),
-            snoozeInterval = SnoozeInterval.THREE
+            maxSnoozeRepeats = 3
         )
         val nextAlarm = slot<Alarm>()
 
@@ -135,7 +135,7 @@ class AlarmActionHandlerTest {
 
         assertThat(nextAlarm.captured.reminderId).isEqualTo(reminder.id)
         assertThat(nextAlarm.captured.triggerAt).isEqualTo(
-            alarm.triggerAt.plusMinutes(alarm.snoozeDuration.value)
+            alarm.triggerAt.plusMinutes(alarm.snoozeDuration)
         )
         assertThat(nextAlarm.captured.snoozeCount).isEqualTo(1)
     }
@@ -147,7 +147,7 @@ class AlarmActionHandlerTest {
             id = 1,
             reminderId = reminder.id,
             triggerAt = currentLocalDateTime(),
-            snoozeInterval = SnoozeInterval.NEVER
+            maxSnoozeRepeats = 0
         )
 
         coEvery { mockReminderRepo.findById(reminder.id) } returns reminder
@@ -192,7 +192,7 @@ class AlarmActionHandlerTest {
             id = 1,
             reminderId = reminder.id,
             triggerAt = currentLocalDateTime(),
-            snoozeInterval = SnoozeInterval.ONCE,
+            maxSnoozeRepeats = 1,
             snoozeCount = 1
         )
 

@@ -49,10 +49,14 @@ class Reminder(
     val daysOfWeek: SortedSet<DayOfWeek> = sortedSetOf(),
     vibrate: Boolean = false,
     var id: String = uuid(),
-    var snoozeInterval: SnoozeInterval = SnoozeInterval.FOREVER,
-    var snoozeDuration: SnoozeDuration = SnoozeDuration.FIVE,
+    maxSnoozeRepeats: Long = SnoozeRules.DEFAULT_SNOOZE_REPEATS,
+    snoozeDuration: Long = SnoozeRules.DEFAULT_SNOOZE_DURATION,
     var notifSoundUri: String = "",
 ) : BaseObservable(), DomainModel<ReminderEntity> {
+    var snoozeRules =
+        SnoozeRules(maxRepeats = maxSnoozeRepeats, duration = snoozeDuration)
+        private set
+
     @get:Bindable
     var description: String = description
         set(value) {
@@ -68,6 +72,26 @@ class Reminder(
             if (field != value) {
                 field = value
                 notifyPropertyChanged(BR.vibrate)
+            }
+        }
+
+    @get:Bindable
+    var maxSnoozeRepeats: Long
+        get() = snoozeRules.maxRepeats
+        set(value) {
+            if (snoozeRules.maxRepeats != value) {
+                snoozeRules = snoozeRules.copy(maxRepeats = value)
+                notifyPropertyChanged(BR.maxSnoozeRepeats)
+            }
+        }
+
+    @get:Bindable
+    var snoozeDuration: Long
+        get() = snoozeRules.duration
+        set(value) {
+            if (snoozeRules.duration != value) {
+                snoozeRules = snoozeRules.copy(duration = value)
+                notifyPropertyChanged(BR.snoozeDuration)
             }
         }
 
@@ -159,8 +183,8 @@ class Reminder(
         daysOfWeek: SortedSet<DayOfWeek> = this.daysOfWeek.toSortedSet(),
         vibrate: Boolean = this.vibrate,
         id: String = this.id,
-        snoozeInterval: SnoozeInterval = this.snoozeInterval,
-        snoozeDuration: SnoozeDuration = this.snoozeDuration,
+        maxSnoozeRepeats: Long = this.maxSnoozeRepeats,
+        snoozeDuration: Long = this.snoozeDuration,
         notifSoundUri: String = this.notifSoundUri
     ) = Reminder(
         description,
@@ -168,7 +192,7 @@ class Reminder(
         daysOfWeek,
         vibrate,
         id,
-        snoozeInterval,
+        maxSnoozeRepeats,
         snoozeDuration,
         notifSoundUri
     )
@@ -180,7 +204,7 @@ class Reminder(
             time = LocalTime.of(hour, minute),
             daysOfWeek = this.daysOfWeek.toSortedSet(),
             vibrate = this.vibrate,
-            snoozeInterval = this.snoozeInterval,
+            maxSnoozeRepeats = this.maxSnoozeRepeats,
             snoozeDuration = this.snoozeDuration,
             notifSoundUri = this.notifSoundUri
         )
@@ -197,8 +221,7 @@ class Reminder(
         if (vibrate != other.vibrate) return false
         if (hour != other.hour) return false
         if (minute != other.minute) return false
-        if (snoozeInterval != other.snoozeInterval) return false
-        if (snoozeDuration != other.snoozeDuration) return false
+        if (snoozeRules != other.snoozeRules) return false
         if (notifSoundUri != other.notifSoundUri) return false
 
         return true
@@ -211,8 +234,7 @@ class Reminder(
         result = 31 * result + vibrate.hashCode()
         result = 31 * result + hour
         result = 31 * result + minute
-        result = 31 * result + snoozeInterval.hashCode()
-        result = 31 * result + snoozeDuration.hashCode()
+        result = 31 * result + snoozeRules.hashCode()
         result = 31 * result + notifSoundUri.hashCode()
         return result
     }
@@ -225,8 +247,7 @@ class Reminder(
                 "vibrate=$vibrate, " +
                 "hour=$hour, " +
                 "minute=$minute, " +
-                "snoozeInterval=$snoozeInterval, " +
-                "snoozeDuration=$snoozeDuration, " +
+                "snoozeRules=$snoozeRules, " +
                 "notifSoundUri=$notifSoundUri, " +
                 ")"
     }

@@ -215,10 +215,12 @@ class AlarmActionHandlerImpl(
         Timber.d("Cancelling previous notification: ${alarm.notificationId}")
         NotificationManagerCompat.from(context).cancel(alarm.notificationId)
 
+        // Determine if the alarm can snooze again
         val result = if (
-            alarm.snoozeInterval.neverRepeats ||
-            alarm.snoozeInterval.canNotRepeat(alarm.snoozeCount)
+            alarm.snoozeRules.neverRepeats ||
+            !alarm.snoozeRules.canSnooze(alarm.snoozeCount)
         ) {
+            // Can't snooze again, never snoozes or out of attempts
             Timber.d("Not snoozing Alarm: beyond allowed limit")
             enqueueSkip(reminder.id)
             showSkipNotification(context, reminder, alarm)
@@ -236,7 +238,7 @@ class AlarmActionHandlerImpl(
                 // if Alarm A, B, C all are scheduled for time T, you wouldn't want the last one C
                 // to snooze until T+2:00, you'd want it to snooze until T_next=T_current+2:00 since
                 // T could be now in the past by a minute or more
-                triggerAt = currentLocalDateTime().plusMinutes(alarm.snoozeDuration.value),
+                triggerAt = currentLocalDateTime().plusMinutes(alarm.snoozeDuration),
             )
 
             // Delete previous, save changes

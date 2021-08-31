@@ -22,11 +22,11 @@ data class ReminderEntity(
 
     val vibrate: Boolean = false,
 
-    @ColumnInfo(name = "max_snooze")
-    val snoozeInterval: SnoozeInterval = SnoozeInterval.FOREVER,
+    @ColumnInfo(name = "max_snooze_repeats")
+    val maxSnoozeRepeats: Long = SnoozeRules.DEFAULT_SNOOZE_REPEATS,
 
     @ColumnInfo(name = "snooze_time")
-    val snoozeDuration: SnoozeDuration = SnoozeDuration.FIVE,
+    val snoozeDuration: Long = SnoozeRules.DEFAULT_SNOOZE_DURATION,
 
     @ColumnInfo(name = "notif_sound_uri")
     val notifSoundUri: String = "",
@@ -38,7 +38,7 @@ data class ReminderEntity(
             time = this.time,
             daysOfWeek = this.daysOfWeek.toSortedSet(),
             vibrate = this.vibrate,
-            snoozeInterval = this.snoozeInterval,
+            maxSnoozeRepeats = this.maxSnoozeRepeats,
             snoozeDuration = this.snoozeDuration,
             notifSoundUri = this.notifSoundUri,
         )

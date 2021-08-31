@@ -13,7 +13,6 @@ import com.github.jeremyt135.reminderapp.data.AlarmRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.Alarm
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
-import com.github.jeremyt135.reminderapp.data.domain.SnoozeInterval
 import com.github.jeremyt135.reminderapp.di.AppCoroutineScope
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
@@ -109,9 +108,6 @@ class AlarmService : Service(), MediaPlayer.OnPreparedListener, MediaPlayer.OnEr
         val description = intent.getStringExtra(EXTRA_REMINDER_DESCRIPTION) ?: ""
         val vibrate = intent.getBooleanExtra(EXTRA_REMINDER_VIBRATE, false)
         val sound = intent.getStringExtra(EXTRA_REMINDER_SOUND_URI) ?: ""
-        val snoozeInterval = intent.getIntExtra(EXTRA_ALARM_SNOOZES, 0).let{
-            if (it > 0) SnoozeInterval.FOREVER else SnoozeInterval.NEVER
-        }
         startForeground(
             reminderId.hashCode(),
             createNotificationForAlarm(
@@ -120,7 +116,6 @@ class AlarmService : Service(), MediaPlayer.OnPreparedListener, MediaPlayer.OnEr
                     id = reminderId,
                     description = description,
                     vibrate = vibrate,
-                    snoozeInterval = snoozeInterval
                 )
             )
         )
@@ -241,7 +236,6 @@ class AlarmService : Service(), MediaPlayer.OnPreparedListener, MediaPlayer.OnEr
                 putExtra(EXTRA_REMINDER_DESCRIPTION, reminder.description)
                 putExtra(EXTRA_REMINDER_VIBRATE, reminder.vibrate)
                 putExtra(EXTRA_REMINDER_SOUND_URI, reminder.notifSoundUri)
-                putExtra(EXTRA_ALARM_SNOOZES, alarm.remainingSnoozes)
             }.also {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     context.startForegroundService(it)

@@ -10,7 +10,7 @@ import java.time.LocalDate
 
 class FakeReminderLocalDataSource(
     private val reminderCache: MutableList<Reminder> = mutableListOf(),
-    private val alarmCache: List<Alarm> = listOf(),
+    private val alarmCache: MutableList<Alarm> = mutableListOf(),
     private val historyCache: List<History> = listOf()
 ) : ReminderDataSource {
 
@@ -26,7 +26,7 @@ class FakeReminderLocalDataSource(
                 reminder = reminder.copy(),
                 history = historyCache.firstOrNull { history ->
                     history.reminderId == reminder.id &&
-                    history.id == historyCache.maxOfOrNull { it.id } ?: 0L
+                            history.id == historyCache.maxOfOrNull { it.id } ?: 0L
                     history.completedAt.toLocalDateTime().dayOfWeek == LocalDate.now().dayOfWeek
                 },
             )
@@ -62,9 +62,11 @@ class FakeReminderLocalDataSource(
 
     override suspend fun delete(reminder: Reminder) {
         reminderCache.remove(reminder)
+        alarmCache.removeIf { it.reminderId == reminder.id } // emulate cascading deletion of alarms when reminder deleted
     }
 
     override suspend fun deleteAll() {
         reminderCache.clear()
+        alarmCache.clear() // emulate cascading deletion of alarms when reminder deleted
     }
 }

@@ -26,7 +26,7 @@ class ReminderRepositoryTest {
 
     @Before
     fun setup() {
-        fakeLocalDataSource = FakeReminderLocalDataSource(localReminders.toMutableList(), alarms)
+        fakeLocalDataSource = FakeReminderLocalDataSource(localReminders.toMutableList(), alarms.toMutableList())
         repository = ReminderRepositoryImpl(
             fakeLocalDataSource
         )

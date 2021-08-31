@@ -4,8 +4,7 @@ import android.os.Parcelable
 import androidx.room.*
 import com.github.jeremyt135.reminderapp.data.DataModel
 import com.github.jeremyt135.reminderapp.data.domain.Alarm
-import com.github.jeremyt135.reminderapp.data.domain.SnoozeDuration
-import com.github.jeremyt135.reminderapp.data.domain.SnoozeInterval
+import com.github.jeremyt135.reminderapp.data.domain.SnoozeRules
 import com.github.jeremyt135.reminderapp.util.NotificationId
 import kotlinx.parcelize.Parcelize
 import java.time.LocalDateTime
@@ -47,14 +46,14 @@ data class AlarmEntity(
     @ColumnInfo(name = "notification_id")
     val notificationId: Int = NotificationId.next,
 
-    @ColumnInfo(name = "max_snooze")
-    val snoozeInterval: SnoozeInterval = SnoozeInterval.FOREVER,
+    @ColumnInfo(name = "max_snooze_repeats")
+    val maxSnoozeRepeats: Long = SnoozeRules.DEFAULT_SNOOZE_REPEATS,
 
     @ColumnInfo(name = "snooze_time")
-    val snoozeDuration: SnoozeDuration = SnoozeDuration.FIVE,
+    val snoozeDuration: Long = SnoozeRules.DEFAULT_SNOOZE_DURATION,
 
     @ColumnInfo(name = "snooze_count")
-    val snoozeCount: Int = 0
+    val snoozeCount: Long = 0
 ) : Parcelable, DataModel<Alarm> {
     override fun asDomainModel(): Alarm = Alarm(
         id = this.id,
@@ -62,7 +61,7 @@ data class AlarmEntity(
         triggerAt = this.triggerAt,
         scheduled = this.scheduled,
         notificationId = this.notificationId,
-        snoozeInterval = this.snoozeInterval,
+        maxSnoozeRepeats = this.maxSnoozeRepeats,
         snoozeDuration = this.snoozeDuration,
         snoozeCount = this.snoozeCount
     )

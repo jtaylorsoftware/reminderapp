@@ -16,8 +16,8 @@ import com.github.jeremyt135.reminderapp.data.AlarmRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.Alarm
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
-import com.github.jeremyt135.reminderapp.data.domain.SnoozeDuration
-import com.github.jeremyt135.reminderapp.data.domain.SnoozeInterval
+import com.github.jeremyt135.reminderapp.data.domain.SnoozeRepetitionOption
+import com.github.jeremyt135.reminderapp.data.domain.SnoozeRules
 import com.github.jeremyt135.reminderapp.di.AppCoroutineScope
 import com.github.jeremyt135.reminderapp.service.AlarmService
 import com.github.jeremyt135.reminderapp.util.MutableEventFlow
@@ -25,9 +25,7 @@ import com.github.jeremyt135.reminderapp.util.asEventFlow
 import com.github.jeremyt135.reminderapp.work.AlarmActionHandler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.time.DayOfWeek
@@ -43,10 +41,37 @@ class ReminderEditorViewModel @Inject constructor(
     private val alarmRepository: AlarmRepository,
     savedStateHandle: SavedStateHandle,
     @AppCoroutineScope private val applicationScope: CoroutineScope
-) :
-    AndroidViewModel(application) {
+) : AndroidViewModel(application) {
     private val _reminder = MutableStateFlow(Reminder())
+
+    /**
+     * The Reminder being edited
+     */
     val reminder = _reminder.asStateFlow()
+
+    // How should the reminder repeat - never, forever, or no. of times
+    val snoozeRepetitionOption = _reminder.map { reminder ->
+        when (reminder.snoozeRules.maxRepeats) {
+            0L -> SnoozeRepetitionOption.None
+            Long.MAX_VALUE -> SnoozeRepetitionOption.Infinite
+            else -> SnoozeRepetitionOption.Choose
+        }
+    }.stateIn(
+        viewModelScope,
+        started = SharingStarted.Lazily,
+        initialValue = SnoozeRepetitionOption.Choose
+    )
+
+    // Can the repetition be changed (is snoozeRepetitionOption "Times")
+    val canChangeSnoozeRepetitions =
+        snoozeRepetitionOption.map { it == SnoozeRepetitionOption.Choose }
+            .asLiveData(viewModelScope.coroutineContext)
+
+    // Can the snooze duration be changed (is snoozeRepetitionOption not "None")
+    val canChangeSnoozeDuration =
+        snoozeRepetitionOption.map { it != SnoozeRepetitionOption.None }
+            .asLiveData(viewModelScope.coroutineContext)
+
 
     val reminderDaysDisplayString: LiveData<String> =
         _reminder.map { it.getDaysDisplayString() }.asLiveData(viewModelScope.coroutineContext)
@@ -109,17 +134,30 @@ class ReminderEditorViewModel @Inject constructor(
         }
     }
 
-    fun onSnoozeIntervalChanged(newInterval: SnoozeInterval) {
-        if (newInterval != _reminder.value.snoozeInterval) {
-            Timber.d("Setting snooze interval to ${newInterval.name}")
-            _reminder.value = _reminder.value.copy(snoozeInterval = newInterval)
+    fun onSnoozeRepetitionOptionChanged(newSelection: String) {
+        val newOption = SnoozeRepetitionOption.valueOf(newSelection)
+        if (newOption == snoozeRepetitionOption.value) {
+            return
         }
-    }
 
-    fun onSnoozeDurationChanged(newDuration: SnoozeDuration) {
-        if (newDuration != _reminder.value.snoozeDuration) {
-            Timber.d("Setting snooze duration to ${newDuration.value} minutes")
-            _reminder.value = _reminder.value.copy(snoozeDuration = newDuration)
+        when (newOption) {
+            SnoozeRepetitionOption.None -> {
+                _reminder.value = _reminder.value.copy(maxSnoozeRepeats = 0)
+            }
+            SnoozeRepetitionOption.Infinite -> {
+                _reminder.value =
+                    _reminder.value.copy(
+                        maxSnoozeRepeats = Long.MAX_VALUE,
+                        snoozeDuration = SnoozeRules.DEFAULT_SNOOZE_DURATION
+                    )
+            }
+            SnoozeRepetitionOption.Choose -> {
+                _reminder.value =
+                    _reminder.value.copy(
+                        maxSnoozeRepeats = SnoozeRules.DEFAULT_SNOOZE_REPEATS,
+                        snoozeDuration = SnoozeRules.DEFAULT_SNOOZE_DURATION
+                    )
+            }
         }
     }
 
@@ -143,7 +181,7 @@ class ReminderEditorViewModel @Inject constructor(
                     val nextAlarm = Alarm(
                         reminderId = reminder.id,
                         triggerAt = time,
-                        snoozeInterval = reminder.snoozeInterval,
+                        maxSnoozeRepeats = reminder.maxSnoozeRepeats,
                         snoozeDuration = reminder.snoozeDuration
                     )
                     nextAlarm.id = alarmRepository.save(nextAlarm)

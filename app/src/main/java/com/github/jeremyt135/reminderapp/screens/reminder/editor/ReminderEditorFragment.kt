@@ -6,15 +6,19 @@ import android.content.Intent
 import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Bundle
+import android.text.InputFilter
+import android.text.Spanned
 import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
+import android.widget.EditText
 import android.widget.TimePicker
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.launch
 import androidx.activity.result.registerForActivityResult
 import androidx.annotation.VisibleForTesting
 import androidx.appcompat.app.AppCompatActivity
+import androidx.constraintlayout.widget.Group
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -24,8 +28,8 @@ import androidx.lifecycle.whenStarted
 import com.github.jeremyt135.R
 import com.github.jeremyt135.databinding.FragmentReminderEditorBinding
 import com.github.jeremyt135.reminderapp.broadcast.EXTRA_REMINDER_ID
-import com.github.jeremyt135.reminderapp.data.domain.SnoozeDuration
-import com.github.jeremyt135.reminderapp.data.domain.SnoozeInterval
+import com.github.jeremyt135.reminderapp.data.domain.SnoozeRepetitionOption
+import com.github.jeremyt135.reminderapp.data.domain.SnoozeRules
 import com.github.jeremyt135.reminderapp.util.time
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collect
@@ -37,9 +41,9 @@ class ReminderEditorFragment : Fragment(R.layout.fragment_reminder_editor) {
     val viewModel: ReminderEditorViewModel by activityViewModels()
         @VisibleForTesting get
 
-    private lateinit var timePickerEditor: TimePicker
-    private lateinit var snoozeIntervalText: AutoCompleteTextView
-    private lateinit var snoozeDurationText: AutoCompleteTextView
+    private lateinit var timePicker: TimePicker
+    private lateinit var snoozeRepetitionsText: AutoCompleteTextView
+    private lateinit var snoozeRepetitionGroup: Group
 
     private val getAlarmSound =
         registerForActivityResult(PickRingtone(), RingtoneManager.TYPE_ALL) { uri ->
@@ -58,17 +62,22 @@ class ReminderEditorFragment : Fragment(R.layout.fragment_reminder_editor) {
                  * Would just use two-way binding but it seems API level 21 may have issues with the
                  * android:hour & android:minute data binding attributes
                  */
-                timePickerEditor.setOnTimeChangedListener { _, hour, minute ->
+                timePicker.setOnTimeChangedListener { _, hour, minute ->
                     Timber.d("Time has changed to $hour hr $minute min")
                     viewModel.onTimeChanged(hour, minute)
                 }
 
                 launch {
                     viewModel.reminder.collect { reminder ->
-                        // Set values for Views that don't provide easy access to data binding
-                        timePickerEditor.time = Pair(reminder.hour, reminder.minute)
-                        snoozeIntervalText.setText(reminder.snoozeInterval.toString(), false)
-                        snoozeDurationText.setText(reminder.snoozeDuration.toString(), false)
+                        // Initialize timePicker from reminder
+                        timePicker.time = Pair(reminder.hour, reminder.minute)
+                    }
+                }
+
+                launch {
+                    viewModel.snoozeRepetitionOption.collect {
+                        // Initialize option from saved state
+                        snoozeRepetitionsText.setText(it.toString(), false)
                     }
                 }
             }
@@ -96,59 +105,106 @@ class ReminderEditorFragment : Fragment(R.layout.fragment_reminder_editor) {
             model = viewModel
             reminder = viewModel.reminder.asLiveData(lifecycleScope.coroutineContext)
 
-            val snoozeIntervalItems = SnoozeInterval.values()
+            snoozeRepetitionGroup = groupEditorMaxSnoozeRepeats
+
+            // Provide options for the dropdown menu
             val intervalAdapter =
-                ArrayAdapter(requireContext(), R.layout.item_dropdown_snooze, snoozeIntervalItems)
-            textinputEditorSnoozeInterval.let { textInputLayout ->
-                textInputLayout.editText?.let { editText ->
-                    snoozeIntervalText = editText as AutoCompleteTextView
-                    snoozeIntervalText.setAdapter(intervalAdapter)
-                    editText.doAfterTextChanged { text ->
-                        text?.toString()?.let {
-                            viewModel.onSnoozeIntervalChanged(SnoozeInterval.fromString(it))
+                ArrayAdapter(
+                    requireContext(),
+                    R.layout.item_dropdown_snooze,
+                    SnoozeRepetitionOption.values()
+                )
+            textinputEditorMaxSnoozeRepeats.apply {
+                editText?.let { editText ->
+                    snoozeRepetitionsText = editText as AutoCompleteTextView
+                    snoozeRepetitionsText.setAdapter(intervalAdapter)
+                    editText.doAfterTextChanged { editable ->
+                        editable?.toString()?.let { text ->
+                            viewModel.onSnoozeRepetitionOptionChanged(text)
                         }
                     }
                 }
             }
 
-            val snoozeDurationItems = SnoozeDuration.values()
-            val durationAdapter =
-                ArrayAdapter(requireContext(), R.layout.item_dropdown_snooze, snoozeDurationItems)
-            textinputEditorSnoozeDuration.let { textInputLayout ->
-                textInputLayout.editText?.let { editText ->
-                    snoozeDurationText = editText as AutoCompleteTextView
-                    snoozeDurationText.setAdapter(durationAdapter)
-                    editText.doAfterTextChanged { text ->
-                        text?.toString()?.let {
-                            viewModel.onSnoozeDurationChanged(SnoozeDuration.fromString(it))
-                        }
-                    }
-                }
-            }
-
+            // When the "sound" switch is toggled, open sound selector
             switchEditorSound.setOnClickListener { getAlarmSound.launch() }
 
-            this@ReminderEditorFragment.timePickerEditor = timePickerEditor
+            timePicker = timePickerEditor
+
+            // Set filters on the numeric text inputs
+            editEditorMaxSnoozeRepeats.filters =
+                arrayOf(RangeInputFilter(0, Long.MAX_VALUE))
+            editEditorSnoozeDuration.filters = arrayOf(
+                RangeInputFilter(
+                    SnoozeRules.MAX_SNOOZE_DURATION,
+                    SnoozeRules.MIN_SNOOZE_DURATION,
+                )
+            )
+
+            // Add listeners to repopulate the text input if they're left empty
+            editEditorMaxSnoozeRepeats.setOnFocusChangeListener { editText, hasFocus ->
+                if (!hasFocus) {
+                    (editText as EditText).setText(viewModel.reminder.value.snoozeRules.maxRepeats.toString())
+                }
+            }
+            editEditorSnoozeDuration.setOnFocusChangeListener { editText, hasFocus ->
+                if (!hasFocus) {
+                    (editText as EditText).setText(viewModel.reminder.value.snoozeRules.duration.toString())
+                }
+            }
         }
     }
 
-    class PickRingtone : ActivityResultContract<Int, Uri?>() {
-        override fun createIntent(context: Context, ringtoneType: Int) =
-            Intent(RingtoneManager.ACTION_RINGTONE_PICKER).apply {
-                putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, ringtoneType)
-                putExtra(RingtoneManager.EXTRA_RINGTONE_TITLE, "Select Alarm Sound")
-                putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, Uri.EMPTY)
-            }
 
-        override fun parseResult(resultCode: Int, result: Intent?): Uri? {
-            if (resultCode != Activity.RESULT_OK) {
-                Timber.e("Result was $resultCode")
-                return null
+}
+
+private class PickRingtone : ActivityResultContract<Int, Uri?>() {
+    override fun createIntent(context: Context, ringtoneType: Int) =
+        Intent(RingtoneManager.ACTION_RINGTONE_PICKER).apply {
+            putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, ringtoneType)
+            putExtra(RingtoneManager.EXTRA_RINGTONE_TITLE, "Select Alarm Sound")
+            putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, Uri.EMPTY)
+        }
+
+    override fun parseResult(resultCode: Int, result: Intent?): Uri? {
+        if (resultCode != Activity.RESULT_OK) {
+            Timber.e("Result was $resultCode")
+            return null
+        }
+        return result?.getParcelableExtra<Uri>(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
+            ?.also {
+                Timber.d("Result was $it")
             }
-            return result?.getParcelableExtra<Uri>(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
-                ?.also {
-                    Timber.d("Result was $it")
-                }
+    }
+}
+
+/**
+ * Filter for snooze EditText that limits values to acceptable range
+ * TODO - Put an error state in the ViewModel that notifies user of accepted range?
+ */
+private class RangeInputFilter(private var min: Long, private var max: Long) : InputFilter {
+    init {
+        if (max < min) {
+            val t = min
+            min = max
+            max = t
+        }
+    }
+
+    override fun filter(
+        source: CharSequence?, start: Int, end: Int, dest: Spanned?, dstart: Int, dend: Int
+    ): CharSequence? {
+        return try {
+            val src = source.toString()
+            val dst = dest.toString()
+            val input = (dst + src).toLong()
+            if (input in min..max) {
+                null
+            } else {
+                ""
+            }
+        } catch (e: NumberFormatException) {
+            ""
         }
     }
 }
