@@ -5,13 +5,12 @@ import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.work.WorkManager
 import com.github.jeremyt135.reminderapp.MainCoroutineRule
 import com.github.jeremyt135.reminderapp.broadcast.cancelAlarmIntentsForReminder
-import com.github.jeremyt135.reminderapp.data.AlarmRepository
-import com.github.jeremyt135.reminderapp.data.FakeAlarmRepository
-import com.github.jeremyt135.reminderapp.data.FakeReminderRepository
-import com.github.jeremyt135.reminderapp.data.ReminderRepository
+import com.github.jeremyt135.reminderapp.data.*
 import com.github.jeremyt135.reminderapp.data.domain.*
+import com.github.jeremyt135.reminderapp.data.local.FakeHistoryLocalDataSource
 import com.github.jeremyt135.reminderapp.getOrAwaitValue
 import com.github.jeremyt135.reminderapp.service.AlarmService
+import com.github.jeremyt135.reminderapp.util.currentEpochMilli
 import com.github.jeremyt135.reminderapp.work.AlarmActionHandler
 import com.google.common.truth.Truth.assertThat
 import io.mockk.*
@@ -23,14 +22,17 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import java.time.DayOfWeek
+import java.time.LocalTime
 
 @ExperimentalCoroutinesApi
 class RemindersViewModelTest {
     private lateinit var fakeReminderRepository: ReminderRepository
     private lateinit var fakeAlarmRepository: AlarmRepository
+    private lateinit var fakeHistoryRepository: FakeHistoryRepository
     private lateinit var viewModel: RemindersViewModel
     private lateinit var reminders: List<Reminder>
     private lateinit var alarms: MutableList<Alarm>
+    private lateinit var historyEntries: MutableList<History>
 
     @get:Rule
     var mainCoroutineRule = MainCoroutineRule()
@@ -41,18 +43,41 @@ class RemindersViewModelTest {
     @Before
     fun setup() {
         reminders = listOf(
-            Reminder("1"),
-            Reminder("2")
+            Reminder("1", time = LocalTime.now().plusMinutes(1)),
+            Reminder("2", time = LocalTime.now().plusMinutes(2)),
+            Reminder("3", time = LocalTime.now().plusMinutes(3)),
+            Reminder(
+                "4",
+                daysOfWeek = sortedSetOf(DayOfWeek.MONDAY, DayOfWeek.TUESDAY),
+                time = LocalTime.now().plusMinutes(4)
+            ),
+            Reminder(
+                "5",
+                daysOfWeek = DayOfWeek.values().toSortedSet(),
+                time = LocalTime.now().plusMinutes(5)
+            ),
+            Reminder(
+                "6",
+                daysOfWeek = sortedSetOf(DayOfWeek.MONDAY, DayOfWeek.FRIDAY),
+                time = LocalTime.now().plusMinutes(6)
+            ),
+            Reminder(
+                "7",
+                daysOfWeek = sortedSetOf(DayOfWeek.MONDAY),
+                time = LocalTime.now().plusMinutes(7)
+            ),
         )
         alarms = mutableListOf()
+        historyEntries = mutableListOf()
 
         fakeReminderRepository =
             FakeReminderRepository(
                 reminders.toMutableList(),
                 alarms,
-                mutableListOf()
+                historyEntries
             )
         fakeAlarmRepository = FakeAlarmRepository(alarms)
+        fakeHistoryRepository = FakeHistoryRepository(FakeHistoryLocalDataSource(historyEntries))
         val mockSharedPrefs = mockkClass(SharedPreferences::class, relaxed = true)
 
         every { mockSharedPrefs.edit() } returns mockk(relaxed = true)
@@ -133,17 +158,167 @@ class RemindersViewModelTest {
     }
 
     @Test
-    fun `deleteAllReminders removes all reminders and their alarms`() = mainCoroutineRule.runBlockingTest {
-        val alarm = Alarm(id = 1, reminderId = reminders[0].id, scheduled = true)
-        fakeAlarmRepository.save(alarm)
+    fun `deleteAllReminders removes all reminders and their alarms`() =
+        mainCoroutineRule.runBlockingTest {
+            val alarm = Alarm(id = 1, reminderId = reminders[0].id, scheduled = true)
+            fakeAlarmRepository.save(alarm)
 
-        viewModel.deleteAllReminders()
+            viewModel.deleteAllReminders()
 
-        fakeReminderRepository.getAll().collect {
-            assertThat(it).isEmpty()
+            fakeReminderRepository.getAll().collect {
+                assertThat(it).isEmpty()
+            }
+            fakeAlarmRepository.getAll().collect {
+                assertThat(it).isEmpty()
+            }
         }
-        fakeAlarmRepository.getAll().collect {
-            assertThat(it).isEmpty()
+
+    @Test
+    fun `reminders list matches filter rules for completion status`() =
+        mainCoroutineRule.runBlockingTest {
+            val completedEntry = History(
+                reminderId = reminders[0].id,
+                completionStatus = ReminderStatus.COMPLETED,
+                completedAt = currentEpochMilli()
+            )
+            val skippedEntry = History(
+                reminderId = reminders[1].id,
+                completionStatus = ReminderStatus.SKIPPED,
+                completedAt = currentEpochMilli()
+            )
+            historyEntries.addAll(listOf(skippedEntry, completedEntry))
+
+            viewModel.changeFilterRules(ReminderFilterRules(reminderStatuses = setOf(ReminderStatus.PENDING)))
+
+            assertThat(viewModel.reminders.getOrAwaitValue()).containsExactlyElementsIn(
+                reminders.slice(2 until reminders.size).map { ReminderAndHistory(it, null) }
+            )
+
+            viewModel.changeFilterRules(ReminderFilterRules(reminderStatuses = setOf(ReminderStatus.COMPLETED)))
+            assertThat(viewModel.reminders.getOrAwaitValue()).containsExactlyElementsIn(
+                listOf(
+                    ReminderAndHistory(reminders[0], completedEntry)
+                )
+            )
+
+            viewModel.changeFilterRules(ReminderFilterRules(reminderStatuses = setOf(ReminderStatus.SKIPPED)))
+            assertThat(viewModel.reminders.getOrAwaitValue()).containsExactlyElementsIn(
+                listOf(
+                    ReminderAndHistory(reminders[1], skippedEntry)
+                )
+            )
+
         }
+
+    @Test
+    fun `reminders list matches filter rules for day of week`() =
+        mainCoroutineRule.runBlockingTest {
+            val remindersWithHistory = mutableListOf<List<ReminderAndHistory>>().let {
+                fakeReminderRepository.getAllWithTodayHistory().toCollection(it)
+            }.first()
+
+            // Should contain all reminders
+            viewModel.changeFilterRules(
+                ReminderFilterRules(
+                    daysOfWeek = DayOfWeek.values().toSet()
+                )
+            )
+            assertThat(viewModel.reminders.getOrAwaitValue()).containsExactlyElementsIn(
+                remindersWithHistory
+            )
+
+            // Should only contain MONDAY
+            viewModel.changeFilterRules(
+                ReminderFilterRules(
+                    includeToday = false,
+                    daysOfWeek = setOf(DayOfWeek.MONDAY)
+                )
+            )
+            assertThat(viewModel.reminders.getOrAwaitValue()).containsExactlyElementsIn(
+                remindersWithHistory.filter { it.reminder.dayIsChecked(DayOfWeek.MONDAY) })
+
+            // Should only contain with FRIDAY
+            viewModel.changeFilterRules(
+                ReminderFilterRules(
+                    includeToday = false,
+                    daysOfWeek = setOf(DayOfWeek.FRIDAY)
+                )
+            )
+            assertThat(viewModel.reminders.getOrAwaitValue()).containsExactlyElementsIn(
+                remindersWithHistory.filter { it.reminder.dayIsChecked(DayOfWeek.FRIDAY) })
+
+            // Should only contain the one-offs
+            viewModel.changeFilterRules(
+                ReminderFilterRules(
+                    includeToday = true,
+                    daysOfWeek = emptySet(),
+                )
+            )
+            assertThat(viewModel.reminders.getOrAwaitValue()).containsExactlyElementsIn(
+                remindersWithHistory.filter { it.reminder.isOneOff })
+        }
+
+    @Test
+    fun `reminders list order matches sorting rules`() =
+        mainCoroutineRule.runBlockingTest {
+            val remindersWithHistory = mutableListOf<List<ReminderAndHistory>>().let {
+                fakeReminderRepository.getAllWithTodayHistory().toCollection(it)
+            }.first()
+
+            // shuffle test data because initial test data is already ordered correctly
+            fakeReminderRepository.deleteAll()
+            fakeReminderRepository.saveAll(reminders.shuffled())
+
+            viewModel.changeSortRules(ReminderSortRules(time = SortRule.ASCENDING))
+            assertThat(viewModel.reminders.getOrAwaitValue()).containsExactlyElementsIn(
+                remindersWithHistory.sortedBy {
+                    // test data is set up such that sorting on description can also sort on time,
+                    // but the ViewModel uses its own method for sorting that may not be correct
+                    it.reminder.description
+                }).inOrder()
+
+            viewModel.changeSortRules(ReminderSortRules(time = SortRule.DESCENDING))
+            assertThat(viewModel.reminders.getOrAwaitValue()).containsExactlyElementsIn(
+                remindersWithHistory.sortedByDescending {
+                    it.reminder.description
+                }).inOrder()
+
+            viewModel.changeSortRules(ReminderSortRules(description = SortRule.DESCENDING))
+            assertThat(viewModel.reminders.getOrAwaitValue()).containsExactlyElementsIn(
+                remindersWithHistory.sortedByDescending {
+                    it.reminder.description
+                }).inOrder()
+
+            viewModel.changeSortRules(ReminderSortRules(description = SortRule.ASCENDING))
+            assertThat(viewModel.reminders.getOrAwaitValue()).containsExactlyElementsIn(
+                remindersWithHistory.sortedBy {
+                    it.reminder.description
+                }).inOrder()
+        }
+
+    @Test
+    fun `reminders list can be both sorted and filtered`() = mainCoroutineRule.runBlockingTest {
+        val remindersWithHistory = mutableListOf<List<ReminderAndHistory>>().let {
+            fakeReminderRepository.getAllWithTodayHistory().toCollection(it)
+        }.first()
+
+        fakeReminderRepository.deleteAll()
+        fakeReminderRepository.saveAll(reminders.shuffled())
+
+        // sort by descending time (description "7" should appear first)
+        viewModel.changeSortRules(ReminderSortRules(time = SortRule.DESCENDING))
+        // filter out one-off reminders, and any that don't occur on mondays
+        viewModel.changeFilterRules(
+            ReminderFilterRules(
+                includeToday = false,
+                daysOfWeek = setOf(DayOfWeek.MONDAY)
+            )
+        )
+
+        assertThat(viewModel.reminders.getOrAwaitValue()).containsExactlyElementsIn(
+            remindersWithHistory.filter { it.reminder.dayIsChecked(DayOfWeek.MONDAY) }
+                .sortedByDescending {
+                    it.reminder.description
+                }).inOrder()
     }
 }
