@@ -22,13 +22,12 @@ class FakeReminderLocalDataSource(
         emit(reminderCache)
     }.map { reminders ->
         reminders.map { reminder ->
+            val today = LocalDate.now().dayOfWeek
             ReminderAndHistory(
                 reminder = reminder.copy(),
-                history = historyCache.firstOrNull { history ->
-                    history.reminderId == reminder.id &&
-                            history.id == historyCache.maxOfOrNull { it.id } ?: 0L
-                    history.completedAt.toLocalDateTime().dayOfWeek == LocalDate.now().dayOfWeek
-                },
+                history = historyCache.filter {
+                    it.reminderId == reminder.id && it.completedAt.toLocalDateTime().dayOfWeek == today
+                }.maxByOrNull { it.completedAt }
             )
         }
     }
