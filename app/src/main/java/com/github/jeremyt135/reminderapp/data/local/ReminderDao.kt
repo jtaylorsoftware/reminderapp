@@ -15,8 +15,8 @@ interface ReminderDao {
     LEFT OUTER JOIN history AS hs 
     ON reminder.id = hs.reminder_id
         AND DATE('now') = DATE(IFNULL(hs.completed_at, 0)/1000, 'unixepoch')
-        AND hs.history_id = ( 
-            SELECT MAX(history_id) FROM history WHERE reminder_id = reminder.id
+        AND hs.completed_at = ( 
+            SELECT MAX(completed_at) FROM history WHERE reminder_id = reminder.id
         )
     """
     )
