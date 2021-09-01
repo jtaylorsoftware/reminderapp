@@ -16,6 +16,7 @@ import com.github.jeremyt135.reminderapp.data.AlarmRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.Alarm
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
+import com.github.jeremyt135.reminderapp.data.domain.SchedulingRules
 import com.github.jeremyt135.reminderapp.getOrAwaitValue
 import com.github.jeremyt135.reminderapp.service.AlarmService
 import com.github.jeremyt135.reminderapp.util.currentLocalDateTime
@@ -131,7 +132,8 @@ class ReminderEditorViewModelTest {
 
     @Test
     fun saveReminder_savesToRepository_schedulesAlarm() = mainCoroutineRule.runBlockingTest {
-        val reminder = Reminder(time = LocalTime.now().plusMinutes(1))
+        val reminder =
+            Reminder(schedulingRules = SchedulingRules(time = LocalTime.now().plusMinutes(1)))
 
         val alarm = Alarm(id = 1, reminderId = reminder.id, scheduled = true)
         val nextAlarm = slot<Alarm>()
@@ -171,14 +173,14 @@ class ReminderEditorViewModelTest {
         assertThat(nextAlarm.captured.reminderId).isEqualTo(reminder.id)
         assertThat(nextAlarm.captured.triggerAt).isEqualTo(
             currentLocalDateTime()
-                .withHour(reminder.hour)
-                .withMinute(reminder.minute)
+                .withHour(reminder.schedulingRules.hour)
+                .withMinute(reminder.schedulingRules.minute)
         )
     }
 
     @Test
     fun saveReminder_emitsNavigateToReminders() = mainCoroutineRule.runBlockingTest {
-        val reminder = Reminder(time = LocalTime.now().minusMinutes(1))
+        val reminder = Reminder(schedulingRules = SchedulingRules(time = LocalTime.now().minusMinutes(1)))
 
         every { mockSavedState.get<String>(EXTRA_REMINDER_ID) } returns reminder.id
         coEvery { mockReminderRepo.findById(reminder.id) } returns reminder

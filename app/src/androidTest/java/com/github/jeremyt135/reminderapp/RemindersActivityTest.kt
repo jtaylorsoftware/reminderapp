@@ -19,6 +19,7 @@ import com.github.jeremyt135.reminderapp.broadcast.getCreatedIntentForAlarmStart
 import com.github.jeremyt135.reminderapp.data.AlarmRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
+import com.github.jeremyt135.reminderapp.data.domain.SchedulingRules
 import com.github.jeremyt135.reminderapp.data.local.AppDatabase
 import com.github.jeremyt135.reminderapp.screens.reminder.overview.ReminderListAdapter
 import com.github.jeremyt135.reminderapp.util.withActivityScenario
@@ -54,7 +55,7 @@ class RemindersActivityTest {
     lateinit var database: AppDatabase
 
     private val reminders =
-        (1..3).map { Reminder("My Reminder $it") }
+        (1..3).map { Reminder(description = "My Reminder $it") }
 
     @Before
     fun setup() {
@@ -140,7 +141,14 @@ class RemindersActivityTest {
              */
             onView(withText(description)).check(matches(isDisplayed()))
 
-            val time = Reminder(time = LocalTime.of(hours, minutes)).getTimeDisplayString()
+            val time = Reminder(
+                schedulingRules = SchedulingRules(
+                    time = LocalTime.of(
+                        hours,
+                        minutes
+                    )
+                )
+            ).getTimeDisplayString()
             onView(withText(time)).check(matches(isDisplayed()))
 
             onView(withTagValue(equalTo(R.drawable.ic_notification_pending))).check(

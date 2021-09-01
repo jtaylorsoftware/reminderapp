@@ -43,28 +43,45 @@ class RemindersViewModelTest {
     @Before
     fun setup() {
         reminders = listOf(
-            Reminder("1", time = LocalTime.now().plusMinutes(1)),
-            Reminder("2", time = LocalTime.now().plusMinutes(2)),
-            Reminder("3", time = LocalTime.now().plusMinutes(3)),
             Reminder(
-                "4",
-                daysOfWeek = sortedSetOf(DayOfWeek.MONDAY, DayOfWeek.TUESDAY),
-                time = LocalTime.now().plusMinutes(4)
+                description = "1",
+                schedulingRules = SchedulingRules(time = LocalTime.now().plusMinutes(1))
             ),
             Reminder(
-                "5",
-                daysOfWeek = DayOfWeek.values().toSortedSet(),
-                time = LocalTime.now().plusMinutes(5)
+                description = "2",
+                schedulingRules = SchedulingRules(time = LocalTime.now().plusMinutes(2))
             ),
             Reminder(
-                "6",
-                daysOfWeek = sortedSetOf(DayOfWeek.MONDAY, DayOfWeek.FRIDAY),
-                time = LocalTime.now().plusMinutes(6)
+                description = "3",
+                schedulingRules = SchedulingRules(time = LocalTime.now().plusMinutes(3))
             ),
             Reminder(
-                "7",
-                daysOfWeek = sortedSetOf(DayOfWeek.MONDAY),
-                time = LocalTime.now().plusMinutes(7)
+                description = "4",
+                schedulingRules = SchedulingRules(
+                    daysOfWeek = sortedSetOf(DayOfWeek.MONDAY, DayOfWeek.TUESDAY),
+                    time = LocalTime.now().plusMinutes(4)
+                )
+            ),
+            Reminder(
+                description = "5",
+                schedulingRules = SchedulingRules(
+                    daysOfWeek = DayOfWeek.values().toSortedSet(),
+                    time = LocalTime.now().plusMinutes(5)
+                )
+            ),
+            Reminder(
+                description = "6",
+                schedulingRules = SchedulingRules(
+                    daysOfWeek = sortedSetOf(DayOfWeek.MONDAY, DayOfWeek.FRIDAY),
+                    time = LocalTime.now().plusMinutes(6)
+                )
+            ),
+            Reminder(
+                description = "7",
+                schedulingRules = SchedulingRules(
+                    daysOfWeek = sortedSetOf(DayOfWeek.MONDAY),
+                    time = LocalTime.now().plusMinutes(7)
+                )
             ),
         )
         alarms = mutableListOf()
@@ -235,7 +252,7 @@ class RemindersViewModelTest {
                 )
             )
             assertThat(viewModel.reminders.getOrAwaitValue()).containsExactlyElementsIn(
-                remindersWithHistory.filter { it.reminder.dayIsChecked(DayOfWeek.MONDAY) })
+                remindersWithHistory.filter { it.reminder.schedulingRules.dayIsScheduled(DayOfWeek.MONDAY) })
 
             // Should only contain with FRIDAY
             viewModel.changeFilterRules(
@@ -245,7 +262,7 @@ class RemindersViewModelTest {
                 )
             )
             assertThat(viewModel.reminders.getOrAwaitValue()).containsExactlyElementsIn(
-                remindersWithHistory.filter { it.reminder.dayIsChecked(DayOfWeek.FRIDAY) })
+                remindersWithHistory.filter { it.reminder.schedulingRules.dayIsScheduled(DayOfWeek.FRIDAY) })
 
             // Should only contain the one-offs
             viewModel.changeFilterRules(
@@ -255,7 +272,7 @@ class RemindersViewModelTest {
                 )
             )
             assertThat(viewModel.reminders.getOrAwaitValue()).containsExactlyElementsIn(
-                remindersWithHistory.filter { it.reminder.isOneOff })
+                remindersWithHistory.filter { it.reminder.schedulingRules.isOneOff })
         }
 
     @Test
@@ -316,7 +333,7 @@ class RemindersViewModelTest {
         )
 
         assertThat(viewModel.reminders.getOrAwaitValue()).containsExactlyElementsIn(
-            remindersWithHistory.filter { it.reminder.dayIsChecked(DayOfWeek.MONDAY) }
+            remindersWithHistory.filter { it.reminder.schedulingRules.dayIsScheduled(DayOfWeek.MONDAY) }
                 .sortedByDescending {
                     it.reminder.description
                 }).inOrder()

@@ -74,7 +74,8 @@ class ReminderEditorViewModel @Inject constructor(
 
 
     val reminderDaysDisplayString: LiveData<String> =
-        _reminder.map { it.getDaysDisplayString() }.asLiveData(viewModelScope.coroutineContext)
+        _reminder.map { it.getDaysDisplayString() }
+            .asLiveData(viewModelScope.coroutineContext)
 
     val selectedSound: LiveData<String> =
         _reminder.map { getSoundTitle(it.notifSoundUri) }
@@ -116,21 +117,32 @@ class ReminderEditorViewModel @Inject constructor(
     fun toggleDay(dayString: String) {
         Timber.d("Clicked $dayString")
         val day = DayOfWeek.valueOf(dayString)
-        val daysOfWeek = _reminder.value.daysOfWeek.toSortedSet()
+        val daysOfWeek = _reminder.value.schedulingRules.daysOfWeek.toSortedSet()
         if (daysOfWeek.contains(day)) {
             daysOfWeek.remove(day)
         } else {
             daysOfWeek.add(day)
         }
-        _reminder.value = _reminder.value.copy(daysOfWeek = daysOfWeek).also {
+        _reminder.value = _reminder.value.let {
+            it.copy(schedulingRules = it.schedulingRules.copy(daysOfWeek = daysOfWeek))
+        }.also {
             Timber.d("datesDisplay is now ${it.getDaysDisplayString()}")
         }
     }
 
     fun onTimeChanged(newHour: Int, newMinute: Int) {
-        val (oldHour, oldMinute) = _reminder.value.hour to _reminder.value.minute
+        val (oldHour, oldMinute) = _reminder.value.schedulingRules.hour to _reminder.value.schedulingRules.minute
         if (newHour != oldHour || newMinute != oldMinute) {
-            _reminder.value = _reminder.value.copy(time = LocalTime.of(newHour, newMinute))
+            _reminder.value = _reminder.value.let {
+                it.copy(
+                    schedulingRules = it.schedulingRules.copy(
+                        time = LocalTime.of(
+                            newHour,
+                            newMinute
+                        )
+                    )
+                )
+            }
         }
     }
 
@@ -142,21 +154,31 @@ class ReminderEditorViewModel @Inject constructor(
 
         when (newOption) {
             SnoozeRepetitionOption.None -> {
-                _reminder.value = _reminder.value.copy(maxSnoozeRepeats = 0)
+                _reminder.value =
+                    _reminder.value.let { it.copy(snoozeRules = it.snoozeRules.copy(maxRepeats = 0)) }
             }
             SnoozeRepetitionOption.Infinite -> {
                 _reminder.value =
-                    _reminder.value.copy(
-                        maxSnoozeRepeats = Long.MAX_VALUE,
-                        snoozeDuration = SnoozeRules.DEFAULT_SNOOZE_DURATION
-                    )
+                    _reminder.value.let {
+                        it.copy(
+                            snoozeRules = it.snoozeRules.copy(
+                                maxRepeats = Long.MAX_VALUE,
+                                duration = SnoozeRules.DEFAULT_SNOOZE_DURATION
+                            )
+                        )
+                    }
+
             }
             SnoozeRepetitionOption.Choose -> {
                 _reminder.value =
-                    _reminder.value.copy(
-                        maxSnoozeRepeats = SnoozeRules.DEFAULT_SNOOZE_REPEATS,
-                        snoozeDuration = SnoozeRules.DEFAULT_SNOOZE_DURATION
-                    )
+                    _reminder.value.let {
+                        it.copy(
+                            snoozeRules = it.snoozeRules.copy(
+                                maxRepeats = SnoozeRules.DEFAULT_SNOOZE_REPEATS,
+                                duration = SnoozeRules.DEFAULT_SNOOZE_DURATION
+                            )
+                        )
+                    }
             }
         }
     }
@@ -177,7 +199,7 @@ class ReminderEditorViewModel @Inject constructor(
                 val wasScheduled = stopAlarmsForReminder(getApplication(), reminder)
 
                 val today = LocalDate.now().dayOfWeek
-                reminder.getNextTimeForAlarm(today)?.let { time ->
+                reminder.schedulingRules.getNextTimeForAlarm(today)?.let { time ->
                     val nextAlarm = Alarm(
                         reminderId = reminder.id,
                         triggerAt = time,

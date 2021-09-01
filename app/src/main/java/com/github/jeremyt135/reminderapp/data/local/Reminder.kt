@@ -5,6 +5,7 @@ import com.github.jeremyt135.reminderapp.data.DataModel
 import com.github.jeremyt135.reminderapp.data.domain.*
 import com.github.jeremyt135.reminderapp.util.uuid
 import java.time.DayOfWeek
+import java.time.LocalDate
 import java.time.LocalTime
 import java.util.*
 
@@ -15,10 +16,21 @@ data class ReminderEntity(
 
     val description: String = "",
 
+    val type: SchedulingType = SchedulingType.SINGLE,
+
+    @ColumnInfo(name = "start_date")
+    val startDate: LocalDate = LocalDate.now(),
+
+    @ColumnInfo(name = "end_date")
+    val endDate: LocalDate = LocalDate.now(),
+
     val time: LocalTime = LocalTime.now(),
 
     @ColumnInfo(name = "days_of_week")
     val daysOfWeek: SortedSet<DayOfWeek> = sortedSetOf(),
+
+    @ColumnInfo(name = "repeats_times")
+    val repeatsTimes: Long = 0,
 
     val vibrate: Boolean = false,
 
@@ -35,12 +47,17 @@ data class ReminderEntity(
         Reminder(
             id = this.id,
             description = this.description,
-            time = this.time,
-            daysOfWeek = this.daysOfWeek.toSortedSet(),
             vibrate = this.vibrate,
-            maxSnoozeRepeats = this.maxSnoozeRepeats,
-            snoozeDuration = this.snoozeDuration,
             notifSoundUri = this.notifSoundUri,
+            snoozeRules = SnoozeRules(maxRepeats = maxSnoozeRepeats, duration = snoozeDuration),
+            schedulingRules = SchedulingRules(
+                type = type,
+                startDate = startDate,
+                endDate = endDate,
+                time = time,
+                daysOfWeek = daysOfWeek,
+                repeatsTimes = repeatsTimes
+            )
         )
 }
 

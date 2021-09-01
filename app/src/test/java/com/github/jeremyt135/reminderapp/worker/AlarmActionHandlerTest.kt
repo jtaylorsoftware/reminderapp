@@ -23,7 +23,9 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import java.time.DayOfWeek
+import java.time.Instant
 import java.time.LocalDate
+import kotlin.math.abs
 
 class AlarmActionHandlerTest {
     @ExperimentalCoroutinesApi
@@ -234,7 +236,8 @@ class AlarmActionHandlerTest {
 
     @Test
     fun actionSkip_savesHistoryAsSkip_schedulesNext() {
-        val reminder = Reminder(daysOfWeek = sortedSetOf(*DayOfWeek.values()))
+        val reminder =
+            Reminder(schedulingRules = SchedulingRules(daysOfWeek = sortedSetOf(*DayOfWeek.values())))
         val alarm = Alarm(id = 1, reminderId = reminder.id, triggerAt = currentLocalDateTime())
         val history = slot<History>()
         val nextAlarm = slot<Alarm>()
@@ -266,19 +269,23 @@ class AlarmActionHandlerTest {
             mockAlarmRepository.delete(alarm)
         }
 
-        assertThat(history.captured.copy(id = "")).isEqualTo(
+        val savedHistory = history.captured.copy(id = "")
+        val completedAt = savedHistory.completedAt
+        assertThat(savedHistory.copy(completedAt = 0)).isEqualTo(
             History(
                 id = "",
                 reminderId = reminder.id,
                 description = reminder.description,
                 completionStatus = ReminderStatus.SKIPPED,
-                completedAt = currentEpochMilli()
             )
         )
 
+        // Check history saved to current second, accounting for test delays
+        assertThat(abs(completedAt - Instant.now().toEpochMilli()) < 60)
+
         assertThat(nextAlarm.captured.reminderId).isEqualTo(reminder.id)
         assertThat(nextAlarm.captured.triggerAt).isEqualTo(
-            reminder.getNextTimeForAlarm(
+            reminder.schedulingRules.getNextTimeForAlarm(
                 LocalDate.now().dayOfWeek,
                 false
             )!!
@@ -287,7 +294,8 @@ class AlarmActionHandlerTest {
 
     @Test
     fun actionComplete_savesHistoryAsComplete_schedulesNext() {
-        val reminder = Reminder(daysOfWeek = sortedSetOf(*DayOfWeek.values()))
+        val reminder =
+            Reminder(schedulingRules = SchedulingRules(daysOfWeek = sortedSetOf(*DayOfWeek.values())))
         val alarm = Alarm(id = 1, reminderId = reminder.id, triggerAt = currentLocalDateTime())
         val history = slot<History>()
         val nextAlarm = slot<Alarm>()
@@ -319,19 +327,24 @@ class AlarmActionHandlerTest {
             mockAlarmRepository.delete(alarm)
         }
 
-        assertThat(history.captured.copy(id = "")).isEqualTo(
+
+        val savedHistory = history.captured.copy(id = "")
+        val completedAt = savedHistory.completedAt
+        assertThat(savedHistory.copy(completedAt = 0)).isEqualTo(
             History(
                 id = "",
                 reminderId = reminder.id,
                 description = reminder.description,
                 completionStatus = ReminderStatus.COMPLETED,
-                completedAt = currentEpochMilli()
             )
         )
 
+        // Check history saved to current second, accounting for test delays
+        assertThat(abs(completedAt - Instant.now().toEpochMilli()) < 60)
+
         assertThat(nextAlarm.captured.reminderId).isEqualTo(reminder.id)
         assertThat(nextAlarm.captured.triggerAt).isEqualTo(
-            reminder.getNextTimeForAlarm(
+            reminder.schedulingRules.getNextTimeForAlarm(
                 LocalDate.now().dayOfWeek,
                 false
             )!!

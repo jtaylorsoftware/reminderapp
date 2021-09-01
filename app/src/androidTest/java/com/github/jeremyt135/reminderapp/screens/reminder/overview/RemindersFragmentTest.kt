@@ -77,7 +77,7 @@ class RemindersFragmentTest {
     lateinit var repository: ReminderRepository
 
     private val reminders =
-        (1..3).map { Reminder("My Reminder $it") }
+        (1..3).map { Reminder(description = "My Reminder $it") }
 
     @Before
     fun setup() {

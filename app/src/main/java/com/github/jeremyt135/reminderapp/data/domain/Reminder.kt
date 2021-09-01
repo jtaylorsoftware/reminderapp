@@ -7,10 +7,7 @@ import com.github.jeremyt135.reminderapp.data.DomainModel
 import com.github.jeremyt135.reminderapp.data.local.ReminderAndAlarmEntity
 import com.github.jeremyt135.reminderapp.data.local.ReminderAndHistoryEntity
 import com.github.jeremyt135.reminderapp.data.local.ReminderEntity
-import com.github.jeremyt135.reminderapp.util.currentLocalDateTime
-import com.github.jeremyt135.reminderapp.util.getFullLocaleDisplay
-import com.github.jeremyt135.reminderapp.util.getShortLocalTimeDisplay
-import com.github.jeremyt135.reminderapp.util.uuid
+import com.github.jeremyt135.reminderapp.util.*
 import timber.log.Timber
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -21,40 +18,21 @@ import java.time.temporal.TemporalAdjusters
 import java.util.*
 
 /**
- * Completion status of a Reminder.
- */
-enum class ReminderStatus {
-    /**
-     * The Reminder is completed for today.
-     */
-    COMPLETED,
-
-    /**
-     * The Reminder is skipped for today.
-     */
-    SKIPPED,
-
-    /**
-     * The Reminder is scheduled for an alarm for today that has not yet gone off.
-     */
-    PENDING
-}
-
-/**
- * Domain class for Reminders that are created and displayed in the application
+ * Domain class for Reminders. Exposes some data through bound properties
+ * for displaying data in layouts.
  */
 class Reminder(
+    val id: String = uuid(),
     description: String = "",
-    time: LocalTime = LocalTime.now(),
-    val daysOfWeek: SortedSet<DayOfWeek> = sortedSetOf(),
     vibrate: Boolean = false,
-    var id: String = uuid(),
-    maxSnoozeRepeats: Long = SnoozeRules.DEFAULT_SNOOZE_REPEATS,
-    snoozeDuration: Long = SnoozeRules.DEFAULT_SNOOZE_DURATION,
     var notifSoundUri: String = "",
+    snoozeRules: SnoozeRules = SnoozeRules(),
+    schedulingRules: SchedulingRules = SchedulingRules(),
 ) : BaseObservable(), DomainModel<ReminderEntity> {
-    var snoozeRules =
-        SnoozeRules(maxRepeats = maxSnoozeRepeats, duration = snoozeDuration)
+    var snoozeRules = snoozeRules
+        private set
+
+    var schedulingRules = schedulingRules
         private set
 
     @get:Bindable
@@ -94,6 +72,144 @@ class Reminder(
                 notifyPropertyChanged(BR.snoozeDuration)
             }
         }
+
+    fun getDaysDisplayString() =
+        when (schedulingRules.daysOfWeek.size) {
+            // TODO: Actually return Today's date?
+            0 -> "Today"
+            in 1..6 ->
+                // Sort for timezones with days of week similarly to the US, with Sunday first
+                // TODO: do sort correctly for any local timezone (would need to also display the date toggles similarly)
+                ("Every " + schedulingRules.daysOfWeek.sortedBy {
+
+                    // Convert from 1..7 to 0..6
+                    it.value % it.range(ChronoField.DAY_OF_WEEK).maximum
+                }.joinToString { it.getFullLocaleDisplay() })
+            7 -> "Every day"
+            else -> throw IllegalArgumentException("daysOfWeek has more than 7 entries")
+        }
+
+    fun getTimeDisplayString(): String =
+        LocalDateTime.now().withHour(schedulingRules.hour).withMinute(schedulingRules.minute)
+            .getShortLocalTimeDisplay()
+
+
+    fun copy(
+        id: String = this.id,
+        description: String = this.description,
+        vibrate: Boolean = this.vibrate,
+        notifSoundUri: String = this.notifSoundUri,
+        snoozeRules: SnoozeRules = this.snoozeRules,
+        schedulingRules: SchedulingRules = this.schedulingRules,
+    ) = Reminder(
+        id = id,
+        description = description,
+        notifSoundUri = notifSoundUri,
+        vibrate = vibrate,
+        snoozeRules = snoozeRules,
+        schedulingRules = schedulingRules,
+    )
+
+    override fun asDataModel(): ReminderEntity =
+        ReminderEntity(
+            id = this.id,
+            description = this.description,
+            vibrate = this.vibrate,
+            notifSoundUri = this.notifSoundUri,
+            type = this.schedulingRules.type,
+            startDate = this.schedulingRules.startDate,
+            endDate = this.schedulingRules.endDate,
+            time = this.schedulingRules.time,
+
+            maxSnoozeRepeats = this.maxSnoozeRepeats,
+            snoozeDuration = this.snoozeDuration,
+        )
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as Reminder
+
+        if (id != other.id) return false
+        if (description != other.description) return false
+        if (vibrate != other.vibrate) return false
+        if (schedulingRules != other.schedulingRules) return false
+        if (snoozeRules != other.snoozeRules) return false
+        if (notifSoundUri != other.notifSoundUri) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = id.hashCode()
+        result = 31 * result + description.hashCode()
+        result = 31 * result + vibrate.hashCode()
+        result = 31 * result + schedulingRules.hashCode()
+        result = 31 * result + snoozeRules.hashCode()
+        result = 31 * result + notifSoundUri.hashCode()
+        return result
+    }
+
+    override fun toString(): String {
+        return "Reminder(" +
+                "id=$id, " +
+                "description='$description', " +
+                "vibrate=$vibrate, " +
+                "schedulingRules=$schedulingRules, " +
+                "snoozeRules=$snoozeRules, " +
+                "notifSoundUri=$notifSoundUri, " +
+                ")"
+    }
+
+}
+
+/**
+ * Completion status of a Reminder.
+ */
+enum class ReminderStatus {
+    /**
+     * The Reminder is completed for today.
+     */
+    COMPLETED,
+
+    /**
+     * The Reminder is skipped for today.
+     */
+    SKIPPED,
+
+    /**
+     * The Reminder is scheduled for an alarm for today that has not yet gone off.
+     */
+    PENDING
+}
+
+/**
+ * Types of Reminders as it relates to scheduling
+ */
+enum class SchedulingType {
+    /**
+     * The Reminder is set for one specific date
+     */
+    SINGLE,
+
+    /**
+     * The Reminder repeats on multiple days over a span of time
+     */
+    REPEATING
+}
+
+/**
+ * Data for determining how to schedule a Reminder.
+ */
+data class SchedulingRules(
+    val type: SchedulingType = SchedulingType.SINGLE,
+    val startDate: LocalDate = LocalDate.now(),
+    val endDate: LocalDate = LocalDate.now(),
+    val time: LocalTime = currentLocalTime(),
+    val daysOfWeek: SortedSet<DayOfWeek> = sortedSetOf(),
+    val repeatsTimes: Long = 0,
+) {
 
     var hour: Int = time.hour
         set(value) {
@@ -154,104 +270,9 @@ class Reminder(
         }
     }
 
-    fun getDaysDisplayString() =
-        when (daysOfWeek.size) {
-            // TODO: Actually return Today's date?
-            0 -> "Today"
-            in 1..6 ->
-                // Sort for timezones with days of week similarly to the US, with Sunday first
-                // TODO: do sort correctly for any local timezone (would need to also display the date toggles similarly)
-                ("Every " + daysOfWeek.sortedBy {
+    fun dayIsScheduled(dayString: String) = dayIsScheduled(DayOfWeek.valueOf(dayString))
 
-                    // Convert from 1..7 to 0..6
-                    it.value % it.range(ChronoField.DAY_OF_WEEK).maximum
-                }.joinToString { it.getFullLocaleDisplay() })
-            7 -> "Every day"
-            else -> throw IllegalArgumentException("daysOfWeek has more than 7 entries")
-        }
-
-    fun getTimeDisplayString(): String =
-        LocalDateTime.now().withHour(hour).withMinute(minute).getShortLocalTimeDisplay()
-
-    fun dayIsChecked(dayString: String) = dayIsChecked(DayOfWeek.valueOf(dayString))
-
-    fun dayIsChecked(day: DayOfWeek) = daysOfWeek.contains(day)
-
-    fun copy(
-        description: String = this.description,
-        time: LocalTime = LocalTime.of(this.hour, this.minute),
-        daysOfWeek: SortedSet<DayOfWeek> = this.daysOfWeek.toSortedSet(),
-        vibrate: Boolean = this.vibrate,
-        id: String = this.id,
-        maxSnoozeRepeats: Long = this.maxSnoozeRepeats,
-        snoozeDuration: Long = this.snoozeDuration,
-        notifSoundUri: String = this.notifSoundUri
-    ) = Reminder(
-        description,
-        time,
-        daysOfWeek,
-        vibrate,
-        id,
-        maxSnoozeRepeats,
-        snoozeDuration,
-        notifSoundUri
-    )
-
-    override fun asDataModel(): ReminderEntity =
-        ReminderEntity(
-            id = this.id,
-            description = this.description,
-            time = LocalTime.of(hour, minute),
-            daysOfWeek = this.daysOfWeek.toSortedSet(),
-            vibrate = this.vibrate,
-            maxSnoozeRepeats = this.maxSnoozeRepeats,
-            snoozeDuration = this.snoozeDuration,
-            notifSoundUri = this.notifSoundUri
-        )
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as Reminder
-
-        if (daysOfWeek != other.daysOfWeek) return false
-        if (id != other.id) return false
-        if (description != other.description) return false
-        if (vibrate != other.vibrate) return false
-        if (hour != other.hour) return false
-        if (minute != other.minute) return false
-        if (snoozeRules != other.snoozeRules) return false
-        if (notifSoundUri != other.notifSoundUri) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = daysOfWeek.hashCode()
-        result = 31 * result + id.hashCode()
-        result = 31 * result + description.hashCode()
-        result = 31 * result + vibrate.hashCode()
-        result = 31 * result + hour
-        result = 31 * result + minute
-        result = 31 * result + snoozeRules.hashCode()
-        result = 31 * result + notifSoundUri.hashCode()
-        return result
-    }
-
-    override fun toString(): String {
-        return "Reminder(" +
-                "daysOfWeek=$daysOfWeek, " +
-                "id=$id, " +
-                "description='$description', " +
-                "vibrate=$vibrate, " +
-                "hour=$hour, " +
-                "minute=$minute, " +
-                "snoozeRules=$snoozeRules, " +
-                "notifSoundUri=$notifSoundUri, " +
-                ")"
-    }
-
+    fun dayIsScheduled(day: DayOfWeek) = daysOfWeek.contains(day)
 }
 
 data class ReminderAndAlarm(val reminder: Reminder, val alarm: Alarm?) :

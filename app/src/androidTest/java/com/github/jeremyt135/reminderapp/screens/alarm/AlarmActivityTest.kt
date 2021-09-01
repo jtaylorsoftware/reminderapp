@@ -14,6 +14,7 @@ import com.github.jeremyt135.reminderapp.data.AlarmRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.Alarm
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
+import com.github.jeremyt135.reminderapp.data.domain.SchedulingRules
 import com.github.jeremyt135.reminderapp.data.local.AppDatabase
 import com.github.jeremyt135.reminderapp.util.currentLocalDateTime
 import dagger.hilt.android.testing.HiltAndroidRule
@@ -42,7 +43,10 @@ class AlarmActivityTest {
     lateinit var database: AppDatabase
 
     val time: LocalDateTime = currentLocalDateTime().plusHours(2)
-    val reminder = Reminder(time = time.toLocalTime(), description = "My Reminder")
+    val reminder = Reminder(
+        schedulingRules = SchedulingRules(time = time.toLocalTime()),
+        description = "My Reminder"
+    )
     val alarm = Alarm(id = 1, reminderId = reminder.id, triggerAt = time)
 
     @Before

@@ -16,6 +16,7 @@ import com.github.jeremyt135.reminderapp.data.*
 import com.github.jeremyt135.reminderapp.data.domain.Alarm
 import com.github.jeremyt135.reminderapp.data.domain.History
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
+import com.github.jeremyt135.reminderapp.data.domain.SchedulingRules
 import com.github.jeremyt135.reminderapp.data.local.FakeHistoryLocalDataSource
 import com.github.jeremyt135.reminderapp.di.DatabaseModule
 import com.github.jeremyt135.reminderapp.di.RepositoryModule
@@ -88,7 +89,10 @@ class AlarmFragmentTest {
     lateinit var historyRepository: HistoryRepository
 
     val time: LocalDateTime = currentLocalDateTime().plusHours(2)
-    val reminder = Reminder(time = time.toLocalTime(), description = "My Reminder")
+    val reminder = Reminder(
+        schedulingRules = SchedulingRules(time = time.toLocalTime()),
+        description = "My Reminder"
+    )
     val alarm = Alarm(id = 1, reminderId = reminder.id, triggerAt = time)
 
     /**
@@ -128,7 +132,8 @@ class AlarmFragmentTest {
 
         onView(withText(reminder.description)).check(matches(isDisplayed()))
 
-        val time = LocalDate.now().atTime(reminder.hour, reminder.minute)
+        val time =
+            LocalDate.now().atTime(reminder.schedulingRules.hour, reminder.schedulingRules.minute)
         onView(withText(reminder.description)).check(matches(isDisplayed()))
         onView(withText(time.getShortLocalTimeDisplay())).check(
             matches(isDisplayed())

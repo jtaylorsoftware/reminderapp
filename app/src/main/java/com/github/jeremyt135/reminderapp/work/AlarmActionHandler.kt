@@ -172,9 +172,9 @@ class AlarmActionHandlerImpl(
         alarmRepository.findByReminderId(reminder.id)?.let { alarm ->
 
             // Save a new alarm if appropriate - not one-off and has an upcoming time
-            if (!reminder.isOneOff) {
+            if (!reminder.schedulingRules.isOneOff) {
                 val today = LocalDate.now().dayOfWeek
-                reminder.getNextTimeForAlarm(today, false)?.let { nextTime ->
+                reminder.schedulingRules.getNextTimeForAlarm(today, false)?.let { nextTime ->
                     alarmRepository.save(
                         alarm.copy(
                             id = 0,

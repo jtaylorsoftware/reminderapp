@@ -197,10 +197,11 @@ class RemindersViewModel @Inject constructor(
             reminderRepository.getAllWithTodayHistory().map { list ->
                 list.filter {
                     // does the filter include today?
-                    val today = reminderFilterRules.includeToday && it.reminder.isOneOff
+                    val today =
+                        reminderFilterRules.includeToday && it.reminder.schedulingRules.isOneOff
                     // does the filter include at least one of the reminder's DayOfWeeks?
                     val dayOfWeek =
-                        it.reminder.daysOfWeek.any { day -> day in reminderFilterRules.daysOfWeek }
+                        it.reminder.schedulingRules.daysOfWeek.any { day -> day in reminderFilterRules.daysOfWeek }
                     // does the filter include the reminder's status?
                     val status =
                         it.history?.completionStatus ?: ReminderStatus.PENDING in reminderFilterRules.reminderStatuses
@@ -235,9 +236,9 @@ class RemindersViewModel @Inject constructor(
 
     private fun calculateTimeOrder(reminder: Reminder): Double {
         val dayOfWeek =
-            if (reminder.daysOfWeek.isNotEmpty()) reminder.daysOfWeek.first().value else 0
-        val hour = reminder.hour / 24.0 / 10
-        val minute = reminder.minute / 60.0 / 100
+            if (reminder.schedulingRules.daysOfWeek.isNotEmpty()) reminder.schedulingRules.daysOfWeek.first().value else 0
+        val hour = reminder.schedulingRules.hour / 24.0 / 10
+        val minute = reminder.schedulingRules.minute / 60.0 / 100
         return dayOfWeek + hour + minute
     }
 

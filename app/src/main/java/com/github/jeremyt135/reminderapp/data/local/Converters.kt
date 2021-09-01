@@ -1,9 +1,11 @@
 package com.github.jeremyt135.reminderapp.data.local
 
 import androidx.room.TypeConverter
+import com.github.jeremyt135.reminderapp.data.domain.SchedulingType
 import com.github.jeremyt135.reminderapp.util.toEpochMilli
 import com.github.jeremyt135.reminderapp.util.toLocalDateTime
 import java.time.DayOfWeek
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.util.*
@@ -14,6 +16,12 @@ class Converters {
 
     @TypeConverter
     fun localTimeToString(value: LocalTime): String = value.toString()
+
+    @TypeConverter
+    fun localDateToString(value: LocalDate): String = value.toString()
+
+    @TypeConverter
+    fun localDateFromString(value: String): LocalDate = LocalDate.parse(value)
 
     @TypeConverter
     fun daysOfWeekToString(value: Set<DayOfWeek>): String = value.joinToString()
@@ -32,4 +40,10 @@ class Converters {
         val days = """,\s+""".toRegex().split(value)
         return days.map { DayOfWeek.valueOf(it) }.toSortedSet()
     }
+
+    @TypeConverter
+    fun schedulingTypeToString(value: SchedulingType) = value.toString()
+
+    @TypeConverter
+    fun schedulingTypeFromString(value: String) = SchedulingType.valueOf(value)
 }

@@ -14,6 +14,7 @@ import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.Alarm
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.ReminderAndAlarm
+import com.github.jeremyt135.reminderapp.data.domain.SchedulingRules
 import com.github.jeremyt135.reminderapp.getOrAwaitValue
 import com.github.jeremyt135.reminderapp.service.AlarmService
 import com.github.jeremyt135.reminderapp.service.AlarmTimer
@@ -74,7 +75,7 @@ class AlarmViewModelTest {
         MockKAnnotations.init(this)
 
         time = currentLocalDateTime().plusHours(2)
-        reminder = Reminder(time = time.toLocalTime())
+        reminder = Reminder(schedulingRules = SchedulingRules(time = time.toLocalTime()))
         alarm = Alarm(id = 1, reminderId = reminder.id, triggerAt = time)
         reminderAndAlarm = ReminderAndAlarm(reminder, alarm)
         timerManager = mockTimerManager

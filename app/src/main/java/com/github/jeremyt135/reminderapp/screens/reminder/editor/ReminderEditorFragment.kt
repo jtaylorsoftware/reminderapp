@@ -70,7 +70,7 @@ class ReminderEditorFragment : Fragment(R.layout.fragment_reminder_editor) {
                 launch {
                     viewModel.reminder.collect { reminder ->
                         // Initialize timePicker from reminder
-                        timePicker.time = Pair(reminder.hour, reminder.minute)
+                        timePicker.time = Pair(reminder.schedulingRules.hour, reminder.schedulingRules.minute)
                     }
                 }
 

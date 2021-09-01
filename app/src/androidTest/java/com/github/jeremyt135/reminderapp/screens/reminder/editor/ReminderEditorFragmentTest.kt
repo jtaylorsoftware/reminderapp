@@ -19,6 +19,7 @@ import com.github.jeremyt135.reminderapp.data.*
 import com.github.jeremyt135.reminderapp.data.domain.Alarm
 import com.github.jeremyt135.reminderapp.data.domain.History
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
+import com.github.jeremyt135.reminderapp.data.domain.SchedulingRules
 import com.github.jeremyt135.reminderapp.data.local.FakeHistoryLocalDataSource
 import com.github.jeremyt135.reminderapp.di.DatabaseModule
 import com.github.jeremyt135.reminderapp.di.RepositoryModule
@@ -122,12 +123,19 @@ class ReminderEditorFragmentTest {
         listOf(
             Reminder(),
             Reminder(
-                "My Reminder",
-                daysOfWeek = sortedSetOf(DayOfWeek.MONDAY, DayOfWeek.TUESDAY),
+                description = "My Reminder",
+                schedulingRules = SchedulingRules(
+                    daysOfWeek = sortedSetOf(
+                        DayOfWeek.MONDAY,
+                        DayOfWeek.TUESDAY
+                    )
+                ),
                 vibrate = true,
             ),
             Reminder(
-                time = LocalTime.now().plusHours(1).plusMinutes(10),
+                schedulingRules = SchedulingRules(
+                    time = LocalTime.now().plusHours(1).plusMinutes(10)
+                ),
             ),
         )
 
@@ -160,7 +168,14 @@ class ReminderEditorFragmentTest {
         onView(withText(reminder.description)).check(matches(isDisplayed()))
         onView(withId(R.id.switch_editor_vibrate)).check(matches(isChecked()))
         onView(withId(R.id.timePicker_editor)).check(
-            matches(withTime(LocalTime.of(reminder.hour, reminder.minute)))
+            matches(
+                withTime(
+                    LocalTime.of(
+                        reminder.schedulingRules.hour,
+                        reminder.schedulingRules.minute
+                    )
+                )
+            )
         )
 
         onView(withId(R.id.toggle_editor_monday)).check(matches(isChecked()))
@@ -206,9 +221,12 @@ class ReminderEditorFragmentTest {
 
         // Create a new reminder that edits fields of current repo version
         val editedReminder = reminder.copy(
-            reminder.description + "edited",
-            time = LocalTime.of(reminder.hour, reminder.minute).plusHours(12).plusMinutes(1),
-            daysOfWeek = sortedSetOf(DayOfWeek.MONDAY, DayOfWeek.TUESDAY),
+            description = reminder.description + "edited",
+            schedulingRules = SchedulingRules(
+                time = LocalTime.of(reminder.schedulingRules.hour, reminder.schedulingRules.minute)
+                    .plusHours(12).plusMinutes(1),
+                daysOfWeek = sortedSetOf(DayOfWeek.MONDAY, DayOfWeek.TUESDAY)
+            ),
             vibrate = true,
         )
 
@@ -218,7 +236,10 @@ class ReminderEditorFragmentTest {
         onView(withId(R.id.toggle_editor_monday)).perform(click())
         onView(withId(R.id.toggle_editor_tuesday)).perform(click())
         onView(withId(R.id.timePicker_editor)).perform(
-            PickerActions.setTime(editedReminder.hour, editedReminder.minute)
+            PickerActions.setTime(
+                editedReminder.schedulingRules.hour,
+                editedReminder.schedulingRules.minute
+            )
         )
 
         // Save changes

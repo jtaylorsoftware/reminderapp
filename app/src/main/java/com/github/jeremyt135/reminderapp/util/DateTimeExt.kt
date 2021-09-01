@@ -1,9 +1,6 @@
 package com.github.jeremyt135.reminderapp.util
 
-import java.time.DayOfWeek
-import java.time.Instant
-import java.time.LocalDateTime
-import java.time.ZoneId
+import java.time.*
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.time.format.TextStyle
@@ -35,6 +32,12 @@ fun LocalDateTime.toEpochMilli(): Long =
  * Returns current LocalDateTime, truncated to minutes
  */
 fun currentLocalDateTime(): LocalDateTime = LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES)
+
+
+/**
+ * Returns current LocalTime, truncated to minutes
+ */
+fun currentLocalTime(): LocalTime = LocalTime.now().truncatedTo(ChronoUnit.MINUTES)
 
 /**
  * Returns current milliseconds since epoch, truncated to minutes.
