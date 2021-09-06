@@ -207,13 +207,17 @@ enum class SchedulingType {
 /**
  * Data for determining how to schedule a Reminder.
  */
-data class SchedulingRules(
+class SchedulingRules(
     val type: SchedulingType = SchedulingType.REPEAT_FOREVER,
     val startDate: LocalDate = LocalDate.now(),
     val endDate: LocalDate = startDate.plusDays(1),
-    val time: LocalTime = currentLocalTime(),
+    time: LocalTime = currentLocalTime(),
     val daysOfWeek: SortedSet<DayOfWeek> = DayOfWeek.values().toSortedSet(),
 ) {
+    var time: LocalTime = time.truncatedTo(ChronoUnit.MINUTES)
+        private set(value) {
+            field = value.truncatedTo(ChronoUnit.MINUTES)
+        }
 
     var hour: Int = time.hour
         set(value) {
@@ -238,14 +242,19 @@ data class SchedulingRules(
     /**
      * Determines the next LocalDateTime that a reminder with these rules could have an alarm scheduled.
      * @param currentDateTime The current date and time, to determine the relative offset for scheduling
+     * @param allowSameDay Escape hatch to allow or disallowed a repeating reminder that could be scheduled today
+     * to actually be scheduled for today, or if it should be scheduled on the next available day.
      * @return The next LocalDateTime to schedule, or null if the reminder is "expired" (outside
      * the allowed end time).
      */
-    fun getNextTimeForAlarm(currentDateTime: LocalDateTime): LocalDateTime? {
+    fun getNextTimeForAlarm(
+        currentDateTime: LocalDateTime,
+        allowSameDay: Boolean = false
+    ): LocalDateTime? {
         return when (type) {
             SchedulingType.SINGLE -> {
                 if (startDate >= currentDateTime.toLocalDate()) {
-                    startDate.atTime(time).truncatedTo(ChronoUnit.MINUTES)
+                    startDate.atTime(time)
                 } else null
             }
             SchedulingType.REPEATING, SchedulingType.REPEAT_FOREVER -> {
@@ -257,7 +266,6 @@ data class SchedulingRules(
                     // in future
                     val nextDayOfWeek = firstDayOfWeek { it > currentDateTime.dayOfWeek }
                     startDate.atTime(time).with(TemporalAdjusters.nextOrSame(nextDayOfWeek))
-                        .truncatedTo(ChronoUnit.MINUTES)
                 } else {
                     // check if the reminder time is in the past, preventing it from being scheduled today
                     if (currentDateTime.toLocalTime() > time) {
@@ -265,14 +273,18 @@ data class SchedulingRules(
                         currentDateTime.toLocalDate()
                             .atTime(time)
                             .with(TemporalAdjusters.next(nextDayOfWeek))
-                            .truncatedTo(ChronoUnit.MINUTES)
                     } else {
-                        // time is in the future, so it could be scheduled for today
-                        val nextDayOfWeek = firstDayOfWeek { it >= currentDateTime.dayOfWeek }
-                        currentDateTime.toLocalDate()
-                            .atTime(time)
-                            .with(TemporalAdjusters.nextOrSame(nextDayOfWeek))
-                            .truncatedTo(ChronoUnit.MINUTES)
+                        // time is in the future (t >= now), so it could be scheduled for today
+                        if (allowSameDay) {
+                            currentDateTime.toLocalDate()
+                                .atTime(time)
+                                .with(TemporalAdjusters.nextOrSame(firstDayOfWeek { it >= currentDateTime.dayOfWeek }))
+                        } else {
+                            currentDateTime.toLocalDate()
+                                .atTime(time)
+                                .with(TemporalAdjusters.next(firstDayOfWeek { it > currentDateTime.dayOfWeek }))
+                        }
+
                     }
                 }
             }
@@ -302,10 +314,55 @@ data class SchedulingRules(
         }
     }
 
-
     fun dayIsScheduled(dayString: String) = dayIsScheduled(DayOfWeek.valueOf(dayString))
 
     fun dayIsScheduled(day: DayOfWeek) = daysOfWeek.contains(day)
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as SchedulingRules
+
+        if (type != other.type) return false
+        if (startDate != other.startDate) return false
+        if (endDate != other.endDate) return false
+        if (daysOfWeek != other.daysOfWeek) return false
+        if (time != other.time) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = type.hashCode()
+        result = 31 * result + startDate.hashCode()
+        result = 31 * result + endDate.hashCode()
+        result = 31 * result + daysOfWeek.hashCode()
+        result = 31 * result + time.hashCode()
+        return result
+    }
+
+    override fun toString(): String {
+        return "SchedulingRules(type=$type, " +
+                "startDate=$startDate, " +
+                "endDate=$endDate, " +
+                "daysOfWeek=$daysOfWeek, " +
+                "time=$time)"
+    }
+
+    fun copy(
+        type: SchedulingType = this.type,
+        startDate: LocalDate = this.startDate,
+        endDate: LocalDate = this.endDate,
+        time: LocalTime = this.time,
+        daysOfWeek: SortedSet<DayOfWeek> = this.daysOfWeek
+    ) = SchedulingRules(
+        type = type,
+        startDate = startDate,
+        endDate = endDate,
+        daysOfWeek = daysOfWeek,
+        time = time
+    )
 }
 
 data class ReminderAndAlarm(val reminder: Reminder, val alarm: Alarm?) :

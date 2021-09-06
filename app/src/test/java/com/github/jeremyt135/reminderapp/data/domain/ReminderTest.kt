@@ -100,11 +100,11 @@ class ReminderTest {
     }
 
     @Test
-    fun getNextTimeForAlarm_repeating_startDateInFuture_returnsNextWeekOrLaterToday() {
+    fun getNextTimeForAlarm_repeating_startDateInFuture_returnsNextWeek() {
         val dayOfWeek = DayOfWeek.MONDAY
         // adjust test date to be a monday
         val startDate =
-            currentLocalDateTime().with(TemporalAdjusters.nextOrSame(dayOfWeek)).toLocalDate()
+            currentLocalDateTime().with(TemporalAdjusters.next(dayOfWeek)).toLocalDate()
         val time = currentLocalTime()
         val reminder = Reminder(
             schedulingRules = SchedulingRules(
@@ -120,7 +120,7 @@ class ReminderTest {
     }
 
     @Test
-    fun getNextTimeForAlarm_repeating_startDateToday_timeInFuture_returnsToday() {
+    fun getNextTimeForAlarm_repeating_startDateToday_timeInFuture_allowToday_returnsToday() {
         val startDate = currentLocalDateTime().toLocalDate()
         val dayOfWeek = startDate.dayOfWeek
         val time = currentLocalTime().plusMinutes(30)
@@ -132,8 +132,26 @@ class ReminderTest {
                 daysOfWeek = sortedSetOf(dayOfWeek)
             )
         )
-        assertThat(reminder.schedulingRules.getNextTimeForAlarm(currentLocalDateTime())).isEqualTo(
+        assertThat(reminder.schedulingRules.getNextTimeForAlarm(currentLocalDateTime(), allowSameDay = true)).isEqualTo(
             startDate.atTime(time)
+        )
+    }
+
+    @Test
+    fun getNextTimeForAlarm_repeating_startDateToday_timeInFuture_doNotAllowToday_returnsNextWeek() {
+        val startDate = currentLocalDateTime().toLocalDate()
+        val dayOfWeek = startDate.dayOfWeek
+        val time = currentLocalTime().plusMinutes(30)
+        val reminder = Reminder(
+            schedulingRules = SchedulingRules(
+                type = SchedulingType.REPEATING,
+                startDate = startDate,
+                time = time,
+                daysOfWeek = sortedSetOf(dayOfWeek)
+            )
+        )
+        assertThat(reminder.schedulingRules.getNextTimeForAlarm(currentLocalDateTime(), allowSameDay = false)).isEqualTo(
+            startDate.atTime(time).with(TemporalAdjusters.next(dayOfWeek))
         )
     }
 

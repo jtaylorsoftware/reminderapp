@@ -140,6 +140,7 @@ class ReminderEditorViewModelTest {
     fun saveReminder_savesToRepository_schedulesAlarm() = mainCoroutineRule.runBlockingTest {
         val reminder =
             Reminder(schedulingRules = SchedulingRules(time = LocalTime.now().plusMinutes(1)))
+        val savedReminder = slot<Reminder>()
 
         val alarm = Alarm(id = 1, reminderId = reminder.id, scheduled = true)
         val nextAlarm = slot<Alarm>()
@@ -147,7 +148,7 @@ class ReminderEditorViewModelTest {
         every { mockSavedState.get<String>(EXTRA_REMINDER_ID) } returns reminder.id
 
         coEvery { mockReminderRepo.findById(reminder.id) } returns reminder
-        coJustRun { mockReminderRepo.save(reminder) }
+        coJustRun { mockReminderRepo.save(capture(savedReminder)) }
         coEvery { mockAlarmRepo.findByReminderId(reminder.id) } returns alarm
         coJustRun { mockAlarmRepo.delete(alarm) }
         coEvery { mockAlarmRepo.save(capture(nextAlarm)) } returns alarm.id + 1
@@ -163,7 +164,7 @@ class ReminderEditorViewModelTest {
 
         coVerify {
             // Verify reminder is saved
-            mockReminderRepo.save(reminder)
+            mockReminderRepo.save(any())
 
             // Should cancel previous by finding old alarm, cancelling, and deleting
             mockAlarmRepo.findByReminderId(reminder.id)
@@ -175,6 +176,8 @@ class ReminderEditorViewModelTest {
             AlarmService.requestStop(mockApplication)
             AlarmActionHandler.createForAction(ACTION_ALARM_SCHEDULE_NEXT, "")
         }
+
+        assertThat(savedReminder.captured.id).isEqualTo(reminder.id)
 
         assertThat(nextAlarm.captured.reminderId).isEqualTo(reminder.id)
         assertThat(nextAlarm.captured.triggerAt).isEqualTo(

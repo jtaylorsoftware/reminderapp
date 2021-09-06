@@ -347,7 +347,10 @@ class ReminderEditorViewModel @Inject constructor(
 
                 val wasScheduled = stopAlarmsForReminder(getApplication(), reminder)
 
-                reminder.schedulingRules.getNextTimeForAlarm(currentLocalDateTime())?.let { time ->
+                reminder.schedulingRules.getNextTimeForAlarm(
+                    currentLocalDateTime(),
+                    allowSameDay = true
+                )?.let { time ->
                     val nextAlarm = Alarm(
                         reminderId = reminder.id,
                         triggerAt = time,
