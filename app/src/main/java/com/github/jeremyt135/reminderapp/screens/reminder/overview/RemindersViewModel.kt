@@ -19,6 +19,8 @@ import com.github.jeremyt135.reminderapp.di.DefaultDispatcher
 import com.github.jeremyt135.reminderapp.service.AlarmService
 import com.github.jeremyt135.reminderapp.util.MutableEventFlow
 import com.github.jeremyt135.reminderapp.util.asEventFlow
+import com.github.jeremyt135.reminderapp.util.currentLocalDateTime
+import com.github.jeremyt135.reminderapp.util.toEpochMilli
 import com.github.jeremyt135.reminderapp.work.AlarmActionHandler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
@@ -29,6 +31,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.time.DayOfWeek
+import java.time.LocalDate
 import javax.inject.Inject
 
 @HiltViewModel
@@ -198,7 +201,9 @@ class RemindersViewModel @Inject constructor(
                 list.filter {
                     // does the filter include today?
                     val today =
-                        reminderFilterRules.includeToday && it.reminder.schedulingRules.isOneOff
+                        reminderFilterRules.includeToday &&
+                                it.reminder.schedulingRules.getNextTimeForAlarm(currentLocalDateTime())
+                                    ?.toLocalDate() == LocalDate.now()
                     // does the filter include at least one of the reminder's DayOfWeeks?
                     val dayOfWeek =
                         it.reminder.schedulingRules.daysOfWeek.any { day -> day in reminderFilterRules.daysOfWeek }
@@ -234,12 +239,9 @@ class RemindersViewModel @Inject constructor(
         }
     }
 
-    private fun calculateTimeOrder(reminder: Reminder): Double {
-        val dayOfWeek =
-            if (reminder.schedulingRules.daysOfWeek.isNotEmpty()) reminder.schedulingRules.daysOfWeek.first().value else 0
-        val hour = reminder.schedulingRules.hour / 24.0 / 10
-        val minute = reminder.schedulingRules.minute / 60.0 / 100
-        return dayOfWeek + hour + minute
+    private fun calculateTimeOrder(reminder: Reminder): Long {
+        return reminder.schedulingRules.getNextTimeForAlarm(currentLocalDateTime())?.toEpochMilli()
+            ?: 0
     }
 
     /**

@@ -9,11 +9,13 @@ import com.github.jeremyt135.reminderapp.data.local.ReminderAndHistoryEntity
 import com.github.jeremyt135.reminderapp.data.local.ReminderEntity
 import com.github.jeremyt135.reminderapp.util.*
 import timber.log.Timber
+import java.lang.IllegalStateException
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.temporal.ChronoField
+import java.time.temporal.ChronoUnit
 import java.time.temporal.TemporalAdjusters
 import java.util.*
 
@@ -75,11 +77,9 @@ class Reminder(
 
     fun getDaysDisplayString() =
         when (schedulingRules.daysOfWeek.size) {
-            // TODO: Actually return Today's date?
-            0 -> "Today"
+            0 -> "No days selected"
             in 1..6 ->
                 // Sort for timezones with days of week similarly to the US, with Sunday first
-                // TODO: do sort correctly for any local timezone (would need to also display the date toggles similarly)
                 ("Every " + schedulingRules.daysOfWeek.sortedBy {
 
                     // Convert from 1..7 to 0..6
@@ -114,15 +114,15 @@ class Reminder(
         ReminderEntity(
             id = this.id,
             description = this.description,
-            vibrate = this.vibrate,
-            notifSoundUri = this.notifSoundUri,
             type = this.schedulingRules.type,
             startDate = this.schedulingRules.startDate,
             endDate = this.schedulingRules.endDate,
             time = this.schedulingRules.time,
-
+            daysOfWeek = this.schedulingRules.daysOfWeek,
+            vibrate = this.vibrate,
             maxSnoozeRepeats = this.maxSnoozeRepeats,
             snoozeDuration = this.snoozeDuration,
+            notifSoundUri = this.notifSoundUri,
         )
 
     override fun equals(other: Any?): Boolean {
@@ -196,19 +196,23 @@ enum class SchedulingType {
     /**
      * The Reminder repeats on multiple days over a span of time
      */
-    REPEATING
+    REPEATING,
+
+    /**
+     * The Reminder repeats forever with no end date
+     */
+    REPEAT_FOREVER
 }
 
 /**
  * Data for determining how to schedule a Reminder.
  */
 data class SchedulingRules(
-    val type: SchedulingType = SchedulingType.SINGLE,
+    val type: SchedulingType = SchedulingType.REPEAT_FOREVER,
     val startDate: LocalDate = LocalDate.now(),
-    val endDate: LocalDate = LocalDate.now(),
+    val endDate: LocalDate = startDate.plusDays(1),
     val time: LocalTime = currentLocalTime(),
-    val daysOfWeek: SortedSet<DayOfWeek> = sortedSetOf(),
-    val repeatsTimes: Long = 0,
+    val daysOfWeek: SortedSet<DayOfWeek> = DayOfWeek.values().toSortedSet(),
 ) {
 
     var hour: Int = time.hour
@@ -226,49 +230,78 @@ data class SchedulingRules(
         }
 
     // True if this Reminder was scheduled for the same day as it was created and does not repeat.
-    val isOneOff: Boolean = daysOfWeek.isEmpty()
+    val isOneOff: Boolean = type == SchedulingType.SINGLE
 
     // True if this Reminder runs every day.
     val isEveryDay: Boolean = daysOfWeek.size == ChronoField.DAY_OF_WEEK.range().maximum.toInt()
 
     /**
-     * Returns the next LocalDateTime that this Reminder could have an alarm scheduled,
-     * or null if the Reminder is a one-off in the past and cannot be scheduled.
+     * Determines the next LocalDateTime that a reminder with these rules could have an alarm scheduled.
+     * @param currentDateTime The current date and time, to determine the relative offset for scheduling
+     * @return The next LocalDateTime to schedule, or null if the reminder is "expired" (outside
+     * the allowed end time).
      */
-    fun getNextTimeForAlarm(today: DayOfWeek, allowSameDay: Boolean = true): LocalDateTime? {
-        val reminderTimeToday =
-            LocalDateTime.of(LocalDate.now(), LocalTime.of(hour, minute))
-        val timeIsInPast = currentLocalDateTime().isAfter(reminderTimeToday)
-
-        return if (isOneOff) {
-            if (timeIsInPast) {
-                Timber.d("One-off Alarm for today was in the past")
-                null
-            } else {
-                reminderTimeToday
+    fun getNextTimeForAlarm(currentDateTime: LocalDateTime): LocalDateTime? {
+        return when (type) {
+            SchedulingType.SINGLE -> {
+                if (startDate >= currentDateTime.toLocalDate()) {
+                    startDate.atTime(time).truncatedTo(ChronoUnit.MINUTES)
+                } else null
             }
-        } else {
-            val nextDayOfWeek = daysOfWeek.firstOrNull { it > today } ?: daysOfWeek.first()
-            if (timeIsInPast) {
-                Timber.d("Repeating alarm (in past) next day of week -> $nextDayOfWeek")
-                reminderTimeToday.with(TemporalAdjusters.next(nextDayOfWeek))
-            } else {
-                val nextDayOfWeek = if (daysOfWeek.contains(today) && allowSameDay) {
-                    today
+            SchedulingType.REPEATING, SchedulingType.REPEAT_FOREVER -> {
+                if (type == SchedulingType.REPEATING &&
+                    currentDateTime > endDate.atTime(time).truncatedTo(ChronoUnit.MINUTES)
+                ) {
+                    null // expired
+                } else if (currentDateTime.toLocalDate() < startDate) {
+                    // in future
+                    val nextDayOfWeek = firstDayOfWeek { it > currentDateTime.dayOfWeek }
+                    startDate.atTime(time).with(TemporalAdjusters.nextOrSame(nextDayOfWeek))
+                        .truncatedTo(ChronoUnit.MINUTES)
                 } else {
-                    nextDayOfWeek
-                }
-                Timber.d("Repeating alarm (time >= now) next day of week -> $nextDayOfWeek")
-                reminderTimeToday.with(
-                    if (allowSameDay) {
-                        TemporalAdjusters.nextOrSame(nextDayOfWeek)
+                    // check if the reminder time is in the past, preventing it from being scheduled today
+                    if (currentDateTime.toLocalTime() > time) {
+                        val nextDayOfWeek = firstDayOfWeek { it > currentDateTime.dayOfWeek }
+                        currentDateTime.toLocalDate()
+                            .atTime(time)
+                            .with(TemporalAdjusters.next(nextDayOfWeek))
+                            .truncatedTo(ChronoUnit.MINUTES)
                     } else {
-                        TemporalAdjusters.next(nextDayOfWeek)
+                        // time is in the future, so it could be scheduled for today
+                        val nextDayOfWeek = firstDayOfWeek { it >= currentDateTime.dayOfWeek }
+                        currentDateTime.toLocalDate()
+                            .atTime(time)
+                            .with(TemporalAdjusters.nextOrSame(nextDayOfWeek))
+                            .truncatedTo(ChronoUnit.MINUTES)
                     }
-                )
+                }
             }
         }
     }
+
+    /**
+     * Returns first day of week matching the predicate, falling back to the first
+     * selected DayOfWeek if none of the daysOfWeek match the predicate.
+     */
+    private fun firstDayOfWeek(predicate: (DayOfWeek) -> Boolean) =
+        daysOfWeek.firstOrNull { predicate(it) }
+            ?: daysOfWeek.first()
+
+    fun startDateDisplayString() = if (startDate == LocalDate.now()) {
+        "Today"
+    } else startDate.getShortLocalDateDisplay()
+
+    fun endDateDisplayString() = when (type) {
+        SchedulingType.REPEATING -> if (endDate == LocalDate.now()) {
+            "Today"
+        } else endDate.getShortLocalDateDisplay()
+        SchedulingType.REPEAT_FOREVER -> "Forever"
+        SchedulingType.SINGLE -> {
+            Timber.e("endDateDisplayString called when there is no meaningful end date")
+            ""
+        }
+    }
+
 
     fun dayIsScheduled(dayString: String) = dayIsScheduled(DayOfWeek.valueOf(dayString))
 

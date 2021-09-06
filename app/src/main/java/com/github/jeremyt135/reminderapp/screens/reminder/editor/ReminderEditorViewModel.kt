@@ -16,21 +16,26 @@ import com.github.jeremyt135.reminderapp.data.AlarmRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.Alarm
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
-import com.github.jeremyt135.reminderapp.data.domain.SnoozeRepetitionOption
+import com.github.jeremyt135.reminderapp.data.domain.SchedulingType
 import com.github.jeremyt135.reminderapp.data.domain.SnoozeRules
 import com.github.jeremyt135.reminderapp.di.AppCoroutineScope
 import com.github.jeremyt135.reminderapp.service.AlarmService
 import com.github.jeremyt135.reminderapp.util.MutableEventFlow
 import com.github.jeremyt135.reminderapp.util.asEventFlow
+import com.github.jeremyt135.reminderapp.util.currentLocalDateTime
+import com.github.jeremyt135.reminderapp.util.getShortLocalDateDisplay
 import com.github.jeremyt135.reminderapp.work.AlarmActionHandler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
+import java.util.*
 import javax.inject.Inject
 import kotlin.properties.Delegates
 
@@ -42,44 +47,131 @@ class ReminderEditorViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     @AppCoroutineScope private val applicationScope: CoroutineScope
 ) : AndroidViewModel(application) {
-    private val _reminder = MutableStateFlow(Reminder())
+    private val _reminder =
+        MutableStateFlow(Reminder())
 
     /**
      * The Reminder being edited
      */
     val reminder = _reminder.asStateFlow()
 
-    // How should the reminder repeat - never, forever, or no. of times
-    val snoozeRepetitionOption = _reminder.map { reminder ->
-        when (reminder.snoozeRules.maxRepeats) {
-            0L -> SnoozeRepetitionOption.None
-            Long.MAX_VALUE -> SnoozeRepetitionOption.Infinite
-            else -> SnoozeRepetitionOption.Choose
-        }
-    }.stateIn(
-        viewModelScope,
-        started = SharingStarted.Lazily,
-        initialValue = SnoozeRepetitionOption.Choose
-    )
+    /**
+     * Error state for days of week
+     */
+    private val _daysOfWeekState = MutableStateFlow(TextFieldState())
+    val daysOfWeekState = _daysOfWeekState.asLiveData(viewModelScope.coroutineContext)
 
-    // Can the repetition be changed (is snoozeRepetitionOption "Times")
-    val canChangeSnoozeRepetitions =
-        snoozeRepetitionOption.map { it == SnoozeRepetitionOption.Choose }
-            .asLiveData(viewModelScope.coroutineContext)
-
-    // Can the snooze duration be changed (is snoozeRepetitionOption not "None")
-    val canChangeSnoozeDuration =
-        snoozeRepetitionOption.map { it != SnoozeRepetitionOption.None }
-            .asLiveData(viewModelScope.coroutineContext)
-
-
+    /**
+     * Comma-separated of selected days of week
+     */
     val reminderDaysDisplayString: LiveData<String> =
-        _reminder.map { it.getDaysDisplayString() }
-            .asLiveData(viewModelScope.coroutineContext)
+        _daysOfWeekState.combine(reminder) { state, reminder ->
+            if (!isEditing && !state.dirty) {
+                ""
+            } else reminder.getDaysDisplayString()
+        }.asLiveData(viewModelScope.coroutineContext)
 
-    val selectedSound: LiveData<String> =
-        _reminder.map { getSoundTitle(it.notifSoundUri) }
-            .asLiveData(viewModelScope.coroutineContext)
+    /**
+     * Error state for start date
+     */
+    private val _startDateState = MutableStateFlow(TextFieldState())
+    val startDateState = _startDateState.asLiveData(viewModelScope.coroutineContext)
+
+    /**
+     * String containing the selected start date
+     */
+    val startDateString: LiveData<String> =
+        _startDateState.combine(_reminder) { state, reminder ->
+            if (!isEditing && !state.dirty) {
+                ""
+            } else reminder.schedulingRules.startDateDisplayString()
+        }.asLiveData(viewModelScope.coroutineContext)
+
+    /**
+     * Error state for end date
+     */
+    private val _endDateState = MutableStateFlow(TextFieldState())
+    val endDateState = _endDateState.asLiveData(viewModelScope.coroutineContext)
+
+    /**
+     * String containing the selected end date
+     */
+    val endDateString: LiveData<String> =
+        _endDateState.combine(_reminder) { state, reminder ->
+            if (!isEditing && !state.dirty) {
+                ""
+            } else reminder.schedulingRules.endDate.let {
+                if (it == LocalDate.now()) {
+                    "Today"
+                } else {
+                    it.getShortLocalDateDisplay()
+                }
+            }
+        }.asLiveData(viewModelScope.coroutineContext)
+
+    /**
+     * Error state for time
+     */
+    private val _timeState = MutableStateFlow(TextFieldState())
+    val timeState = _timeState.asLiveData(viewModelScope.coroutineContext)
+
+    /**
+     * Display string for selected time
+     */
+    val timeDisplayString: LiveData<String> =
+        _timeState.combine(_reminder) { state, reminder ->
+            if (!isEditing && !state.dirty) {
+                ""
+            } else reminder.getTimeDisplayString()
+        }.asLiveData(viewModelScope.coroutineContext)
+
+
+    /**
+     * Error state for snooze options
+     */
+    private val _snoozeRulesState = MutableStateFlow(TextFieldState())
+    val snoozeRulesState = _snoozeRulesState.asLiveData(viewModelScope.coroutineContext)
+
+    /**
+     * Display string for selected snooze options
+     */
+    val snoozeDisplayString: LiveData<String> =
+        _snoozeRulesState.combine(_reminder) { state, reminder ->
+            if (!isEditing && !state.dirty) "" else reminder.snoozeRules.getDisplayString()
+        }.asLiveData(viewModelScope.coroutineContext)
+
+
+    /**
+     * Error state for sound & vibrate options
+     */
+    private val _soundState = MutableStateFlow(TextFieldState())
+    val soundState = _soundState.asLiveData(viewModelScope.coroutineContext)
+
+    /**
+     * String containing current selected vibrate and sound options
+     */
+    val vibrateAndSoundDisplayString: LiveData<String> =
+        _soundState.combine(_reminder) { state, reminder ->
+            if (!isEditing && !state.dirty) {
+                ""
+            } else (if (_reminder.value.vibrate) "Vibrate" else "No vibrate") + ", ${
+                getSoundTitle(
+                    reminder.notifSoundUri
+                )
+            }"
+        }.asLiveData(viewModelScope.coroutineContext)
+
+    /**
+     * "Repeats" Checkbox state
+     */
+    private val _repeats = MutableStateFlow(true)
+    val repeats = _repeats.asLiveData()
+
+    /**
+     * "End date" Checkbox state
+     */
+    private val _hasEndDate = MutableStateFlow(false)
+    val hasEndDate = _hasEndDate.asLiveData()
 
     private val _navigateToReminders = MutableEventFlow<Unit>()
     val navigateToReminders = _navigateToReminders.asEventFlow()
@@ -105,6 +197,9 @@ class ReminderEditorViewModel @Inject constructor(
             viewModelScope.launch {
                 reminderRepository.findById(savedReminderId)?.let {
                     _reminder.value = it
+                    _repeats.value = _reminder.value.schedulingRules.type != SchedulingType.SINGLE
+                    _hasEndDate.value =
+                        _reminder.value.schedulingRules.type == SchedulingType.REPEATING
                 }
             }
         }
@@ -114,73 +209,127 @@ class ReminderEditorViewModel @Inject constructor(
         viewModelScope.launch { _navigateToReminders.value = Unit }
     }
 
-    fun toggleDay(dayString: String) {
-        Timber.d("Clicked $dayString")
-        val day = DayOfWeek.valueOf(dayString)
-        val daysOfWeek = _reminder.value.schedulingRules.daysOfWeek.toSortedSet()
-        if (daysOfWeek.contains(day)) {
-            daysOfWeek.remove(day)
-        } else {
-            daysOfWeek.add(day)
-        }
+    fun onStartDateChanged(newDate: LocalDate) {
         _reminder.value = _reminder.value.let {
-            it.copy(schedulingRules = it.schedulingRules.copy(daysOfWeek = daysOfWeek))
-        }.also {
-            Timber.d("datesDisplay is now ${it.getDaysDisplayString()}")
+            it.copy(schedulingRules = it.schedulingRules.copy(startDate = newDate))
+        }
+        _startDateState.value = _startDateState.value.copy(dirty = true)
+        checkDateErrors()
+        checkTimeErrors()
+    }
+
+    fun onEndDateChanged(newDate: LocalDate) {
+        _reminder.value = _reminder.value.let {
+            it.copy(schedulingRules = it.schedulingRules.copy(endDate = newDate))
+        }
+        _endDateState.value = _endDateState.value.copy(dirty = true)
+        checkDateErrors()
+    }
+
+    private fun checkDateErrors() {
+        with(_reminder.value.schedulingRules) {
+            _startDateState.value =
+                _startDateState.value.copy(
+                    errorEnabled = startDate < LocalDate.now() || startDate > endDate && _hasEndDate.value
+                )
+            _endDateState.value =
+                _endDateState.value.copy(
+                    errorEnabled = endDate <= _reminder.value.schedulingRules.startDate
+                )
+        }
+
+    }
+
+    fun setRepeat(repeat: Boolean) {
+        if (_repeats.value == repeat) {
+            return
+        }
+
+        Timber.d("Set repeat")
+        _repeats.value = repeat
+        _daysOfWeekState.value = _daysOfWeekState.value.copy(dirty = false, errorEnabled = false)
+        _reminder.value = _reminder.value.let {
+            it.copy(
+                schedulingRules = if (repeat) {
+                    it.schedulingRules.copy(
+                        type = SchedulingType.REPEAT_FOREVER,
+                        daysOfWeek = DayOfWeek.values().toSortedSet()
+                    )
+                } else {
+                    it.schedulingRules.copy(
+                        type = SchedulingType.SINGLE,
+                        daysOfWeek = sortedSetOf()
+                    )
+                }
+            )
         }
     }
 
-    fun onTimeChanged(newHour: Int, newMinute: Int) {
-        val (oldHour, oldMinute) = _reminder.value.schedulingRules.hour to _reminder.value.schedulingRules.minute
-        if (newHour != oldHour || newMinute != oldMinute) {
+    fun setHasEndDate(hasEndDate: Boolean) {
+        if (_hasEndDate.value == hasEndDate) {
+            return
+        }
+
+        _hasEndDate.value = hasEndDate
+        if (hasEndDate) {
             _reminder.value = _reminder.value.let {
                 it.copy(
                     schedulingRules = it.schedulingRules.copy(
-                        time = LocalTime.of(
-                            newHour,
-                            newMinute
-                        )
+                        type = SchedulingType.REPEATING,
+                        endDate = it.schedulingRules.startDate.plusDays(1)
                     )
+                )
+            }
+            _endDateState.value = _endDateState.value.copy(errorEnabled = false)
+        } else {
+            _reminder.value = _reminder.value.let {
+                it.copy(
+                    schedulingRules = it.schedulingRules.copy(type = SchedulingType.REPEAT_FOREVER)
                 )
             }
         }
     }
 
-    fun onSnoozeRepetitionOptionChanged(newSelection: String) {
-        val newOption = SnoozeRepetitionOption.valueOf(newSelection)
-        if (newOption == snoozeRepetitionOption.value) {
-            return
+    fun onDaysOfWeekChanged(newValue: SortedSet<DayOfWeek>) {
+        _reminder.value = _reminder.value.let {
+            it.copy(schedulingRules = it.schedulingRules.copy(daysOfWeek = newValue))
         }
+        Timber.d("Days of week: $newValue")
+        _daysOfWeekState.value =
+            _daysOfWeekState.value.copy(dirty = true, errorEnabled = newValue.isEmpty())
+    }
 
-        when (newOption) {
-            SnoozeRepetitionOption.None -> {
-                _reminder.value =
-                    _reminder.value.let { it.copy(snoozeRules = it.snoozeRules.copy(maxRepeats = 0)) }
-            }
-            SnoozeRepetitionOption.Infinite -> {
-                _reminder.value =
-                    _reminder.value.let {
-                        it.copy(
-                            snoozeRules = it.snoozeRules.copy(
-                                maxRepeats = Long.MAX_VALUE,
-                                duration = SnoozeRules.DEFAULT_SNOOZE_DURATION
-                            )
-                        )
-                    }
-
-            }
-            SnoozeRepetitionOption.Choose -> {
-                _reminder.value =
-                    _reminder.value.let {
-                        it.copy(
-                            snoozeRules = it.snoozeRules.copy(
-                                maxRepeats = SnoozeRules.DEFAULT_SNOOZE_REPEATS,
-                                duration = SnoozeRules.DEFAULT_SNOOZE_DURATION
-                            )
-                        )
-                    }
-            }
+    fun onTimeChanged(newTime: LocalTime) {
+        Timber.d("New time $newTime")
+        _reminder.value = _reminder.value.let {
+            it.copy(schedulingRules = it.schedulingRules.copy(time = newTime))
         }
+        _timeState.value = _timeState.value.copy(dirty = true)
+        checkTimeErrors()
+    }
+
+    private fun checkTimeErrors() {
+        val errorEnabled = with(_reminder.value) {
+            val startDateTime = schedulingRules.startDate.atTime(schedulingRules.time)
+            startDateTime < currentLocalDateTime()
+        }
+        _timeState.value = _timeState.value.copy(errorEnabled = errorEnabled)
+    }
+
+    fun onSnoozeRulesChanged(newRules: SnoozeRules) {
+        Timber.d("New rules: $newRules")
+        _snoozeRulesState.value = _snoozeRulesState.value.copy(dirty = true)
+        _reminder.value = _reminder.value.copy(snoozeRules = newRules)
+    }
+
+    fun onVibrateChanged(newValue: Boolean) {
+        _soundState.value = _soundState.value.copy(dirty = true)
+        _reminder.value = _reminder.value.copy(vibrate = newValue)
+    }
+
+    fun onSoundUriChanged(newValue: String) {
+        _soundState.value = _soundState.value.copy(dirty = true)
+        _reminder.value = _reminder.value.copy(notifSoundUri = newValue)
     }
 
     fun setAlarmSound(sound: Uri) {
@@ -198,8 +347,7 @@ class ReminderEditorViewModel @Inject constructor(
 
                 val wasScheduled = stopAlarmsForReminder(getApplication(), reminder)
 
-                val today = LocalDate.now().dayOfWeek
-                reminder.schedulingRules.getNextTimeForAlarm(today)?.let { time ->
+                reminder.schedulingRules.getNextTimeForAlarm(currentLocalDateTime())?.let { time ->
                     val nextAlarm = Alarm(
                         reminderId = reminder.id,
                         triggerAt = time,
@@ -209,11 +357,14 @@ class ReminderEditorViewModel @Inject constructor(
                     nextAlarm.id = alarmRepository.save(nextAlarm)
                 }
 
+                // schedule the next alarm again if the one being saved is an edit, or
+                // if the AlarmService is not already running for some other reminder
                 if (wasScheduled) {
                     AlarmService.requestStop(getApplication())
+                    scheduleNextAlarm()
+                } else if (!AlarmService.running) {
+                    scheduleNextAlarm()
                 }
-
-                scheduleNextAlarm()
             }
         }
 
@@ -242,7 +393,7 @@ class ReminderEditorViewModel @Inject constructor(
         _navigateToReminders.value = Unit
     }
 
-    private fun getSoundTitle(soundUri: String) = if (soundUri.isEmpty()) "None" else
+    private fun getSoundTitle(soundUri: String) = if (soundUri.isEmpty()) "No sound" else
         RingtoneManager.getRingtone(getApplication(), Uri.parse(soundUri))
             .getTitle(getApplication())
 
@@ -262,3 +413,5 @@ class ReminderEditorViewModel @Inject constructor(
             it.scheduled
         } == true
 }
+
+data class TextFieldState(val errorEnabled: Boolean = false, val dirty: Boolean = false)

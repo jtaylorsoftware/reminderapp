@@ -237,7 +237,12 @@ class AlarmActionHandlerTest {
     @Test
     fun actionSkip_savesHistoryAsSkip_schedulesNext() {
         val reminder =
-            Reminder(schedulingRules = SchedulingRules(daysOfWeek = sortedSetOf(*DayOfWeek.values())))
+            Reminder(
+                schedulingRules = SchedulingRules(
+                    type = SchedulingType.REPEATING,
+                    daysOfWeek = sortedSetOf(*DayOfWeek.values()),
+                )
+            )
         val alarm = Alarm(id = 1, reminderId = reminder.id, triggerAt = currentLocalDateTime())
         val history = slot<History>()
         val nextAlarm = slot<Alarm>()
@@ -286,8 +291,7 @@ class AlarmActionHandlerTest {
         assertThat(nextAlarm.captured.reminderId).isEqualTo(reminder.id)
         assertThat(nextAlarm.captured.triggerAt).isEqualTo(
             reminder.schedulingRules.getNextTimeForAlarm(
-                LocalDate.now().dayOfWeek,
-                false
+                currentLocalDateTime()
             )!!
         )
     }
@@ -295,7 +299,12 @@ class AlarmActionHandlerTest {
     @Test
     fun actionComplete_savesHistoryAsComplete_schedulesNext() {
         val reminder =
-            Reminder(schedulingRules = SchedulingRules(daysOfWeek = sortedSetOf(*DayOfWeek.values())))
+            Reminder(
+                schedulingRules = SchedulingRules(
+                    type = SchedulingType.REPEATING,
+                    daysOfWeek = sortedSetOf(*DayOfWeek.values())
+                )
+            )
         val alarm = Alarm(id = 1, reminderId = reminder.id, triggerAt = currentLocalDateTime())
         val history = slot<History>()
         val nextAlarm = slot<Alarm>()
@@ -345,8 +354,7 @@ class AlarmActionHandlerTest {
         assertThat(nextAlarm.captured.reminderId).isEqualTo(reminder.id)
         assertThat(nextAlarm.captured.triggerAt).isEqualTo(
             reminder.schedulingRules.getNextTimeForAlarm(
-                LocalDate.now().dayOfWeek,
-                false
+                currentLocalDateTime()
             )!!
         )
     }

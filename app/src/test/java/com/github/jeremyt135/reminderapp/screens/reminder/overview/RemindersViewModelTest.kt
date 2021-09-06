@@ -11,6 +11,7 @@ import com.github.jeremyt135.reminderapp.data.local.FakeHistoryLocalDataSource
 import com.github.jeremyt135.reminderapp.getOrAwaitValue
 import com.github.jeremyt135.reminderapp.service.AlarmService
 import com.github.jeremyt135.reminderapp.util.currentEpochMilli
+import com.github.jeremyt135.reminderapp.util.currentLocalDateTime
 import com.github.jeremyt135.reminderapp.work.AlarmActionHandler
 import com.google.common.truth.Truth.assertThat
 import io.mockk.*
@@ -22,6 +23,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import java.time.DayOfWeek
+import java.time.LocalDate
 import java.time.LocalTime
 
 @ExperimentalCoroutinesApi
@@ -264,7 +266,7 @@ class RemindersViewModelTest {
             assertThat(viewModel.reminders.getOrAwaitValue()).containsExactlyElementsIn(
                 remindersWithHistory.filter { it.reminder.schedulingRules.dayIsScheduled(DayOfWeek.FRIDAY) })
 
-            // Should only contain the one-offs
+            // Should only contain reminders scheduled for today
             viewModel.changeFilterRules(
                 ReminderFilterRules(
                     includeToday = true,
@@ -272,7 +274,12 @@ class RemindersViewModelTest {
                 )
             )
             assertThat(viewModel.reminders.getOrAwaitValue()).containsExactlyElementsIn(
-                remindersWithHistory.filter { it.reminder.schedulingRules.isOneOff })
+                remindersWithHistory.filter {
+                    it.reminder.schedulingRules.getNextTimeForAlarm(
+                        currentLocalDateTime()
+                    )
+                        ?.toLocalDate() == LocalDate.now()
+                })
         }
 
     @Test

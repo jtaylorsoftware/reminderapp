@@ -173,18 +173,21 @@ class AlarmActionHandlerImpl(
 
             // Save a new alarm if appropriate - not one-off and has an upcoming time
             if (!reminder.schedulingRules.isOneOff) {
-                val today = LocalDate.now().dayOfWeek
-                reminder.schedulingRules.getNextTimeForAlarm(today, false)?.let { nextTime ->
-                    alarmRepository.save(
-                        alarm.copy(
-                            id = 0,
-                            triggerAt = nextTime,
-                            snoozeCount = 0,
-                            scheduled = null,
-                            notificationId = NotificationId.next
+                reminder.schedulingRules.getNextTimeForAlarm(currentLocalDateTime())
+                    ?.let { nextTime ->
+                        alarmRepository.save(
+                            alarm.copy(
+                                id = 0,
+                                triggerAt = nextTime,
+                                snoozeCount = 0,
+                                scheduled = null,
+                                notificationId = NotificationId.next
+                            )
                         )
-                    )
-                }
+                    }
+            } else {
+                // is a one-off, delete the reminder since it can no longer be scheduled
+                reminderRepository.delete(reminder)
             }
             alarmRepository.delete(alarm)
         }

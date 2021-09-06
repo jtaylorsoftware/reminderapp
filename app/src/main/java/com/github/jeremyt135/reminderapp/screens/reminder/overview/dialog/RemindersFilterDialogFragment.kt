@@ -37,23 +37,21 @@ constructor(previousFilterRules: ReminderFilterRules) : DialogFragment() {
     }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        return activity?.let {
-            val builder = AlertDialog.Builder(it)
-            val inflater = requireActivity().layoutInflater
-            // custom dialog body
-            val view = inflater.inflate(R.layout.dialog_filter_reminders, null)
-            setupView(view)
-            builder.apply {
-                setView(view)
-                setTitle(R.string.dialog_reminderFilter_title)
-                setPositiveButton(R.string.dialog_apply) { _, _ ->
-                    listener.onFilterRulesChange(this@RemindersFilterDialogFragment)
-                }
-                setNegativeButton(R.string.dialog_cancel) { _, _ ->
-                    Timber.d("User cancelled sorting")
-                }
-            }.create()
-        } ?: throw IllegalStateException("Activity cannot be null")
+        val builder = AlertDialog.Builder(requireActivity())
+        val inflater = requireActivity().layoutInflater
+        // custom dialog body
+        val view = inflater.inflate(R.layout.dialog_filter_reminders, null)
+        setupView(view)
+        return builder.apply {
+            setView(view)
+            setTitle(R.string.dialog_reminderFilter_title)
+            setPositiveButton(R.string.dialog_apply) { _, _ ->
+                listener.onFilterRulesChange(this@RemindersFilterDialogFragment)
+            }
+            setNegativeButton(R.string.dialog_cancel) { _, _ ->
+                Timber.d("User cancelled sorting")
+            }
+        }.create()
     }
 
     override fun onAttach(context: Context) {

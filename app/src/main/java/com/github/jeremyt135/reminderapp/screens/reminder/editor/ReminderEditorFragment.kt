@@ -1,88 +1,35 @@
 package com.github.jeremyt135.reminderapp.screens.reminder.editor
 
-import android.app.Activity
-import android.content.Context
-import android.content.Intent
-import android.media.RingtoneManager
-import android.net.Uri
 import android.os.Bundle
-import android.text.InputFilter
-import android.text.Spanned
 import android.view.View
-import android.widget.ArrayAdapter
-import android.widget.AutoCompleteTextView
-import android.widget.EditText
-import android.widget.TimePicker
-import androidx.activity.result.contract.ActivityResultContract
-import androidx.activity.result.launch
-import androidx.activity.result.registerForActivityResult
 import androidx.annotation.VisibleForTesting
 import androidx.appcompat.app.AppCompatActivity
-import androidx.constraintlayout.widget.Group
-import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.whenStarted
 import com.github.jeremyt135.R
 import com.github.jeremyt135.databinding.FragmentReminderEditorBinding
 import com.github.jeremyt135.reminderapp.broadcast.EXTRA_REMINDER_ID
-import com.github.jeremyt135.reminderapp.data.domain.SnoozeRepetitionOption
-import com.github.jeremyt135.reminderapp.data.domain.SnoozeRules
-import com.github.jeremyt135.reminderapp.util.time
+import com.github.jeremyt135.reminderapp.screens.reminder.editor.dialog.DayOfWeekDialogFragment
+import com.github.jeremyt135.reminderapp.screens.reminder.editor.dialog.SnoozeOptionsDialogFragment
+import com.github.jeremyt135.reminderapp.screens.reminder.editor.dialog.SoundPickerDialogFragment
+import com.github.jeremyt135.reminderapp.util.toEpochMilli
+import com.github.jeremyt135.reminderapp.util.toLocalDate
+import com.google.android.material.datepicker.CalendarConstraints
+import com.google.android.material.datepicker.DateValidatorPointForward
+import com.google.android.material.datepicker.MaterialDatePicker
+import com.google.android.material.timepicker.MaterialTimePicker
+import com.google.android.material.timepicker.TimeFormat
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.launch
 import timber.log.Timber
+import java.time.LocalTime
+import java.time.ZoneId
 
 @AndroidEntryPoint
 class ReminderEditorFragment : Fragment(R.layout.fragment_reminder_editor) {
     val viewModel: ReminderEditorViewModel by activityViewModels()
         @VisibleForTesting get
-
-    private lateinit var timePicker: TimePicker
-    private lateinit var snoozeRepetitionsText: AutoCompleteTextView
-    private lateinit var snoozeRepetitionGroup: Group
-
-    private val getAlarmSound =
-        registerForActivityResult(PickRingtone(), RingtoneManager.TYPE_ALL) { uri ->
-            Timber.d("Finished ringtone activity: $uri")
-            uri?.let {
-                viewModel.setAlarmSound(it)
-            }
-        }
-
-    init {
-        lifecycleScope.launch {
-            whenStarted {
-                /**
-                 * Set the TimePicker's onTimeChangedListener programmatically
-                 *
-                 * Would just use two-way binding but it seems API level 21 may have issues with the
-                 * android:hour & android:minute data binding attributes
-                 */
-                timePicker.setOnTimeChangedListener { _, hour, minute ->
-                    Timber.d("Time has changed to $hour hr $minute min")
-                    viewModel.onTimeChanged(hour, minute)
-                }
-
-                launch {
-                    viewModel.reminder.collect { reminder ->
-                        // Initialize timePicker from reminder
-                        timePicker.time = Pair(reminder.schedulingRules.hour, reminder.schedulingRules.minute)
-                    }
-                }
-
-                launch {
-                    viewModel.snoozeRepetitionOption.collect {
-                        // Initialize option from saved state
-                        snoozeRepetitionsText.setText(it.toString(), false)
-                    }
-                }
-            }
-        }
-    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -105,106 +52,152 @@ class ReminderEditorFragment : Fragment(R.layout.fragment_reminder_editor) {
             model = viewModel
             reminder = viewModel.reminder.asLiveData(lifecycleScope.coroutineContext)
 
-            snoozeRepetitionGroup = groupEditorMaxSnoozeRepeats
+            viewModel.startDateState.observe(viewLifecycleOwner) {
+                if (it.errorEnabled) {
+                    textlayoutEditorStartDate.error = "Start date must be after end date"
+                } else {
+                    textlayoutEditorStartDate.error = ""
+                }
+            }
+            viewModel.endDateState.observe(viewLifecycleOwner) {
+                if (it.errorEnabled) {
+                    textlayoutEditorEndDate.error = "End date must be after start date"
+                } else {
+                    textlayoutEditorEndDate.error = ""
+                }
+            }
+            viewModel.timeState.observe(viewLifecycleOwner) {
+                if (it.errorEnabled) {
+                    if (viewModel.timeState.value?.dirty == true) {
+                        textlayoutEditorTime.error = "Time cannot be in the past"
+                    }
+                } else {
+                    textlayoutEditorTime.error = ""
+                }
+            }
+            viewModel.daysOfWeekState.observe(viewLifecycleOwner) {
+                if (it.errorEnabled) {
+                    textlayoutEditorDaysOfWeek.error = "Select at least one day of week"
+                } else {
+                    textlayoutEditorDaysOfWeek.error = ""
+                }
+            }
 
-            // Provide options for the dropdown menu
-            val intervalAdapter =
-                ArrayAdapter(
-                    requireContext(),
-                    R.layout.item_dropdown_snooze,
-                    SnoozeRepetitionOption.values()
-                )
-            textinputEditorMaxSnoozeRepeats.apply {
-                editText?.let { editText ->
-                    snoozeRepetitionsText = editText as AutoCompleteTextView
-                    snoozeRepetitionsText.setAdapter(intervalAdapter)
-                    editText.doAfterTextChanged { editable ->
-                        editable?.toString()?.let { text ->
-                            viewModel.onSnoozeRepetitionOptionChanged(text)
-                        }
+            textinputEditorStartDate.setOnClickListener {
+                selectDate(it)
+            }
+            textinputEditorEndDate.setOnClickListener {
+                selectDate(it)
+            }
+            textinputEditorTime.setOnClickListener {
+                selectTime()
+            }
+            textinputEditorDaysOfWeek.setOnClickListener {
+                selectDaysOfWeek()
+            }
+            textinputEditorSound.setOnClickListener {
+                selectSound()
+            }
+            textinputEditorSnooze.setOnClickListener {
+                selectSnooze()
+            }
+
+            checkboxEditorRepeat.setOnCheckedChangeListener { _, isChecked ->
+                viewModel.setRepeat(isChecked)
+            }
+            checkboxEditorEndDate.setOnCheckedChangeListener { _, isChecked ->
+                viewModel.setHasEndDate(isChecked)
+            }
+        }
+    }
+
+    private fun selectDate(view: View) {
+        val datePickerBuilder =
+            MaterialDatePicker.Builder.datePicker()
+                .setTitleText("Select date")
+
+        val datePicker = when (view.id) {
+            R.id.textinput_editor_startDate -> {
+                // Only allow start dates beginning from today
+                val constraintsBuilder =
+                    CalendarConstraints.Builder().setValidator(DateValidatorPointForward.now())
+                        .build()
+
+                datePickerBuilder.setSelection(
+                    viewModel.reminder.value.schedulingRules.startDate.atTime(
+                        LocalTime.now()
+                    ).toEpochMilli(ZoneId.of("Z"))
+                ).setCalendarConstraints(constraintsBuilder)
+                datePickerBuilder.build().apply {
+                    addOnPositiveButtonClickListener {
+                        viewModel.onStartDateChanged(it.toLocalDate(ZoneId.of("Z")))
                     }
                 }
             }
+            R.id.textinput_editor_endDate -> {
+                // Only allow end dates beginning from the start date
+                val constraintsBuilder =
+                    CalendarConstraints.Builder().setValidator(
+                        DateValidatorPointForward.from(
+                            viewModel.reminder.value.schedulingRules.startDate.atTime(LocalTime.now())
+                                .toEpochMilli(ZoneId.of("Z"))
+                        )
+                    ).build()
 
-            // When the "sound" switch is toggled, open sound selector
-            switchEditorSound.setOnClickListener { getAlarmSound.launch() }
-
-            timePicker = timePickerEditor
-
-            // Set filters on the numeric text inputs
-            editEditorMaxSnoozeRepeats.filters =
-                arrayOf(RangeInputFilter(0, Long.MAX_VALUE))
-            editEditorSnoozeDuration.filters = arrayOf(
-                RangeInputFilter(
-                    SnoozeRules.MAX_SNOOZE_DURATION,
-                    SnoozeRules.MIN_SNOOZE_DURATION,
-                )
-            )
-
-            // Add listeners to repopulate the text input if they're left empty
-            editEditorMaxSnoozeRepeats.setOnFocusChangeListener { editText, hasFocus ->
-                if (!hasFocus) {
-                    (editText as EditText).setText(viewModel.reminder.value.snoozeRules.maxRepeats.toString())
+                datePickerBuilder.setSelection(
+                    viewModel.reminder.value.schedulingRules.endDate.atTime(
+                        LocalTime.now()
+                    ).toEpochMilli(ZoneId.of("Z"))
+                ).setCalendarConstraints(constraintsBuilder)
+                datePickerBuilder.build().apply {
+                    addOnPositiveButtonClickListener {
+                        viewModel.onEndDateChanged(it.toLocalDate(ZoneId.of("Z")))
+                    }
                 }
             }
-            editEditorSnoozeDuration.setOnFocusChangeListener { editText, hasFocus ->
-                if (!hasFocus) {
-                    (editText as EditText).setText(viewModel.reminder.value.snoozeRules.duration.toString())
-                }
-            }
+            else -> throw IllegalStateException("selectDate called with unexpected view")
         }
+
+        datePicker.show(parentFragmentManager, "datePicker")
     }
 
+    private fun selectTime() {
+        val previousSelectedTime = viewModel.reminder.value.schedulingRules.time
+        val timePicker =
+            MaterialTimePicker.Builder()
+                .setTimeFormat(TimeFormat.CLOCK_12H)
+                .setHour(previousSelectedTime.hour)
+                .setMinute(previousSelectedTime.minute)
+                .setTitleText("Select time")
+                .build()
 
-}
-
-private class PickRingtone : ActivityResultContract<Int, Uri?>() {
-    override fun createIntent(context: Context, ringtoneType: Int) =
-        Intent(RingtoneManager.ACTION_RINGTONE_PICKER).apply {
-            putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, ringtoneType)
-            putExtra(RingtoneManager.EXTRA_RINGTONE_TITLE, "Select Alarm Sound")
-            putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, Uri.EMPTY)
+        timePicker.addOnPositiveButtonClickListener {
+            viewModel.onTimeChanged(LocalTime.of(timePicker.hour, timePicker.minute))
         }
 
-    override fun parseResult(resultCode: Int, result: Intent?): Uri? {
-        if (resultCode != Activity.RESULT_OK) {
-            Timber.e("Result was $resultCode")
-            return null
-        }
-        return result?.getParcelableExtra<Uri>(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
-            ?.also {
-                Timber.d("Result was $it")
-            }
-    }
-}
-
-/**
- * Filter for snooze EditText that limits values to acceptable range
- * TODO - Put an error state in the ViewModel that notifies user of accepted range?
- */
-private class RangeInputFilter(private var min: Long, private var max: Long) : InputFilter {
-    init {
-        if (max < min) {
-            val t = min
-            min = max
-            max = t
-        }
+        timePicker.show(parentFragmentManager, "timePicker")
     }
 
-    override fun filter(
-        source: CharSequence?, start: Int, end: Int, dest: Spanned?, dstart: Int, dend: Int
-    ): CharSequence? {
-        return try {
-            val src = source.toString()
-            val dst = dest.toString()
-            val input = (dst + src).toLong()
-            if (input in min..max) {
-                null
-            } else {
-                ""
-            }
-        } catch (e: NumberFormatException) {
-            ""
-        }
+    private fun selectDaysOfWeek() {
+        val dialog =
+            DayOfWeekDialogFragment(if (viewModel.daysOfWeekState.value?.dirty == true) {
+                viewModel.reminder.value.schedulingRules.daysOfWeek
+            } else sortedSetOf())
+        dialog.show(parentFragmentManager, "dialogDaysOfWeek")
+    }
+
+    private fun selectSound() {
+        val dialog = SoundPickerDialogFragment(
+            viewModel.reminder.value.vibrate,
+            viewModel.reminder.value.notifSoundUri
+        )
+        dialog.show(parentFragmentManager, "dialogSoundPicker")
+    }
+
+    private fun selectSnooze() {
+        val dialog = SnoozeOptionsDialogFragment(
+            viewModel.reminder.value.snoozeRules
+        )
+        dialog.show(parentFragmentManager, "dialogSnooze")
     }
 }

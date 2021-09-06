@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+
+        <import type="android.view.View" />
+
+        <import type="java.time.DayOfWeek" />
+
+        <import type="java.util.SortedSet" />
+
+        <import type="androidx.lifecycle.LiveData" />
+
+        <variable
+            name="model"
+            type="com.github.jeremyt135.reminderapp.screens.reminder.editor.dialog.DialogDayViewModel" />
+
+        <variable
+            name="daysOfWeek"
+            type="LiveData&lt;SortedSet&lt;DayOfWeek&gt;&gt;" />
+    </data>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <CheckBox
+            android:id="@+id/checkbox_dialogDay_everyday"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:checked="@{model.isEveryDay}"
+            android:text="@string/dialog_day_everyday"
+            app:layout_constraintEnd_toStartOf="@+id/checkbox_dialogDay_thursday"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <CheckBox
+            android:id="@+id/checkbox_dialogDay_monday"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:checked="@{daysOfWeek.contains(DayOfWeek.MONDAY)}"
+            android:text="@string/dialog_day_mondays"
+            app:layout_constraintStart_toStartOf="@+id/checkbox_dialogDay_everyday"
+            app:layout_constraintTop_toBottomOf="@+id/checkbox_dialogDay_everyday" />
+
+        <CheckBox
+            android:id="@+id/checkbox_dialogDay_tuesday"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:checked="@{daysOfWeek.contains(DayOfWeek.TUESDAY)}"
+            android:text="@string/dialog_day_tuesdays"
+            app:layout_constraintStart_toStartOf="@+id/checkbox_dialogDay_monday"
+            app:layout_constraintTop_toBottomOf="@+id/checkbox_dialogDay_monday" />
+
+        <CheckBox
+            android:id="@+id/checkbox_dialogDay_wednesday"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:checked="@{daysOfWeek.contains(DayOfWeek.WEDNESDAY)}"
+            android:text="@string/dialog_day_wednesdays"
+            app:layout_constraintStart_toStartOf="@+id/checkbox_dialogDay_tuesday"
+            app:layout_constraintTop_toBottomOf="@+id/checkbox_dialogDay_tuesday" />
+
+        <CheckBox
+            android:id="@+id/checkbox_dialogDay_thursday"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="@{daysOfWeek.contains(DayOfWeek.THURSDAY)}"
+            android:text="@string/dialog_day_thursdays"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toEndOf="@+id/checkbox_dialogDay_everyday"
+            app:layout_constraintTop_toTopOf="@+id/checkbox_dialogDay_everyday" />
+
+        <CheckBox
+            android:id="@+id/checkbox_dialogDay_friday"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:checked="@{daysOfWeek.contains(DayOfWeek.FRIDAY)}"
+            android:text="@string/dialog_day_fridays"
+            app:layout_constraintStart_toStartOf="@+id/checkbox_dialogDay_thursday"
+            app:layout_constraintTop_toBottomOf="@+id/checkbox_dialogDay_thursday" />
+
+        <CheckBox
+            android:id="@+id/checkbox_dialogDay_saturday"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:checked="@{daysOfWeek.contains(DayOfWeek.SATURDAY)}"
+            android:text="@string/dialog_day_saturdays"
+            app:layout_constraintStart_toStartOf="@+id/checkbox_dialogDay_friday"
+            app:layout_constraintTop_toBottomOf="@+id/checkbox_dialogDay_friday" />
+
+        <CheckBox
+            android:id="@+id/checkbox_dialogDay_sunday"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:checked="@{daysOfWeek.contains(DayOfWeek.SUNDAY)}"
+            android:text="@string/dialog_day_sundays"
+            app:layout_constraintStart_toStartOf="@+id/checkbox_dialogDay_saturday"
+            app:layout_constraintTop_toBottomOf="@+id/checkbox_dialogDay_saturday" />
+
+        <androidx.constraintlayout.widget.Group
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="@{model.isEveryDay ? View.GONE : View.VISIBLE}"
+            app:constraint_referenced_ids="checkbox_dialogDay_monday,checkbox_dialogDay_tuesday,checkbox_dialogDay_wednesday,checkbox_dialogDay_thursday,checkbox_dialogDay_friday,checkbox_dialogDay_saturday,checkbox_dialogDay_sunday"
+            tools:layout_editor_absoluteX="131dp"
+            tools:layout_editor_absoluteY="292dp" />
+
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>

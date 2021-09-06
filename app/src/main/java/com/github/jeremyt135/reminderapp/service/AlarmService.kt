@@ -44,8 +44,6 @@ class AlarmService : Service(), MediaPlayer.OnPreparedListener, MediaPlayer.OnEr
     private var mediaPlayer: MediaPlayer? = null
     private val binder = AlarmServiceBinderImpl()
 
-    private val running = AtomicBoolean(false)
-
     private var timerJob: Job? = null
 
     override fun onBind(intent: Intent?): IBinder = binder
@@ -94,12 +92,13 @@ class AlarmService : Service(), MediaPlayer.OnPreparedListener, MediaPlayer.OnEr
     override fun onDestroy() {
         super.onDestroy()
         Timber.d("Service destroyed")
+        _running.set(false)
         timerJob?.cancel()
         stopVibrateAndPlayback()
     }
 
     private fun start(intent: Intent) {
-        if (!running.compareAndSet(false, true)) {
+        if (!_running.compareAndSet(false, true)) {
             Timber.w("Service already running")
             return
         }
@@ -176,7 +175,7 @@ class AlarmService : Service(), MediaPlayer.OnPreparedListener, MediaPlayer.OnEr
     }
 
     private fun stopVibrateAndPlayback() {
-        if (!running.get()) {
+        if (!_running.get()) {
             Timber.w("Service was not running")
             return
         }
@@ -215,6 +214,15 @@ class AlarmService : Service(), MediaPlayer.OnPreparedListener, MediaPlayer.OnEr
     }
 
     companion object {
+        // flag to track if AlarmService has started
+        private val _running = AtomicBoolean(false)
+
+        /**
+         * Indicates that the AlarmService has started
+         */
+        val running: Boolean
+            get() = _running.get()
+
         /**
          * Binds to the Service
          */

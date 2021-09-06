@@ -36,23 +36,21 @@ constructor(previousSortRules: ReminderSortRules) : DialogFragment() {
     }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        return activity?.let {
-            val builder = AlertDialog.Builder(it)
-            val inflater = requireActivity().layoutInflater
-            // custom dialog body
-            val view = inflater.inflate(R.layout.dialog_sort_reminders, null)
-            setupView(view)
-            builder.apply {
-                setView(view)
-                setTitle(R.string.dialog_reminderSort_title)
-                setPositiveButton(R.string.dialog_apply) { _, _ ->
-                    listener.onSortRulesChange(this@RemindersSortDialogFragment)
-                }
-                setNegativeButton(R.string.dialog_cancel) { _, _ ->
-                    Timber.d("User cancelled sorting")
-                }
-            }.create()
-        } ?: throw IllegalStateException("Activity cannot be null")
+        val builder = AlertDialog.Builder(requireActivity())
+        val inflater = requireActivity().layoutInflater
+        // custom dialog body
+        val view = inflater.inflate(R.layout.dialog_sort_reminders, null)
+        setupView(view)
+        return builder.apply {
+            setView(view)
+            setTitle(R.string.dialog_reminderSort_title)
+            setPositiveButton(R.string.dialog_apply) { _, _ ->
+                listener.onSortRulesChange(this@RemindersSortDialogFragment)
+            }
+            setNegativeButton(R.string.dialog_cancel) { _, _ ->
+                Timber.d("User cancelled sorting")
+            }
+        }.create()
     }
 
     override fun onAttach(context: Context) {
@@ -67,7 +65,8 @@ constructor(previousSortRules: ReminderSortRules) : DialogFragment() {
 
     private fun setupView(view: View) {
         val sortTimeGroup: RadioGroup = view.findViewById(R.id.radioGroup_dialogReminderSort_time)!!
-        val sortDescriptionGroup: RadioGroup = view.findViewById(R.id.radioGroup_dialogReminderSort_description)!!
+        val sortDescriptionGroup: RadioGroup =
+            view.findViewById(R.id.radioGroup_dialogReminderSort_description)!!
 
         setupTimeRadioGroup(sortTimeGroup)
         setupDescriptionRadioGroup(sortDescriptionGroup)

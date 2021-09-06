@@ -29,9 +29,6 @@ data class ReminderEntity(
     @ColumnInfo(name = "days_of_week")
     val daysOfWeek: SortedSet<DayOfWeek> = sortedSetOf(),
 
-    @ColumnInfo(name = "repeats_times")
-    val repeatsTimes: Long = 0,
-
     val vibrate: Boolean = false,
 
     @ColumnInfo(name = "max_snooze_repeats")
@@ -56,7 +53,6 @@ data class ReminderEntity(
                 endDate = endDate,
                 time = time,
                 daysOfWeek = daysOfWeek,
-                repeatsTimes = repeatsTimes
             )
         )
 }

@@ -17,6 +17,7 @@ import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.Alarm
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.SchedulingRules
+import com.github.jeremyt135.reminderapp.data.domain.SchedulingType
 import com.github.jeremyt135.reminderapp.getOrAwaitValue
 import com.github.jeremyt135.reminderapp.service.AlarmService
 import com.github.jeremyt135.reminderapp.util.currentLocalDateTime
@@ -113,7 +114,12 @@ class ReminderEditorViewModelTest {
 
         createViewModel()
 
-        assertThat(viewModel.reminder.value.copy(id = "")).isEqualTo(Reminder(id = ""))
+        assertThat(viewModel.reminder.value.copy(id = "")).isEqualTo(
+            Reminder(
+                id = "",
+                schedulingRules = SchedulingRules(type = SchedulingType.REPEAT_FOREVER)
+            )
+        )
     }
 
     @Test
@@ -180,11 +186,13 @@ class ReminderEditorViewModelTest {
 
     @Test
     fun saveReminder_emitsNavigateToReminders() = mainCoroutineRule.runBlockingTest {
-        val reminder = Reminder(schedulingRules = SchedulingRules(time = LocalTime.now().minusMinutes(1)))
+        val reminder =
+            Reminder(schedulingRules = SchedulingRules(time = LocalTime.now().minusMinutes(1)))
 
         every { mockSavedState.get<String>(EXTRA_REMINDER_ID) } returns reminder.id
         coEvery { mockReminderRepo.findById(reminder.id) } returns reminder
         coJustRun { mockReminderRepo.save(reminder) }
+        coEvery { mockAlarmRepo.save(any()) } returns 0L
         coEvery { mockAlarmRepo.findByReminderId(reminder.id) } returns null
         every { mockApplication.applicationContext } returns mockContext
         mockkStatic(::cancelAlarmIntentsForReminder)

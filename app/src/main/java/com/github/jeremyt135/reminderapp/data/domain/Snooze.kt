@@ -36,6 +36,15 @@ data class SnoozeRules(
     fun canSnooze(currentRepeats: Long): Boolean =
         alwaysRepeats || !neverRepeats && currentRepeats < maxRepeats
 
+    /**
+     * Returns a string for displaying a description of the snooze rules in the UI.
+     */
+    fun getDisplayString(): String = when (maxRepeats) {
+        0L -> "Never snooze"
+        Long.MAX_VALUE -> "Snooze for $duration minutes, forever"
+        else -> "Snooze for $duration minutes, $maxRepeats times"
+    }
+
     companion object {
         const val MAX_SNOOZE_DURATION = 30L
         const val MIN_SNOOZE_DURATION = 1L

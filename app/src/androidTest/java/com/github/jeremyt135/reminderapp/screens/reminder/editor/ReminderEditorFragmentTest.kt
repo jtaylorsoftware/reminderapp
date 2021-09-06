@@ -153,9 +153,13 @@ class ReminderEditorFragmentTest {
 
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val hintString = context.getString(R.string.editor_descriptionEdit_hint)
-        onView(withId(R.id.edit_editor_description)).check(matches(withHint(hintString)))
-        onView(withId(R.id.timePicker_editor)).check(matches(withTime(time)))
-        onView(withId(R.id.switch_editor_vibrate)).check(matches(isNotChecked()))
+        onView(withId(R.id.textinput_editor_description)).check(matches(withHint(hintString)))
+        onView(withId(R.id.textinput_editor_startDate)).check(matches(withHint(context.getString(R.string.editor_startDate_hint))))
+//        onView(withId(R.id.textinput_editor_endDate)).check(matches(withHint(context.getString(R.string.editor_endDate_hint))))
+        onView(withId(R.id.textinput_editor_time)).check(matches(withHint(context.getString(R.string.editor_time_hint))))
+        onView(withId(R.id.textinput_editor_daysOfWeek)).check(matches(withHint(context.getString(R.string.editor_daysOfWeek_hint))))
+        onView(withId(R.id.textinput_editor_snooze)).check(matches(withHint(context.getString(R.string.editor_snooze_hint))))
+        onView(withId(R.id.textinput_editor_sound)).check(matches(withHint(context.getString(R.string.editor_sound_hint))))
     }
 
     @Test
@@ -166,20 +170,12 @@ class ReminderEditorFragmentTest {
         launchEditorFragmentWithReminder(id)
 
         onView(withText(reminder.description)).check(matches(isDisplayed()))
-        onView(withId(R.id.switch_editor_vibrate)).check(matches(isChecked()))
-        onView(withId(R.id.timePicker_editor)).check(
-            matches(
-                withTime(
-                    LocalTime.of(
-                        reminder.schedulingRules.hour,
-                        reminder.schedulingRules.minute
-                    )
-                )
-            )
-        )
-
-        onView(withId(R.id.toggle_editor_monday)).check(matches(isChecked()))
-        onView(withId(R.id.toggle_editor_tuesday)).check(matches(isChecked()))
+        onView(withId(R.id.textinput_editor_description)).check(matches(withText(reminder.description)))
+        onView(withId(R.id.textinput_editor_startDate)).check(matches(withText(reminder.schedulingRules.startDateDisplayString())))
+        onView(withId(R.id.textinput_editor_time)).check(matches(withText(reminder.getTimeDisplayString())))
+        onView(withId(R.id.textinput_editor_daysOfWeek)).check(matches(withText(reminder.getDaysDisplayString())))
+        onView(withId(R.id.textinput_editor_snooze)).check(matches(withText(reminder.snoozeRules.getDisplayString())))
+        onView(withId(R.id.textinput_editor_sound)).check(matches(withText("Vibrate, No sound")))
     }
 
     @ExperimentalCoroutinesApi
@@ -223,24 +219,24 @@ class ReminderEditorFragmentTest {
         val editedReminder = reminder.copy(
             description = reminder.description + "edited",
             schedulingRules = SchedulingRules(
-                time = LocalTime.of(reminder.schedulingRules.hour, reminder.schedulingRules.minute)
-                    .plusHours(12).plusMinutes(1),
-                daysOfWeek = sortedSetOf(DayOfWeek.MONDAY, DayOfWeek.TUESDAY)
+//                time = LocalTime.of(reminder.schedulingRules.hour, reminder.schedulingRules.minute)
+//                    .plusHours(12).plusMinutes(1),
+//                daysOfWeek = sortedSetOf(DayOfWeek.MONDAY, DayOfWeek.TUESDAY)
             ),
-            vibrate = true,
+//            vibrate = true,
         )
 
         // Apply edits
-        onView(withId(R.id.edit_editor_description)).perform(replaceText(editedReminder.description))
-        onView(withId(R.id.switch_editor_vibrate)).perform(click())
-        onView(withId(R.id.toggle_editor_monday)).perform(click())
-        onView(withId(R.id.toggle_editor_tuesday)).perform(click())
-        onView(withId(R.id.timePicker_editor)).perform(
-            PickerActions.setTime(
-                editedReminder.schedulingRules.hour,
-                editedReminder.schedulingRules.minute
-            )
-        )
+        onView(withId(R.id.textinput_editor_description)).perform(replaceText(editedReminder.description))
+//        onView(withId(R.id.switch_soundPicker_vibrate)).perform(click())
+//        onView(withId(R.id.toggle_editor_monday)).perform(click())
+//        onView(withId(R.id.toggle_editor_tuesday)).perform(click())
+//        onView(withId(R.id.timePicker_editor)).perform(
+//            PickerActions.setTime(
+//                editedReminder.schedulingRules.hour,
+//                editedReminder.schedulingRules.minute
+//            )
+//        )
 
         // Save changes
         onView(withId(R.id.button_editor_save)).perform(click())
@@ -251,7 +247,6 @@ class ReminderEditorFragmentTest {
             reminderRepository.findById(id)!!
         }
         assertThat(savedReminder).isEqualTo(editedReminder)
-
     }
 
     @Test
