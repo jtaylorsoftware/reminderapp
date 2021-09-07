@@ -311,7 +311,7 @@ class ReminderEditorViewModel @Inject constructor(
     private fun checkTimeErrors() {
         val errorEnabled = with(_reminder.value) {
             val startDateTime = schedulingRules.startDate.atTime(schedulingRules.time)
-            startDateTime < currentLocalDateTime()
+            schedulingRules.type == SchedulingType.SINGLE && startDateTime < currentLocalDateTime()
         }
         _timeState.value = _timeState.value.copy(errorEnabled = errorEnabled)
     }
