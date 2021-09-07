@@ -339,7 +339,21 @@ class ReminderEditorViewModel @Inject constructor(
         }
     }
 
+    private fun formHasErrors(): Boolean =
+        _daysOfWeekState.value.errorEnabled || _startDateState.value.errorEnabled ||
+                _endDateState.value.errorEnabled || _timeState.value.errorEnabled ||
+                _snoozeRulesState.value.errorEnabled || _soundState.value.errorEnabled
+
     fun saveReminder() {
+        // Do not save if there are errors
+        if (formHasErrors()) {
+            showToast(
+                getApplication(),
+                "Please fix any errors before saving",
+            )
+            return
+        }
+
         applicationScope.launch {
             _reminder.value.copy().let { reminder ->
                 Timber.d("Saving reminder $reminder")
