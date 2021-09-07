@@ -180,9 +180,11 @@ class ReminderEditorFragment : Fragment(R.layout.fragment_reminder_editor) {
 
     private fun selectDaysOfWeek() {
         val dialog =
-            DayOfWeekDialogFragment(if (viewModel.daysOfWeekState.value?.dirty == true) {
-                viewModel.reminder.value.schedulingRules.daysOfWeek
-            } else sortedSetOf())
+            DayOfWeekDialogFragment(
+                if (viewModel.isEditing || viewModel.daysOfWeekState.value?.dirty == true) {
+                    viewModel.reminder.value.schedulingRules.daysOfWeek
+                } else sortedSetOf()
+            )
         dialog.show(parentFragmentManager, "dialogDaysOfWeek")
     }
 
