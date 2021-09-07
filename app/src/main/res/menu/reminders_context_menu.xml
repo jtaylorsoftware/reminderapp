@@ -1,8 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
-        android:id="@+id/item_reminders_delete"
-        android:title="@string/menu_reminders_delete"
+        android:id="@+id/item_reminders_markComplete"
+        android:title="@string/menu_reminders_complete" />
+
+    <item
+        android:id="@+id/item_reminders_markSkipped"
+        android:title="@string/menu_reminders_skip"
         />
+
+    <item
+        android:id="@+id/item_reminders_edit"
+        android:title="@string/menu_reminders_edit" />
+
+    <item
+        android:id="@+id/item_reminders_delete"
+        android:title="@string/menu_reminders_delete" />
 
 </menu>

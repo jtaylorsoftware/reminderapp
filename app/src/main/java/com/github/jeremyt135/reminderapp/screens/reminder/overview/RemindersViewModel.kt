@@ -8,7 +8,9 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import androidx.work.WorkManager
+import com.github.jeremyt135.reminderapp.broadcast.ACTION_ALARM_COMPLETE
 import com.github.jeremyt135.reminderapp.broadcast.ACTION_ALARM_SCHEDULE_NEXT
+import com.github.jeremyt135.reminderapp.broadcast.ACTION_ALARM_SKIP
 import com.github.jeremyt135.reminderapp.broadcast.cancelAlarmIntentsForReminder
 import com.github.jeremyt135.reminderapp.data.AlarmRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
@@ -147,6 +149,32 @@ class RemindersViewModel @Inject constructor(
     }
 
     /**
+     * Marks a reminder as complete for today, starting the process of
+     * adding a history entry and scheduling the next alarm
+     */
+    fun completeReminder(reminder: Reminder) {
+        viewModelScope.launch {
+            if (reminderAlarmIsScheduled(reminder)) {
+                AlarmService.requestStop(getApplication())
+            }
+            changeReminderStatus(reminder, ReminderStatus.COMPLETED)
+        }
+    }
+
+    /**
+     * Marks a reminder as skipped for today, starting the process of
+     * adding a history entry and scheduling the next alarm
+     */
+    fun skipReminder(reminder: Reminder) {
+        viewModelScope.launch {
+            if (reminderAlarmIsScheduled(reminder)) {
+                AlarmService.requestStop(getApplication())
+            }
+            changeReminderStatus(reminder, ReminderStatus.SKIPPED)
+        }
+    }
+
+    /**
      * Cancels alarms for `reminder` and reschedules next alarm.
      */
     private suspend fun rescheduleAlarms(reminder: Reminder) {
@@ -157,7 +185,7 @@ class RemindersViewModel @Inject constructor(
     }
 
     /**
-     * Cancels & deletes Reminder, returning value of alarm.scheduled
+     * Cancels & deletes Reminder's current alarm, if it exists, returning value of alarm.scheduled
      */
     private suspend fun stopAlarmsForReminder(context: Context, reminder: Reminder): Boolean =
         alarmRepository.findByReminderId(reminder.id)?.let {
@@ -167,8 +195,22 @@ class RemindersViewModel @Inject constructor(
             it.scheduled // nullable bool
         } == true // force to nonnull bool
 
+    private suspend fun reminderAlarmIsScheduled(reminder: Reminder): Boolean =
+        alarmRepository.findByReminderId(reminder.id)?.scheduled == true
+
     private fun scheduleNextAlarm() {
         AlarmActionHandler.createForAction(ACTION_ALARM_SCHEDULE_NEXT, "").let {
+            WorkManager.getInstance(getApplication()).enqueue(it)
+        }
+    }
+
+    private fun changeReminderStatus(reminder: Reminder, status: ReminderStatus) {
+        val action = when (status) {
+            ReminderStatus.COMPLETED -> ACTION_ALARM_COMPLETE
+            ReminderStatus.SKIPPED -> ACTION_ALARM_SKIP
+            else -> throw IllegalArgumentException("Cannot change status to PENDING")
+        }
+        AlarmActionHandler.createForAction(action, reminder.id).let {
             WorkManager.getInstance(getApplication()).enqueue(it)
         }
     }
@@ -191,6 +233,32 @@ class RemindersViewModel @Inject constructor(
         with(preferences.edit()) {
             putString("SORT_REMINDER_TIME", reminderSortRules.time.toString())
             putString("SORT_REMINDER_DESCRIPTION", reminderSortRules.description.toString())
+            apply()
+        }
+    }
+
+    /**
+     * Changes the rules for filter the `reminders` list. As a side effect,
+     * the `reminders` list will be updated and emitted.
+     * @param newRules The updated filter rules to use.
+     */
+    fun changeFilterRules(newRules: ReminderFilterRules) {
+        if (newRules == reminderFilterRules) {
+            return
+        }
+        reminderFilterRules = newRules
+        saveFilterRules()
+        sortAndFilterList()
+    }
+
+    private fun saveFilterRules() {
+        with(preferences.edit()) {
+            putBoolean("FILTER_REMINDER_TODAY", reminderFilterRules.includeToday)
+            putString("FILTER_REMINDER_DAYS", reminderFilterRules.daysOfWeek.joinToString(","))
+            putString(
+                "FILTER_REMINDER_STATUS",
+                reminderFilterRules.reminderStatuses.joinToString(",")
+            )
             apply()
         }
     }
@@ -242,31 +310,5 @@ class RemindersViewModel @Inject constructor(
     private fun calculateTimeOrder(reminder: Reminder): Long {
         return reminder.schedulingRules.getNextTimeForAlarm(currentLocalDateTime())?.toEpochMilli()
             ?: 0
-    }
-
-    /**
-     * Changes the rules for filter the `reminders` list. As a side effect,
-     * the `reminders` list will be updated and emitted.
-     * @param newRules The updated filter rules to use.
-     */
-    fun changeFilterRules(newRules: ReminderFilterRules) {
-        if (newRules == reminderFilterRules) {
-            return
-        }
-        reminderFilterRules = newRules
-        saveFilterRules()
-        sortAndFilterList()
-    }
-
-    private fun saveFilterRules() {
-        with(preferences.edit()) {
-            putBoolean("FILTER_REMINDER_TODAY", reminderFilterRules.includeToday)
-            putString("FILTER_REMINDER_DAYS", reminderFilterRules.daysOfWeek.joinToString(","))
-            putString(
-                "FILTER_REMINDER_STATUS",
-                reminderFilterRules.reminderStatuses.joinToString(",")
-            )
-            apply()
-        }
     }
 }

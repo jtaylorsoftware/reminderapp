@@ -103,4 +103,7 @@
     <string name="editor_time_hint">Select time</string>
     <string name="editor_snooze_hint">Adjust snooze</string>
     <string name="editor_sound_hint">Select sounds and vibrate</string>
+    <string name="menu_reminders_complete">Complete</string>
+    <string name="menu_reminders_skip">Skip</string>
+    <string name="menu_reminders_edit">Edit</string>
 </resources>

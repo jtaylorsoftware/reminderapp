@@ -69,15 +69,24 @@ class RemindersFragment : Fragment() {
         inflater.inflate(R.menu.reminders_context_menu, menu)
     }
 
-    override fun onContextItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
-            R.id.item_reminders_delete -> {
-                reminderListAdapter.selectedContextReminder?.let { viewModel.deleteReminder(it) }
-                true
-            }
-            else -> super.onContextItemSelected(item)
+    override fun onContextItemSelected(item: MenuItem): Boolean = when (item.itemId) {
+        R.id.item_reminders_delete -> {
+            reminderListAdapter.selectedContextReminder?.let { viewModel.deleteReminder(it) }
+            true
         }
-
+        R.id.item_reminders_markComplete -> {
+            reminderListAdapter.selectedContextReminder?.let { viewModel.completeReminder(it) }
+            true
+        }
+        R.id.item_reminders_markSkipped -> {
+            reminderListAdapter.selectedContextReminder?.let { viewModel.skipReminder(it) }
+            true
+        }
+        R.id.item_reminders_edit -> {
+            reminderListAdapter.selectedContextReminder?.let { viewModel.editReminder(it) }
+            true
+        }
+        else -> super.onContextItemSelected(item)
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
