@@ -9,7 +9,9 @@ import android.text.Spanned
 import android.view.LayoutInflater
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.DialogFragment
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.asLiveData
 import com.github.jeremyt135.R
 import com.github.jeremyt135.databinding.DialogSnoozeOptionsBinding
@@ -22,17 +24,22 @@ import timber.log.Timber
 /**
  * Dialog body for choosing snooze options.
  */
-class SnoozeOptionsDialogFragment
-
-/**
- * Constructs a SnoozeOptionsDialogFragment.
- * @param previousRules SnoozeRules to initialize the fragment with.
- */
-constructor(previousRules: SnoozeRules) :
+class SnoozeOptionsDialogFragment() :
     DialogFragment() {
     private lateinit var listener: DialogListener
-    private val viewModel = SnoozeOptionsViewModel(previousRules)
     private lateinit var binding: DialogSnoozeOptionsBinding
+    private var previousRules = SnoozeRules()
+    private val viewModel: SnoozeOptionsViewModel by viewModels() {
+        SnoozeOptionsViewModel.Factory(previousRules)
+    }
+
+    /**
+     * Constructs a SnoozeOptionsDialogFragment.
+     * @param previousRules SnoozeRules to initialize the fragment with.
+     */
+    constructor(previousRules: SnoozeRules) : this() {
+        this.previousRules = previousRules
+    }
 
     /**
      * Listener interface for host activity to implement.
@@ -52,7 +59,7 @@ constructor(previousRules: SnoozeRules) :
             setPositiveButton(R.string.dialog_apply) { _, _ ->
                 listener.onSnoozeRulesChanged(viewModel.snoozeRules.value)
             }
-            setNegativeButton(R.string.dialog_cancel) {_, _ ->
+            setNegativeButton(R.string.dialog_cancel) { _, _ ->
                 Timber.d("Snooze options cancel pressed")
             }
         }.create()
@@ -101,7 +108,7 @@ constructor(previousRules: SnoozeRules) :
                 }
             }
 
-            editDialogSnoozeMaxSnoozeRepeats.filters = arrayOf(RangeInputFilter(0, Long.MAX_VALUE))
+            editDialogSnoozeMaxSnoozeRepeats.filters = arrayOf(RangeInputFilter(1, Long.MAX_VALUE))
             editDialogSnoozeMaxSnoozeRepeats.doAfterTextChanged { editable ->
                 editable?.let {
                     if (it.toString().isNotEmpty()) {
@@ -136,6 +143,12 @@ class SnoozeOptionsViewModel(previousRules: SnoozeRules) : ViewModel() {
 
     fun setSnoozeDuration(duration: Long) {
         _snoozeRules.value = _snoozeRules.value.copy(duration = duration)
+    }
+
+    class Factory(private val previousRules: SnoozeRules) :
+        ViewModelProvider.NewInstanceFactory() {
+        override fun <T : ViewModel?> create(modelClass: Class<T>): T =
+            SnoozeOptionsViewModel(previousRules) as T
     }
 }
 
