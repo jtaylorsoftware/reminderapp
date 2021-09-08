@@ -14,7 +14,10 @@ import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.launch
 import androidx.activity.result.registerForActivityResult
 import androidx.fragment.app.DialogFragment
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.asLiveData
 import com.github.jeremyt135.R
 import com.github.jeremyt135.databinding.DialogSoundOptionsBinding
@@ -26,18 +29,15 @@ import timber.log.Timber
 /**
  * Dialog body for choosing vibrate & sound options.
  */
-class SoundPickerDialogFragment
-
-/**
- * Constructs a SoundPickerDialogFragment.
- * @param vibrate Previous or initial vibrate option
- * @param soundUri Previous or initial chosen sound uri as a String
- */
-constructor(private val vibrate: Boolean, private val soundUri: String) :
+class SoundPickerDialogFragment() :
     DialogFragment() {
     private lateinit var listener: DialogListener
-    private lateinit var viewModel: SoundPickerViewModel
     private lateinit var binding: DialogSoundOptionsBinding
+    private var vibrate: Boolean = false
+    private var soundUri: String = ""
+    private val viewModel: SoundPickerViewModel by viewModels {
+        SoundPickerViewModel.Factory(requireActivity().application, vibrate, soundUri)
+    }
 
     private val getAlarmSound =
         registerForActivityResult(PickRingtone(), RingtoneManager.TYPE_ALL) { uri ->
@@ -46,6 +46,17 @@ constructor(private val vibrate: Boolean, private val soundUri: String) :
                 viewModel.setSoundUri(it)
             }
         }
+
+
+    /**
+     * Constructs a SoundPickerDialogFragment.
+     * @param vibrate Previous or initial vibrate option
+     * @param soundUri Previous or initial chosen sound uri as a String
+     */
+    constructor(vibrate: Boolean, soundUri: String) : this() {
+        this.vibrate = vibrate
+        this.soundUri = soundUri
+    }
 
     /**
      * Listener interface for host activity to implement.
@@ -56,7 +67,6 @@ constructor(private val vibrate: Boolean, private val soundUri: String) :
     }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        viewModel = SoundPickerViewModel(requireActivity().application, vibrate, soundUri)
         val builder = AlertDialog.Builder(requireActivity())
         val inflater = LayoutInflater.from(context)
         binding = DialogSoundOptionsBinding.inflate(inflater)
@@ -68,7 +78,7 @@ constructor(private val vibrate: Boolean, private val soundUri: String) :
                 listener.onVibrateOptionChanged(viewModel.vibrate.value!!)
                 listener.onSoundUriChanged(viewModel.soundUri.value)
             }
-            setNegativeButton(R.string.dialog_cancel) {_, _ ->
+            setNegativeButton(R.string.dialog_cancel) { _, _ ->
                 Timber.d("SoundPicker cancel pressed")
             }
         }.create()
@@ -98,8 +108,8 @@ constructor(private val vibrate: Boolean, private val soundUri: String) :
             switchSoundPickerSound.setOnClickListener {
                 getAlarmSound.launch()
             }
-            switchSoundPickerVibrate.setOnCheckedChangeListener { _, isChecked ->
-                viewModel.setVibrate(isChecked)
+            switchSoundPickerVibrate.setOnClickListener {
+                viewModel.toggleVibrate()
             }
         }
     }
@@ -121,8 +131,8 @@ class SoundPickerViewModel(application: Application, vibrate: Boolean, soundUri:
         it.isNotEmpty()
     }.asLiveData()
 
-    fun setVibrate(vibrate: Boolean) {
-        _vibrate.value = vibrate
+    fun toggleVibrate() {
+        _vibrate.value = !_vibrate.value
     }
 
     fun setSoundUri(uri: Uri) {
@@ -136,6 +146,16 @@ class SoundPickerViewModel(application: Application, vibrate: Boolean, soundUri:
     private fun getSoundTitle(soundUri: String): String? = if (soundUri.isEmpty()) null else
         RingtoneManager.getRingtone(getApplication(), Uri.parse(soundUri))
             ?.getTitle(getApplication())
+
+    class Factory(
+        private val application: Application,
+        private val previousVibrate: Boolean,
+        private val previousSoundUri: String
+    ) :
+        ViewModelProvider.NewInstanceFactory() {
+        override fun <T : ViewModel?> create(modelClass: Class<T>): T =
+            SoundPickerViewModel(application, previousVibrate, previousSoundUri) as T
+    }
 }
 
 private class PickRingtone : ActivityResultContract<Int, Uri?>() {
