@@ -6,7 +6,9 @@ import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import androidx.fragment.app.DialogFragment
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.asLiveData
 import com.github.jeremyt135.R
 import com.github.jeremyt135.databinding.DialogDayBinding
@@ -19,11 +21,20 @@ import java.util.*
 /**
  * Dialog body for selecting days of week for a reminder to repeat on.
  */
-class DayOfWeekDialogFragment(private val previousDaysOfWeek: SortedSet<DayOfWeek>) :
+class DayOfWeekDialogFragment() :
     DialogFragment() {
     private lateinit var listener: DialogListener
-    private lateinit var viewModel: DialogDayViewModel
     private lateinit var binding: DialogDayBinding
+    private var previousDaysOfWeek: SortedSet<DayOfWeek> = sortedSetOf()
+    private val viewModel: DialogDayViewModel by viewModels {
+        DialogDayViewModel.Factory(
+            previousDaysOfWeek
+        )
+    }
+
+    constructor(previousDaysOfWeek: SortedSet<DayOfWeek>) : this() {
+        this.previousDaysOfWeek = previousDaysOfWeek
+    }
 
     /**
      * Listener interface for host activity to implement.
@@ -33,7 +44,6 @@ class DayOfWeekDialogFragment(private val previousDaysOfWeek: SortedSet<DayOfWee
     }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        viewModel = DialogDayViewModel(previousDaysOfWeek)
         val builder = AlertDialog.Builder(requireActivity())
         val inflater = LayoutInflater.from(context)
         binding = DialogDayBinding.inflate(inflater)
@@ -69,6 +79,7 @@ class DayOfWeekDialogFragment(private val previousDaysOfWeek: SortedSet<DayOfWee
         binding.apply {
             lifecycleOwner = requireActivity()
             model = viewModel
+            daysOfWeek = viewModel.daysOfWeek.asLiveData()
 
             listOf(
                 checkboxDialogDayMonday to DayOfWeek.MONDAY,
@@ -79,9 +90,8 @@ class DayOfWeekDialogFragment(private val previousDaysOfWeek: SortedSet<DayOfWee
                 checkboxDialogDaySaturday to DayOfWeek.SATURDAY,
                 checkboxDialogDaySunday to DayOfWeek.SUNDAY
             ).forEach { (checkbox, dayOfWeek) ->
-                checkbox.isChecked = viewModel.hasDay(dayOfWeek)
-                checkbox.setOnCheckedChangeListener { _, isChecked ->
-                    viewModel.toggleDay(dayOfWeek, isChecked)
+                checkbox.setOnClickListener {
+                    viewModel.toggleDay(dayOfWeek)
                 }
             }
 
@@ -107,7 +117,6 @@ class DialogDayViewModel constructor(daysOfWeek: SortedSet<DayOfWeek>) : ViewMod
     val isEveryDay = _isEveryday.asLiveData()
 
     fun toggleEveryDay(enabled: Boolean) {
-        Timber.d("Toggle everyDay")
         _isEveryday.value = enabled
         if (enabled) {
             savedDaysOfWeek = _daysOfWeek.value
@@ -118,9 +127,9 @@ class DialogDayViewModel constructor(daysOfWeek: SortedSet<DayOfWeek>) : ViewMod
         }
     }
 
-    fun toggleDay(dayOfWeek: DayOfWeek, enabled: Boolean) {
+    fun toggleDay(dayOfWeek: DayOfWeek) {
         _daysOfWeek.value = _daysOfWeek.value.toSortedSet().apply {
-            if (enabled) {
+            if (dayOfWeek !in this) {
                 add(dayOfWeek)
             } else {
                 remove(dayOfWeek)
@@ -129,5 +138,9 @@ class DialogDayViewModel constructor(daysOfWeek: SortedSet<DayOfWeek>) : ViewMod
         _isEveryday.value = _daysOfWeek.value.size == daysInWeek
     }
 
-    fun hasDay(dayOfWeek: DayOfWeek) = dayOfWeek in _daysOfWeek.value
+    class Factory(private val previousDaysOfWeek: SortedSet<DayOfWeek>) :
+        ViewModelProvider.NewInstanceFactory() {
+        override fun <T : ViewModel?> create(modelClass: Class<T>): T =
+            (DialogDayViewModel(previousDaysOfWeek) as T)
+    }
 }
