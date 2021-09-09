@@ -1,7 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools">
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <data>
+
+        <import type="com.github.jeremyt135.reminderapp.screens.reminder.overview.dialog.ReminderFilterViewModel" />
+
+        <import type="com.github.jeremyt135.reminderapp.screens.reminder.overview.ReminderFilterRules" />
+
+        <import type="com.github.jeremyt135.reminderapp.data.domain.ReminderStatus" />
+
+        <import type="androidx.lifecycle.LiveData" />
+
+        <import type="java.time.DayOfWeek" />
+
+        <variable
+            name="model"
+            type="ReminderFilterViewModel" />
+
+        <variable
+            name="filterRules"
+            type="LiveData&lt;ReminderFilterRules&gt;" />
+    </data>
 
     <ScrollView
         android:id="@+id/scrollView_dialogReminderFilter_contents"
@@ -30,6 +50,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
+                android:checked="@{filterRules.includeToday}"
                 android:text="@string/dialog_reminderFilter_today"
                 app:layout_constraintEnd_toStartOf="@+id/checkbox_dialogReminderFilter_thursday"
                 app:layout_constraintHorizontal_bias="0.5"
@@ -41,6 +62,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
+                android:checked="@{filterRules.daysOfWeek.contains(DayOfWeek.MONDAY)}"
                 android:text="@string/dialog_reminderFilter_mondays"
                 app:layout_constraintStart_toStartOf="@+id/checkbox_dialogReminderFilter_today"
                 app:layout_constraintTop_toBottomOf="@+id/checkbox_dialogReminderFilter_today" />
@@ -50,6 +72,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
+                android:checked="@{filterRules.daysOfWeek.contains(DayOfWeek.TUESDAY)}"
                 android:text="@string/dialog_reminderFilter_tuesdays"
                 app:layout_constraintStart_toStartOf="@+id/checkbox_dialogReminderFilter_monday"
                 app:layout_constraintTop_toBottomOf="@+id/checkbox_dialogReminderFilter_monday" />
@@ -59,6 +82,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
+                android:checked="@{filterRules.daysOfWeek.contains(DayOfWeek.WEDNESDAY)}"
                 android:text="@string/dialog_reminderFilter_wednesdays"
                 app:layout_constraintStart_toStartOf="@+id/checkbox_dialogReminderFilter_tuesday"
                 app:layout_constraintTop_toBottomOf="@+id/checkbox_dialogReminderFilter_tuesday" />
@@ -67,6 +91,7 @@
                 android:id="@+id/checkbox_dialogReminderFilter_thursday"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:checked="@{filterRules.daysOfWeek.contains(DayOfWeek.THURSDAY)}"
                 android:text="@string/dialog_reminderFilter_thursdays"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_bias="0.5"
@@ -78,6 +103,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
+                android:checked="@{filterRules.daysOfWeek.contains(DayOfWeek.FRIDAY)}"
                 android:text="@string/dialog_reminderFilter_fridays"
                 app:layout_constraintStart_toStartOf="@+id/checkbox_dialogReminderFilter_thursday"
                 app:layout_constraintTop_toBottomOf="@+id/checkbox_dialogReminderFilter_thursday" />
@@ -87,6 +113,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
+                android:checked="@{filterRules.daysOfWeek.contains(DayOfWeek.SATURDAY)}"
                 android:text="@string/dialog_reminderFilter_saturdays"
                 app:layout_constraintStart_toStartOf="@+id/checkbox_dialogReminderFilter_friday"
                 app:layout_constraintTop_toBottomOf="@+id/checkbox_dialogReminderFilter_friday" />
@@ -96,6 +123,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
+                android:checked="@{filterRules.daysOfWeek.contains(DayOfWeek.SUNDAY)}"
                 android:text="@string/dialog_reminderFilter_sundays"
                 app:layout_constraintStart_toStartOf="@+id/checkbox_dialogReminderFilter_saturday"
                 app:layout_constraintTop_toBottomOf="@+id/checkbox_dialogReminderFilter_saturday" />
@@ -116,6 +144,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
+                android:checked="@{filterRules.reminderStatuses.contains(ReminderStatus.PENDING)}"
                 android:text="@string/dialog_reminderFilter_pending"
                 app:layout_constraintEnd_toStartOf="@+id/checkbox_dialogReminderFilter_skipped"
                 app:layout_constraintHorizontal_bias="0.5"
@@ -126,6 +155,7 @@
                 android:id="@+id/checkbox_dialogReminderFilter_skipped"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:checked="@{filterRules.reminderStatuses.contains(ReminderStatus.SKIPPED)}"
                 android:text="@string/dialog_reminderFilter_skipped"
                 app:layout_constraintEnd_toStartOf="@+id/checkbox_dialogReminderFilter_completed"
                 app:layout_constraintHorizontal_bias="0.5"
@@ -136,6 +166,7 @@
                 android:id="@+id/checkbox_dialogReminderFilter_completed"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:checked="@{filterRules.reminderStatuses.contains(ReminderStatus.COMPLETED)}"
                 android:text="@string/dialog_reminderFilter_completed"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_bias="0.5"
