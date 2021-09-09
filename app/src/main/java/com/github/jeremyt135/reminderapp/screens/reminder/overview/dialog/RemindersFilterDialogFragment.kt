@@ -4,8 +4,7 @@ import android.app.AlertDialog
 import android.app.Dialog
 import android.content.Context
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
+import android.view.*
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.ViewModel
@@ -18,8 +17,6 @@ import com.github.jeremyt135.reminderapp.screens.reminder.overview.ReminderFilte
 import com.github.jeremyt135.reminderapp.util.getShortLocalDateDisplay
 import com.github.jeremyt135.reminderapp.util.toEpochMilli
 import com.github.jeremyt135.reminderapp.util.toLocalDate
-import com.google.android.material.datepicker.CalendarConstraints
-import com.google.android.material.datepicker.DateValidatorPointForward
 import com.google.android.material.datepicker.MaterialDatePicker
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -92,6 +89,27 @@ class RemindersFilterDialogFragment() : DialogFragment() {
         setupBinding()
     }
 
+    override fun onCreateContextMenu(
+        menu: ContextMenu,
+        view: View,
+        menuInfo: ContextMenu.ContextMenuInfo?
+    ) {
+        super.onCreateContextMenu(menu, view, menuInfo)
+        menu.add(Menu.NONE, view.id, 0, getString(R.string.menu_reset)).apply {
+            setOnMenuItemClickListener {
+                resetDate(itemId)
+                true
+            }
+        }
+    }
+
+    private fun resetDate(viewId: Int) {
+        when (viewId) {
+            R.id.text_dialogReminderFilter_startDate -> viewModel.setStartDate(null)
+            R.id.text_dialogReminderFilter_endDate -> viewModel.setEndDate(null)
+        }
+    }
+
     private fun setupBinding() {
         binding.apply {
             lifecycleOwner = requireActivity()
@@ -145,6 +163,11 @@ class RemindersFilterDialogFragment() : DialogFragment() {
 
     private fun setupDatePickers() {
         binding.apply {
+            // Register date text views to display a context menu with "reset" option
+            registerForContextMenu(textDialogReminderFilterStartDate)
+            registerForContextMenu(textDialogReminderFilterEndDate)
+
+            // Set onClick listeners to open a date picker
             textDialogReminderFilterStartDate.setOnClickListener {
                 selectDate(it)
             }
@@ -235,11 +258,11 @@ class ReminderFilterViewModel constructor(previousFilterRules: ReminderFilterRul
         }
     }
 
-    fun setStartDate(date: LocalDate) {
+    fun setStartDate(date: LocalDate?) {
         _filterRules.value = _filterRules.value.copy(startDate = date)
     }
 
-    fun setEndDate(date: LocalDate) {
+    fun setEndDate(date: LocalDate?) {
         _filterRules.value = _filterRules.value.copy(endDate = date)
     }
 
