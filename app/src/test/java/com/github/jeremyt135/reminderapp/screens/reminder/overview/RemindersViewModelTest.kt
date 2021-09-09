@@ -44,6 +44,7 @@ class RemindersViewModelTest {
 
     @Before
     fun setup() {
+        val today = LocalDate.now().dayOfWeek
         reminders = listOf(
             Reminder(
                 description = "1",
@@ -60,28 +61,25 @@ class RemindersViewModelTest {
             Reminder(
                 description = "4",
                 schedulingRules = SchedulingRules(
-                    daysOfWeek = sortedSetOf(DayOfWeek.MONDAY, DayOfWeek.TUESDAY),
+                    daysOfWeek = sortedSetOf(today, DayOfWeek.TUESDAY),
                     time = LocalTime.now().plusMinutes(4)
                 )
             ),
             Reminder(
                 description = "5",
-                schedulingRules = SchedulingRules(
-                    daysOfWeek = DayOfWeek.values().toSortedSet(),
-                    time = LocalTime.now().plusMinutes(5)
-                )
+                schedulingRules = SchedulingRules(time = LocalTime.now().plusMinutes(5))
             ),
             Reminder(
                 description = "6",
                 schedulingRules = SchedulingRules(
-                    daysOfWeek = sortedSetOf(DayOfWeek.MONDAY, DayOfWeek.FRIDAY),
+                    daysOfWeek = sortedSetOf(today, DayOfWeek.FRIDAY),
                     time = LocalTime.now().plusMinutes(6)
                 )
             ),
             Reminder(
                 description = "7",
                 schedulingRules = SchedulingRules(
-                    daysOfWeek = sortedSetOf(DayOfWeek.MONDAY),
+                    daysOfWeek = sortedSetOf(today),
                     time = LocalTime.now().plusMinutes(7)
                 )
             ),
@@ -270,15 +268,13 @@ class RemindersViewModelTest {
             viewModel.changeFilterRules(
                 ReminderFilterRules(
                     includeToday = true,
-                    daysOfWeek = emptySet(),
                 )
             )
             assertThat(viewModel.reminders.getOrAwaitValue()).containsExactlyElementsIn(
                 remindersWithHistory.filter {
-                    it.reminder.schedulingRules.getNextTimeForAlarm(
-                        currentLocalDateTime()
+                    it.reminder.schedulingRules.daysOfWeek.contains(
+                        LocalDate.now().dayOfWeek
                     )
-                        ?.toLocalDate() == LocalDate.now()
                 })
         }
 

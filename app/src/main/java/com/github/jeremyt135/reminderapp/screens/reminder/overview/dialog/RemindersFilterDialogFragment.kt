@@ -5,6 +5,7 @@ import android.app.Dialog
 import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.View
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.ViewModel
@@ -14,10 +15,20 @@ import com.github.jeremyt135.R
 import com.github.jeremyt135.databinding.DialogFilterRemindersBinding
 import com.github.jeremyt135.reminderapp.data.domain.ReminderStatus
 import com.github.jeremyt135.reminderapp.screens.reminder.overview.ReminderFilterRules
+import com.github.jeremyt135.reminderapp.util.getShortLocalDateDisplay
+import com.github.jeremyt135.reminderapp.util.toEpochMilli
+import com.github.jeremyt135.reminderapp.util.toLocalDate
+import com.google.android.material.datepicker.CalendarConstraints
+import com.google.android.material.datepicker.DateValidatorPointForward
+import com.google.android.material.datepicker.MaterialDatePicker
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import timber.log.Timber
 import java.time.DayOfWeek
+import java.time.LocalDate
+import java.time.LocalTime
+import java.time.ZoneId
 import java.util.*
 
 class RemindersFilterDialogFragment() : DialogFragment() {
@@ -90,6 +101,7 @@ class RemindersFilterDialogFragment() : DialogFragment() {
 
         setupDaysOfWeek()
         setupStatus()
+        setupDatePickers()
     }
 
     private fun setupDaysOfWeek() {
@@ -130,11 +142,68 @@ class RemindersFilterDialogFragment() : DialogFragment() {
             }
         }
     }
+
+    private fun setupDatePickers() {
+        binding.apply {
+            textDialogReminderFilterStartDate.setOnClickListener {
+                selectDate(it)
+            }
+            textDialogReminderFilterEndDate.setOnClickListener {
+                selectDate(it)
+            }
+        }
+    }
+
+    private fun selectDate(view: View) {
+        val datePickerBuilder =
+            MaterialDatePicker.Builder.datePicker()
+                .setTitleText("Select date")
+
+        val datePicker = when (view.id) {
+            R.id.text_dialogReminderFilter_startDate -> {
+                datePickerBuilder.run {
+                    setSelection(
+                        (viewModel.filterRules.value.startDate
+                            ?: LocalDate.now()).atTime(LocalTime.now()).toEpochMilli(ZoneId.of("Z"))
+                    )
+                    build()
+                }.apply {
+                    addOnPositiveButtonClickListener {
+                        viewModel.setStartDate(it.toLocalDate(ZoneId.of("Z")))
+                    }
+                }
+            }
+            R.id.text_dialogReminderFilter_endDate -> {
+                datePickerBuilder.run {
+                    setSelection(
+                        (viewModel.filterRules.value.endDate
+                            ?: LocalDate.now()).atTime(LocalTime.now()).toEpochMilli(ZoneId.of("Z"))
+                    )
+                    build()
+                }.apply {
+                    addOnPositiveButtonClickListener {
+                        viewModel.setEndDate(it.toLocalDate(ZoneId.of("Z")))
+                    }
+                }
+            }
+            else -> throw IllegalStateException("selectDate called with unexpected view")
+        }
+        datePicker.show(parentFragmentManager, "datePicker")
+    }
 }
 
-class ReminderFilterViewModel constructor(previousFilterRules: ReminderFilterRules) : ViewModel() {
+class ReminderFilterViewModel constructor(previousFilterRules: ReminderFilterRules) :
+    ViewModel() {
     private val _filterRules = MutableStateFlow(previousFilterRules)
     val filterRules = _filterRules.asStateFlow()
+
+    val startDateString = _filterRules.map {
+        it.startDate?.getShortLocalDateDisplay() ?: "Select date"
+    }.asLiveData()
+
+    val endDateString = _filterRules.map {
+        it.endDate?.getShortLocalDateDisplay() ?: "Select date"
+    }.asLiveData()
 
     fun toggleToday() {
         _filterRules.value = _filterRules.value.let {
@@ -164,6 +233,14 @@ class ReminderFilterViewModel constructor(previousFilterRules: ReminderFilterRul
                 }
             })
         }
+    }
+
+    fun setStartDate(date: LocalDate) {
+        _filterRules.value = _filterRules.value.copy(startDate = date)
+    }
+
+    fun setEndDate(date: LocalDate) {
+        _filterRules.value = _filterRules.value.copy(endDate = date)
     }
 
     class Factory(private val previousFilterRules: ReminderFilterRules) :

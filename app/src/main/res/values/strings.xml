@@ -106,4 +106,7 @@
     <string name="menu_reminders_complete">Complete</string>
     <string name="menu_reminders_skip">Skip</string>
     <string name="menu_reminders_edit">Edit</string>
+    <string name="dialog_reminderFilter_date">Date</string>
+    <string name="dialog_reminderFilter_startDate">Start:</string>
+    <string name="dialog_reminderFilter_endDate">End:</string>
 </resources>

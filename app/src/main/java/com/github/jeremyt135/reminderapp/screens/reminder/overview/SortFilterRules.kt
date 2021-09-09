@@ -1,7 +1,10 @@
 package com.github.jeremyt135.reminderapp.screens.reminder.overview
 
 import com.github.jeremyt135.reminderapp.data.domain.ReminderStatus
+import com.github.jeremyt135.reminderapp.data.domain.SchedulingRules
+import com.github.jeremyt135.reminderapp.data.domain.SchedulingType
 import java.time.DayOfWeek
+import java.time.LocalDate
 
 /**
  * Rules for filtering a list of Reminders
@@ -20,8 +23,53 @@ data class ReminderFilterRules(
     /**
      * The ReminderStatus values to include.
      */
-    val reminderStatuses: Set<ReminderStatus> = ReminderStatus.values().toSet()
-)
+    val reminderStatuses: Set<ReminderStatus> = ReminderStatus.values().toSet(),
+
+    /**
+     * The date that Reminders must begin on or after
+     */
+    val startDate: LocalDate? = null,
+
+    /**
+     * The date that Reminders must end on or before
+     */
+    val endDate: LocalDate? = null
+) {
+    /**
+     * Determines if the schedule falls within the filter's allowed
+     * start and end dates. Considers SchedulingType of the schedule.
+     * @param schedulingRules Schedule to check
+     * @return True if schedule is within the filter range
+     */
+    fun checkWithinDateRange(schedulingRules: SchedulingRules): Boolean {
+        val includesStart = startDate?.let {
+            it <= schedulingRules.startDate
+        } ?: true
+
+        return when (schedulingRules.type) {
+            SchedulingType.SINGLE -> includeToday && includesStart
+            SchedulingType.REPEATING -> {
+                val includesEnd = endDate?.let {
+                    schedulingRules.endDate <= it
+                } ?: true
+                includesStart && includesEnd
+            }
+            SchedulingType.REPEAT_FOREVER -> includesStart
+        }
+    }
+
+    /**
+     * Determines if the schedule falls within the filter's allowed
+     * daysOfWeek. Considers SchedulingType of the schedule.
+     * @param schedulingRules Schedule to check
+     * @returns True if schedule is within the allowed daysOfWeek
+     */
+    fun checkWithinDaysOfWeek(schedulingRules: SchedulingRules): Boolean =
+        when (schedulingRules.type) {
+            SchedulingType.SINGLE -> includeToday
+            SchedulingType.REPEATING, SchedulingType.REPEAT_FOREVER -> schedulingRules.daysOfWeek.any { day -> day in daysOfWeek }
+        }
+}
 
 /**
  * Rules for sorting a list of Reminders

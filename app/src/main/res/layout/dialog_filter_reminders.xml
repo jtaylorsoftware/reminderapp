@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <data>
 
@@ -133,11 +134,11 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
-                android:layout_marginTop="312dp"
+                android:layout_marginTop="8dp"
                 android:text="@string/dialog_reminderFilter_completion_title"
                 android:textColor="@color/text_secondary"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                app:layout_constraintTop_toBottomOf="@+id/checkbox_dialogReminderFilter_wednesday" />
 
             <CheckBox
                 android:id="@+id/checkbox_dialogReminderFilter_pending"
@@ -172,6 +173,70 @@
                 app:layout_constraintHorizontal_bias="0.5"
                 app:layout_constraintStart_toEndOf="@+id/checkbox_dialogReminderFilter_skipped"
                 app:layout_constraintTop_toTopOf="@+id/checkbox_dialogReminderFilter_skipped" />
+
+            <TextView
+                android:id="@+id/text_dialogReminderFilter_dates"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="8dp"
+                android:text="@string/dialog_reminderFilter_date"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/checkbox_dialogReminderFilter_pending" />
+
+            <TextView
+                android:id="@+id/text_dialogReminderFilter_startDateLabel"
+                style="@style/TextAppearance.AppCompat.Body1"
+                android:layout_width="wrap_content"
+                android:layout_height="0dp"
+                android:text="@string/dialog_reminderFilter_startDate"
+                app:layout_constraintBottom_toBottomOf="@+id/text_dialogReminderFilter_startDate"
+                app:layout_constraintEnd_toStartOf="@+id/text_dialogReminderFilter_startDate"
+                app:layout_constraintHorizontal_chainStyle="packed"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="@+id/text_dialogReminderFilter_startDate" />
+
+            <TextView
+                android:id="@+id/text_dialogReminderFilter_startDate"
+                style="@style/TextAppearance.AppCompat.Body1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginEnd="24dp"
+                android:text="@{model.startDateString}"
+                app:drawableEndCompat="@drawable/ic_baseline_event_note_24"
+                app:layout_constraintEnd_toStartOf="@+id/text_dialogReminderFilter_endDateLabel"
+                app:layout_constraintStart_toEndOf="@+id/text_dialogReminderFilter_startDateLabel"
+                app:layout_constraintTop_toBottomOf="@+id/text_dialogReminderFilter_dates"
+                tools:text="Select date" />
+
+            <TextView
+                android:id="@+id/text_dialogReminderFilter_endDateLabel"
+                style="@style/TextAppearance.AppCompat.Body1"
+                android:layout_width="wrap_content"
+                android:layout_height="0dp"
+                android:layout_marginStart="24dp"
+                android:text="@string/dialog_reminderFilter_endDate"
+                app:layout_constraintBottom_toBottomOf="@+id/text_dialogReminderFilter_endDate"
+                app:layout_constraintEnd_toStartOf="@+id/text_dialogReminderFilter_endDate"
+                app:layout_constraintStart_toEndOf="@+id/text_dialogReminderFilter_startDate"
+                app:layout_constraintTop_toTopOf="@+id/text_dialogReminderFilter_endDate" />
+
+            <TextView
+                android:id="@+id/text_dialogReminderFilter_endDate"
+                style="@style/TextAppearance.AppCompat.Body1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:layout_marginTop="8dp"
+                android:text="@{model.endDateString}"
+                app:drawableEndCompat="@drawable/ic_baseline_event_note_24"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/text_dialogReminderFilter_endDateLabel"
+                app:layout_constraintTop_toBottomOf="@+id/text_dialogReminderFilter_dates"
+                tools:text="Select date" />
+
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 

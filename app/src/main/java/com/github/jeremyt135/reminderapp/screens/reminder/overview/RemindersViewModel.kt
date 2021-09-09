@@ -86,8 +86,8 @@ class RemindersViewModel @Inject constructor(
     }
 
     private fun loadFilterPreferences() {
-        val filterToday = preferences.getBoolean("FILTER_REMINDER_TODAY", true)
-        val filterDaysOfWeek =
+        val includeToday = preferences.getBoolean("FILTER_REMINDER_TODAY", true)
+        val daysOfWeek =
             preferences.getString("FILTER_REMINDER_DAYS", DayOfWeek.values().joinToString(","))!!
                 .let { storedValue ->
                     if (storedValue.isEmpty()) {
@@ -96,7 +96,7 @@ class RemindersViewModel @Inject constructor(
                         storedValue.split(",").map { DayOfWeek.valueOf(it) }.toSet()
                     }
                 }
-        val filterStatus = preferences.getString(
+        val statuses = preferences.getString(
             "FILTER_REMINDER_STATUS",
             ReminderStatus.values().joinToString(",")
         )!!.let { storedValue ->
@@ -106,7 +106,19 @@ class RemindersViewModel @Inject constructor(
                 storedValue.split(",").map { ReminderStatus.valueOf(it) }.toSet()
             }
         }
-        reminderFilterRules = ReminderFilterRules(filterToday, filterDaysOfWeek, filterStatus)
+        val filterStartDate = preferences.getString("FILTER_REMINDER_START_DATE", "")!!.let {
+            if (it.isNotEmpty()) LocalDate.parse(it) else null
+        }
+        val filterEndDate = preferences.getString("FILTER_REMINDER_END_DATE", "")!!.let {
+            if (it.isNotEmpty()) LocalDate.parse(it) else null
+        }
+        reminderFilterRules = ReminderFilterRules(
+            includeToday,
+            daysOfWeek,
+            statuses,
+            startDate = filterStartDate,
+            endDate = filterEndDate
+        )
     }
 
     /**
@@ -259,6 +271,8 @@ class RemindersViewModel @Inject constructor(
                 "FILTER_REMINDER_STATUS",
                 reminderFilterRules.reminderStatuses.joinToString(",")
             )
+            putString("FILTER_REMINDER_START_DATE", reminderFilterRules.startDate?.toString())
+            putString("FILTER_REMINDER_END_DATE", reminderFilterRules.endDate?.toString())
             apply()
         }
     }
@@ -267,20 +281,21 @@ class RemindersViewModel @Inject constructor(
         viewModelScope.launch {
             reminderRepository.getAllWithTodayHistory().map { list ->
                 list.filter {
-                    // does the filter include today?
-                    val today =
-                        reminderFilterRules.includeToday &&
-                                it.reminder.schedulingRules.getNextTimeForAlarm(currentLocalDateTime())
-                                    ?.toLocalDate() == LocalDate.now()
+                    // is the reminder within the filter's start and end date
+                    val withinDateRange =
+                        reminderFilterRules.checkWithinDateRange(it.reminder.schedulingRules)
+                    if (!withinDateRange) {
+                        return@filter false
+                    }
+
                     // does the filter include at least one of the reminder's DayOfWeeks?
-                    val dayOfWeek =
-                        it.reminder.schedulingRules.daysOfWeek.any { day -> day in reminderFilterRules.daysOfWeek }
+                    val withinDayOfWeek = reminderFilterRules.checkWithinDaysOfWeek(it.reminder.schedulingRules)
                     // does the filter include the reminder's status?
                     val status =
                         it.history?.completionStatus ?: ReminderStatus.PENDING in reminderFilterRules.reminderStatuses
 
                     // include reminder if the date or time is included and its status is included
-                    (today || dayOfWeek) && status
+                    withinDateRange && withinDayOfWeek && status
                 }
             }.map { list ->
                 // sort by time first
@@ -308,7 +323,10 @@ class RemindersViewModel @Inject constructor(
     }
 
     private fun calculateTimeOrder(reminder: Reminder): Long {
-        return reminder.schedulingRules.getNextTimeForAlarm(currentLocalDateTime())?.toEpochMilli()
+        return reminder.schedulingRules.getNextTimeForAlarm(
+            currentLocalDateTime(),
+            allowSameDay = true
+        )?.toEpochMilli()
             ?: 0
     }
 }
