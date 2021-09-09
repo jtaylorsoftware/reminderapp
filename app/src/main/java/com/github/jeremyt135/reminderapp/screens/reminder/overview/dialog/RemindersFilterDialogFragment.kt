@@ -259,11 +259,27 @@ class ReminderFilterViewModel constructor(previousFilterRules: ReminderFilterRul
     }
 
     fun setStartDate(date: LocalDate?) {
-        _filterRules.value = _filterRules.value.copy(startDate = date)
+        with(_filterRules.value) {
+            if (date != null && endDate != null && date > endDate) {
+                // swap new start date to be new end date
+                val start = endDate
+                _filterRules.value = _filterRules.value.copy(startDate = start, endDate = date)
+            } else {
+                _filterRules.value = _filterRules.value.copy(startDate = date)
+            }
+        }
     }
 
     fun setEndDate(date: LocalDate?) {
-        _filterRules.value = _filterRules.value.copy(endDate = date)
+        with(_filterRules.value) {
+            if (date != null && startDate != null && date < startDate) {
+                // swap new end date to be new start date
+                val end = startDate
+                _filterRules.value = _filterRules.value.copy(startDate = date, endDate = end)
+            } else {
+                _filterRules.value = _filterRules.value.copy(endDate = date)
+            }
+        }
     }
 
     class Factory(private val previousFilterRules: ReminderFilterRules) :
