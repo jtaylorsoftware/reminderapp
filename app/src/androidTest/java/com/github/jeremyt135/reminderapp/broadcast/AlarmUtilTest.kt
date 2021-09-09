@@ -13,8 +13,8 @@ import com.github.jeremyt135.reminderapp.data.domain.Alarm
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.util.currentLocalDateTime
 import com.google.common.truth.Truth.assertThat
-import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltAndroidRule
+import dagger.hilt.android.testing.HiltAndroidTest
 import io.mockk.justRun
 import io.mockk.mockkStatic
 import io.mockk.verify
@@ -64,7 +64,7 @@ class AlarmUtilTest {
 
         scheduleAlarmForReminder(context, alarm, reminder)
 
-        intent = getCreatedIntentForAlarmStart(context, reminder.id)
+        intent = getCreatedIntentForAlarmAction(context, ACTION_ALARM_START, reminder.id)
 
         assertThat(intent).isNotNull()
     }
@@ -88,7 +88,7 @@ class AlarmUtilTest {
             alarms.forEach { runBlocking { alarmRepo.save(it) } }
             assertThat(scheduleNextAlarm(context, alarmRepo, reminderRepository)).isTrue()
 
-            intent = getCreatedIntentForAlarmStart(context, reminders[0].id)
+            intent = getCreatedIntentForAlarmAction(context, ACTION_ALARM_START, reminders[0].id)
 
             assertThat(intent).isNotNull()
             assertThat(alarmRepo.getFirstScheduledAlarm()!!.copy(id = 0)).isEqualTo(
@@ -107,7 +107,8 @@ class AlarmUtilTest {
 
         // Save alarms with descending id but ascending time
         val alarms = reminders.mapIndexed { i, reminder ->
-            Alarm(reminderId = reminder.id, triggerAt = now.plusMinutes(i.toLong()),
+            Alarm(
+                reminderId = reminder.id, triggerAt = now.plusMinutes(i.toLong()),
                 scheduled = if (i == 4) true else null
             )
         }
@@ -149,9 +150,9 @@ class AlarmUtilTest {
             reminder
         )
 
-        assertThat(getCreatedIntentForAlarmSnooze(context, reminder.id)).isNotNull()
-        assertThat(getCreatedIntentForAlarmSkip(context, reminder.id)).isNotNull()
-        assertThat(getCreatedIntentForAlarmComplete(context, reminder.id)).isNotNull()
+        assertThat(getCreatedIntentForAlarmAction(context, ACTION_ALARM_SNOOZE, reminder.id)).isNotNull()
+        assertThat(getCreatedIntentForAlarmAction(context, ACTION_ALARM_SKIP, reminder.id)).isNotNull()
+        assertThat(getCreatedIntentForAlarmAction(context, ACTION_ALARM_COMPLETE, reminder.id)).isNotNull()
     }
 
     @Test
