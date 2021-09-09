@@ -42,20 +42,16 @@ data class ReminderFilterRules(
      * @return True if schedule is within the filter range
      */
     fun checkWithinDateRange(schedulingRules: SchedulingRules): Boolean {
-        val onOrAfterStart = startDate?.let {
-            it <= schedulingRules.startDate
+        val onOrAfterStart = startDate?.let { startDate ->
+            schedulingRules.startDate >= startDate
         } ?: true
 
         return when (schedulingRules.type) {
             SchedulingType.SINGLE -> includeToday && onOrAfterStart
             SchedulingType.REPEATING -> {
-                val includesStart = startDate?.let {
-                    it <= schedulingRules.startDate || it <= schedulingRules.endDate
-                } ?: true
-                val includesEnd = endDate?.let {
-                    schedulingRules.endDate <= it
-                } ?: true
-                includesStart && includesEnd
+                val start = startDate ?: schedulingRules.endDate
+                val end = endDate ?: schedulingRules.startDate
+                start <= schedulingRules.endDate && end >= schedulingRules.startDate
             }
             SchedulingType.REPEAT_FOREVER -> onOrAfterStart
         }

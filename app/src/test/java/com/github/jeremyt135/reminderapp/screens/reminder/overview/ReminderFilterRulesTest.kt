@@ -29,26 +29,6 @@ class ReminderFilterRulesTest {
     }
 
     @Test
-    fun `checkWithinDateRange for REPEATING schedule excludes end dates greater than the filter end date`() {
-        val schedulingRules = SchedulingRules(
-            type = SchedulingType.REPEATING,
-            endDate = LocalDate.now().plusDays(3)
-        )
-        val filterRules = ReminderFilterRules(endDate = LocalDate.now().plusDays(1))
-        assertThat(filterRules.checkWithinDateRange(schedulingRules)).isFalse()
-    }
-
-    @Test
-    fun `checkWithinDateRange for REPEATING schedule includes end dates less than or equal to the filter end date`() {
-        val schedulingRules = SchedulingRules(
-            type = SchedulingType.REPEATING,
-            endDate = LocalDate.now().plusDays(1)
-        )
-        val filterRules = ReminderFilterRules(endDate = LocalDate.now().plusDays(3))
-        assertThat(filterRules.checkWithinDateRange(schedulingRules)).isTrue()
-    }
-
-    @Test
     fun `checkWithinDateRange for REPEATING schedule includes schedules that have both start and end date within allowed range`() {
         val schedulingRules = SchedulingRules(
             type = SchedulingType.REPEATING,
@@ -77,7 +57,7 @@ class ReminderFilterRulesTest {
     }
 
     @Test
-    fun `checkWithinDateRange for REPEATING schedule excludes schedules where filter start date beyond schedule start date`() {
+    fun `checkWithinDateRange for REPEATING schedule excludes schedules where filter start date beyond schedule end date`() {
         val schedulingRules = SchedulingRules(
             type = SchedulingType.REPEATING,
             startDate = LocalDate.now().plusDays(3),
@@ -86,6 +66,34 @@ class ReminderFilterRulesTest {
         val filterRules = ReminderFilterRules(
             startDate = LocalDate.now().plusDays(10),
             endDate = LocalDate.now().plusDays(12)
+        )
+        assertThat(filterRules.checkWithinDateRange(schedulingRules)).isFalse()
+    }
+
+    @Test
+    fun `checkWithinDateRange for REPEATING schedule includes schedules where filter end date is inclusive within schedule (start,end) dates`() {
+        val schedulingRules = SchedulingRules(
+            type = SchedulingType.REPEATING,
+            startDate = LocalDate.now().plusDays(3),
+            endDate = LocalDate.now().plusDays(9)
+        )
+        val filterRules = ReminderFilterRules(
+            startDate = LocalDate.now().plusDays(4),
+            endDate = LocalDate.now().plusDays(10)
+        )
+        assertThat(filterRules.checkWithinDateRange(schedulingRules)).isTrue()
+    }
+
+    @Test
+    fun `checkWithinDateRange for REPEATING schedule excludes schedules where filter end date before schedule start date`() {
+        val schedulingRules = SchedulingRules(
+            type = SchedulingType.REPEATING,
+            startDate = LocalDate.now().plusDays(6),
+            endDate = LocalDate.now().plusDays(8)
+        )
+        val filterRules = ReminderFilterRules(
+            startDate = LocalDate.now().plusDays(1),
+            endDate = LocalDate.now().plusDays(5)
         )
         assertThat(filterRules.checkWithinDateRange(schedulingRules)).isFalse()
     }
