@@ -14,6 +14,7 @@ import androidx.navigation.ui.setupActionBarWithNavController
 import com.github.jeremyt135.R
 import com.github.jeremyt135.reminderapp.broadcast.NOTIFICATION_LED_ARGB
 import com.github.jeremyt135.reminderapp.screens.reminder.overview.ReminderFilterRules
+import com.github.jeremyt135.reminderapp.screens.reminder.overview.ReminderSortRules
 import com.github.jeremyt135.reminderapp.screens.reminder.overview.RemindersViewModel
 import com.github.jeremyt135.reminderapp.screens.reminder.overview.dialog.RemindersFilterDialogFragment
 import com.github.jeremyt135.reminderapp.screens.reminder.overview.dialog.RemindersSortDialogFragment
@@ -75,8 +76,8 @@ class RemindersActivity : AppCompatActivity(), RemindersSortDialogFragment.Dialo
         }
     }
 
-    override fun onSortRulesChange(dialog: RemindersSortDialogFragment) {
-        viewModel.changeSortRules(dialog.reminderSortRules)
+    override fun onSortRulesChange(sortRules: ReminderSortRules) {
+        viewModel.changeSortRules(sortRules)
     }
 
     override fun onFilterRulesChange(filterRules: ReminderFilterRules) {

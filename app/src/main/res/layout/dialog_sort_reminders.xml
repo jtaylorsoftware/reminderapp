@@ -1,88 +1,103 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent">
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <TextView
-        android:id="@+id/text_dialogSort_time"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:text="@string/dialog_reminderSort_time_title"
-        android:textColor="@color/text_secondary"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+    <data>
+        <variable
+            name="model"
+            type="com.github.jeremyt135.reminderapp.screens.reminder.overview.dialog.ReminderSortViewModel" />
+    </data>
 
-    <RadioGroup
-        android:id="@+id/radioGroup_dialogReminderSort_time"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="8dp"
-        android:checkedButton="@id/radioButton_dialogReminderSort_time_none"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/text_dialogSort_time">
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/transparent"
+        android:fillViewport="true">
 
-        <RadioButton
-            android:id="@+id/radioButton_dialogReminderSort_time_none"
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/dialog_reminderSort_time_none" />
+            android:layout_height="wrap_content">
 
-        <RadioButton
-            android:id="@+id/radioButton_dialogReminderSort_time_asc"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/dialog_reminderSort_time_soonest" />
+            <TextView
+                android:id="@+id/text_dialogSort_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="16dp"
+                android:text="@string/dialog_reminderSort_time_title"
+                android:textColor="@color/text_secondary"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
 
-        <RadioButton
-            android:id="@+id/radioButton_dialogReminderSort_time_desc"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/dialog_reminderSort_time_latest" />
-    </RadioGroup>
+            <RadioGroup
+                android:id="@+id/radioGroup_dialogReminderSort_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="8dp"
+                android:checkedButton="@id/radioButton_dialogReminderSort_time_none"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/text_dialogSort_time">
 
-    <TextView
-        android:id="@+id/text_dialogReminderSort_description"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:text="@string/dialog_reminderSort_description_title"
-        android:textColor="@color/text_secondary"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/radioGroup_dialogReminderSort_time" />
+                <RadioButton
+                    android:id="@+id/radioButton_dialogReminderSort_time_none"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/dialog_reminderSort_time_none" />
 
-    <RadioGroup
-        android:id="@+id/radioGroup_dialogReminderSort_description"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="8dp"
-        android:checkedButton="@id/radioButton_dialogReminderSort_description_none"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/text_dialogReminderSort_description">
+                <RadioButton
+                    android:id="@+id/radioButton_dialogReminderSort_time_asc"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/dialog_reminderSort_time_soonest" />
 
-        <RadioButton
-            android:id="@+id/radioButton_dialogReminderSort_description_none"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/dialog_reminderSort_description_none" />
+                <RadioButton
+                    android:id="@+id/radioButton_dialogReminderSort_time_desc"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/dialog_reminderSort_time_latest" />
+            </RadioGroup>
 
-        <RadioButton
-            android:id="@+id/radioButton_dialogReminderSort_description_alpha"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/dialog_reminderSort_description_alpha" />
+            <TextView
+                android:id="@+id/text_dialogReminderSort_description"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="16dp"
+                android:text="@string/dialog_reminderSort_description_title"
+                android:textColor="@color/text_secondary"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/radioGroup_dialogReminderSort_time" />
 
-        <RadioButton
-            android:id="@+id/radioButton_dialogReminderSort_description_revAlpha"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/dialog_reminderSort_description_revAlpha" />
-    </RadioGroup>
+            <RadioGroup
+                android:id="@+id/radioGroup_dialogReminderSort_description"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="8dp"
+                android:checkedButton="@id/radioButton_dialogReminderSort_description_none"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/text_dialogReminderSort_description">
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+                <RadioButton
+                    android:id="@+id/radioButton_dialogReminderSort_description_none"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/dialog_reminderSort_description_none" />
+
+                <RadioButton
+                    android:id="@+id/radioButton_dialogReminderSort_description_alpha"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/dialog_reminderSort_description_alpha" />
+
+                <RadioButton
+                    android:id="@+id/radioButton_dialogReminderSort_description_revAlpha"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/dialog_reminderSort_description_revAlpha" />
+            </RadioGroup>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </ScrollView>
+</layout>
