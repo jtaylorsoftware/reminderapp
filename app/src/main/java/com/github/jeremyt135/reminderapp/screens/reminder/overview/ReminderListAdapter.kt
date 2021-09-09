@@ -1,6 +1,5 @@
 package com.github.jeremyt135.reminderapp.screens.reminder.overview
 
-import android.view.ContextMenu
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil

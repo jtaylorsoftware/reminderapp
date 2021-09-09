@@ -5,7 +5,6 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.github.jeremyt135.R
 import com.github.jeremyt135.databinding.ItemHistoryBinding
 import com.github.jeremyt135.reminderapp.data.domain.History
 import timber.log.Timber

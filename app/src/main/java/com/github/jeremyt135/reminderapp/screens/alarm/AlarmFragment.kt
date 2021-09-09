@@ -1,11 +1,8 @@
 package com.github.jeremyt135.reminderapp.screens.alarm
 
 import android.os.Bundle
-import androidx.fragment.app.Fragment
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
-import androidx.annotation.VisibleForTesting
+import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import com.github.jeremyt135.R
 import com.github.jeremyt135.databinding.FragmentAlarmBinding
