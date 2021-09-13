@@ -278,11 +278,19 @@ private fun createAlarmActionIntent(
     reminderId: String,
     pendingIntentFlags: Int
 ): PendingIntent? =
-    Intent(context, AlarmActionReceiver::class.java).run {
-        this.action = action
-        putExtra(EXTRA_REMINDER_ID, reminderId)
-        PendingIntent.getBroadcast(context, reminderId.hashCode(), this, pendingIntentFlags)
+    when (action) {
+        ACTION_ALARM_START -> Intent(context, AlarmStartReceiver::class.java).run {
+            this.action = action
+            putExtra(EXTRA_REMINDER_ID, reminderId)
+            PendingIntent.getBroadcast(context, reminderId.hashCode(), this, pendingIntentFlags)
+        }
+        else -> Intent(context, AlarmActionReceiver::class.java).run {
+            this.action = action
+            putExtra(EXTRA_REMINDER_ID, reminderId)
+            PendingIntent.getBroadcast(context, reminderId.hashCode(), this, pendingIntentFlags)
+        }
     }
+
 
 fun buildNotificationForAlarm(
     context: Context,
