@@ -11,6 +11,7 @@ import javax.inject.Singleton
 
 interface ReminderRepository {
     fun getAll(): Flow<List<Reminder>>
+    fun getAllInMonth(month: String): Flow<List<Reminder>>
     fun getAllWithTodayHistory(): Flow<List<ReminderAndHistory>>
     suspend fun save(reminder: Reminder)
     suspend fun saveAll(reminders: List<Reminder>)
@@ -25,6 +26,9 @@ class ReminderRepositoryImpl @Inject constructor(
     @ReminderDatabaseSource private val reminderLocalDataSource: ReminderDataSource,
 ) : ReminderRepository {
     override fun getAll(): Flow<List<Reminder>> = reminderLocalDataSource.getAll()
+    override fun getAllInMonth(month: String): Flow<List<Reminder>> =
+        reminderLocalDataSource.getAllInMonth(month)
+
     override fun getAllWithTodayHistory(): Flow<List<ReminderAndHistory>> =
         reminderLocalDataSource.getAllWithTodayHistory()
 

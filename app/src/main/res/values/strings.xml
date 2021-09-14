@@ -110,4 +110,7 @@
     <string name="dialog_reminderFilter_date">Date</string>
     <string name="dialog_reminderFilter_startDate">Start:</string>
     <string name="dialog_reminderFilter_endDate">End:</string>
+    <string name="bottomnav_calendar">Calendar</string>
+    <string name="calendar_reminder_heading">Reminders</string>
+    <string name="calendar_reminder_empty_hint">No reminders for selected date.</string>
 </resources>

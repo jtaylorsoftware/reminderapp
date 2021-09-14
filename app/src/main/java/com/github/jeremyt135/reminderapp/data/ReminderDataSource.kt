@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface ReminderDataSource {
     fun getAll(): Flow<List<Reminder>>
+    fun getAllInMonth(month: String): Flow<List<Reminder>>
     fun getAllWithTodayHistory(): Flow<List<ReminderAndHistory>>
     suspend fun findById(id: String): Reminder?
     suspend fun getReminderAndAlarm(reminderId: String): ReminderAndAlarm?

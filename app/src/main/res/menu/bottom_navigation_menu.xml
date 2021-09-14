@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
+        android:id="@+id/fragment_calendar"
+        android:enabled="true"
+        android:icon="@drawable/ic_baseline_calendar_24"
+        android:title="@string/bottomnav_calendar"/>
+
+    <item
         android:id="@+id/fragment_reminders"
         android:enabled="true"
         android:icon="@drawable/ic_baseline_format_list_bulleted_24"

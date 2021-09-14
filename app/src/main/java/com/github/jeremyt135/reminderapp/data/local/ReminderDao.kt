@@ -25,6 +25,9 @@ interface ReminderDao {
     @Query("SELECT * FROM reminder")
     fun getAll(): Flow<List<Reminder>>
 
+    @Query("SELECT * FROM reminder WHERE STRFTIME('%m', DATE(start_date/1000, 'unixepoch')) <= :month")
+    fun getAllInMonth(month: String): Flow<List<Reminder>>
+
     @Query("SELECT * FROM reminder WHERE id = :id")
     suspend fun findById(id: String): Reminder?
 

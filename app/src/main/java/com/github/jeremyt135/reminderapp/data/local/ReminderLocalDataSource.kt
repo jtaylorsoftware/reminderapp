@@ -19,6 +19,11 @@ class ReminderLocalDataSource @Inject constructor(private val reminderDao: Remin
         it.asDomainModel()
     }
 
+    override fun getAllInMonth(month: String): Flow<List<Reminder>> =
+        reminderDao.getAllInMonth(month).map {
+            it.asDomainModel()
+        }
+
     override fun getAllWithTodayHistory(): Flow<List<ReminderAndHistory>> =
         reminderDao.getAllWithTodayHistory().map {
             it.asDomainModel()

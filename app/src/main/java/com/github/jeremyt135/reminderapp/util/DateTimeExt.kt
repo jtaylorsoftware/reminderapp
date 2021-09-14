@@ -76,3 +76,9 @@ fun LocalDate.getShortLocalDateDisplay(): String = format(
 fun DayOfWeek.getFullLocaleDisplay(): String = getDisplayName(TextStyle.FULL, Locale.getDefault())
 
 
+/**
+ * Returns a String containing the short localized name of a DayOfWeek
+ */
+fun DayOfWeek.getShortLocaleDisplay(): String = getDisplayName(TextStyle.SHORT, Locale.getDefault())
+
+

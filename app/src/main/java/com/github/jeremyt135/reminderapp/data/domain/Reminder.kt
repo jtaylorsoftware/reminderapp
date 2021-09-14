@@ -298,6 +298,23 @@ class SchedulingRules(
         daysOfWeek.firstOrNull { predicate(it) }
             ?: daysOfWeek.first()
 
+    /**
+     * Determines if the date falls within the schedule's
+     * start and end dates and also has the same day of week.
+     * However, SchedulingType.SINGLE only checks date because it never repeats.
+     * @param date Date to check
+     * @return True if date is within the schedule's start and end date and also the schedule contains dayOfWeek
+     */
+    fun containsDate(date: LocalDate): Boolean {
+        return when (type) {
+            SchedulingType.SINGLE -> date == startDate
+            SchedulingType.REPEATING -> {
+                date in startDate..endDate  && date.dayOfWeek in daysOfWeek
+            }
+            SchedulingType.REPEAT_FOREVER -> startDate <= date  && date.dayOfWeek in daysOfWeek
+        }
+    }
+
     fun startDateDisplayString() = if (startDate == LocalDate.now()) {
         "Today"
     } else startDate.getShortLocalDateDisplay()

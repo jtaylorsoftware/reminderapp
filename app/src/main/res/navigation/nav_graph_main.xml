@@ -20,6 +20,9 @@
                 android:name="com.github.jeremyt135.reminderapp.EXTRA_REMINDER_ID"
                 android:defaultValue='""' />
         </action>
+        <action
+            android:id="@+id/action_fragment_reminders_to_calendarFragment"
+            app:destination="@id/fragment_calendar" />
     </fragment>
     <fragment
         android:id="@+id/fragment_history"
@@ -34,4 +37,8 @@
             android:name="com.github.jeremyt135.reminderapp.EXTRA_REMINDER_ID"
             app:argType="string" />
     </activity>
+    <fragment
+        android:id="@+id/fragment_calendar"
+        android:name="com.github.jeremyt135.reminderapp.screens.reminder.calendar.CalendarFragment"
+        android:label="Calendar" />
 </navigation>

@@ -36,7 +36,13 @@ class RemindersActivity : AppCompatActivity(), RemindersSortDialogFragment.Dialo
             supportFragmentManager.findFragmentById(R.id.nav_host_fragment_main) as NavHostFragment
         val navController = navHostFragment.navController
         appBarConfiguration =
-            AppBarConfiguration(setOf(R.id.fragment_reminders, R.id.fragment_history))
+            AppBarConfiguration(
+                setOf(
+                    R.id.fragment_reminders,
+                    R.id.fragment_history,
+                    R.id.fragment_calendar
+                )
+            )
         setupActionBarWithNavController(navController, appBarConfiguration)
 
         val bottomNav: BottomNavigationView = findViewById(R.id.bottom_navigation)
