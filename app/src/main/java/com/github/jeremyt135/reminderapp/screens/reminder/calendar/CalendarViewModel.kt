@@ -23,12 +23,10 @@ class CalendarViewModel @Inject constructor(
     private val reminderRepository: ReminderRepository,
     @DefaultDispatcher private val dispatcher: CoroutineDispatcher,
 ) : ViewModel() {
-    private val _selectedYearMonth = MutableStateFlow(YearMonth.now())
-
     /**
      * Currently selected year & month
      */
-    val selectedYearMonth = _selectedYearMonth.asStateFlow()
+    private val _selectedYearMonth = MutableStateFlow(YearMonth.now())
 
     private val _remindersInSelectedMonth = MutableStateFlow<List<Reminder>>(emptyList())
 
@@ -52,24 +50,22 @@ class CalendarViewModel @Inject constructor(
      */
     val remindersOnSelectedDate = _remindersOnSelectedDate.asLiveData()
 
-    /**
-     * List of boolean values where a value of true indicates there is at least one Reminder
-     * on that day of the month.
-     */
-    val daysWithReminders =
+
+    val calendarData =
         _selectedYearMonth.combine(_remindersInSelectedMonth) { yearMonth, reminders ->
             // Transform each array index representing a dayOfMonth into a true/false
             // value for presence of reminders
-            (1..yearMonth.lengthOfMonth()).map { dayOfMonth ->
+            val daysWithReminders = (1..yearMonth.lengthOfMonth()).map { dayOfMonth ->
                 val date = LocalDate.of(yearMonth.year, yearMonth.monthValue, dayOfMonth)
                 reminders.any {
                     it.schedulingRules.containsDate(date)
                 }
             }
+            CalendarData(yearMonth, daysWithReminders)
         }.flowOn(dispatcher).stateIn(
             viewModelScope,
             started = SharingStarted.Lazily,
-            emptyList()
+            CalendarData()
         )
 
     /**
@@ -83,7 +79,6 @@ class CalendarViewModel @Inject constructor(
     private var loadMonthRemindersJob: Job? = null
 
     init {
-        loadRemindersForDate()
         loadRemindersForMonth()
     }
 
@@ -94,7 +89,6 @@ class CalendarViewModel @Inject constructor(
         if (date == _selectedDate.value) {
             return
         }
-        Timber.d("Set selected date to $date")
         _selectedDate.value = date
         loadRemindersForDate()
     }

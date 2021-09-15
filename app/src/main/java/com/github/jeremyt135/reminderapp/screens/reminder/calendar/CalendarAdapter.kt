@@ -8,23 +8,42 @@ import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.github.jeremyt135.R
+import com.github.jeremyt135.reminderapp.data.domain.ReminderAndHistory
 import com.github.jeremyt135.reminderapp.util.getShortLocaleDisplay
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
 
+typealias OnDaySelectedListener = (day: LocalDate) -> Unit
+
+/**
+ * Backing data for calendar
+ */
+data class CalendarData(
+    /**
+     * Currently selected yearMonth
+     */
+    val yearMonth: YearMonth = YearMonth.now(),
+
+    /**
+     * List of boolean values where a value of
+     * true indicates there is at least one Reminder
+     * on that day of the month.
+     */
+    val daysWithReminders: List<Boolean> = emptyList(),
+)
+
 class CalendarAdapter(
-    yearMonth: YearMonth,
-    private val daysWithReminders: List<Boolean> = emptyList(),
+    private val data: CalendarData,
     private val daySelectedListener: OnDaySelectedListener
 ) :
     RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     // Date adjusted for yearMonth
-    private val yearMonthDate = LocalDate.of(yearMonth.year, yearMonth.month, 1)
+    private val yearMonthDate = LocalDate.of(data.yearMonth.year, data.yearMonth.month, 1)
 
     // Days in selected month
-    private val daysInMonth: Int = yearMonth.lengthOfMonth()
+    private val daysInMonth: Int = data.yearMonth.lengthOfMonth()
 
     // First day of week of selected month
     private val firstDayOfWeek: DayOfWeek = yearMonthDate.dayOfWeek
@@ -36,11 +55,11 @@ class CalendarAdapter(
     private val lastPositionOfMonth: Int = firstPositionOfMonth + daysInMonth - 1
 
     // Last calendar day (not position) of previous month
-    private val lastDayOfPreviousMonth: Int = yearMonth.minusMonths(1).lengthOfMonth()
+    private val lastDayOfPreviousMonth: Int = data.yearMonth.minusMonths(1).lengthOfMonth()
 
     init {
-        if (daysWithReminders.isNotEmpty() && daysWithReminders.size != daysInMonth) {
-            throw IllegalArgumentException("DaysWithReminders must be same size as number of days (${daysWithReminders.size} vs $daysInMonth)")
+        if (data.daysWithReminders.isNotEmpty() && data.daysWithReminders.size != daysInMonth) {
+            throw IllegalArgumentException("DaysWithReminders must be same size as number of days (${data.daysWithReminders.size} vs $daysInMonth)")
         }
     }
 
@@ -88,7 +107,8 @@ class CalendarAdapter(
 
                 if (isCurrentMonth) {
                     hasReminder =
-                        daysWithReminders.elementAtOrNull(position - firstPositionOfMonth) ?: false
+                        data.daysWithReminders.elementAtOrNull(position - firstPositionOfMonth)
+                            ?: false
                     // Only allow selection if part of current month
                     dayViewHolder.itemView.setOnClickListener {
                         onDaySelected(dayViewHolder)
@@ -96,11 +116,6 @@ class CalendarAdapter(
                 }
 
                 dayViewHolder.bind(day, isCurrentMonth, hasReminder)
-
-                // Select the viewHolder if its day is today
-                if (day == LocalDate.now()) {
-                    setSelectedDay(dayViewHolder)
-                }
             }
         }
     }
@@ -252,5 +267,3 @@ class CalendarAdapter(
         const val ITEM_COUNT = HEADING_SLOTS + DAY_SLOTS
     }
 }
-
-typealias OnDaySelectedListener = (day: LocalDate) -> Unit

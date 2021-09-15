@@ -65,7 +65,7 @@ class CalendarView : ConstraintLayout {
                 viewModel.goToNextMonth()
             }
         }
-        setBindingCalendarAdapter(YearMonth.now())
+        setBindingCalendarAdapter(CalendarData())
     }
 
     private fun attachBinding() {
@@ -84,10 +84,9 @@ class CalendarView : ConstraintLayout {
     }
 
     private fun setBindingCalendarAdapter(
-        yearMonth: YearMonth,
-        daysWithReminders: List<Boolean> = emptyList()
+        calendarData: CalendarData
     ) {
-        calendarAdapter = CalendarAdapter(yearMonth, daysWithReminders) {
+        calendarAdapter = CalendarAdapter(calendarData) {
             viewModel.setSelectedDate(it)
         }
         binding?.recyclerCalendar?.adapter = calendarAdapter
@@ -95,15 +94,8 @@ class CalendarView : ConstraintLayout {
 
     private fun startJobs() {
         coroutineScope?.launch {
-            viewModel.daysWithReminders.collect {
-                Timber.d("Setting daysWithReminders $it")
-                setBindingCalendarAdapter(viewModel.selectedYearMonth.value, it)
-            }
-        }
-        coroutineScope?.launch {
-            viewModel.selectedYearMonth.collect {
-                Timber.d("Setting selectedYearMonth $it")
-                setBindingCalendarAdapter(it, emptyList())
+            viewModel.calendarData.collect {
+                setBindingCalendarAdapter(it)
             }
         }
     }
