@@ -58,7 +58,8 @@ class CalendarViewModel @Inject constructor(
      */
     val daysWithReminders =
         _selectedYearMonth.combine(_remindersInSelectedMonth) { yearMonth, reminders ->
-            Timber.d("Reminders in month len: ${reminders.size}")
+            // Transform each array index representing a dayOfMonth into a true/false
+            // value for presence of reminders
             (1..yearMonth.lengthOfMonth()).map { dayOfMonth ->
                 val date = LocalDate.of(yearMonth.year, yearMonth.monthValue, dayOfMonth)
                 reminders.any {
@@ -86,6 +87,9 @@ class CalendarViewModel @Inject constructor(
         loadRemindersForMonth()
     }
 
+    /**
+     * Changes the selected date, and starts a job to load the reminders for that date.
+     */
     fun setSelectedDate(date: LocalDate) {
         if (date == _selectedDate.value) {
             return
@@ -95,10 +99,16 @@ class CalendarViewModel @Inject constructor(
         loadRemindersForDate()
     }
 
+    /**
+     * Changes the calendar month to the next sequential month.
+     */
     fun goToNextMonth() {
         setSelectedMonth(_selectedYearMonth.value.plusMonths(1))
     }
 
+    /**
+     * Changes the calendar month to the previous sequential month.
+     */
     fun goToPreviousMonth() {
         setSelectedMonth(_selectedYearMonth.value.minusMonths(1))
     }
@@ -113,11 +123,10 @@ class CalendarViewModel @Inject constructor(
         loadDateRemindersJob?.cancel()
         loadDateRemindersJob = viewModelScope.launch {
             reminderRepository.getAllWithTodayHistory().map { list ->
-                list.filter { it.reminder.schedulingRules.containsDate(_selectedDate.value) }.also {
-                    Timber.d("Loaded $it")
-                }
+                // Only return reminders where the selected date is within its schedule,
+                // so expired/future reminders aren't displayed
+                list.filter { it.reminder.schedulingRules.containsDate(_selectedDate.value) }
             }.flowOn(dispatcher).collect {
-                Timber.d("Loaded reminders for selected date")
                 _remindersOnSelectedDate.emit(it)
             }
         }

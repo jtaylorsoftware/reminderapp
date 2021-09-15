@@ -9,25 +9,25 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.github.jeremyt135.R
 import com.github.jeremyt135.reminderapp.util.getShortLocaleDisplay
-import timber.log.Timber
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
-import java.time.temporal.TemporalAdjusters
 
 class CalendarAdapter(
-    private val yearMonth: YearMonth,
+    yearMonth: YearMonth,
     private val daysWithReminders: List<Boolean> = emptyList(),
     private val daySelectedListener: OnDaySelectedListener
 ) :
     RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
+    // Date adjusted for yearMonth
+    private val yearMonthDate = LocalDate.of(yearMonth.year, yearMonth.month, 1)
+
     // Days in selected month
     private val daysInMonth: Int = yearMonth.lengthOfMonth()
 
     // First day of week of selected month
-    private val firstDayOfWeek: DayOfWeek = LocalDate.now()
-        .withMonth(yearMonth.monthValue).with(TemporalAdjusters.firstDayOfMonth()).dayOfWeek
+    private val firstDayOfWeek: DayOfWeek = yearMonthDate.dayOfWeek
 
     // First position in the adapter that contains a day of the selected month
     private val firstPositionOfMonth: Int = HEADING_SLOTS - 1 + firstDayOfWeek.value % 7
@@ -77,12 +77,11 @@ class CalendarAdapter(
                 val day = when {
                     position in firstPositionOfMonth..lastPositionOfMonth -> {
                         isCurrentMonth = true
-                        LocalDate.now()
-                            .withDayOfMonth(position - firstPositionOfMonth + 1)
+                        yearMonthDate.withDayOfMonth(position - firstPositionOfMonth + 1)
                     }
-                    position < firstPositionOfMonth -> LocalDate.now().minusMonths(1)
+                    position < firstPositionOfMonth -> yearMonthDate.minusMonths(1)
                         .withDayOfMonth(lastDayOfPreviousMonth - firstPositionOfMonth + position + 1)
-                    position > lastPositionOfMonth -> LocalDate.now().plusMonths(1)
+                    position > lastPositionOfMonth -> yearMonthDate.plusMonths(1)
                         .withDayOfMonth(position - lastPositionOfMonth)
                     else -> throw IllegalStateException("Invalid position $position")
                 }
@@ -98,6 +97,7 @@ class CalendarAdapter(
 
                 dayViewHolder.bind(day, isCurrentMonth, hasReminder)
 
+                // Select the viewHolder if its day is today
                 if (day == LocalDate.now()) {
                     setSelectedDay(dayViewHolder)
                 }
@@ -125,6 +125,10 @@ class CalendarAdapter(
         selectedDay = dayViewHolder
     }
 
+    /**
+     * ViewHolder for a date on the calendar. Displays numeric dayOfMonth and
+     * a background image that changes if it is today's date or the selected date.
+     */
     class DayViewHolder(private val view: View) :
         RecyclerView.ViewHolder(view) {
 

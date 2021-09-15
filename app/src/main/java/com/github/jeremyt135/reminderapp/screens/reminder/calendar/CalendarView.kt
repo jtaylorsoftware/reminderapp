@@ -103,7 +103,7 @@ class CalendarView : ConstraintLayout {
         coroutineScope?.launch {
             viewModel.selectedYearMonth.collect {
                 Timber.d("Setting selectedYearMonth $it")
-                setBindingCalendarAdapter(it, viewModel.daysWithReminders.value)
+                setBindingCalendarAdapter(it, emptyList())
             }
         }
     }
