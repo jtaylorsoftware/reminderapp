@@ -23,6 +23,7 @@ import dagger.assisted.AssistedInject
 import kotlinx.coroutines.flow.first
 import timber.log.Timber
 import java.time.Instant
+import java.time.ZoneId
 import java.util.concurrent.TimeUnit
 
 /**
@@ -200,7 +201,9 @@ class AlarmActionHandlerImpl(
             reminderId = reminder.id,
             description = reminder.description,
             completionStatus = completionStatus,
-            completedAt = Instant.now().toEpochMilli()
+            // Save history with time to highest resolution to allow distinguishing between multiple
+            // history on same day, possibly within same minute
+            completedAt = Instant.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
         )
         historyRepository.save(history)
     }
