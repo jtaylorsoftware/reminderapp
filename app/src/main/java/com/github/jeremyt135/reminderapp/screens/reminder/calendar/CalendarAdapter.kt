@@ -49,7 +49,7 @@ class CalendarAdapter(
     private val firstDayOfWeek: DayOfWeek = yearMonthDate.dayOfWeek
 
     // First position in the adapter that contains a day of the selected month
-    private val firstPositionOfMonth: Int = HEADING_SLOTS - 1 + firstDayOfWeek.value % 7
+    private val firstPositionOfMonth: Int = HEADING_SLOTS + firstDayOfWeek.value % 7
 
     // Last position of a day of the current month
     private val lastPositionOfMonth: Int = firstPositionOfMonth + daysInMonth - 1
