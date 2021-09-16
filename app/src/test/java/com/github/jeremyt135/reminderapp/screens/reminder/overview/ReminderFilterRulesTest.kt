@@ -9,12 +9,12 @@ import java.time.LocalDate
 
 class ReminderFilterRulesTest {
     @Test
-    fun `checkWithinDateRange for REPEATING_FOREVER schedule excludes start dates less than the filter start date`() {
+    fun `checkWithinDateRange for REPEATING_FOREVER schedule excludes start dates greater than the filter end date`() {
         val schedulingRules = SchedulingRules(
             type = SchedulingType.REPEAT_FOREVER,
-            startDate = LocalDate.now()
+            startDate = LocalDate.now().plusDays(3)
         )
-        val filterRules = ReminderFilterRules(startDate = LocalDate.now().plusDays(3))
+        val filterRules = ReminderFilterRules(endDate = LocalDate.now())
         assertThat(filterRules.checkWithinDateRange(schedulingRules)).isFalse()
     }
 
@@ -108,22 +108,38 @@ class ReminderFilterRulesTest {
     }
 
     @Test
-    fun `checkWithinDateRange for SINGLE schedule returns true if within start date and includesToday`() {
+    fun `checkWithinDateRange for SINGLE schedule returns true if schedule startDate between filter startDate and endDate`() {
         val schedulingRules = SchedulingRules(
             type = SchedulingType.SINGLE,
-            startDate = LocalDate.now(),
+            startDate = LocalDate.now().plusDays(1),
         )
         val filterRules = ReminderFilterRules(
             includeToday = true,
-            startDate = LocalDate.now()
+            startDate = LocalDate.now(),
+            endDate = LocalDate.now().plusDays(2),
         )
         assertThat(filterRules.checkWithinDateRange(schedulingRules)).isTrue()
     }
 
     @Test
+    fun `checkWithinDateRange for SINGLE schedule returns false if schedule startDate outside of filter startDate and endDate`() {
+        val schedulingRules = SchedulingRules(
+            type = SchedulingType.SINGLE,
+            startDate = LocalDate.now().plusDays(3),
+        )
+        val filterRules = ReminderFilterRules(
+            includeToday = true,
+            startDate = LocalDate.now(),
+            endDate = LocalDate.now().plusDays(2),
+        )
+        assertThat(filterRules.checkWithinDateRange(schedulingRules)).isFalse()
+    }
+
+    @Test
     fun `checkWithinDaysOfWeek returns value of includeToday for schedules of type SINGLE`() {
         val schedulingRules = SchedulingRules(
-            type = SchedulingType.SINGLE
+            type = SchedulingType.SINGLE,
+            startDate = LocalDate.now()
         )
         var filterRules = ReminderFilterRules(includeToday = false)
         assertThat(filterRules.checkWithinDaysOfWeek(schedulingRules)).isFalse()
