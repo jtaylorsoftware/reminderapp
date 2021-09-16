@@ -232,10 +232,12 @@ class ReminderEditorViewModel @Inject constructor(
                 _startDateState.value.copy(
                     errorEnabled = startDate < LocalDate.now() || startDate > endDate && _hasEndDate.value
                 )
-            _endDateState.value =
-                _endDateState.value.copy(
-                    errorEnabled = endDate <= _reminder.value.schedulingRules.startDate
-                )
+            if (type == SchedulingType.REPEATING) {
+                _endDateState.value =
+                    _endDateState.value.copy(
+                        errorEnabled = endDate <= _reminder.value.schedulingRules.startDate
+                    )
+            }
         }
 
     }
