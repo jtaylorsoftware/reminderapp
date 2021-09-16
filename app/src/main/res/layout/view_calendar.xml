@@ -14,7 +14,8 @@
 
     <merge
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
+        tools:layout_height="match_parent"
         tools:parentTag="androidx.constraintlayout.widget.ConstraintLayout">
 
         <TextView
@@ -61,7 +62,7 @@
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recycler_calendar"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
@@ -97,13 +98,12 @@
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recycler_calendar_reminders"
             android:layout_width="0dp"
-            android:layout_height="0dp"
+            android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:fadeScrollbars="true"
             android:orientation="vertical"
             android:visibility="@{model.remindersOnSelectedDate.size() == 0 ? View.GONE : View.VISIBLE}"
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="@+id/recycler_calendar"
             app:layout_constraintStart_toStartOf="@+id/recycler_calendar"
             app:layout_constraintTop_toBottomOf="@+id/text_calendar_reminder_heading"

@@ -5,4 +5,13 @@
     <dimen name="dateToggleSize_editor">36dp</dimen>
     <dimen name="margin_editor_medium">32dp</dimen>
     <dimen name="textSize_item_reminder_date">14sp</dimen>
+
+    <!-- Small screen dimens for calendar cells -->
+    <dimen name="calendar_cell_width">25dp</dimen>
+    <dimen name="calendar_cell_height">25dp</dimen>
+    <dimen name="calendar_cell_indicator_size">3dp</dimen>
+    <dimen name="calendar_cell_padding_h">4dp</dimen>
+    <dimen name="calendar_cell_padding_v">4dp</dimen>
+    <dimen name="calendar_cell_margin_h">0dp</dimen>
+    <dimen name="calendar_cell_margin_v">0dp</dimen>
 </resources>

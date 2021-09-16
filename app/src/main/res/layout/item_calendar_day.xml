@@ -2,14 +2,18 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="50dp"
-    android:layout_height="50dp"
+    android:layout_width="@dimen/calendar_cell_width"
+    android:layout_height="@dimen/calendar_cell_height"
+    android:paddingHorizontal="@dimen/calendar_cell_padding_h"
+    android:paddingVertical="@dimen/calendar_cell_padding_v"
+    android:layout_marginHorizontal="@dimen/calendar_cell_margin_h"
+    android:layout_marginVertical="@dimen/calendar_cell_margin_v"
     android:foregroundGravity="center">
 
     <ImageView
         android:id="@+id/image_calendar_dayOfMonth"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:visibility="invisible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

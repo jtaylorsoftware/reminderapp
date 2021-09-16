@@ -33,7 +33,7 @@ class CalendarViewModel @Inject constructor(
     /**
      * Currently tapped on date, including the current scrolled-to month & year, in the calendar
      */
-    private val _selectedDate = MutableStateFlow(LocalDate.now())
+    private val _selectedDate = MutableStateFlow<LocalDate?>(null)
 
     /**
      * Display string for selected date's month & year. Format is full month and short year, such as
@@ -85,12 +85,17 @@ class CalendarViewModel @Inject constructor(
     /**
      * Changes the selected date, and starts a job to load the reminders for that date.
      */
-    fun setSelectedDate(date: LocalDate) {
+    fun setSelectedDate(date: LocalDate?) {
         if (date == _selectedDate.value) {
             return
         }
         _selectedDate.value = date
-        loadRemindersForDate()
+
+        if (date == null) {
+            _remindersOnSelectedDate.value = emptyList()
+        } else {
+            loadRemindersForDate()
+        }
     }
 
     /**
@@ -108,7 +113,7 @@ class CalendarViewModel @Inject constructor(
     }
 
     private fun setSelectedMonth(yearMonth: YearMonth) {
-        setSelectedDate(LocalDate.now().withYear(yearMonth.year).withMonth(yearMonth.monthValue))
+        setSelectedDate(null)
         _selectedYearMonth.value = yearMonth
         loadRemindersForMonth()
     }
@@ -117,9 +122,13 @@ class CalendarViewModel @Inject constructor(
         loadDateRemindersJob?.cancel()
         loadDateRemindersJob = viewModelScope.launch {
             reminderRepository.getAllWithTodayHistory().map { list ->
-                // Only return reminders where the selected date is within its schedule,
-                // so expired/future reminders aren't displayed
-                list.filter { it.reminder.schedulingRules.containsDate(_selectedDate.value) }
+                _selectedDate.value?.let { selectedDate ->
+                    // Only return reminders where the selected date is within its schedule,
+                    // so expired/future reminders aren't displayed
+                    list.filter {
+                        it.reminder.schedulingRules.containsDate(selectedDate)
+                    }
+                } ?: emptyList()
             }.flowOn(dispatcher).collect {
                 _remindersOnSelectedDate.emit(it)
             }

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Portrait medium+ screen dimens for calendar cells -->
+    <dimen name="calendar_cell_width">50dp</dimen>
+    <dimen name="calendar_cell_height">50dp</dimen>
+    <dimen name="calendar_cell_indicator_size">5dp</dimen>
+    <dimen name="calendar_cell_padding_h">2dp</dimen>
+    <dimen name="calendar_cell_padding_v">2dp</dimen>
+    <dimen name="calendar_cell_margin_h">0dp</dimen>
+    <dimen name="calendar_cell_margin_v">0dp</dimen>
+</resources>

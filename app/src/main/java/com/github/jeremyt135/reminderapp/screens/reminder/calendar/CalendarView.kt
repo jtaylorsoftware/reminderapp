@@ -1,6 +1,7 @@
 package com.github.jeremyt135.reminderapp.screens.reminder.calendar
 
 import android.content.Context
+import android.content.res.Configuration
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import androidx.annotation.AttrRes
@@ -8,6 +9,7 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.findViewTreeLifecycleOwner
 import androidx.lifecycle.findViewTreeViewModelStoreOwner
+import androidx.recyclerview.widget.GridLayoutManager
 import com.github.jeremyt135.databinding.ViewCalendarBinding
 import com.github.jeremyt135.reminderapp.screens.reminder.overview.ReminderListAdapter
 import dagger.hilt.android.AndroidEntryPoint
@@ -58,6 +60,16 @@ class CalendarView : ConstraintLayout {
         binding?.apply {
             recyclerCalendarReminders.adapter = reminderListAdapter
 
+            // Use a GLM with Calendar's RecyclerView that has disabled scrolling in both directions
+            recyclerCalendar.layoutManager = object : GridLayoutManager(context, CalendarAdapter.COLUMNS) {
+                override fun canScrollVertically() = false
+                override fun canScrollHorizontally() = false
+            }
+
+            // Disable nested scrolling on both RecyclerViews (relevant to portrait view)
+            recyclerCalendar.isNestedScrollingEnabled = false
+            recyclerCalendarReminders.isNestedScrollingEnabled = false
+
             buttonCalendarBackward.setOnClickListener {
                 viewModel.goToPreviousMonth()
             }
@@ -65,6 +77,7 @@ class CalendarView : ConstraintLayout {
                 viewModel.goToNextMonth()
             }
         }
+
         setBindingCalendarAdapter(CalendarData())
     }
 

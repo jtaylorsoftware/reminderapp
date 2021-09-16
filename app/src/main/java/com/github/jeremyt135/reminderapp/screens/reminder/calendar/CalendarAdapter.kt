@@ -257,6 +257,8 @@ class CalendarAdapter(
     }
 
     companion object {
+        const val COLUMNS = 7
+
         private const val HEADING_SLOTS = 7
         private const val DAY_SLOTS = 35
 
