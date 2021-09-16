@@ -26,7 +26,7 @@
     <string name="editor_heading_add">Add Reminder</string>
     <string name="editor_heading_edit">Edit Reminder</string>
     <string name="editor_switch_vibrate">Vibrate</string>
-    <string name="alarm_heading">Alarm</string>
+    <string name="alarm_heading">Reminder</string>
     <string name="alarm_skip">Skip</string>
     <string name="alarm_snooze">Snooze</string>
     <string name="alarm_complete">Complete</string>
