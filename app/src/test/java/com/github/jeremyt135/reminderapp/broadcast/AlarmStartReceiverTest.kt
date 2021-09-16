@@ -114,7 +114,6 @@ class AlarmStartReceiverTest {
         receiver.onReceive(mockContext, intent)
 
         verify {
-            AlarmActionHandler.createForAction(ACTION_ALARM_SCHEDULE_NEXT, "")
             AlarmService.start(mockContext, reminder, alarm)
         }
     }
