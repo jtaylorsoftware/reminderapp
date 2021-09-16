@@ -118,16 +118,12 @@ class AlarmActionHandlerImpl(
      * Attempts to handle an action
      */
     private suspend fun handleAction(action: String, reminderId: String): Result {
-        return if (action != ACTION_ALARM_SCHEDULE_NEXT) {
-            // Do action
-            when (action) {
-                ACTION_ALARM_SNOOZE -> handleSnooze(reminderId)
-                ACTION_ALARM_SKIP -> handleSkip(reminderId)
-                ACTION_ALARM_COMPLETE -> handleCompleted(reminderId)
-                else -> Result.failure()
-            }
-        } else {
-            scheduleNext()
+        return when (action) {
+            ACTION_ALARM_SNOOZE -> handleSnooze(reminderId)
+            ACTION_ALARM_SKIP -> handleSkip(reminderId)
+            ACTION_ALARM_COMPLETE -> handleCompleted(reminderId)
+            ACTION_ALARM_SCHEDULE_NEXT -> scheduleNext()
+            else -> Result.failure()
         }
     }
 
