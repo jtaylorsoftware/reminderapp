@@ -92,9 +92,9 @@ class AlarmService : Service(), MediaPlayer.OnPreparedListener, MediaPlayer.OnEr
     override fun onDestroy() {
         super.onDestroy()
         Timber.d("Service destroyed")
-        _running.set(false)
         timerJob?.cancel()
         stopVibrateAndPlayback()
+        _running.set(false)
     }
 
     private fun start(intent: Intent) {
