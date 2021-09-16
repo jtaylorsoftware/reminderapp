@@ -86,7 +86,7 @@ class AlarmViewModel @Inject constructor(
         // stop AlarmService (sounds and notif)
         AlarmService.requestStop(getApplication())
         // try to snooze
-        snooze()
+        snooze(showToast = false)
     }
 
     // Loads the reminder and alarm data for the associated reminder
@@ -99,14 +99,16 @@ class AlarmViewModel @Inject constructor(
             } ?: run {
                 return@let null
             }
-           reminder to alarm
+            reminder to alarm
         }
 
     /**
      * Snoozes the alarm
      */
-    fun snooze() {
-        showToast(getApplication(), "Snoozed Reminder")
+    fun snooze(showToast: Boolean = true) {
+        if (showToast) {
+            showToast(getApplication(), "Snoozed Reminder")
+        }
 
         tryStartWorkerForAction(ACTION_ALARM_SNOOZE)
     }
@@ -114,8 +116,10 @@ class AlarmViewModel @Inject constructor(
     /**
      * Skips the alarm
      */
-    fun skip() {
-        showToast(getApplication(), "Skipped Reminder")
+    fun skip(showToast: Boolean = true) {
+        if (showToast) {
+            showToast(getApplication(), "Skipped Reminder")
+        }
 
         tryStartWorkerForAction(ACTION_ALARM_SKIP)
     }
@@ -123,8 +127,10 @@ class AlarmViewModel @Inject constructor(
     /**
      * Completes the alarm
      */
-    fun complete() {
-        showToast(getApplication(), "Completed Reminder")
+    fun complete(showToast: Boolean = true) {
+        if (showToast) {
+            showToast(getApplication(), "Completed Reminder")
+        }
 
         tryStartWorkerForAction(ACTION_ALARM_COMPLETE)
     }

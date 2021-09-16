@@ -96,7 +96,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="4dp"
-                android:onClick="@{() -> model.snooze()}"
+                android:onClick="@{() -> model.snooze(true)}"
                 android:text="@string/alarm_snooze" />
 
             <Button
@@ -104,14 +104,14 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="8dp"
-                android:onClick="@{() -> model.skip()}"
+                android:onClick="@{() -> model.skip(true)}"
                 android:text="@string/alarm_skip" />
 
             <Button
                 android:id="@+id/buttom_alarm_complete"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:onClick="@{() -> model.complete()}"
+                android:onClick="@{() -> model.complete(true)}"
                 android:text="@string/alarm_complete" />
 
         </LinearLayout>
