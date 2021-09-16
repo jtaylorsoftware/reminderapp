@@ -257,14 +257,13 @@ class CalendarAdapter(
     }
 
     companion object {
-        const val COLUMNS = 7
+        const val COLUMNS = 7 // Same as no. days in week
 
-        private const val HEADING_SLOTS = 7
-        private const val DAY_SLOTS = 35
+        private const val HEADING_SLOTS = 7 // Same as no. days in week
+        private const val DAY_SLOTS = 42 // 6 weeks of values to account for any start & end dates in a month
 
         /**
-         * The fixed number of items in the adapter - 7 headings and enough items for 35 days
-         * (5 weeks displayed at once).
+         * The fixed number of items in the adapter
          */
         const val ITEM_COUNT = HEADING_SLOTS + DAY_SLOTS
     }
