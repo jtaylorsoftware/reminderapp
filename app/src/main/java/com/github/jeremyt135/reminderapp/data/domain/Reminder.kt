@@ -252,9 +252,12 @@ class SchedulingRules(
     ): LocalDateTime? {
         return when (type) {
             SchedulingType.SINGLE -> {
-                if (startDate >= currentDateTime.toLocalDate()) {
-                    startDate.atTime(time)
-                } else null
+                val startDateTime = startDate.atTime(time)
+
+                // Check if in future
+                if (startDateTime >= currentDateTime) {
+                    startDateTime
+                } else null // Was in past
             }
             SchedulingType.REPEATING, SchedulingType.REPEAT_FOREVER -> {
                 if (type == SchedulingType.REPEATING &&
