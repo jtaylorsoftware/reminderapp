@@ -2,13 +2,9 @@ package com.github.jeremyt135.reminderapp.data.local
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.test.filters.SmallTest
-import com.github.jeremyt135.reminderapp.data.domain.History
-import com.github.jeremyt135.reminderapp.data.domain.Reminder
-import com.github.jeremyt135.reminderapp.data.domain.ReminderStatus
-import com.github.jeremyt135.reminderapp.util.InMemoryDatabaseRule
-import com.github.jeremyt135.reminderapp.util.currentEpochMilli
-import com.github.jeremyt135.reminderapp.util.currentLocalDateTime
-import com.github.jeremyt135.reminderapp.util.uuid
+import com.github.jeremyt135.reminderapp.broadcast.ACTION_ALARM_COMPLETE
+import com.github.jeremyt135.reminderapp.data.domain.*
+import com.github.jeremyt135.reminderapp.util.*
 import com.google.common.truth.Truth.assertThat
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -18,6 +14,8 @@ import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import java.time.LocalDate
+import java.time.LocalTime
 
 @ExperimentalCoroutinesApi
 @HiltAndroidTest
@@ -45,7 +43,7 @@ class ReminderDaoTest {
     }
 
     @Test
-    fun getAllWithHistory_calculatesCompletionStatus_returnsAllReminders() = runBlockingTest {
+    fun getAllWithHistory_returnsAllRemindersWithLatestHistory() = runBlockingTest {
         val reminders = (1..5).map { i ->
             Reminder(
                 "Reminder $i",
@@ -77,6 +75,115 @@ class ReminderDaoTest {
             }
         }
     }
+
+    @Test
+    fun getAllInRangeWithHistoryOnDate_returnsOnlyRemindersInDateRange() = runBlockingTest {
+        // Beginning of expected date range
+        val startDate = LocalDate.now().minusDays(3)
+        // End of exected date range
+        val endDate = LocalDate.now().plusDays(7)
+        val expectedReminderCount = 3
+        val reminders = (1..5).map { i ->
+            when {
+                // Save some in correct range of start..end dates
+                i <= expectedReminderCount -> Reminder(
+                    "Reminder $i",
+                    schedulingRules = SchedulingRules(
+                        type = SchedulingType.SINGLE,
+                        startDate = startDate,
+                    )
+                ).asDataModel()
+                // Save rest outside the date range
+                else -> Reminder(
+                    "Reminder $i",
+                    schedulingRules = SchedulingRules(
+                        type = SchedulingType.SINGLE,
+                        startDate = endDate.plusDays(1),
+                    )
+                ).asDataModel()
+            }
+
+        }
+        reminders.forEach {
+            reminderDao.insert(it)
+        }
+
+        // Get reminders within start..end, should be 3
+        val dbReminders = reminderDao.getAllInRangeWithHistoryOnDate(
+            startDate = startDate.toString(),
+            endDate = endDate.toString(),
+            historyDate = LocalDate.now().toString() // not testing for history
+        ).first()
+
+        // Expect that only reminders within date range are found
+        assertThat(dbReminders).hasSize(expectedReminderCount)
+    }
+
+    @Test
+    fun getAllInRangeWithHistoryOnDate_returnsOnlyHistoryOnGivenDate() = runBlockingTest {
+        // Beginning of expected date range
+        val startDate = LocalDate.now().minusDays(3)
+        // End of exected date range
+        val endDate = LocalDate.now().plusDays(7)
+        val expectedReminderCount = 3
+        val reminders = (1..5).map { i ->
+            when {
+                // Save some in correct range of start..end dates
+                i <= expectedReminderCount -> Reminder(
+                    "Reminder $i",
+                    schedulingRules = SchedulingRules(
+                        type = SchedulingType.SINGLE,
+                        startDate = startDate,
+                    )
+                ).asDataModel()
+                // Save rest outside the date range
+                else -> Reminder(
+                    "Reminder $i",
+                    schedulingRules = SchedulingRules(
+                        type = SchedulingType.SINGLE,
+                        startDate = endDate.plusDays(1),
+                    )
+                ).asDataModel()
+            }
+
+        }
+        reminders.forEach {
+            reminderDao.insert(it)
+        }
+
+        // History date to test for
+        val expectedHistoryDate = startDate.plusDays(1)
+
+        val expectedHistoryCount = 2
+        // Save only one history with correct date, rest incorrect
+        val historyEntries = reminders.indices.map { i ->
+            History(
+                reminderId = reminders[i].id,
+                completionStatus = ReminderStatus.COMPLETED,
+                completedAt = when {
+                    i < expectedHistoryCount -> expectedHistoryDate
+                    else -> expectedHistoryDate.minusDays(1)
+                }.atTime(LocalTime.MIN).toEpochMilli()
+            ).asDataModel()
+        }
+        historyDao.insertAll(historyEntries)
+
+        // Get reminders within start..end, should be 3
+        val dbReminders = reminderDao.getAllInRangeWithHistoryOnDate(
+            startDate = startDate.toString(),
+            endDate = endDate.toString(),
+            historyDate = expectedHistoryDate.toString()
+        ).first()
+
+        // Expect that only reminders within date range are found
+        assertThat(dbReminders).hasSize(expectedReminderCount)
+
+        // Expect that only 2 of these have COMPLETED
+        assertThat(dbReminders.count { it.history != null && it.history!!.completionStatus == ReminderStatus.COMPLETED.toString() }).isEqualTo(
+            expectedHistoryCount
+        )
+    }
+
 
     @Test
     fun getAll_returnsAllReminders() = runBlockingTest {
@@ -130,7 +237,8 @@ class ReminderDaoTest {
         val reminder = Reminder().asDataModel()
         reminderDao.insert(reminder)
 
-        val alarm = AlarmEntity(id = 1, reminderId = reminder.id, triggerAt = currentLocalDateTime())
+        val alarm =
+            AlarmEntity(id = 1, reminderId = reminder.id, triggerAt = currentLocalDateTime())
         alarmDao.insert(alarm)
 
         val reminderAndAlarm = reminderDao.getReminderAndAlarm(reminder.id)

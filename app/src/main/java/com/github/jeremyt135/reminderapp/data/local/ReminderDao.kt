@@ -22,6 +22,36 @@ interface ReminderDao {
     )
     fun getAllWithTodayHistory(): Flow<List<ReminderAndHistoryEntity>>
 
+    @Transaction
+    @Query(
+        """
+    SELECT reminder.*, hs.*, 
+            CASE
+                WHEN type = 'SINGLE' THEN 
+                    :startDate <= start_date AND start_date <= :endDate
+                WHEN type = 'REPEAT_FOREVER' THEN :endDate >= start_date
+                WHEN type = 'REPEATING' THEN 
+                    :startDate <= end_date AND :endDate >= start_date
+                ELSE 1
+            END dateRangeFilter
+    FROM reminder
+    LEFT OUTER JOIN history AS hs
+    ON reminder.id = hs.reminder_id
+        AND hs.completed_at = ( 
+            SELECT MAX(completed_at) 
+            FROM history 
+            WHERE reminder_id = reminder.id
+            AND :historyDate = DATE(ROUND(IFNULL(completed_at, 0)/1000), 'unixepoch')
+        )
+     WHERE dateRangeFilter = 1
+    """
+    )
+    fun getAllInRangeWithHistoryOnDate(
+        startDate: String,
+        endDate: String,
+        historyDate: String
+    ): Flow<List<ReminderAndHistoryEntity>>
+
     @Query("SELECT * FROM reminder")
     fun getAll(): Flow<List<Reminder>>
 

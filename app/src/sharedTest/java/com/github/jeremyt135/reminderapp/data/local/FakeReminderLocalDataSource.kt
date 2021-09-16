@@ -2,6 +2,7 @@ package com.github.jeremyt135.reminderapp.data.local
 
 import com.github.jeremyt135.reminderapp.data.ReminderDataSource
 import com.github.jeremyt135.reminderapp.data.domain.*
+import com.github.jeremyt135.reminderapp.util.toLocalDate
 import com.github.jeremyt135.reminderapp.util.toLocalDateTime
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -28,6 +29,33 @@ class FakeReminderLocalDataSource(
                 reminder = reminder.copy(),
                 history = historyCache.filter {
                     it.reminderId == reminder.id && it.completedAt.toLocalDateTime().dayOfWeek == today
+                }.maxByOrNull { it.completedAt }
+            )
+        }
+    }
+
+    override fun getAllInRangeWithHistoryOnDate(
+        startDate: LocalDate,
+        endDate: LocalDate,
+        historyDate: LocalDate
+    ): Flow<List<ReminderAndHistory>> = flow {
+        emit(reminderCache)
+    }.map { reminders ->
+        reminders.filter { reminder ->
+            reminder.schedulingRules.let {
+                when (it.type) {
+                    SchedulingType.SINGLE -> startDate <= it.startDate
+                    SchedulingType.REPEATING -> {
+                        startDate <= it.endDate && endDate >= it.startDate
+                    }
+                    SchedulingType.REPEAT_FOREVER -> startDate <= it.startDate
+                }
+            }
+        }.map { reminder ->
+            ReminderAndHistory(
+                reminder = reminder,
+                history = historyCache.filter {
+                    it.reminderId == reminder.id && it.completedAt.toLocalDate() == historyDate
                 }.maxByOrNull { it.completedAt }
             )
         }

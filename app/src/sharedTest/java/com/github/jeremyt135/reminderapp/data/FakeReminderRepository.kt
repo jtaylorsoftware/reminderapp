@@ -5,6 +5,7 @@ import com.github.jeremyt135.reminderapp.data.local.FakeReminderLocalDataSource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -19,9 +20,18 @@ class FakeReminderRepository @Inject constructor(
 
     override fun getAll(): Flow<List<Reminder>> = fakeLocalDataSource.getAll()
 
-    override fun getAllWithTodayHistory(): Flow<List<ReminderAndHistory>> = fakeLocalDataSource.getAllWithTodayHistory()
+    override fun getAllWithTodayHistory(): Flow<List<ReminderAndHistory>> =
+        fakeLocalDataSource.getAllWithTodayHistory()
 
-    override fun getAllInMonth(month: String): Flow<List<Reminder>> = fakeLocalDataSource.getAllInMonth(month)
+    override fun getAllInRangeWithHistoryOnDate(
+        startDate: LocalDate,
+        endDate: LocalDate,
+        historyDate: LocalDate
+    ): Flow<List<ReminderAndHistory>> =
+        fakeLocalDataSource.getAllInRangeWithHistoryOnDate(startDate, endDate, historyDate)
+
+    override fun getAllInMonth(month: String): Flow<List<Reminder>> =
+        fakeLocalDataSource.getAllInMonth(month)
 
     override suspend fun getReminderAndAlarm(reminderId: String): ReminderAndAlarm? {
         return fakeLocalDataSource.getReminderAndAlarm(reminderId)

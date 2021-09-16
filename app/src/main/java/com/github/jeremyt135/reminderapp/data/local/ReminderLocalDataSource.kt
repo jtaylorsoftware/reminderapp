@@ -8,6 +8,7 @@ import com.github.jeremyt135.reminderapp.data.domain.ReminderAndAlarm
 import com.github.jeremyt135.reminderapp.data.domain.ReminderAndHistory
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -28,6 +29,18 @@ class ReminderLocalDataSource @Inject constructor(private val reminderDao: Remin
         reminderDao.getAllWithTodayHistory().map {
             it.asDomainModel()
         }
+
+    override fun getAllInRangeWithHistoryOnDate(
+        startDate: LocalDate,
+        endDate: LocalDate,
+        historyDate: LocalDate
+    ): Flow<List<ReminderAndHistory>> =
+        reminderDao.getAllInRangeWithHistoryOnDate(
+            startDate.toString(),
+            endDate.toString(),
+            historyDate.toString()
+        )
+            .map { it.asDomainModel() }
 
     override suspend fun findById(id: String): Reminder? = reminderDao.findById(id)?.asDomainModel()
 

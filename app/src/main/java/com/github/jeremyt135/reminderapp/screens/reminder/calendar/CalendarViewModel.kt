@@ -4,15 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
-import com.github.jeremyt135.reminderapp.data.domain.Reminder
-import com.github.jeremyt135.reminderapp.data.domain.ReminderAndHistory
 import com.github.jeremyt135.reminderapp.di.DefaultDispatcher
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
-import timber.log.Timber
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
@@ -28,7 +23,19 @@ class CalendarViewModel @Inject constructor(
      */
     private val _selectedYearMonth = MutableStateFlow(YearMonth.now())
 
-    private val _remindersInSelectedMonth = MutableStateFlow<List<Reminder>>(emptyList())
+    /**
+     * List of reminders in the currently selected yearMonth. Used to compute dates
+     * that should have an indicator dot displayed.
+     */
+    private val _remindersInSelectedMonth = _selectedYearMonth.map { selectedYearMonth ->
+        reminderRepository.getAllInMonth(
+            selectedYearMonth.month.value.toString().padStart(2, '0')
+        ).first()
+    }.stateIn(
+        viewModelScope,
+        started = SharingStarted.Lazily,
+        emptyList()
+    )
 
     /**
      * Currently tapped on date, including the current scrolled-to month & year, in the calendar
@@ -43,14 +50,30 @@ class CalendarViewModel @Inject constructor(
         date.format(DateTimeFormatter.ofPattern("MMMM ''uu"))
     }.asLiveData()
 
-    private val _remindersOnSelectedDate = MutableStateFlow(listOf<ReminderAndHistory>())
+    private val _remindersOnSelectedDate = _selectedDate.map { selectedDate ->
+        selectedDate?.let {
+            // Get any reminders on the selected date and only the history for the selected date
+            reminderRepository.getAllInRangeWithHistoryOnDate(
+                startDate = selectedDate,
+                endDate = selectedDate,
+                historyDate = selectedDate
+            ).first()
+        } ?: emptyList()
+    }.stateIn(
+        viewModelScope,
+        started = SharingStarted.Lazily,
+        emptyList()
+    )
 
     /**
      * List of reminders for selected date
      */
     val remindersOnSelectedDate = _remindersOnSelectedDate.asLiveData()
 
-
+    /**
+     * The backing data for the Calendar. Contains all data necessary to produce
+     * date views for the current month.
+     */
     val calendarData =
         _selectedYearMonth.combine(_remindersInSelectedMonth) { yearMonth, reminders ->
             // Transform each array index representing a dayOfMonth into a true/false
@@ -69,20 +92,6 @@ class CalendarViewModel @Inject constructor(
         )
 
     /**
-     * Job for loading reminders for selected date
-     */
-    private var loadDateRemindersJob: Job? = null
-
-    /**
-     * Job for loading reminders for selected month
-     */
-    private var loadMonthRemindersJob: Job? = null
-
-    init {
-        loadRemindersForMonth()
-    }
-
-    /**
      * Changes the selected date, and starts a job to load the reminders for that date.
      */
     fun setSelectedDate(date: LocalDate?) {
@@ -90,12 +99,6 @@ class CalendarViewModel @Inject constructor(
             return
         }
         _selectedDate.value = date
-
-        if (date == null) {
-            _remindersOnSelectedDate.value = emptyList()
-        } else {
-            loadRemindersForDate()
-        }
     }
 
     /**
@@ -115,35 +118,5 @@ class CalendarViewModel @Inject constructor(
     private fun setSelectedMonth(yearMonth: YearMonth) {
         setSelectedDate(null)
         _selectedYearMonth.value = yearMonth
-        loadRemindersForMonth()
-    }
-
-    private fun loadRemindersForDate() {
-        loadDateRemindersJob?.cancel()
-        loadDateRemindersJob = viewModelScope.launch {
-            reminderRepository.getAllWithTodayHistory().map { list ->
-                _selectedDate.value?.let { selectedDate ->
-                    // Only return reminders where the selected date is within its schedule,
-                    // so expired/future reminders aren't displayed
-                    list.filter {
-                        it.reminder.schedulingRules.containsDate(selectedDate)
-                    }
-                } ?: emptyList()
-            }.flowOn(dispatcher).collect {
-                _remindersOnSelectedDate.emit(it)
-            }
-        }
-    }
-
-    private fun loadRemindersForMonth() {
-        loadMonthRemindersJob?.cancel()
-        loadMonthRemindersJob = viewModelScope.launch {
-            val selectedYearMonth = _selectedYearMonth.value
-            reminderRepository.getAllInMonth(
-                selectedYearMonth.month.value.toString().padStart(2, '0')
-            ).collect {
-                _remindersInSelectedMonth.emit(it)
-            }
-        }
     }
 }
