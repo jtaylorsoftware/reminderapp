@@ -21,6 +21,8 @@ class FakeReminderRepository @Inject constructor(
 
     override fun getAllWithTodayHistory(): Flow<List<ReminderAndHistory>> = fakeLocalDataSource.getAllWithTodayHistory()
 
+    override fun getAllInMonth(month: String): Flow<List<Reminder>> = fakeLocalDataSource.getAllInMonth(month)
+
     override suspend fun getReminderAndAlarm(reminderId: String): ReminderAndAlarm? {
         return fakeLocalDataSource.getReminderAndAlarm(reminderId)
     }

@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import java.time.LocalDate
+import java.time.Month
 
 class FakeReminderLocalDataSource(
     private val reminderCache: MutableList<Reminder> = mutableListOf(),
@@ -29,6 +30,15 @@ class FakeReminderLocalDataSource(
                     it.reminderId == reminder.id && it.completedAt.toLocalDateTime().dayOfWeek == today
                 }.maxByOrNull { it.completedAt }
             )
+        }
+    }
+
+    override fun getAllInMonth(month: String): Flow<List<Reminder>> = flow {
+        emit(reminderCache)
+    }.map { reminders ->
+        val month = Month.of(month.toInt())
+        reminders.filter {
+            it.schedulingRules.startDate.month <= month
         }
     }
 
