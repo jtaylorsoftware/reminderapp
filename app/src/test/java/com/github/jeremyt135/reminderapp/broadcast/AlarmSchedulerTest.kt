@@ -13,7 +13,6 @@ import com.github.jeremyt135.reminderapp.work.AlarmActionHandler
 import io.mockk.*
 import io.mockk.impl.annotations.MockK
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -38,13 +37,8 @@ class AlarmSchedulerTest {
     fun setup() {
         MockKAnnotations.init(this)
 
-        val mockWorkManager = mockkClass(WorkManager::class)
-        every { mockWorkManager.enqueue(any<WorkRequest>()) } returns mockkClass(Operation::class)
-        mockkStatic(WorkManager::class)
-        every { WorkManager.getInstance(any()) } returns mockWorkManager
-
-        coJustRun { mockAlarmRepository.deleteAllInPast(any()) }
-        coJustRun { mockAlarmRepository.clearAllScheduled() }
+        mockkStatic(::rescheduleReminders)
+        coJustRun { rescheduleReminders(any(), any(), any()) }
 
         receiver = spyk(AlarmScheduler().apply {
             applicationScope = mainCoroutineRule
@@ -78,9 +72,7 @@ class AlarmSchedulerTest {
         receiver.onReceive(mockContext, intent)
 
         coVerifyOrder {
-            mockAlarmRepository.deleteAllInPast(any())
-            mockAlarmRepository.clearAllScheduled()
-            AlarmActionHandler.createForAction(ACTION_ALARM_SCHEDULE_NEXT, "")
+            rescheduleReminders(any(), any(), any())
         }
     }
 
@@ -92,9 +84,7 @@ class AlarmSchedulerTest {
         receiver.onReceive(mockContext, intent)
 
         coVerifyOrder {
-            mockAlarmRepository.deleteAllInPast(any())
-            mockAlarmRepository.clearAllScheduled()
-            AlarmActionHandler.createForAction(ACTION_ALARM_SCHEDULE_NEXT, "")
+            rescheduleReminders(any(), any(), any())
         }
     }
 }

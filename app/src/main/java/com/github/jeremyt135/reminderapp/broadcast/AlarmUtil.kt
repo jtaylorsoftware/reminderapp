@@ -12,16 +12,19 @@ import androidx.annotation.VisibleForTesting
 import androidx.core.app.AlarmManagerCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.work.WorkManager
 import com.github.jeremyt135.R
 import com.github.jeremyt135.reminderapp.data.AlarmRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.Alarm
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
+import com.github.jeremyt135.reminderapp.data.domain.ReminderStatus
 import com.github.jeremyt135.reminderapp.screens.alarm.AlarmActivity
 import com.github.jeremyt135.reminderapp.screens.reminder.editor.ReminderEditorActivity
-import com.github.jeremyt135.reminderapp.util.getShortLocalDateDisplay
-import com.github.jeremyt135.reminderapp.util.getShortLocalTimeDisplay
-import com.github.jeremyt135.reminderapp.util.toEpochMilli
+import com.github.jeremyt135.reminderapp.util.*
+import com.github.jeremyt135.reminderapp.work.AlarmActionHandler
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.first
 import timber.log.Timber
 
 /**
@@ -125,6 +128,65 @@ suspend fun scheduleNextAlarm(
         }
     } // Else the Alarm was the one already scheduled
     return true
+}
+
+/**
+ * Deletes all alarms, clears the scheduled flag for all alarms, saves new alarms
+ * for all reminders, and then creates an action to schedule next alarm. Reminders that have
+ * been completed on the current date will not be schedule on the same day, instead they
+ * are scheduled when next available.
+ * For use when the application has restarted from a force stop, reinstalled, or when phone restarts.
+ * Reminders that expired while the app was unable to run cannot be recovered and will not be rescheduled
+ * because that would cause an "avalanche" of past alarms.
+ * @return Number of saved alarms.
+ */
+suspend fun rescheduleReminders(
+    context: Context,
+    reminderRepository: ReminderRepository,
+    alarmRepository: AlarmRepository
+): Int {
+    Timber.d("Rescheduling all reminders and their alarms...")
+
+    // Clear the past alarms
+    alarmRepository.deleteAll()
+
+    Timber.d("Cleared all past alarms, saving new ones...")
+
+    // Get all reminders and re-save their alarms
+    val reminders = reminderRepository.getAllWithTodayHistory().first()
+    val numRescheduled = reminders.map { reminderAndHistory ->
+        // Allow same day alarm if either a) no history or b) history.status is PENDING
+        val allowSameDay =
+            reminderAndHistory.history?.let { it.completionStatus == ReminderStatus.PENDING }
+                ?: true
+
+        reminderAndHistory.reminder.let {
+            it.schedulingRules.getNextTimeForAlarm(
+                currentLocalDateTime(),
+                allowSameDay = allowSameDay
+            )?.let { time ->
+                val nextAlarm = Alarm(
+                    reminderId = it.id,
+                    triggerAt = time,
+                    maxSnoozeRepeats = it.maxSnoozeRepeats,
+                    snoozeDuration = it.snoozeDuration
+                )
+                nextAlarm.id = alarmRepository.save(nextAlarm)
+            }
+        }
+    }.count { it != null }
+
+    Timber.d("Saved $numRescheduled new alarms, starting action for SCHEDULE_NEXT...")
+
+    enqueueScheduleNext(context)
+
+    return numRescheduled
+}
+
+@VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+fun enqueueScheduleNext(context: Context) {
+    val worker = AlarmActionHandler.createForAction(ACTION_ALARM_SCHEDULE_NEXT, "")
+    WorkManager.getInstance(context).enqueue(worker)
 }
 
 /**

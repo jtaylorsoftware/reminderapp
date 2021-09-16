@@ -46,14 +46,8 @@ class AlarmScheduler : BroadcastReceiver() {
 
         val pendingResult = goAsync()
         applicationScope.launch {
-            Timber.d("Rescheduling alarms")
-
-            // Clean up dangling Alarms
-            alarmRepository.deleteAllInPast(currentEpochMilli())
-            alarmRepository.clearAllScheduled()
-
-            val worker = AlarmActionHandler.createForAction(ACTION_ALARM_SCHEDULE_NEXT, "")
-            WorkManager.getInstance(context).enqueue(worker)
+            // Try to reschedule each reminder
+            rescheduleReminders(context, reminderRepository, alarmRepository)
             pendingResult.finish()
         }
     }

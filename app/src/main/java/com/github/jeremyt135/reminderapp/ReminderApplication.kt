@@ -6,6 +6,7 @@ import androidx.work.Configuration
 import androidx.work.WorkManager
 import com.github.jeremyt135.BuildConfig
 import com.github.jeremyt135.reminderapp.broadcast.ACTION_ALARM_SCHEDULE_NEXT
+import com.github.jeremyt135.reminderapp.broadcast.rescheduleReminders
 import com.github.jeremyt135.reminderapp.data.AlarmRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.di.AppCoroutineScope
@@ -42,13 +43,8 @@ class ReminderApplication : Application(), Configuration.Provider {
             Timber.plant(Timber.DebugTree())
         }
 
-        // Perform cleanup and reschedule, which may be necessary due to a force stop
-        alarmRepository.deleteAllInPast(currentEpochMilli())
-        alarmRepository.clearAllScheduled()
-
-        AlarmActionHandler.createForAction(ACTION_ALARM_SCHEDULE_NEXT, "").let {
-            WorkManager.getInstance(this).enqueue(it)
-        }
+        // Try to reschedule each reminder which may be necessary due to a force stop
+        rescheduleReminders(this, reminderRepository, alarmRepository)
     }
 
     override fun getWorkManagerConfiguration() =
