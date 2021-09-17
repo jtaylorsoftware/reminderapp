@@ -40,7 +40,8 @@ class RemindersActivity : AppCompatActivity(), RemindersSortDialogFragment.Dialo
                 setOf(
                     R.id.fragment_reminders,
                     R.id.fragment_history,
-                    R.id.fragment_calendar
+                    R.id.fragment_calendar,
+                    R.id.fragment_alarm_list
                 )
             )
         setupActionBarWithNavController(navController, appBarConfiguration)

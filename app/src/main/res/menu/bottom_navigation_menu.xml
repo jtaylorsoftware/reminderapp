@@ -13,6 +13,12 @@
         android:title="@string/bottomnav_reminders"/>
 
     <item
+        android:id="@+id/fragment_alarm_list"
+        android:enabled="true"
+        android:icon="@drawable/ic_notification_alarm"
+        android:title="@string/bottomnav_alams"/>
+
+    <item
         android:id="@+id/fragment_history"
         android:enabled="true"
         android:icon="@drawable/ic_baseline_history_24"

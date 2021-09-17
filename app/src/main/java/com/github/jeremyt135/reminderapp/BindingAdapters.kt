@@ -7,6 +7,7 @@ import com.github.jeremyt135.R
 import com.github.jeremyt135.reminderapp.data.domain.History
 import com.github.jeremyt135.reminderapp.data.domain.ReminderAndHistory
 import com.github.jeremyt135.reminderapp.data.domain.ReminderStatus
+import com.github.jeremyt135.reminderapp.screens.reminder.alarm.AlarmListAdapter
 import com.github.jeremyt135.reminderapp.screens.reminder.history.HistoryListAdapter
 import com.github.jeremyt135.reminderapp.screens.reminder.overview.ReminderListAdapter
 
@@ -18,6 +19,11 @@ fun bindReminderRecyclerView(recyclerView: RecyclerView, data: List<ReminderAndH
 @BindingAdapter("historyListData")
 fun bindHistoryRecyclerView(recyclerView: RecyclerView, data: List<History>?) {
     (recyclerView.adapter as HistoryListAdapter).submitList(data)
+}
+
+@BindingAdapter("alarmListData")
+fun bindAlarmRecyclerView(recyclerView: RecyclerView, data: List<Any>?) {
+    (recyclerView.adapter as AlarmListAdapter).submitList(data)
 }
 
 @BindingAdapter("statusForIcon")

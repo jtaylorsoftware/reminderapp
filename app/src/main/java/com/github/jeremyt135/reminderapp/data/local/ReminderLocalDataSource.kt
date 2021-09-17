@@ -47,6 +47,11 @@ class ReminderLocalDataSource @Inject constructor(private val reminderDao: Remin
     override suspend fun getReminderAndAlarm(reminderId: String): ReminderAndAlarm? =
         reminderDao.getReminderAndAlarm(reminderId)?.asDomainModel()
 
+    override fun getAllWithAlarmsSortedDesc(): Flow<List<ReminderAndAlarm>> =
+        reminderDao.getAllWithAlarmsSortedDesc().map {
+            it.asDomainModel()
+        }
+
     override suspend fun save(reminder: Reminder) = reminderDao.insert(reminder.asDataModel())
     override suspend fun saveAll(reminders: List<Reminder>) =
         reminderDao.insertAll(reminders.asDataModel())

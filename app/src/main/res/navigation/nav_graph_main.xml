@@ -23,6 +23,9 @@
         <action
             android:id="@+id/action_fragment_reminders_to_calendarFragment"
             app:destination="@id/fragment_calendar" />
+        <action
+            android:id="@+id/action_fragment_reminders_to_alarmListFragment"
+            app:destination="@id/fragment_alarm_list" />
     </fragment>
     <fragment
         android:id="@+id/fragment_history"
@@ -43,6 +46,18 @@
         android:label="Calendar" >
         <action
             android:id="@+id/action_fragment_calendar_to_activity_reminder_editor"
+            app:destination="@id/activity_reminder_editor">
+            <argument
+                android:name="com.github.jeremyt135.reminderapp.EXTRA_REMINDER_ID"
+                android:defaultValue='""' />
+        </action>
+    </fragment>
+    <fragment
+        android:id="@+id/fragment_alarm_list"
+        android:name="com.github.jeremyt135.reminderapp.screens.reminder.alarm.AlarmListFragment"
+        android:label="Alarms" >
+        <action
+            android:id="@+id/action_alarmListFragment_to_activity_reminder_editor"
             app:destination="@id/activity_reminder_editor">
             <argument
                 android:name="com.github.jeremyt135.reminderapp.EXTRA_REMINDER_ID"

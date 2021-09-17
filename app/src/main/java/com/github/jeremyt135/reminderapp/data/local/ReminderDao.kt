@@ -25,15 +25,7 @@ interface ReminderDao {
     @Transaction
     @Query(
         """
-    SELECT reminder.*, hs.*, 
-            CASE
-                WHEN type = 'SINGLE' THEN 
-                    :startDate <= start_date AND start_date <= :endDate
-                WHEN type = 'REPEAT_FOREVER' THEN :endDate >= start_date
-                WHEN type = 'REPEATING' THEN 
-                    :startDate <= end_date AND :endDate >= start_date
-                ELSE 1
-            END dateRangeFilter
+    SELECT reminder.*, hs.*
     FROM reminder
     LEFT OUTER JOIN history AS hs
     ON reminder.id = hs.reminder_id
@@ -43,7 +35,13 @@ interface ReminderDao {
             WHERE reminder_id = reminder.id
             AND :historyDate = DATE(ROUND(IFNULL(completed_at, 0)/1000), 'unixepoch')
         )
-     WHERE dateRangeFilter = 1
+     WHERE 
+        CASE
+            WHEN type = 'SINGLE' THEN :startDate <= start_date AND start_date <= :endDate
+            WHEN type = 'REPEAT_FOREVER' THEN :endDate >= start_date
+            WHEN type = 'REPEATING' THEN :startDate <= end_date AND :endDate >= start_date
+            ELSE 0
+        END
     """
     )
     fun getAllInRangeWithHistoryOnDate(
@@ -62,8 +60,19 @@ interface ReminderDao {
     suspend fun findById(id: String): Reminder?
 
     @Transaction
-    @Query("SELECT * FROM reminder WHERE id = :reminderId")
+    @Query("SELECT reminder.*, alarm.* FROM reminder LEFT OUTER JOIN alarm on reminder_id = alarm_id WHERE id = :reminderId")
     suspend fun getReminderAndAlarm(reminderId: String): ReminderAndAlarm?
+
+    @Transaction
+    @Query(
+        """
+        SELECT reminder.*, alarm.*
+        FROM reminder
+        INNER JOIN alarm on reminder.id = alarm.reminder_id
+        ORDER BY alarm.trigger_at ASC
+    """
+    )
+    fun getAllWithAlarmsSortedDesc(): Flow<List<ReminderAndAlarm>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(reminder: Reminder)

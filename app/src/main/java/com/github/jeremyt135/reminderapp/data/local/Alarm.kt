@@ -24,7 +24,7 @@ import java.time.LocalDateTime
             entity = ReminderEntity::class,
             parentColumns = ["id"],
             childColumns = ["reminder_id"],
-            onDelete = ForeignKey.CASCADE
+            onDelete = ForeignKey.CASCADE,
         ),
     ],
     indices = [
@@ -33,6 +33,7 @@ import java.time.LocalDateTime
 )
 data class AlarmEntity(
     @PrimaryKey(autoGenerate = true)
+    @ColumnInfo(name = "alarm_id")
     var id: Long = 0L,
 
     @ColumnInfo(name = "reminder_id")
@@ -46,10 +47,10 @@ data class AlarmEntity(
     @ColumnInfo(name = "notification_id")
     val notificationId: Int = NotificationId.next,
 
-    @ColumnInfo(name = "max_snooze_repeats")
+    @ColumnInfo(name = "alarm_max_snooze_repeats")
     val maxSnoozeRepeats: Long = SnoozeRules.DEFAULT_SNOOZE_REPEATS,
 
-    @ColumnInfo(name = "snooze_time")
+    @ColumnInfo(name = "alarm_snooze_time")
     val snoozeDuration: Long = SnoozeRules.DEFAULT_SNOOZE_DURATION,
 
     @ColumnInfo(name = "snooze_count")

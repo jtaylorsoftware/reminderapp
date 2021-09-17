@@ -59,11 +59,7 @@ data class ReminderEntity(
 
 data class ReminderAndAlarmEntity(
     @Embedded val reminder: ReminderEntity,
-    @Relation(
-        parentColumn = "id",
-        entityColumn = "reminder_id"
-    )
-    val alarm: AlarmEntity?
+    @Embedded val alarm: AlarmEntity?
 ) : DataModel<ReminderAndAlarm> {
     override fun asDomainModel(): ReminderAndAlarm =
         ReminderAndAlarm(

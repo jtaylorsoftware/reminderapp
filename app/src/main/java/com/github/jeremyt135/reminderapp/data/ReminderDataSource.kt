@@ -18,6 +18,7 @@ interface ReminderDataSource {
 
     suspend fun findById(id: String): Reminder?
     suspend fun getReminderAndAlarm(reminderId: String): ReminderAndAlarm?
+    fun getAllWithAlarmsSortedDesc(): Flow<List<ReminderAndAlarm>>
     suspend fun save(reminder: Reminder)
     suspend fun saveAll(reminders: List<Reminder>)
     suspend fun delete(reminder: Reminder)

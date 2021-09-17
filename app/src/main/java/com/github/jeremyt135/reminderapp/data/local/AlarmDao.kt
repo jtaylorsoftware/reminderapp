@@ -9,7 +9,7 @@ interface AlarmDao {
     @Query("SELECT * FROM alarm")
     fun getAll(): Flow<List<Alarm>>
 
-    @Query("SELECT * FROM alarm WHERE id = :id")
+    @Query("SELECT * FROM alarm WHERE alarm_id = :id")
     suspend fun findById(id: Long): Alarm?
 
     @Query("SELECT * FROM alarm WHERE reminder_id = :reminderId")
@@ -40,4 +40,4 @@ interface AlarmDao {
     suspend fun clearTable()
 }
 
-data class AlarmScheduleFlag(val id: Long, val scheduled: Boolean?)
+data class AlarmScheduleFlag(@ColumnInfo(name="alarm_id") val id: Long, val scheduled: Boolean?)
