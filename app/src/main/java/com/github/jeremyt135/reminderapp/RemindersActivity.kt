@@ -47,6 +47,9 @@ class RemindersActivity : AppCompatActivity(), RemindersSortDialogFragment.Dialo
         setupActionBarWithNavController(navController, appBarConfiguration)
 
         val bottomNav: BottomNavigationView = findViewById(R.id.bottom_navigation)
+        bottomNav.setOnItemReselectedListener {
+            // ignore reselection
+        }
         NavigationUI.setupWithNavController(bottomNav, navController)
 
         createNotificationChannels()
