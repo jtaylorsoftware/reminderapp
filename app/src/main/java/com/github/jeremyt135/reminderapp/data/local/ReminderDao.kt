@@ -60,7 +60,7 @@ interface ReminderDao {
     suspend fun findById(id: String): Reminder?
 
     @Transaction
-    @Query("SELECT reminder.*, alarm.* FROM reminder LEFT OUTER JOIN alarm on reminder_id = alarm_id WHERE id = :reminderId")
+    @Query("SELECT reminder.*, alarm.* FROM reminder LEFT OUTER JOIN alarm on reminder.id = alarm.reminder_id WHERE id = :reminderId")
     suspend fun getReminderAndAlarm(reminderId: String): ReminderAndAlarm?
 
     @Transaction
