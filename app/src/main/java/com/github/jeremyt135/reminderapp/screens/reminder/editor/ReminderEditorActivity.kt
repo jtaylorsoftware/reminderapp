@@ -1,6 +1,7 @@
 package com.github.jeremyt135.reminderapp.screens.reminder.editor
 
 import android.os.Bundle
+import android.view.MenuItem
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NavUtils
@@ -24,9 +25,22 @@ class ReminderEditorActivity : AppCompatActivity(), SoundPickerDialogFragment.Di
         setContentView(R.layout.activity_reminder_editor)
 
         viewModel.navigateToReminders.asLiveData().observe(this) { event ->
-            event.value?.let { NavUtils.navigateUpFromSameTask(this) }
+            event.value?.let {
+                // When "Cancel" button is pressed in editor, finish activity
+                finish()
+            }
         }
     }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean =
+        when (item.itemId) {
+            // When "Up" button is pressed in toolbar, finish activity (similar to "back" button)
+            android.R.id.home -> {
+                finish()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
 
     override fun onVibrateOptionChanged(vibrate: Boolean) {
         viewModel.onVibrateChanged(vibrate)

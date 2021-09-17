@@ -1,7 +1,6 @@
 package com.github.jeremyt135.reminderapp.screens.reminder.calendar
 
 import android.content.Context
-import android.content.res.Configuration
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import androidx.annotation.AttrRes
@@ -11,12 +10,13 @@ import androidx.lifecycle.findViewTreeLifecycleOwner
 import androidx.lifecycle.findViewTreeViewModelStoreOwner
 import androidx.recyclerview.widget.GridLayoutManager
 import com.github.jeremyt135.databinding.ViewCalendarBinding
+import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.screens.reminder.overview.ReminderListAdapter
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collect
-import timber.log.Timber
-import java.time.YearMonth
+
+typealias OnReminderSelectedListener = (Reminder) -> Unit
 
 @AndroidEntryPoint
 class CalendarView : ConstraintLayout {
@@ -29,6 +29,7 @@ class CalendarView : ConstraintLayout {
     private var calendarAdapter: CalendarAdapter? = null
     private var coroutineScope: CoroutineScope? = null
 
+    var onReminderSelectedListener: OnReminderSelectedListener? = null
 
     constructor(context: Context) : super(context)
     constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
@@ -54,17 +55,18 @@ class CalendarView : ConstraintLayout {
 
     private fun setupBindingViews() {
         reminderListAdapter = ReminderListAdapter(ReminderListAdapter.OnClickListener {
-//            viewModel.editReminder(it.reminder)
+            onReminderSelectedListener?.invoke(it.reminder)
         })
 
         binding?.apply {
             recyclerCalendarReminders.adapter = reminderListAdapter
 
             // Use a GLM with Calendar's RecyclerView that has disabled scrolling in both directions
-            recyclerCalendar.layoutManager = object : GridLayoutManager(context, CalendarAdapter.COLUMNS) {
-                override fun canScrollVertically() = false
-                override fun canScrollHorizontally() = false
-            }
+            recyclerCalendar.layoutManager =
+                object : GridLayoutManager(context, CalendarAdapter.COLUMNS) {
+                    override fun canScrollVertically() = false
+                    override fun canScrollHorizontally() = false
+                }
 
             // Disable nested scrolling on both RecyclerViews (relevant to portrait view)
             recyclerCalendar.isNestedScrollingEnabled = false
