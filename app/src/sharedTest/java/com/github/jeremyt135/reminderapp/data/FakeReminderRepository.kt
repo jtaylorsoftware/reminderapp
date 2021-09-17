@@ -37,6 +37,8 @@ class FakeReminderRepository @Inject constructor(
         return fakeLocalDataSource.getReminderAndAlarm(reminderId)
     }
 
+    override fun getAllWithAlarmsSortedDesc(): Flow<List<ReminderAndAlarm>> = fakeLocalDataSource.getAllWithAlarmsSortedDesc()
+
     override suspend fun save(reminder: Reminder) {
         fakeLocalDataSource.save(reminder)
     }

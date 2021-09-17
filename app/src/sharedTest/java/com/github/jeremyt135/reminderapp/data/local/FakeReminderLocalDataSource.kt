@@ -80,6 +80,14 @@ class FakeReminderLocalDataSource(
         }
     }
 
+    override fun getAllWithAlarmsSortedDesc(): Flow<List<ReminderAndAlarm>> = flow {
+        emit(reminderCache)
+    }.map { reminders ->
+        reminders.map { reminder ->
+            ReminderAndAlarm(reminder, alarmCache.find { it.reminderId == reminder.id })
+        }.sortedBy { it.alarm?.triggerAt }
+    }
+
     override suspend fun findById(id: String): Reminder? = reminderCache.find { it.id == id }
 
     override suspend fun save(reminder: Reminder) {
