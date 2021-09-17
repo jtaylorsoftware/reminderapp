@@ -80,7 +80,7 @@ class FakeReminderLocalDataSource(
         }
     }
 
-    override fun getAllWithAlarmsSortedDesc(): Flow<List<ReminderAndAlarm>> = flow {
+    override fun getAllWithAlarmsTimeAscending(): Flow<List<ReminderAndAlarm>> = flow {
         emit(reminderCache)
     }.map { reminders ->
         reminders.map { reminder ->

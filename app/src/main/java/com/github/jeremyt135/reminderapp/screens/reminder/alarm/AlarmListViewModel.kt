@@ -10,7 +10,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class AlarmListViewModel @Inject constructor(reminderRepository: ReminderRepository) : ViewModel() {
-    val remindersAndAlarms = reminderRepository.getAllWithAlarmsSortedDesc().map { list ->
+    val remindersAndAlarms = reminderRepository.getAllWithAlarmsTimeAscending().map { list ->
         if (list.isNotEmpty()) {
             // Add title separators to list only if there's alarms
             val newList = listOf(AlarmListSeparator("Next")) + list[0] + listOf(AlarmListSeparator("Upcoming")) + list.slice(

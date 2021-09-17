@@ -72,7 +72,7 @@ interface ReminderDao {
         ORDER BY alarm.trigger_at ASC
     """
     )
-    fun getAllWithAlarmsSortedDesc(): Flow<List<ReminderAndAlarm>>
+    fun getAllWithAlarmsTimeAscending(): Flow<List<ReminderAndAlarm>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(reminder: Reminder)

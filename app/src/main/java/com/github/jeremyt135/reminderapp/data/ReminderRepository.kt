@@ -23,7 +23,7 @@ interface ReminderRepository {
     suspend fun save(reminder: Reminder)
     suspend fun saveAll(reminders: List<Reminder>)
     suspend fun getReminderAndAlarm(reminderId: String): ReminderAndAlarm?
-    fun getAllWithAlarmsSortedDesc(): Flow<List<ReminderAndAlarm>>
+    fun getAllWithAlarmsTimeAscending(): Flow<List<ReminderAndAlarm>>
     suspend fun findById(id: String): Reminder?
     suspend fun delete(reminder: Reminder)
     suspend fun deleteAll()
@@ -58,8 +58,8 @@ class ReminderRepositoryImpl @Inject constructor(
     override suspend fun getReminderAndAlarm(reminderId: String): ReminderAndAlarm? =
         reminderLocalDataSource.getReminderAndAlarm(reminderId)
 
-    override fun getAllWithAlarmsSortedDesc(): Flow<List<ReminderAndAlarm>> =
-        reminderLocalDataSource.getAllWithAlarmsSortedDesc()
+    override fun getAllWithAlarmsTimeAscending(): Flow<List<ReminderAndAlarm>> =
+        reminderLocalDataSource.getAllWithAlarmsTimeAscending()
 
     override suspend fun findById(id: String): Reminder? = reminderLocalDataSource.findById(id)
     override suspend fun delete(reminder: Reminder) = reminderLocalDataSource.delete(reminder)

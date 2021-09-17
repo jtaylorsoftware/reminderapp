@@ -3,8 +3,6 @@ package com.github.jeremyt135.reminderapp.data
 import com.github.jeremyt135.reminderapp.data.domain.*
 import com.github.jeremyt135.reminderapp.data.local.FakeReminderLocalDataSource
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.map
 import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -37,7 +35,7 @@ class FakeReminderRepository @Inject constructor(
         return fakeLocalDataSource.getReminderAndAlarm(reminderId)
     }
 
-    override fun getAllWithAlarmsSortedDesc(): Flow<List<ReminderAndAlarm>> = fakeLocalDataSource.getAllWithAlarmsSortedDesc()
+    override fun getAllWithAlarmsTimeAscending(): Flow<List<ReminderAndAlarm>> = fakeLocalDataSource.getAllWithAlarmsTimeAscending()
 
     override suspend fun save(reminder: Reminder) {
         fakeLocalDataSource.save(reminder)
