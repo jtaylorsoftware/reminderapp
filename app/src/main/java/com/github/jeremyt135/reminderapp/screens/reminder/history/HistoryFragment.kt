@@ -28,7 +28,6 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
 
 
         FragmentHistoryBinding.bind(view).apply {
-            Timber.d("Binding FragmentHistory")
             lifecycleOwner = viewLifecycleOwner
             model = viewModel
 
@@ -45,7 +44,7 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
         R.id.item_history_clear -> {
             buildClearDialog().also {
                 if (it == null) {
-                    Timber.d("AlertDialog was null")
+                    Timber.e("AlertDialog was null")
                 }
             }?.show()
             true
