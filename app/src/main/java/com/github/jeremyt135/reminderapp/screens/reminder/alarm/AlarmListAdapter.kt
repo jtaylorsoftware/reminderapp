@@ -13,7 +13,6 @@ import com.github.jeremyt135.databinding.ItemAlarmBinding
 import com.github.jeremyt135.reminderapp.data.domain.ReminderAndAlarm
 import com.github.jeremyt135.reminderapp.util.getShortLocalDateDisplay
 import com.github.jeremyt135.reminderapp.util.getShortLocalTimeDisplay
-import timber.log.Timber
 
 /**
  * Separator between the next & upcoming alarms
@@ -39,19 +38,15 @@ class AlarmListAdapter(private val onAlarmClickListener: OnAlarmClickListener) :
                     ), parent, false
                 )
             )
-        }.also {
-            Timber.d("onCreate type ${ViewType.fromValue(viewType)}")
         }
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) =
         when (ViewType.fromPosition(position)) {
             ViewType.SEPARATOR -> {
-                Timber.d("onBind separator")
                 val holder = holder as SeparatorViewHolder
                 holder.bind(getItem(position) as AlarmListSeparator)
             }
             ViewType.ALARM -> {
-                Timber.d("onBind remindreandalarm")
                 val holder = holder as ReminderAndAlarmViewHolder
                 val reminderAndAlarm = getItem(position) as ReminderAndAlarm
                 holder.bind(reminderAndAlarm)
@@ -87,7 +82,6 @@ class AlarmListAdapter(private val onAlarmClickListener: OnAlarmClickListener) :
 
     object AlarmDiffCallback : DiffUtil.ItemCallback<Any>() {
         override fun areItemsTheSame(oldItem: Any, newItem: Any): Boolean {
-            Timber.d("areItemsTheSame: $oldItem, $newItem")
             if (oldItem.javaClass != newItem.javaClass) return false
 
             return when (oldItem) {
@@ -105,7 +99,6 @@ class AlarmListAdapter(private val onAlarmClickListener: OnAlarmClickListener) :
 
         @SuppressLint("DiffUtilEquals")
         override fun areContentsTheSame(oldItem: Any, newItem: Any): Boolean {
-            Timber.d("areContentsTheSame: $oldItem, $newItem")
             if (oldItem.javaClass != newItem.javaClass) return false
 
             return when (oldItem) {
