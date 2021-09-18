@@ -33,7 +33,7 @@ interface ReminderDao {
             SELECT MAX(completed_at) 
             FROM history 
             WHERE reminder_id = reminder.id
-            AND :historyDate = DATE(ROUND(IFNULL(completed_at, 0)/1000), 'unixepoch')
+            AND :historyDate = DATE(ROUND(IFNULL(completed_at, 0)/1000), 'unixepoch', 'localtime')
         )
      WHERE 
         CASE
