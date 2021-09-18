@@ -7,7 +7,6 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.github.jeremyt135.databinding.ItemHistoryBinding
 import com.github.jeremyt135.reminderapp.data.domain.History
-import timber.log.Timber
 
 class HistoryListAdapter : ListAdapter<History, HistoryListAdapter.HistoryViewHolder>(HistoryDiffUtil) {
 
@@ -21,7 +20,6 @@ class HistoryListAdapter : ListAdapter<History, HistoryListAdapter.HistoryViewHo
         )
 
     override fun onBindViewHolder(holder: HistoryViewHolder, position: Int) {
-        Timber.d("Binding HistoryViewHolder $position")
         holder.bind(getItem(position))
     }
 
