@@ -8,7 +8,6 @@ import com.github.jeremyt135.reminderapp.data.local.ReminderAndAlarmEntity
 import com.github.jeremyt135.reminderapp.data.local.ReminderAndHistoryEntity
 import com.github.jeremyt135.reminderapp.data.local.ReminderEntity
 import com.github.jeremyt135.reminderapp.util.*
-import timber.log.Timber
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -312,9 +311,9 @@ class SchedulingRules(
         return when (type) {
             SchedulingType.SINGLE -> date == startDate
             SchedulingType.REPEATING -> {
-                date in startDate..endDate  && date.dayOfWeek in daysOfWeek
+                date in startDate..endDate && date.dayOfWeek in daysOfWeek
             }
-            SchedulingType.REPEAT_FOREVER -> startDate <= date  && date.dayOfWeek in daysOfWeek
+            SchedulingType.REPEAT_FOREVER -> startDate <= date && date.dayOfWeek in daysOfWeek
         }
     }
 
@@ -328,7 +327,6 @@ class SchedulingRules(
         } else endDate.getShortLocalDateDisplay()
         SchedulingType.REPEAT_FOREVER -> "Forever"
         SchedulingType.SINGLE -> {
-            Timber.e("endDateDisplayString called when there is no meaningful end date")
             ""
         }
     }
