@@ -5,7 +5,6 @@ import androidx.lifecycle.asLiveData
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.map
-import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
@@ -13,10 +12,10 @@ class AlarmListViewModel @Inject constructor(reminderRepository: ReminderReposit
     val remindersAndAlarms = reminderRepository.getAllWithAlarmsTimeAscending().map { list ->
         if (list.isNotEmpty()) {
             // Add title separators to list only if there's alarms
-            val newList = listOf(AlarmListSeparator("Next")) + list[0] + listOf(AlarmListSeparator("Upcoming")) + list.slice(
-                1 until list.size
-            )
-            Timber.d("Sending list $newList")
+            val newList =
+                listOf(AlarmListSeparator("Next")) + list[0] + listOf(AlarmListSeparator("Upcoming")) + list.slice(
+                    1 until list.size
+                )
             newList
         } else emptyList()
     }.asLiveData()
