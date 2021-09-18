@@ -31,7 +31,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
-import timber.log.Timber
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
@@ -192,7 +191,6 @@ class ReminderEditorViewModel @Inject constructor(
         }
         isEditing = savedReminderId.isNotEmpty()
 
-        Timber.d("reminderId = $savedReminderId")
         if (isEditing) {
             viewModelScope.launch {
                 reminderRepository.findById(savedReminderId)?.let {
@@ -247,7 +245,6 @@ class ReminderEditorViewModel @Inject constructor(
             return
         }
 
-        Timber.d("Set repeat")
         _repeats.value = repeat
         _daysOfWeekState.value = _daysOfWeekState.value.copy(dirty = false, errorEnabled = false)
         _reminder.value = _reminder.value.let {
@@ -296,13 +293,11 @@ class ReminderEditorViewModel @Inject constructor(
         _reminder.value = _reminder.value.let {
             it.copy(schedulingRules = it.schedulingRules.copy(daysOfWeek = newValue))
         }
-        Timber.d("Days of week: $newValue")
         _daysOfWeekState.value =
             _daysOfWeekState.value.copy(dirty = true, errorEnabled = newValue.isEmpty())
     }
 
     fun onTimeChanged(newTime: LocalTime) {
-        Timber.d("New time $newTime")
         _reminder.value = _reminder.value.let {
             it.copy(schedulingRules = it.schedulingRules.copy(time = newTime))
         }
@@ -319,7 +314,6 @@ class ReminderEditorViewModel @Inject constructor(
     }
 
     fun onSnoozeRulesChanged(newRules: SnoozeRules) {
-        Timber.d("New rules: $newRules")
         _snoozeRulesState.value = _snoozeRulesState.value.copy(dirty = true)
         _reminder.value = _reminder.value.copy(snoozeRules = newRules)
     }
@@ -336,7 +330,6 @@ class ReminderEditorViewModel @Inject constructor(
 
     fun setAlarmSound(sound: Uri) {
         if (sound.toString() != _reminder.value.notifSoundUri) {
-            Timber.d("Setting snooze sound to $sound")
             _reminder.value = _reminder.value.copy(notifSoundUri = sound.toString())
         }
     }
@@ -361,7 +354,6 @@ class ReminderEditorViewModel @Inject constructor(
 
         applicationScope.launch {
             _reminder.value.copy().let { reminder ->
-                Timber.d("Saving reminder $reminder")
                 reminderRepository.save(reminder)
 
                 val wasScheduled = stopAlarmsForReminder(getApplication(), reminder)
@@ -429,7 +421,6 @@ class ReminderEditorViewModel @Inject constructor(
     // Cancels & deletes Reminder, returning value of alarm.scheduled
     private suspend fun stopAlarmsForReminder(context: Context, reminder: Reminder): Boolean =
         alarmRepository.findByReminderId(reminder.id)?.let {
-            Timber.d("Cancelling previous alarm")
             cancelAlarmIntentsForReminder(context, reminder)
             alarmRepository.delete(it)
             it.scheduled
