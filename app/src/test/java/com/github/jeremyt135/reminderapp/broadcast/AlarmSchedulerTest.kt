@@ -3,22 +3,31 @@ package com.github.jeremyt135.reminderapp.broadcast
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import androidx.work.Operation
-import androidx.work.WorkManager
-import androidx.work.WorkRequest
+import androidx.test.core.app.ApplicationProvider
 import com.github.jeremyt135.reminderapp.MainCoroutineRule
 import com.github.jeremyt135.reminderapp.data.AlarmRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
-import com.github.jeremyt135.reminderapp.work.AlarmActionHandler
+import dagger.hilt.android.testing.HiltAndroidRule
+import dagger.hilt.android.testing.HiltAndroidTest
+import dagger.hilt.android.testing.HiltTestApplication
 import io.mockk.*
 import io.mockk.impl.annotations.MockK
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
+@HiltAndroidTest
+@Config(application = HiltTestApplication::class)
 @ExperimentalCoroutinesApi
+@RunWith(RobolectricTestRunner::class)
 class AlarmSchedulerTest {
+    @get:Rule
+    var hiltRule = HiltAndroidRule(this)
+
     @get:Rule
     var mainCoroutineRule = MainCoroutineRule()
 
@@ -30,11 +39,11 @@ class AlarmSchedulerTest {
     @MockK
     lateinit var mockAlarmRepository: AlarmRepository
 
-    @MockK
-    lateinit var mockContext: Context
+    val context = ApplicationProvider.getApplicationContext<Context>()
 
     @Before
     fun setup() {
+        hiltRule.inject()
         MockKAnnotations.init(this)
 
         mockkStatic(::rescheduleReminders)
@@ -56,7 +65,7 @@ class AlarmSchedulerTest {
         val intent = mockk<Intent>()
         every { intent.action } returns ACTION_ALARM_SNOOZE
 
-        receiver.onReceive(mockContext, intent)
+        receiver.onReceive(context, intent)
 
         // Verify that no other methods will be called
         coVerify(exactly = 0) {
@@ -69,7 +78,7 @@ class AlarmSchedulerTest {
         val intent = mockk<Intent>()
         every { intent.action } returns Intent.ACTION_BOOT_COMPLETED
 
-        receiver.onReceive(mockContext, intent)
+        receiver.onReceive(context, intent)
 
         coVerifyOrder {
             rescheduleReminders(any(), any(), any())
@@ -81,7 +90,7 @@ class AlarmSchedulerTest {
         val intent = mockk<Intent>()
         every { intent.action } returns Intent.ACTION_MY_PACKAGE_REPLACED
 
-        receiver.onReceive(mockContext, intent)
+        receiver.onReceive(context, intent)
 
         coVerifyOrder {
             rescheduleReminders(any(), any(), any())
