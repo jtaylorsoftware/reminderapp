@@ -25,6 +25,9 @@ android {
     }
     testOptions {
         execution 'ANDROIDX_TEST_ORCHESTRATOR'
+        unitTests {
+            includeAndroidResources = true
+        }
     }
     buildTypes {
         release {
@@ -120,6 +123,10 @@ dependencies {
     testImplementation "com.google.truth:truth:$truth_version"
     testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:$coroutine_version"
 
+    testImplementation "com.google.dagger:hilt-android-testing:$hilt_version"
+    kaptTest "com.google.dagger:hilt-compiler:$hilt_version"
+    testImplementation 'org.robolectric:robolectric:4.6.1'
+    testImplementation "androidx.test:core:$test_version"
     testImplementation "io.mockk:mockk:$mockk_version"
     testImplementation 'junit:junit:4.13.1'
 
