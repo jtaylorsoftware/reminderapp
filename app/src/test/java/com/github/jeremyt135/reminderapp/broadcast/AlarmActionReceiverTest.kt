@@ -1,8 +1,8 @@
 package com.github.jeremyt135.reminderapp.broadcast
 
-import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import androidx.test.core.app.ApplicationProvider
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.Operation
 import androidx.work.WorkManager
@@ -10,35 +10,44 @@ import androidx.work.WorkRequest
 import com.github.jeremyt135.reminderapp.MainCoroutineRule
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.service.AlarmService
-import com.github.jeremyt135.reminderapp.service.AlarmTimer
 import com.github.jeremyt135.reminderapp.service.AlarmTimerManager
 import com.github.jeremyt135.reminderapp.work.AlarmActionHandler
+import com.google.common.truth.Truth.assertThat
+import dagger.hilt.android.testing.HiltAndroidRule
+import dagger.hilt.android.testing.HiltAndroidTest
+import dagger.hilt.android.testing.HiltTestApplication
 import io.mockk.*
-import io.mockk.impl.annotations.MockK
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
+import javax.inject.Inject
 
+@HiltAndroidTest
+@Config(application = HiltTestApplication::class)
 @ExperimentalCoroutinesApi
+@RunWith(RobolectricTestRunner::class)
 class AlarmActionReceiverTest {
+    @get:Rule
+    var hiltRule = HiltAndroidRule(this)
+
     @get:Rule
     var mainCoroutineRule = MainCoroutineRule()
 
+    @Inject
+    lateinit var timerManager: AlarmTimerManager
+
     lateinit var receiver: AlarmActionReceiver
 
-    @MockK
-    lateinit var mockContext: Context
-
-    @MockK
-    lateinit var mockTimerManager: AlarmTimerManager
-
-    @MockK
-    lateinit var mockTimer: AlarmTimer
+    val context = ApplicationProvider.getApplicationContext<Context>()
 
     @Before
     fun setup() {
-        MockKAnnotations.init(this)
+        hiltRule.inject()
 
         val mockWorkManager = mockkClass(WorkManager::class)
         every { mockWorkManager.enqueue(any<WorkRequest>()) } returns mockkClass(Operation::class)
@@ -53,24 +62,15 @@ class AlarmActionReceiverTest {
         every { AlarmActionHandler.createForAction(any(), any()) } returns
                 OneTimeWorkRequestBuilder<AlarmActionHandler>().build()
 
-        receiver = spyk(AlarmActionReceiver()).apply {
-            timerManager = mockTimerManager
-        }
-
-        every { mockTimerManager.timer } returns mockTimer
-        every { mockTimer.stop() } returns true
-
-        val mockPendingResult = mockk<BroadcastReceiver.PendingResult>()
-        every { receiver.goAsync() } returns mockPendingResult
-        every { mockPendingResult.finish() } returns Unit
+        receiver = AlarmActionReceiver()
     }
 
     @Test
-    fun intentAction_null_returns() {
+    fun intentAction_null_returns() = mainCoroutineRule.runBlockingTest {
         val intent = mockk<Intent>()
         every { intent.action } returns null
 
-        receiver.onReceive(mockContext, intent)
+        receiver.onReceive(context, intent)
 
         verify(exactly = 0) {
             intent.getStringExtra(EXTRA_REMINDER_ID)
@@ -78,11 +78,11 @@ class AlarmActionReceiverTest {
     }
 
     @Test
-    fun intentAction_notExpected_returns() {
+    fun intentAction_notExpected_returns() = mainCoroutineRule.runBlockingTest {
         val intent = mockk<Intent>()
         every { intent.action } returns ACTION_ALARM_START
 
-        receiver.onReceive(mockContext, intent)
+        receiver.onReceive(context, intent)
 
         verify(exactly = 0) {
             intent.getStringExtra(EXTRA_REMINDER_ID)
@@ -90,7 +90,7 @@ class AlarmActionReceiverTest {
     }
 
     @Test
-    fun stopsAlarmService_andCreatesWorker() {
+    fun stopsAlarmService_andCreatesWorker() = mainCoroutineRule.runBlockingTest {
         val reminder = Reminder()
 
         val action = ACTION_ALARM_SNOOZE
@@ -99,28 +99,31 @@ class AlarmActionReceiverTest {
         every { intent.action } returns action
         every { intent.getStringExtra(EXTRA_REMINDER_ID) } returns reminder.id
 
-        receiver.onReceive(mockContext, intent)
+        receiver.onReceive(context, intent)
 
         verify {
-            AlarmService.requestStop(mockContext)
+            AlarmService.requestStop(context)
             AlarmActionHandler.createForAction(action, reminder.id)
         }
     }
 
     @Test
-    fun stopsAlarmManagerTimerInstance() {
+    fun stopsAlarmManagerTimerInstance() = mainCoroutineRule.runBlockingTest {
         val action = ACTION_ALARM_SNOOZE
         val intent = mockk<Intent>()
 
         every { intent.action } returns action
         every { intent.getStringExtra(EXTRA_REMINDER_ID) } returns ""
 
-        receiver.onReceive(mockContext, intent)
+        pauseDispatcher()
+        timerManager.startTimer(mainCoroutineRule) {}
+        receiver.onReceive(context, intent)
 
         verify {
-            mockTimer.stop()
-            AlarmService.requestStop(mockContext)
+            AlarmService.requestStop(context)
             AlarmActionHandler.createForAction(action, "")
         }
+
+        assertThat(timerManager.timer!!.isFinished).isTrue()
     }
 }
