@@ -11,4 +11,7 @@
     <color name="error">#B71C1C</color>
     <color name="transparent">#0000</color>
     <color name="card_stroke">#F888</color>
+    <color name="status_pending">#F888</color>
+    <color name="status_skip">#B71C1C</color>
+    <color name="status_complete">#1B5E20</color>
 </resources>

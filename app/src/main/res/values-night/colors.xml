@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="status_pending">#FBBB</color>
+    <color name="status_skip">#FF5252</color>
+    <color name="status_complete">#00E676</color>
+</resources>

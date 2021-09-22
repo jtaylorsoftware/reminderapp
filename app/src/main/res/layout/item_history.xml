@@ -10,16 +10,16 @@
             type="com.github.jeremyt135.reminderapp.data.domain.History" />
     </data>
 
+
     <com.google.android.material.card.MaterialCardView
+        android:id="@+id/card_item_history"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="12dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="12dp"
-        android:layout_marginBottom="8dp"
-        app:cardElevation="0dp"
-        app:strokeColor="@color/card_stroke"
-        app:strokeWidth="1dp">
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginVertical="8dp"
+        android:clickable="true"
+        android:focusable="true"
+        app:cardElevation="6dp">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
@@ -27,77 +27,82 @@
             android:padding="4dp">
 
             <TextView
+                android:id="@+id/text_item_history_startDate"
+                style="@style/TextAppearance.MaterialComponents.Caption"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:padding="2dp"
+                android:text="@{history.dateDisplayString}"
+                app:layout_constraintBottom_toBottomOf="@+id/text_item_history_time"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.5"
+                app:layout_constraintStart_toEndOf="@+id/text_item_history_time"
+                tools:text="9/5/21" />
+
+            <TextView
                 android:id="@+id/text_item_history_description"
+                style="@style/TextAppearance.MaterialComponents.Body1"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:padding="2dp"
-                android:text="@{history.description}"
-                android:textColor="?android:attr/textColorPrimary"
-                android:textSize="16sp"
-                app:layout_constraintBottom_toTopOf="@+id/text_item_history_completionDate"
-                app:layout_constraintEnd_toStartOf="@+id/divider_item_history"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                tools:text="Reminder text" />
-
-            <TextView
-                android:id="@+id/text_item_history_completionDate"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:gravity="center"
-                android:paddingStart="2dp"
-                android:paddingEnd="2dp"
-                android:paddingBottom="1dp"
-                android:text="@{history.dateDisplayString}"
-                android:textColor="@color/text_secondary"
-                android:textSize="@dimen/textSize_item_reminder_date"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/text_item_history_description"
-                tools:text="February 15"/>
-
-            <View
-                android:id="@+id/divider_item_history"
-                android:layout_width="1dp"
-                android:layout_height="0dp"
-                android:background="?android:attr/listDivider"
-                app:layout_constraintBottom_toBottomOf="parent"
+                android:layout_marginBottom="4dp"
+                android:ellipsize="end"
+                android:maxLines="2"
+                android:paddingHorizontal="2dp"
+                android:paddingVertical="2dp"
+                android:scrollHorizontally="true"
+                android:text="@{history.description}"
+                app:layout_constraintBottom_toTopOf="@+id/divider8"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                app:layout_constraintTop_toBottomOf="@+id/text_item_history_time"
+                app:layout_constraintWidth_percent="0.95"
+                tools:text="Reminder text that is an example and is long enough for ellipses" />
 
             <TextView
-                android:id="@+id/text_item_history_completionTime"
+                android:id="@+id/text_item_history_time"
+                style="@style/TextAppearance.MaterialComponents.Caption"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:padding="2dp"
+                android:paddingVertical="2dp"
                 android:text="@{history.timeDisplayString}"
-                android:textColor="?android:attr/textColorSecondary"
-                android:textSize="18sp"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@+id/image_item_history_status"
+                app:layout_constraintBottom_toTopOf="@+id/text_item_history_description"
+                app:layout_constraintEnd_toStartOf="@+id/text_item_history_startDate"
                 app:layout_constraintHorizontal_bias="0.5"
-                app:layout_constraintStart_toEndOf="@+id/divider_item_history"
+                app:layout_constraintHorizontal_chainStyle="spread_inside"
+                app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintVertical_chainStyle="packed"
                 tools:text="6:15 AM" />
+
 
             <ImageView
                 android:id="@+id/image_item_history_status"
                 android:layout_width="wrap_content"
-                android:layout_height="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
                 android:contentDescription="@string/notification_icon_description"
-
-                app:layout_constraintBottom_toBottomOf="@+id/text_item_history_completionTime"
+                app:layout_constraintBottom_toBottomOf="@+id/divider8"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="0.5"
-                app:layout_constraintStart_toEndOf="@+id/text_item_history_completionTime"
-                app:layout_constraintTop_toTopOf="@+id/text_item_history_completionTime"
+                app:layout_constraintTop_toBottomOf="@+id/text_item_history_description"
                 app:statusForIcon="@{history}"
-                tools:srcCompat="@drawable/ic_notification_complete" />
+                tools:srcCompat="@drawable/ic_notification_pending"
+                tools:tint="@color/status_complete" />
+
+            <View
+                android:id="@+id/divider8"
+                android:layout_width="1dp"
+                android:layout_height="16dp"
+                android:background="?android:attr/listDivider"
+                android:visibility="invisible"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/text_item_history_description"
+                tools:visibility="visible" />
+
 
         </androidx.constraintlayout.widget.ConstraintLayout>
-
 
     </com.google.android.material.card.MaterialCardView>
 

@@ -1,6 +1,9 @@
 package com.github.jeremyt135.reminderapp
 
+import android.content.res.ColorStateList
 import android.widget.ImageView
+import androidx.core.content.ContextCompat
+import androidx.core.widget.ImageViewCompat
 import androidx.databinding.BindingAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.github.jeremyt135.R
@@ -28,13 +31,17 @@ fun bindAlarmRecyclerView(recyclerView: RecyclerView, data: List<Any>?) {
 
 @BindingAdapter("statusForIcon")
 fun bindReminderStatusIcon(imageView: ImageView, history: History?) {
-    val resId = history?.let {
+    val (resId, tint) = history?.let {
         when (it.completionStatus) {
-            ReminderStatus.PENDING -> R.drawable.ic_notification_pending
-            ReminderStatus.SKIPPED -> R.drawable.ic_notification_skip
-            ReminderStatus.COMPLETED -> R.drawable.ic_notification_complete
+            ReminderStatus.PENDING -> R.drawable.ic_notification_pending to R.color.status_pending
+            ReminderStatus.SKIPPED -> R.drawable.ic_notification_skip to R.color.status_skip
+            ReminderStatus.COMPLETED -> R.drawable.ic_notification_complete to R.color.status_complete
         }
-    } ?: R.drawable.ic_notification_pending
+    } ?: R.drawable.ic_notification_pending to R.color.status_pending
     imageView.setImageResource(resId)
     imageView.tag = resId
+    ImageViewCompat.setImageTintList(
+        imageView,
+        ColorStateList.valueOf(ContextCompat.getColor(imageView.context, tint))
+    )
 }
