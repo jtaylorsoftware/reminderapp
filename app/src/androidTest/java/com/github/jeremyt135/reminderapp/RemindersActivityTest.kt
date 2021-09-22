@@ -7,9 +7,8 @@ import androidx.navigation.findNavController
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.click
-import androidx.test.espresso.action.ViewActions.replaceText
+import androidx.test.espresso.action.ViewActions.scrollTo
 import androidx.test.espresso.assertion.ViewAssertions.matches
-import androidx.test.espresso.contrib.PickerActions.setTime
 import androidx.test.espresso.contrib.RecyclerViewActions
 import androidx.test.espresso.matcher.ViewMatchers.*
 import androidx.test.filters.LargeTest
@@ -18,17 +17,13 @@ import com.github.jeremyt135.R
 import com.github.jeremyt135.reminderapp.data.AlarmRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
-import com.github.jeremyt135.reminderapp.data.domain.SchedulingRules
 import com.github.jeremyt135.reminderapp.data.local.AppDatabase
 import com.github.jeremyt135.reminderapp.screens.reminder.overview.ReminderListAdapter
 import com.github.jeremyt135.reminderapp.util.withActivityScenario
-import com.github.jeremyt135.reminderapp.util.withTime
 import com.google.common.truth.Truth.assertThat
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
-import org.hamcrest.CoreMatchers.equalTo
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -218,7 +213,7 @@ class RemindersActivityTest {
              */
             onView(withId(R.id.button_editor_delete))
                 .check(matches(isDisplayed()))
-                .perform(click())
+                .perform(scrollTo(), click())
 
             /**
              * Verify back on reminders list

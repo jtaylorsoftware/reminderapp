@@ -6,10 +6,9 @@ import androidx.fragment.app.commitNow
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.Espresso.onView
-import androidx.test.espresso.action.ViewActions.click
-import androidx.test.espresso.action.ViewActions.replaceText
+import androidx.test.espresso.action.ViewActions
+import androidx.test.espresso.action.ViewActions.*
 import androidx.test.espresso.assertion.ViewAssertions.matches
-import androidx.test.espresso.contrib.PickerActions
 import androidx.test.espresso.matcher.ViewMatchers.*
 import androidx.test.filters.MediumTest
 import androidx.test.platform.app.InstrumentationRegistry
@@ -24,7 +23,6 @@ import com.github.jeremyt135.reminderapp.data.local.FakeHistoryLocalDataSource
 import com.github.jeremyt135.reminderapp.di.DatabaseModule
 import com.github.jeremyt135.reminderapp.di.RepositoryModule
 import com.github.jeremyt135.reminderapp.util.currentLocalDateTime
-import com.github.jeremyt135.reminderapp.util.withTime
 import com.google.common.truth.Truth.assertThat
 import dagger.Module
 import dagger.Provides
@@ -187,7 +185,7 @@ class ReminderEditorFragmentTest {
             fragmentVM = this.viewModel
         }
 
-        onView(withId(R.id.button_editor_cancel)).perform(click())
+        onView(withId(R.id.button_editor_cancel)).perform(scrollTo(), click())
         assertThat(fragmentVM.navigateToReminders.value).isNotNull()
 
         // Assert that the size hasn't changed during this test
@@ -203,7 +201,7 @@ class ReminderEditorFragmentTest {
             fragmentVM = this.viewModel
         }
 
-        onView(withId(R.id.button_editor_save)).perform(click())
+        onView(withId(R.id.button_editor_save)).perform(scrollTo(), click())
         assertThat(fragmentVM.navigateToReminders.value).isNotNull()
     }
 
@@ -228,9 +226,9 @@ class ReminderEditorFragmentTest {
 
         // Apply edits
         onView(withId(R.id.textinput_editor_description)).perform(replaceText(editedReminder.description))
-//        onView(withId(R.id.switch_soundPicker_vibrate)).perform(click())
-//        onView(withId(R.id.toggle_editor_monday)).perform(click())
-//        onView(withId(R.id.toggle_editor_tuesday)).perform(click())
+//        onView(withId(R.id.switch_soundPicker_vibrate)) .perform(scrollTo(), click())
+//        onView(withId(R.id.toggle_editor_monday)) .perform(scrollTo(), click())
+//        onView(withId(R.id.toggle_editor_tuesday)) .perform(scrollTo(), click())
 //        onView(withId(R.id.timePicker_editor)).perform(
 //            PickerActions.setTime(
 //                editedReminder.schedulingRules.hour,
@@ -239,7 +237,7 @@ class ReminderEditorFragmentTest {
 //        )
 
         // Save changes
-        onView(withId(R.id.button_editor_save)).perform(click())
+        onView(withId(R.id.button_editor_save)).perform(scrollTo(), click())
 
         // Verify save happened
         val savedReminder: Reminder = runBlocking {
@@ -266,7 +264,7 @@ class ReminderEditorFragmentTest {
         launchEditorFragmentWithReminder(reminder.id)
 
         onView(withId(R.id.button_editor_delete)).check(matches(isDisplayed()))
-        onView(withId(R.id.button_editor_delete)).perform(click())
+        onView(withId(R.id.button_editor_delete)).perform(scrollTo(), click())
 
         assertThat(reminderRepository.findById(reminder.id)).isNull()
         assertThat(alarmRepository.findByReminderId(reminder.id)).isNull()
