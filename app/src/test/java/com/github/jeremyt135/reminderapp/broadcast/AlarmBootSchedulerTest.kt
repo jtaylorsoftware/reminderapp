@@ -24,14 +24,14 @@ import org.robolectric.annotation.Config
 @Config(application = HiltTestApplication::class)
 @ExperimentalCoroutinesApi
 @RunWith(RobolectricTestRunner::class)
-class AlarmSchedulerTest {
+class AlarmBootSchedulerTest {
     @get:Rule
     var hiltRule = HiltAndroidRule(this)
 
     @get:Rule
     var mainCoroutineRule = MainCoroutineRule()
 
-    lateinit var receiver: AlarmScheduler
+    lateinit var receiver: AlarmBootScheduler
 
     @MockK
     lateinit var mockReminderRepository: ReminderRepository
@@ -49,7 +49,7 @@ class AlarmSchedulerTest {
         mockkStatic(::rescheduleReminders)
         coJustRun { rescheduleReminders(any(), any(), any()) }
 
-        receiver = spyk(AlarmScheduler().apply {
+        receiver = spyk(AlarmBootScheduler().apply {
             applicationScope = mainCoroutineRule
             alarmRepository = mockAlarmRepository
             reminderRepository = mockReminderRepository
@@ -89,6 +89,19 @@ class AlarmSchedulerTest {
     fun alarmScheduler_intentAction_isMyPackageReplaced_schedulesAlarms() {
         val intent = mockk<Intent>()
         every { intent.action } returns Intent.ACTION_MY_PACKAGE_REPLACED
+
+        receiver.onReceive(context, intent)
+
+        coVerifyOrder {
+            rescheduleReminders(any(), any(), any())
+        }
+    }
+
+
+    @Test
+    fun alarmScheduler_intentAction_TimezoneChanged_schedulesAlarms() {
+        val intent = mockk<Intent>()
+        every { intent.action } returns Intent.ACTION_TIMEZONE_CHANGED
 
         receiver.onReceive(context, intent)
 

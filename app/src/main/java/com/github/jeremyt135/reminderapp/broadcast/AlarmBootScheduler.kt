@@ -3,12 +3,9 @@ package com.github.jeremyt135.reminderapp.broadcast
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import androidx.work.WorkManager
 import com.github.jeremyt135.reminderapp.data.AlarmRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.di.AppCoroutineScope
-import com.github.jeremyt135.reminderapp.util.currentEpochMilli
-import com.github.jeremyt135.reminderapp.work.AlarmActionHandler
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -16,13 +13,13 @@ import timber.log.Timber
 import javax.inject.Inject
 
 /**
- * AlarmScheduler removes old alarms, resets scheduled alarms, and schedules the next
- * Alarm to trigger.
+ * AlarmBootScheduler is responsible for rescheduling alarms in response to system events
+ * indicating a restart or other changes that would invalidate or remove AlarmManager alarms.
  *
  * It accepts android.intent.action.BOOT_COMPLETED or android.intent.action.MY_PACKAGE_REPLACED
  */
 @AndroidEntryPoint
-class AlarmScheduler : BroadcastReceiver() {
+class AlarmBootScheduler : BroadcastReceiver() {
     @Inject
     lateinit var reminderRepository: ReminderRepository
 
@@ -34,8 +31,11 @@ class AlarmScheduler : BroadcastReceiver() {
     lateinit var applicationScope: CoroutineScope
 
     private val actions = arrayOf(
+        // Results in AlarmManager alarms being cleared
         "android.intent.action.BOOT_COMPLETED",
-        "android.intent.action.MY_PACKAGE_REPLACED"
+        "android.intent.action.MY_PACKAGE_REPLACED",
+        // Requires rescheduling using new timezone
+        "android.intent.action.TIMEZONE_CHANGED"
     )
 
     override fun onReceive(context: Context, intent: Intent) {
