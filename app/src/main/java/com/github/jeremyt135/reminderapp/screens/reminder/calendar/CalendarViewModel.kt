@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
+import com.github.jeremyt135.reminderapp.data.domain.SchedulingType
 import com.github.jeremyt135.reminderapp.di.DefaultDispatcher
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
@@ -57,9 +58,16 @@ class CalendarViewModel @Inject constructor(
                 startDate = selectedDate,
                 endDate = selectedDate,
                 historyDate = selectedDate
-            ).first()
+            ).first().filter {
+                with(it.reminder.schedulingRules) {
+                    when (type) {
+                        SchedulingType.SINGLE -> startDate == selectedDate
+                        else -> daysOfWeek.contains(selectedDate.dayOfWeek)
+                    }
+                }
+            }
         } ?: emptyList()
-    }.stateIn(
+    }.flowOn(dispatcher).stateIn(
         viewModelScope,
         started = SharingStarted.Lazily,
         emptyList()
