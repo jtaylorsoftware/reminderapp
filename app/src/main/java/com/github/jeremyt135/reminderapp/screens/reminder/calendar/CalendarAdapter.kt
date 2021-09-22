@@ -57,14 +57,19 @@ class CalendarAdapter(
     // Last calendar day (not position) of previous month
     private val lastDayOfPreviousMonth: Int = data.yearMonth.minusMonths(1).lengthOfMonth()
 
+    var selectedDay: DayViewHolder? = null
+        private set
+
     init {
         if (data.daysWithReminders.isNotEmpty() && data.daysWithReminders.size != daysInMonth) {
             throw IllegalArgumentException("DaysWithReminders must be same size as number of days (${data.daysWithReminders.size} vs $daysInMonth)")
         }
     }
 
-    var selectedDay: DayViewHolder? = null
-        private set
+    fun clearSelectedDay() {
+        selectedDay?.toggleSelected()
+        selectedDay = null
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder =
         when (ViewType.fromValue(viewType)) {

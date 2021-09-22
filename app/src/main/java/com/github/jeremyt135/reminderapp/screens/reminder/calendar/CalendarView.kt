@@ -3,6 +3,7 @@ package com.github.jeremyt135.reminderapp.screens.reminder.calendar
 import android.content.Context
 import android.util.AttributeSet
 import android.view.LayoutInflater
+import android.view.View
 import androidx.annotation.AttrRes
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.lifecycle.ViewModelProvider
@@ -51,6 +52,22 @@ class CalendarView : ConstraintLayout {
         super.onDetachedFromWindow()
         detachBinding()
         cancelJobs()
+    }
+
+    override fun onVisibilityChanged(changedView: View, visibility: Int) {
+        super.onVisibilityChanged(changedView, visibility)
+
+        if (visibility != View.VISIBLE) {
+            clearSelectedDay()
+        }
+    }
+
+    /**
+     * Deselects the currently selected date.
+     */
+    private fun clearSelectedDay() {
+        viewModel.setSelectedDate(null)
+        calendarAdapter?.clearSelectedDay()
     }
 
     private fun setupBindingViews() {
