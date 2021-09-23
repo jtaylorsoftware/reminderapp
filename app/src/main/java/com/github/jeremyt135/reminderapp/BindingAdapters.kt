@@ -17,22 +17,22 @@ import com.github.jeremyt135.reminderapp.screens.reminder.overview.ReminderListA
 
 @BindingAdapter("reminderListData")
 fun bindReminderRecyclerView(recyclerView: RecyclerView, data: List<ReminderAndHistory>?) {
-    (recyclerView.adapter as ReminderListAdapter).submitList(data)
+    (recyclerView.adapter as ReminderListAdapter?)?.submitList(data)
 }
 
 @BindingAdapter("historyListData")
 fun bindHistoryRecyclerView(recyclerView: RecyclerView, data: List<History>?) {
-    (recyclerView.adapter as HistoryListAdapter).submitList(data)
+    (recyclerView.adapter as HistoryListAdapter?)?.submitList(data)
 }
 
 @BindingAdapter("alarmListData")
 fun bindAlarmRecyclerView(recyclerView: RecyclerView, data: List<Any>?) {
-    (recyclerView.adapter as AlarmListAdapter).submitList(data)
+    (recyclerView.adapter as AlarmListAdapter?)?.submitList(data)
 }
 
 @BindingAdapter("calendarData")
 fun bindCalendarRecyclerView(recyclerView: RecyclerView, data: List<Any>?) {
-    (recyclerView.adapter as CalendarAdapter).submitList(data)
+    (recyclerView.adapter as CalendarAdapter?)?.submitList(data)
 }
 
 @BindingAdapter("statusForIcon")

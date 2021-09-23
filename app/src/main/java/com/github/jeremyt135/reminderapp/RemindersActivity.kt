@@ -33,8 +33,8 @@ class RemindersActivity : AppCompatActivity(), RemindersSortDialogFragment.Dialo
         setContentView(R.layout.activity_main)
 
         val navHostFragment =
-            supportFragmentManager.findFragmentById(R.id.nav_host_fragment_main) as NavHostFragment
-        val navController = navHostFragment.navController
+            supportFragmentManager.findFragmentById(R.id.nav_host_fragment_main) as NavHostFragment?
+        val navController = navHostFragment?.navController
         appBarConfiguration =
             AppBarConfiguration(
                 setOf(
@@ -44,13 +44,16 @@ class RemindersActivity : AppCompatActivity(), RemindersSortDialogFragment.Dialo
                     R.id.fragment_alarm_list
                 )
             )
-        setupActionBarWithNavController(navController, appBarConfiguration)
-
-        val bottomNav: BottomNavigationView = findViewById(R.id.bottom_navigation)
-        bottomNav.setOnItemReselectedListener {
-            // ignore reselection
+        if (navController != null) {
+            setupActionBarWithNavController(navController, appBarConfiguration)
+            val bottomNav: BottomNavigationView? = findViewById(R.id.bottom_navigation)
+            if (bottomNav != null) {
+                bottomNav.setOnItemReselectedListener {
+                    // ignore reselection
+                }
+                NavigationUI.setupWithNavController(bottomNav, navController)
+            }
         }
-        NavigationUI.setupWithNavController(bottomNav, navController)
 
         createNotificationChannels()
     }
