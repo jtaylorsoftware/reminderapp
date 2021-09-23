@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Widget.App.Button.Compact" parent="Widget.MaterialComponents.Button">
+        <item name="android:insetTop">16dp</item>
+        <item name="android:insetBottom">16dp</item>
+        <item name="android:insetLeft">8dp</item>
+        <item name="android:insetRight">8dp</item>
+        <item name="android:paddingTop">2dp</item>
+        <item name="android:paddingBottom">2dp</item>
+        <item name="android:paddingLeft">12dp</item>
+        <item name="android:paddingRight">12dp</item>
+        <item name="iconPadding">2dp</item>
+        <item name="iconGravity">textStart</item>
+        <item name="iconSize">16dp</item>
+        <item name="android:minWidth">48dp</item>
+        <item name="android:minHeight">48dp</item>
+        <item name="android:textAppearance">@style/TextAppearance.App.Button.Compact</item>
+    </style>
+    <style name="Widget.App.Button.Compact.Round" parent="Widget.App.Button.Compact">
+        <item name="shapeAppearanceOverlay">@style/ShapeAppearanceOverlay.App.Button.Round</item>
+    </style>
+    <style name="TextAppearance.App.Button.Compact" parent="TextAppearance.MaterialComponents.Button">
+        <item name="textAllCaps">false</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:letterSpacing">0.033</item>
+    </style>
+    <style name="ShapeAppearanceOverlay.App.Button.Round" parent="ShapeAppearance.MaterialComponents.SmallComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">50%</item>
+    </style>
+</resources>
