@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="color_primary_dark">#FFBB86FC</color>
-    <color name="color_primary">#FF6200EE</color>
-    <color name="color_primary_variant">#FF3700B3</color>
-    <color name="color_secondary">#FF03DAC5</color>
-    <color name="color_secondary_variant">#FF018786</color>
+    <color name="color_primary_dark">#FF5f5fc4</color>
+    <color name="color_primary">#FF283593</color>
+    <color name="color_primary_variant">#FF001064</color>
+    <color name="color_secondary">#FF40c4ff</color>
+    <color name="color_secondary_variant">#FF0094cc</color>
     <color name="black">#FF000000</color>
     <color name="text_secondary">#F888</color>
     <color name="white">#FFFFFFFF</color>
@@ -14,4 +14,8 @@
     <color name="status_pending">#F888</color>
     <color name="status_skip">#B71C1C</color>
     <color name="status_complete">#1B5E20</color>
+    <color name="calendar_day_outline">@color/black</color>
+    <color name="calendar_day_filled">@color/color_secondary_variant</color>
+    <color name="calendar_reminder_indicator">@color/color_primary</color>
+    <color name="reminder_day_of_week_tint">@color/color_secondary_variant</color>
 </resources>

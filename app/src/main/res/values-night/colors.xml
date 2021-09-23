@@ -3,4 +3,8 @@
     <color name="status_pending">#FBBB</color>
     <color name="status_skip">#FF5252</color>
     <color name="status_complete">#00E676</color>
+    <color name="calendar_day_outline">@color/white</color>
+    <color name="calendar_day_filled">@color/color_secondary</color>
+    <color name="calendar_reminder_indicator">@color/color_primary_dark</color>
+    <color name="reminder_day_of_week_tint">@color/color_secondary</color>
 </resources>

@@ -4,5 +4,5 @@
     <size
         android:width="46dp"
         android:height="46dp" />
-    <solid android:color="@color/color_secondary" />
+    <solid android:color="@color/calendar_day_filled" />
 </shape>

@@ -4,5 +4,5 @@
     <size
         android:width="@dimen/calendar_cell_indicator_size"
         android:height="@dimen/calendar_cell_indicator_size" />
-    <solid android:color="@color/color_primary_variant" />
+    <solid android:color="@color/calendar_reminder_indicator" />
 </shape>
