@@ -346,6 +346,12 @@ class ReminderEditorViewModel @Inject constructor(
             return
         }
 
+        // If description is empty, save a generic description for clarity
+        if (_reminder.value.description.isBlank()) {
+            _reminder.value =
+                _reminder.value.copy(description = "Reminder saved on ${LocalDate.now().getShortLocalDateDisplay()}")
+        }
+
         applicationScope.launch {
             _reminder.value.copy().let { reminder ->
                 reminderRepository.save(reminder)
