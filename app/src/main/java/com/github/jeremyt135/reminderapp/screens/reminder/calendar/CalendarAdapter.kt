@@ -8,8 +8,8 @@ import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.github.jeremyt135.R
-import com.github.jeremyt135.reminderapp.data.domain.ReminderAndHistory
 import com.github.jeremyt135.reminderapp.util.getShortLocaleDisplay
+import com.google.android.material.color.MaterialColors
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
@@ -202,8 +202,7 @@ class CalendarAdapter(
 
         private fun onSelect() {
             useFilledImage()
-//            val colorId = MaterialColors.getColor(view, R.attr.colorOnSecondary)
-            val colorId = ContextCompat.getColor(view.context, R.color.white)
+            val colorId = MaterialColors.getColor(view, R.attr.colorOnSecondary)
             textView.setTextColor(colorId)
         }
 
@@ -265,7 +264,8 @@ class CalendarAdapter(
         const val COLUMNS = 7 // Same as no. days in week
 
         private const val HEADING_SLOTS = 7 // Same as no. days in week
-        private const val DAY_SLOTS = 42 // 6 weeks of values to account for any start & end dates in a month
+        private const val DAY_SLOTS =
+            42 // 6 weeks of values to account for any start & end dates in a month
 
         /**
          * The fixed number of items in the adapter
