@@ -3,12 +3,12 @@
     <string name="action_alarm_skip_name">Skip</string>
     <string name="action_alarm_snooze_name">Snooze</string>
     <string name="action_alarm_complete_name">Complete</string>
-    <string name="alarm_notification_channel_name">Alarms</string>
+    <string name="alarm_notification_channel_name">Firing alarms</string>
     <string name="alarm_notification_channel_id">Alarms</string>
-    <string name="alarm_notification_channel_description">Notifications and alarms for reminders</string>
+    <string name="alarm_notification_channel_description">Firing notifications and alarms for reminders. Highest priority, must be enabled or app will not work as expected.</string>
     <string name="scheduling_notification_channel_name">Alarm scheduling</string>
     <string name="scheduling_notification_channel_id">AlarmScheduling</string>
-    <string name="scheduling_notification_channel_description">Scheduling notifications for reminders</string>
+    <string name="scheduling_notification_channel_description">Scheduling notifications for reminders. Only displays infrequently.</string>
     <string name="overview_fab_description">Add Reminder Button</string>
     <string name="editor_descriptionEdit_hint">Edit reminder text</string>
     <string name="saturday_abbrev">S</string>
