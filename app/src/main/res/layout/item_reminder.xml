@@ -222,15 +222,17 @@
                 android:layout_width="0dp"
                 android:layout_height="0dp"
                 android:visibility="@{data.reminder.schedulingRules.type != SchedulingType.SINGLE ? View.VISIBLE : View.INVISIBLE}"
-                app:constraint_referenced_ids="text_itemReminder_monday,text_itemReminder_tuesday,text_itemReminder_wednesday,text_itemReminder_thursday,text_itemReminder_friday,text_itemReminder_saturday,text_itemReminder_sunday"/>
+                app:constraint_referenced_ids="text_itemReminder_monday,text_itemReminder_tuesday,text_itemReminder_wednesday,text_itemReminder_thursday,text_itemReminder_friday,text_itemReminder_saturday,text_itemReminder_sunday"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
 
             <androidx.constraintlayout.widget.Group
                 android:layout_width="0dp"
                 android:layout_height="0dp"
                 android:visibility="@{data.reminder.schedulingRules.type != SchedulingType.SINGLE ? View.VISIBLE : View.GONE}"
                 app:constraint_referenced_ids="image_item_reminder_until,text_item_reminder_endDate"
-                tools:layout_editor_absoluteX="395dp"
-                tools:layout_editor_absoluteY="86dp" />
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
 
             <TextView
                 android:id="@+id/text_item_reminder_time"
