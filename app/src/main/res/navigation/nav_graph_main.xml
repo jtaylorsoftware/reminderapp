@@ -19,6 +19,9 @@
             <argument
                 android:name="com.github.jeremyt135.reminderapp.EXTRA_REMINDER_ID"
                 android:defaultValue='""' />
+            <argument
+                android:name="com.github.jeremyt135.reminderapp.EXTRA_REMINDER_START_DATE"
+                android:defaultValue='""' />
         </action>
         <action
             android:id="@+id/action_fragment_reminders_to_calendarFragment"
@@ -39,6 +42,10 @@
         <argument
             android:name="com.github.jeremyt135.reminderapp.EXTRA_REMINDER_ID"
             app:argType="string" />
+        <argument
+            android:name="com.github.jeremyt135.reminderapp.EXTRA_REMINDER_START_DATE"
+            app:argType="string"
+            android:defaultValue='""' />
     </activity>
     <fragment
         android:id="@+id/fragment_calendar"
@@ -49,6 +56,9 @@
             app:destination="@id/activity_reminder_editor">
             <argument
                 android:name="com.github.jeremyt135.reminderapp.EXTRA_REMINDER_ID"
+                android:defaultValue='""' />
+            <argument
+                android:name="com.github.jeremyt135.reminderapp.EXTRA_REMINDER_START_DATE"
                 android:defaultValue='""' />
         </action>
     </fragment>
@@ -61,6 +71,9 @@
             app:destination="@id/activity_reminder_editor">
             <argument
                 android:name="com.github.jeremyt135.reminderapp.EXTRA_REMINDER_ID"
+                android:defaultValue='""' />
+            <argument
+                android:name="com.github.jeremyt135.reminderapp.EXTRA_REMINDER_START_DATE"
                 android:defaultValue='""' />
         </action>
     </fragment>
