@@ -8,6 +8,7 @@ import androidx.navigation.fragment.findNavController
 import com.github.jeremyt135.R
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import dagger.hilt.android.AndroidEntryPoint
+import java.time.LocalDate
 
 @AndroidEntryPoint
 class CalendarFragment : Fragment(R.layout.fragment_calendar) {
@@ -17,6 +18,9 @@ class CalendarFragment : Fragment(R.layout.fragment_calendar) {
 
         view.findViewById<CalendarView>(R.id.calendarView).apply {
             onReminderSelectedListener = {
+                navigateToEditor(it)
+            }
+            onAddReminderListener = {
                 navigateToEditor(it)
             }
         }
@@ -30,6 +34,15 @@ class CalendarFragment : Fragment(R.layout.fragment_calendar) {
     private fun navigateToEditor(reminder: Reminder) {
         findNavController().navigate(
             CalendarFragmentDirections.actionFragmentCalendarToActivityReminderEditor(reminder.id)
+        )
+    }
+
+    private fun navigateToEditor(localDate: LocalDate?) {
+        findNavController().navigate(
+            CalendarFragmentDirections.actionFragmentCalendarToActivityReminderEditor(
+                "", // reminder id
+                localDate?.toString().orEmpty() // start date
+            )
         )
     }
 }

@@ -22,12 +22,14 @@ typealias OnDaySelectedListener = (day: LocalDate) -> Unit
 class CalendarAdapter(private val daySelectedListener: OnDaySelectedListener) :
     ListAdapter<Any, RecyclerView.ViewHolder>(CalendarDiffCallback) {
 
-    var selectedDate: DateViewHolder? = null
-        private set
+    val selectedDate: LocalDate?
+        get() = selectedDateViewHolder?.date
+
+    private var selectedDateViewHolder: DateViewHolder? = null
 
     fun clearSelectedDay() {
-        selectedDate?.toggleSelected()
-        selectedDate = null
+        selectedDateViewHolder?.toggleSelected()
+        selectedDateViewHolder = null
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder =
@@ -74,11 +76,11 @@ class CalendarAdapter(private val daySelectedListener: OnDaySelectedListener) :
 
     private fun setSelectedDay(dateViewHolder: DateViewHolder) {
         // Unselect previous
-        selectedDate?.toggleSelected()
+        selectedDateViewHolder?.toggleSelected()
 
         // Select new
         dateViewHolder.toggleSelected()
-        selectedDate = dateViewHolder
+        selectedDateViewHolder = dateViewHolder
     }
 
     /**

@@ -8,10 +8,7 @@ import android.widget.Toast
 import androidx.lifecycle.*
 import androidx.work.WorkManager
 import com.github.jeremyt135.BuildConfig
-import com.github.jeremyt135.reminderapp.broadcast.ACTION_ALARM_SCHEDULE_NEXT
-import com.github.jeremyt135.reminderapp.broadcast.EXTRA_REMINDER_ID
-import com.github.jeremyt135.reminderapp.broadcast.cancelAlarmIntentsForReminder
-import com.github.jeremyt135.reminderapp.broadcast.showToast
+import com.github.jeremyt135.reminderapp.broadcast.*
 import com.github.jeremyt135.reminderapp.data.AlarmRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.Alarm
@@ -200,6 +197,20 @@ class ReminderEditorViewModel @Inject constructor(
                         _reminder.value.schedulingRules.type == SchedulingType.REPEATING
                 }
             }
+        } else {
+            // If navigated to from calendar, startDate should be a stringified LocalDate to fill in
+            // as the new reminder startDate
+            val startDate = savedStateHandle.get<String>(EXTRA_REMINDER_START_DATE)
+            startDate?.let {
+                _reminder.value = _reminder.value.copy(
+                    schedulingRules = _reminder.value.schedulingRules.copy(
+                        startDate = LocalDate.parse(
+                            startDate
+                        )
+                    )
+                )
+                _startDateState.value = _startDateState.value.copy(dirty = true)
+            }
         }
     }
 
@@ -349,7 +360,11 @@ class ReminderEditorViewModel @Inject constructor(
         // If description is empty, save a generic description for clarity
         if (_reminder.value.description.isBlank()) {
             _reminder.value =
-                _reminder.value.copy(description = "Reminder saved on ${LocalDate.now().getShortLocalDateDisplay()}")
+                _reminder.value.copy(
+                    description = "Reminder saved on ${
+                        LocalDate.now().getShortLocalDateDisplay()
+                    }"
+                )
         }
 
         applicationScope.launch {

@@ -14,8 +14,10 @@ import com.github.jeremyt135.databinding.ViewCalendarBinding
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.screens.reminder.overview.ReminderListAdapter
 import dagger.hilt.android.AndroidEntryPoint
+import java.time.LocalDate
 
 typealias OnReminderSelectedListener = (Reminder) -> Unit
+typealias OnAddReminderListener = (LocalDate?) -> Unit
 
 @AndroidEntryPoint
 class CalendarView : ConstraintLayout {
@@ -28,6 +30,7 @@ class CalendarView : ConstraintLayout {
     private var calendarAdapter: CalendarAdapter? = null
 
     var onReminderSelectedListener: OnReminderSelectedListener? = null
+    var onAddReminderListener: OnAddReminderListener? = null
 
     constructor(context: Context) : super(context)
     constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
@@ -93,6 +96,10 @@ class CalendarView : ConstraintLayout {
             }
             buttonCalendarForward.setOnClickListener {
                 viewModel.goToNextMonth()
+            }
+
+            buttonCalendarAdd.setOnClickListener {
+                onAddReminderListener?.invoke(calendarAdapter?.selectedDate)
             }
         }
     }

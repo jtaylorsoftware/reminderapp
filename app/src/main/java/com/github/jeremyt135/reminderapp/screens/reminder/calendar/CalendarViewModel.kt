@@ -44,6 +44,7 @@ class CalendarViewModel @Inject constructor(
      * Currently tapped on date, including the current scrolled-to month & year, in the calendar
      */
     private val _selectedDate = MutableStateFlow<LocalDate?>(null)
+    val selectedDate = _selectedDate.asLiveData()
 
     /**
      * Display string for selected date's month & year. Format is full month and short year, such as
