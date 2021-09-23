@@ -4,11 +4,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
+import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.SchedulingType
 import com.github.jeremyt135.reminderapp.di.DefaultDispatcher
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.*
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
@@ -84,20 +86,8 @@ class CalendarViewModel @Inject constructor(
      */
     val calendarData =
         _selectedYearMonth.combine(_remindersInSelectedMonth) { yearMonth, reminders ->
-            // Transform each array index representing a dayOfMonth into a true/false
-            // value for presence of reminders
-            val daysWithReminders = (1..yearMonth.lengthOfMonth()).map { dayOfMonth ->
-                val date = LocalDate.of(yearMonth.year, yearMonth.monthValue, dayOfMonth)
-                reminders.any {
-                    it.schedulingRules.containsDate(date)
-                }
-            }
-            CalendarData(yearMonth, daysWithReminders)
-        }.flowOn(dispatcher).stateIn(
-            viewModelScope,
-            started = SharingStarted.Lazily,
-            CalendarData()
-        )
+            getCalendarData(yearMonth, reminders)
+        }.flowOn(dispatcher).asLiveData()
 
     /**
      * Changes the selected date, and starts a job to load the reminders for that date.
@@ -126,5 +116,76 @@ class CalendarViewModel @Inject constructor(
     private fun setSelectedMonth(yearMonth: YearMonth) {
         setSelectedDate(null)
         _selectedYearMonth.value = yearMonth
+    }
+
+    private suspend fun getCalendarData(
+        yearMonth: YearMonth,
+        reminders: List<Reminder>
+    ): List<Any> {
+        // Date adjusted for yearMonth
+        val yearMonthDate = LocalDate.of(yearMonth.year, yearMonth.month, 1)
+
+        // Days in selected month
+        val daysInMonth: Int = yearMonth.lengthOfMonth()
+
+        // First day of week of selected month
+        val firstDayOfWeek: DayOfWeek = yearMonthDate.dayOfWeek
+
+        // First position in the adapter that contains a day of the selected month
+        val firstPositionOfMonth: Int = CalendarAdapter.HEADING_SLOTS + firstDayOfWeek.value % 7
+
+        // Last position of a day of the current month
+        val lastPositionOfMonth: Int = firstPositionOfMonth + daysInMonth - 1
+
+        // Last calendar day (not position) of previous month
+        val lastDayOfPreviousMonth: Int = yearMonth.minusMonths(1).lengthOfMonth()
+
+        val daysWithReminders = getDaysWithReminders(yearMonth, reminders)
+
+        val items = mutableListOf<Any>()
+        (0 until CalendarAdapter.ITEM_COUNT).asFlow().map { position ->
+            if (position < CalendarAdapter.HEADING_SLOTS) {
+                getHeadingItem(position)
+            } else {
+                var isCurrentMonth = false
+                var hasReminder = false
+
+                val date = when {
+                    position in firstPositionOfMonth..lastPositionOfMonth -> {
+                        isCurrentMonth = true
+                        yearMonthDate.withDayOfMonth(position - firstPositionOfMonth + 1)
+                    }
+                    position < firstPositionOfMonth -> yearMonthDate.minusMonths(1)
+                        .withDayOfMonth(lastDayOfPreviousMonth - firstPositionOfMonth + position + 1)
+                    position > lastPositionOfMonth -> yearMonthDate.plusMonths(1)
+                        .withDayOfMonth(position - lastPositionOfMonth)
+                    else -> throw IllegalStateException("Invalid position $position")
+                }
+
+                if (isCurrentMonth) {
+                    hasReminder =
+                        daysWithReminders.elementAtOrNull(position - firstPositionOfMonth)
+                            ?: false
+                }
+
+                CalendarDateItem(position, date, isCurrentMonth, hasReminder)
+            }
+        }.toList(items)
+
+        return items
+    }
+
+    private fun getHeadingItem(position: Int) = DayOfWeek.of(if (position == 0) 7 else position)
+
+    private fun getDaysWithReminders(
+        yearMonth: YearMonth,
+        reminders: List<Reminder>
+    ) = (1..yearMonth.lengthOfMonth()).map { dayOfMonth ->
+        // Transform each array index representing a dayOfMonth into a true/false
+        // value for presence of reminders
+        val date = LocalDate.of(yearMonth.year, yearMonth.monthValue, dayOfMonth)
+        reminders.any {
+            it.schedulingRules.containsDate(date)
+        }
     }
 }

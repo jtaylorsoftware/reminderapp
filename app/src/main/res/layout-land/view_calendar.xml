@@ -66,6 +66,7 @@
             android:layout_marginStart="4dp"
             android:layout_marginTop="2dp"
             android:nestedScrollingEnabled="false"
+            app:calendarData="@{model.calendarData}"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/button_calendar_forward"
             app:layout_constraintStart_toEndOf="@+id/button_calendar_backward"

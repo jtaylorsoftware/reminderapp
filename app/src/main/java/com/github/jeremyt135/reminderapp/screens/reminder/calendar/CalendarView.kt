@@ -14,8 +14,6 @@ import com.github.jeremyt135.databinding.ViewCalendarBinding
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.screens.reminder.overview.ReminderListAdapter
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.collect
 
 typealias OnReminderSelectedListener = (Reminder) -> Unit
 
@@ -28,7 +26,6 @@ class CalendarView : ConstraintLayout {
         ViewCalendarBinding.inflate(LayoutInflater.from(context), this, true)
     private var reminderListAdapter: ReminderListAdapter? = null
     private var calendarAdapter: CalendarAdapter? = null
-    private var coroutineScope: CoroutineScope? = null
 
     var onReminderSelectedListener: OnReminderSelectedListener? = null
 
@@ -44,14 +41,11 @@ class CalendarView : ConstraintLayout {
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
         attachBinding()
-        coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
-        startJobs()
     }
 
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
         detachBinding()
-        cancelJobs()
     }
 
     override fun onVisibilityChanged(changedView: View, visibility: Int) {
@@ -85,6 +79,11 @@ class CalendarView : ConstraintLayout {
                     override fun canScrollHorizontally() = false
                 }
 
+            calendarAdapter = CalendarAdapter() {
+                viewModel.setSelectedDate(it)
+            }
+            recyclerCalendar.adapter = calendarAdapter
+
             // Disable nested scrolling on both RecyclerViews (relevant to portrait view)
             recyclerCalendar.isNestedScrollingEnabled = false
             recyclerCalendarReminders.isNestedScrollingEnabled = false
@@ -96,8 +95,6 @@ class CalendarView : ConstraintLayout {
                 viewModel.goToNextMonth()
             }
         }
-
-        setBindingCalendarAdapter(CalendarData())
     }
 
     private fun attachBinding() {
@@ -108,32 +105,6 @@ class CalendarView : ConstraintLayout {
     }
 
     private fun detachBinding() {
-        binding?.apply {
-            lifecycleOwner = null
-            model = null
-        }
         binding = null
-    }
-
-    private fun setBindingCalendarAdapter(
-        calendarData: CalendarData
-    ) {
-        calendarAdapter = CalendarAdapter(calendarData) {
-            viewModel.setSelectedDate(it)
-        }
-        binding?.recyclerCalendar?.adapter = calendarAdapter
-    }
-
-    private fun startJobs() {
-        coroutineScope?.launch {
-            viewModel.calendarData.collect {
-                setBindingCalendarAdapter(it)
-            }
-        }
-    }
-
-    private fun cancelJobs() {
-        coroutineScope?.cancel()
-        coroutineScope = null
     }
 }
