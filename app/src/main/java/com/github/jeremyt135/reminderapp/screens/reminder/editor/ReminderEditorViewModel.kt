@@ -328,12 +328,6 @@ class ReminderEditorViewModel @Inject constructor(
         _reminder.value = _reminder.value.copy(notifSoundUri = newValue)
     }
 
-    fun setAlarmSound(sound: Uri) {
-        if (sound.toString() != _reminder.value.notifSoundUri) {
-            _reminder.value = _reminder.value.copy(notifSoundUri = sound.toString())
-        }
-    }
-
     private fun formHasErrors(): Boolean =
         _daysOfWeekState.value.errorEnabled || _startDateState.value.errorEnabled ||
                 _endDateState.value.errorEnabled || _timeState.value.errorEnabled ||
