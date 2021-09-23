@@ -69,6 +69,11 @@ const val EXTRA_ALARM_ACTION_NAME = "com.github.jeremyt135.reminderapp.EXTRA_ALA
 const val EXTRA_REMINDER_ID = "com.github.jeremyt135.reminderapp.EXTRA_REMINDER_ID"
 
 /**
+ *
+ */
+const val EXTRA_REMINDER_START_DATE =  "com.github.jeremyt135.reminderapp.EXTRA_REMINDER_START_DATE"
+
+/**
  * Bool: The on-off should-vibrate setting from the Reminder as entered into the editor.
  */
 const val EXTRA_REMINDER_VIBRATE = "com.github.jeremyt135.reminderapp.EXTRA_REMINDER_VIBRATE"
