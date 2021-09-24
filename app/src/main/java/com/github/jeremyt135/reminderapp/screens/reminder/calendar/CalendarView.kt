@@ -94,10 +94,6 @@ class CalendarView : ConstraintLayout {
             }
             recyclerCalendar.adapter = calendarAdapter
 
-            // Disable nested scrolling on both RecyclerViews (relevant to portrait view)
-            recyclerCalendar.isNestedScrollingEnabled = false
-            recyclerCalendarReminders.isNestedScrollingEnabled = false
-
             buttonCalendarBackward.setOnClickListener {
                 viewModel.goToPreviousMonth()
             }

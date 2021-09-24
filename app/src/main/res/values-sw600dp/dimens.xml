@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dimens for calendar cells -->
+    <dimen name="calendar_cell_width">50dp</dimen>
+    <dimen name="calendar_cell_height">50dp</dimen>
+    <dimen name="calendar_cell_indicator_size">7dp</dimen>
+    <dimen name="calendar_cell_padding_h">0dp</dimen>
+    <dimen name="calendar_cell_padding_v">0dp</dimen>
+    <dimen name="calendar_cell_margin_h">8dp</dimen>
+    <dimen name="calendar_cell_margin_v">3dp</dimen>
+</resources>

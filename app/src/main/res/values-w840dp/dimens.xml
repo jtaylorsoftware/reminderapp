@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Common dimens constraints for views -->
+    <dimen name="constraint_widthPercent">0.70</dimen>
+</resources>

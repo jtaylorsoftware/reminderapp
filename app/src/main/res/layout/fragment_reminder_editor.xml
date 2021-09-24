@@ -25,7 +25,12 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@color/transparent"
-        android:fillViewport="true">
+        android:fadeScrollbars="true"
+        android:fillViewport="true"
+        android:paddingHorizontal="4dp"
+        android:scrollbarSize="3dp"
+        android:scrollbarStyle="insideOverlay"
+        android:scrollbars="vertical">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
@@ -44,6 +49,7 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintWidth_percent="@dimen/constraint_widthPercent"
                 app:startIconContentDescription="Edit icon"
                 app:startIconDrawable="@drawable/ic_baseline_edit_24">
 
@@ -51,8 +57,8 @@
                     android:id="@+id/textinput_editor_description"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="text"
                     android:imeOptions="actionDone"
+                    android:inputType="text"
                     android:text="@={reminder.description}" />
 
             </com.google.android.material.textfield.TextInputLayout>
@@ -73,6 +79,7 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/textlayout_editor_description"
+                app:layout_constraintWidth_percent="@dimen/constraint_widthPercent"
                 app:startIconContentDescription="Calendar icon"
                 app:startIconDrawable="@drawable/ic_baseline_event_note_24">
 
@@ -91,22 +98,26 @@
                 android:id="@+id/checkbox_editor_repeat"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
                 android:layout_marginTop="8dp"
                 android:checked="@{model.repeats}"
                 android:text="@string/editor_checkbox_repeats"
-                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/checkbox_editor_endDate"
+                app:layout_constraintHorizontal_bias="0.0"
+                app:layout_constraintHorizontal_chainStyle="packed"
+                app:layout_constraintStart_toStartOf="@+id/textlayout_editor_time"
                 app:layout_constraintTop_toBottomOf="@+id/textlayout_editor_time" />
 
             <CheckBox
                 android:id="@+id/checkbox_editor_endDate"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
+                android:layout_marginStart="8dp"
                 android:checked="@{model.hasEndDate}"
                 android:text="@string/editor_checkbox_endDate"
                 android:visibility="@{model.repeats ? View.VISIBLE : View.GONE}"
-                app:layout_constraintStart_toEndOf="@id/checkbox_editor_repeat"
+                app:layout_constraintEnd_toEndOf="@+id/textlayout_editor_time"
+                app:layout_constraintHorizontal_bias="0.5"
+                app:layout_constraintStart_toEndOf="@+id/checkbox_editor_repeat"
                 app:layout_constraintTop_toTopOf="@+id/checkbox_editor_repeat" />
 
             <com.google.android.material.textfield.TextInputLayout
@@ -124,9 +135,9 @@
                 app:errorIconDrawable="@drawable/ic_baseline_error_outline_24"
                 app:errorIconTint="@color/error"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="0.0"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/textlayout_editor_daysOfWeek"
+                app:layout_constraintWidth_percent="@dimen/constraint_widthPercent"
                 app:startIconContentDescription="Calendar icon"
                 app:startIconDrawable="@drawable/ic_baseline_event_note_24">
 
@@ -156,9 +167,9 @@
                 app:errorIconDrawable="@drawable/ic_baseline_error_outline_24"
                 app:errorIconTint="@color/error"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="0.0"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/checkbox_editor_repeat"
+                app:layout_constraintWidth_percent="@dimen/constraint_widthPercent"
                 app:startIconContentDescription="Date range icon"
                 app:startIconDrawable="@drawable/ic_baseline_date_range_24">
 
@@ -189,6 +200,7 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/textlayout_editor_startDate"
+                app:layout_constraintWidth_percent="@dimen/constraint_widthPercent"
                 app:startIconContentDescription="Clock icon"
                 app:startIconDrawable="@drawable/ic_baseline_access_time_24">
 
@@ -215,6 +227,7 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/textlayout_editor_endDate"
+                app:layout_constraintWidth_percent="@dimen/constraint_widthPercent"
                 app:startIconContentDescription="Snooze icon"
                 app:startIconDrawable="@drawable/ic_notification_snooze">
 
@@ -241,6 +254,7 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/textlayout_editor_snooze"
+                app:layout_constraintWidth_percent="@dimen/constraint_widthPercent"
                 app:startIconContentDescription="Snooze icon"
                 app:startIconDrawable="@drawable/ic_notification_alarm">
 
@@ -306,6 +320,5 @@
         </androidx.constraintlayout.widget.ConstraintLayout>
 
     </ScrollView>
-
 
 </layout>

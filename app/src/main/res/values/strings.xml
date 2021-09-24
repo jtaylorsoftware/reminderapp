@@ -116,4 +116,6 @@
     <string name="alarm_list_empty_hint">There are no alarms scheduled currently.</string>
     <string name="bottomnav_alams">Alarms</string>
     <string name="calendar_addReminder_content_description">Add reminder on current date</string>
+    <string name="button_next_month_description">Next month</string>
+    <string name="button_previous_month_description">Previous month</string>
 </resources>

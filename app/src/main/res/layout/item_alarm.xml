@@ -4,12 +4,15 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <data>
+
         <variable
             name="description"
             type="String" />
+
         <variable
             name="date"
             type="String" />
+
         <variable
             name="time"
             type="String" />
@@ -19,11 +22,11 @@
         android:id="@+id/card_item_alarm"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginHorizontal="@dimen/recycler_alarm_item_margin_h"
         android:layout_marginVertical="8dp"
-        android:layout_marginHorizontal="16dp"
         android:clickable="true"
         android:focusable="true"
-        app:cardElevation="6dp">
+        app:cardElevation="@dimen/recycler_item_cardView_elevation">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"

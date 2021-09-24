@@ -19,25 +19,26 @@
 
         <TextView
             android:id="@+id/text_reminders_hint"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/margin_overview_small"
+            android:layout_marginTop="16dp"
+            android:clickable="true"
+            android:focusable="true"
             android:gravity="start|center_vertical"
+            android:onClick="@{() -> model.addReminder()}"
             android:paddingStart="16dp"
             android:paddingEnd="16dp"
             android:text="@string/reminders_empty_hint"
             android:textColor="@color/text_secondary"
-            android:clickable="true"
-            android:onClick="@{() -> model.addReminder()}"
             android:visibility="@{model.reminders.size() > 0 ? View.GONE : View.VISIBLE}"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            android:focusable="true" />
+            app:layout_constraintWidth_percent="@dimen/constraint_widthPercent" />
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recycler_reminders_list"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="match_parent"
             android:visibility="@{model.reminders.size() == 0 ? View.GONE : View.VISIBLE}"
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
@@ -45,6 +46,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintWidth_percent="@dimen/constraint_widthPercent"
             app:reminderListData="@{model.reminders}"
             tools:listitem="@layout/item_reminder" />
 
@@ -52,7 +54,7 @@
             android:id="@+id/fab_reminders_add"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="@dimen/margin_overview_small"
+            android:layout_marginEnd="16dp"
             android:layout_marginBottom="16dp"
             android:clickable="true"
             android:contentDescription="@string/overview_fab_description"
