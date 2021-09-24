@@ -345,7 +345,8 @@ class ReminderEditorViewModel @Inject constructor(
                 _snoozeRulesState.value.errorEnabled || _soundState.value.errorEnabled
 
     fun saveReminder() {
-        // Check time again so it's not in past when saved
+        // Check for errors again before saving
+        checkDateErrors()
         checkTimeErrors()
 
         // Do not save if there are errors
