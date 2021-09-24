@@ -28,6 +28,7 @@ class CalendarView : ConstraintLayout {
         ViewCalendarBinding.inflate(LayoutInflater.from(context), this, true)
     private var reminderListAdapter: ReminderListAdapter? = null
     private var calendarAdapter: CalendarAdapter? = null
+    private var previouslyVisible: Boolean = false // Track if View has ever been visible
 
     var onReminderSelectedListener: OnReminderSelectedListener? = null
     var onAddReminderListener: OnAddReminderListener? = null
@@ -56,6 +57,12 @@ class CalendarView : ConstraintLayout {
 
         if (visibility != View.VISIBLE) {
             clearSelectedDay()
+        } else {
+            // Only refresh if View has ever been visible
+            if (previouslyVisible) {
+                viewModel.refreshData()
+            }
+            previouslyVisible = true
         }
     }
 

@@ -9,6 +9,7 @@ import com.github.jeremyt135.reminderapp.data.domain.SchedulingType
 import com.github.jeremyt135.reminderapp.di.DefaultDispatcher
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -27,18 +28,28 @@ class CalendarViewModel @Inject constructor(
     private val _selectedYearMonth = MutableStateFlow(YearMonth.now())
 
     /**
+     * Fallback to refresh the calendar when data is updated or the view appears
+     */
+    private val refreshData =
+        MutableSharedFlow<Unit>(
+            replay = 1,
+            onBufferOverflow = BufferOverflow.DROP_OLDEST,
+        )
+
+    /**
      * List of reminders in the currently selected yearMonth. Used to compute dates
      * that should have an indicator dot displayed.
      */
-    private val _remindersInSelectedMonth = _selectedYearMonth.map { selectedYearMonth ->
-        reminderRepository.getAllInMonth(
-            selectedYearMonth.month.value.toString().padStart(2, '0')
-        ).first()
-    }.stateIn(
-        viewModelScope,
-        started = SharingStarted.Lazily,
-        emptyList()
-    )
+    private val _remindersInSelectedMonth =
+        combine(_selectedYearMonth, refreshData) { selectedYearMonth, _ ->
+            reminderRepository.getAllInMonth(
+                selectedYearMonth.month.value.toString().padStart(2, '0')
+            ).first()
+        }.stateIn(
+            viewModelScope,
+            started = SharingStarted.Lazily,
+            emptyList()
+        )
 
     /**
      * Currently tapped on date, including the current scrolled-to month & year, in the calendar
@@ -85,10 +96,21 @@ class CalendarViewModel @Inject constructor(
      * The backing data for the Calendar. Contains all data necessary to produce
      * date views for the current month.
      */
-    val calendarData =
-        _selectedYearMonth.combine(_remindersInSelectedMonth) { yearMonth, reminders ->
-            getCalendarData(yearMonth, reminders)
-        }.flowOn(dispatcher).asLiveData()
+    val calendarData = combine(
+        _selectedYearMonth,
+        _remindersInSelectedMonth,
+    ) { yearMonth, reminders ->
+        getCalendarData(yearMonth, reminders)
+    }.flowOn(dispatcher).stateIn(
+        viewModelScope,
+        started = SharingStarted.Lazily,
+        null
+    ).asLiveData()
+
+    init {
+        // Trigger fetch of initial data
+        refreshData.tryEmit(Unit)
+    }
 
     /**
      * Changes the selected date, and starts a job to load the reminders for that date.
@@ -114,12 +136,20 @@ class CalendarViewModel @Inject constructor(
         setSelectedMonth(_selectedYearMonth.value.minusMonths(1))
     }
 
+    /**
+     * Causes the calendarData to refresh. Useful if Reminders have been added or removed
+     * and one wants to notify the Calendar to update.
+     */
+    fun refreshData() {
+        refreshData.tryEmit(Unit)
+    }
+
     private fun setSelectedMonth(yearMonth: YearMonth) {
         setSelectedDate(null)
         _selectedYearMonth.value = yearMonth
     }
 
-    private suspend fun getCalendarData(
+    private fun getCalendarData(
         yearMonth: YearMonth,
         reminders: List<Reminder>
     ): List<Any> {
@@ -143,8 +173,7 @@ class CalendarViewModel @Inject constructor(
 
         val daysWithReminders = getDaysWithReminders(yearMonth, reminders)
 
-        val items = mutableListOf<Any>()
-        (0 until CalendarAdapter.ITEM_COUNT).asFlow().map { position ->
+        return (0 until CalendarAdapter.ITEM_COUNT).map { position ->
             if (position < CalendarAdapter.HEADING_SLOTS) {
                 getHeadingItem(position)
             } else {
@@ -171,9 +200,7 @@ class CalendarViewModel @Inject constructor(
 
                 CalendarDateItem(position, date, isCurrentMonth, hasReminder)
             }
-        }.toList(items)
-
-        return items
+        }
     }
 
     private fun getHeadingItem(position: Int) = DayOfWeek.of(if (position == 0) 7 else position)
