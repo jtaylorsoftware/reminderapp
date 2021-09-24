@@ -15,13 +15,11 @@
             app:destination="@id/fragment_history" />
         <action
             android:id="@+id/action_fragment_reminders_to_reminderEditorActivity"
-            app:destination="@id/activity_reminder_editor" >
-            <argument
-                android:name="com.github.jeremyt135.reminderapp.EXTRA_REMINDER_ID"
-                android:defaultValue='""' />
-            <argument
-                android:name="com.github.jeremyt135.reminderapp.EXTRA_REMINDER_START_DATE"
-                android:defaultValue='""' />
+            app:destination="@id/activity_reminder_editor">
+            <argument android:name="com.github.jeremyt135.reminderapp.EXTRA_REMINDER_ID"
+                android:defaultValue="@null" />
+            <argument android:name="com.github.jeremyt135.reminderapp.EXTRA_REMINDER_START_DATE"
+                android:defaultValue="@null" />
         </action>
         <action
             android:id="@+id/action_fragment_reminders_to_calendarFragment"
@@ -34,47 +32,46 @@
         android:id="@+id/fragment_history"
         android:name="com.github.jeremyt135.reminderapp.screens.reminder.history.HistoryFragment"
         android:label="History"
-        tools:layout="@layout/fragment_history"/>
+        tools:layout="@layout/fragment_history" />
     <activity
         android:id="@+id/activity_reminder_editor"
         android:name="com.github.jeremyt135.reminderapp.screens.reminder.editor.ReminderEditorActivity"
         tools:layout="@layout/fragment_reminder_editor">
         <argument
             android:name="com.github.jeremyt135.reminderapp.EXTRA_REMINDER_ID"
-            app:argType="string" />
+            android:defaultValue="@null"
+            app:argType="string"
+            app:nullable="true" />
         <argument
             android:name="com.github.jeremyt135.reminderapp.EXTRA_REMINDER_START_DATE"
+            android:defaultValue="@null"
             app:argType="string"
-            android:defaultValue='""' />
+            app:nullable="true" />
     </activity>
     <fragment
         android:id="@+id/fragment_calendar"
         android:name="com.github.jeremyt135.reminderapp.screens.reminder.calendar.CalendarFragment"
-        android:label="Calendar" >
+        android:label="Calendar">
         <action
             android:id="@+id/action_fragment_calendar_to_activity_reminder_editor"
             app:destination="@id/activity_reminder_editor">
-            <argument
-                android:name="com.github.jeremyt135.reminderapp.EXTRA_REMINDER_ID"
-                android:defaultValue='""' />
-            <argument
-                android:name="com.github.jeremyt135.reminderapp.EXTRA_REMINDER_START_DATE"
-                android:defaultValue='""' />
+            <argument android:name="com.github.jeremyt135.reminderapp.EXTRA_REMINDER_ID"
+                android:defaultValue="@null" />
+            <argument android:name="com.github.jeremyt135.reminderapp.EXTRA_REMINDER_START_DATE"
+                android:defaultValue="@null" />
         </action>
     </fragment>
     <fragment
         android:id="@+id/fragment_alarm_list"
         android:name="com.github.jeremyt135.reminderapp.screens.reminder.alarm.AlarmListFragment"
-        android:label="Alarms" >
+        android:label="Alarms">
         <action
             android:id="@+id/action_alarmListFragment_to_activity_reminder_editor"
             app:destination="@id/activity_reminder_editor">
-            <argument
-                android:name="com.github.jeremyt135.reminderapp.EXTRA_REMINDER_ID"
-                android:defaultValue='""' />
-            <argument
-                android:name="com.github.jeremyt135.reminderapp.EXTRA_REMINDER_START_DATE"
-                android:defaultValue='""' />
+            <argument android:name="com.github.jeremyt135.reminderapp.EXTRA_REMINDER_ID"
+                android:defaultValue="@null" />
+            <argument android:name="com.github.jeremyt135.reminderapp.EXTRA_REMINDER_START_DATE"
+                android:defaultValue="@null" />
         </action>
     </fragment>
 </navigation>
