@@ -54,7 +54,7 @@ class AlarmActionHandler @AssistedInject constructor(
         val title = "Reminders scheduling"
         val notification = NotificationCompat.Builder(applicationContext, channel).apply {
             setContentTitle(title)
-            setSmallIcon(R.drawable.ic_notification_alarm)
+            setSmallIcon(R.drawable.ic_scheduling_notification)
             setContentText("Reminders app is scheduling your reminder")
             setPriority(NotificationCompat.PRIORITY_LOW)
             setCategory(NotificationCompat.CATEGORY_SERVICE)
