@@ -26,10 +26,7 @@ import com.github.jeremyt135.reminderapp.util.toEpochMilli
 import com.github.jeremyt135.reminderapp.work.AlarmActionHandler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.time.DayOfWeek
@@ -155,8 +152,9 @@ class RemindersViewModel @Inject constructor(
      */
     fun deleteAllReminders() {
         viewModelScope.launch {
-            reminderRepository.deleteAll()
             AlarmService.requestStop(getApplication())
+            clearAllAlarmIntents()
+            reminderRepository.deleteAll()
         }
     }
 
@@ -213,6 +211,13 @@ class RemindersViewModel @Inject constructor(
     private fun scheduleNextAlarm() {
         AlarmActionHandler.createForAction(ACTION_ALARM_SCHEDULE_NEXT, "").let {
             WorkManager.getInstance(getApplication()).enqueue(it)
+        }
+    }
+
+    private suspend fun clearAllAlarmIntents() {
+        reminderRepository.getAll().first().map {
+            Timber.d("Cancelling reminder alarms for $it")
+            cancelAlarmIntentsForReminder(getApplication(), it)
         }
     }
 
@@ -289,7 +294,8 @@ class RemindersViewModel @Inject constructor(
                     }
 
                     // does the filter include at least one of the reminder's DayOfWeeks?
-                    val withinDayOfWeek = reminderFilterRules.checkWithinDaysOfWeek(it.reminder.schedulingRules)
+                    val withinDayOfWeek =
+                        reminderFilterRules.checkWithinDaysOfWeek(it.reminder.schedulingRules)
                     // does the filter include the reminder's status?
                     val status =
                         it.history?.completionStatus ?: ReminderStatus.PENDING in reminderFilterRules.reminderStatuses
