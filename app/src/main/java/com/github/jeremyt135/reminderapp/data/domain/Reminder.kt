@@ -265,7 +265,7 @@ class SchedulingRules(
                     null // expired
                 } else if (currentDateTime.toLocalDate() < startDate) {
                     // in future
-                    val nextDayOfWeek = firstDayOfWeek { it > currentDateTime.dayOfWeek }
+                    val nextDayOfWeek = firstDayOfWeek { it >= startDate.dayOfWeek } // first day of week on or after startDate
                     startDate.atTime(time).with(TemporalAdjusters.nextOrSame(nextDayOfWeek))
                 } else {
                     // check if the reminder time is in the past, preventing it from being scheduled today
