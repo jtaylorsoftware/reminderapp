@@ -11,6 +11,7 @@ import com.github.jeremyt135.reminderapp.MainCoroutineRule
 import com.github.jeremyt135.reminderapp.ReminderApplication
 import com.github.jeremyt135.reminderapp.broadcast.ACTION_ALARM_SCHEDULE_NEXT
 import com.github.jeremyt135.reminderapp.broadcast.EXTRA_REMINDER_ID
+import com.github.jeremyt135.reminderapp.broadcast.EXTRA_REMINDER_START_DATE
 import com.github.jeremyt135.reminderapp.broadcast.cancelAlarmIntentsForReminder
 import com.github.jeremyt135.reminderapp.data.AlarmRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
@@ -84,6 +85,8 @@ class ReminderEditorViewModelTest {
         every {
             AlarmActionHandler.createForAction(any(), any())
         } returns OneTimeWorkRequestBuilder<AlarmActionHandler>().build()
+
+        every { mockSavedState.get<String>(EXTRA_REMINDER_START_DATE) } returns ""
     }
 
     @Test
@@ -139,7 +142,7 @@ class ReminderEditorViewModelTest {
     @Test
     fun saveReminder_savesToRepository_schedulesAlarm() = mainCoroutineRule.runBlockingTest {
         val reminder =
-            Reminder(schedulingRules = SchedulingRules(time = LocalTime.now().plusMinutes(1)))
+            Reminder(description="Test", schedulingRules = SchedulingRules(time = LocalTime.now().plusMinutes(1)))
         val savedReminder = slot<Reminder>()
 
         val alarm = Alarm(id = 1, reminderId = reminder.id, scheduled = true)
@@ -190,7 +193,7 @@ class ReminderEditorViewModelTest {
     @Test
     fun saveReminder_emitsNavigateToReminders() = mainCoroutineRule.runBlockingTest {
         val reminder =
-            Reminder(schedulingRules = SchedulingRules(time = LocalTime.now().minusMinutes(1)))
+            Reminder(description="Test", schedulingRules = SchedulingRules(time = LocalTime.now().minusMinutes(1)))
 
         every { mockSavedState.get<String>(EXTRA_REMINDER_ID) } returns reminder.id
         coEvery { mockReminderRepo.findById(reminder.id) } returns reminder

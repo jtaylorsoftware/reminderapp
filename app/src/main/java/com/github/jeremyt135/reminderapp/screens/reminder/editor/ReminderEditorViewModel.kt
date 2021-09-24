@@ -4,10 +4,8 @@ import android.app.Application
 import android.content.Context
 import android.media.RingtoneManager
 import android.net.Uri
-import android.widget.Toast
 import androidx.lifecycle.*
 import androidx.work.WorkManager
-import com.github.jeremyt135.BuildConfig
 import com.github.jeremyt135.reminderapp.broadcast.*
 import com.github.jeremyt135.reminderapp.data.AlarmRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
@@ -176,16 +174,7 @@ class ReminderEditorViewModel @Inject constructor(
         private set
 
     init {
-        val savedReminderId = savedStateHandle.get<String>(EXTRA_REMINDER_ID) ?: run {
-            if (BuildConfig.DEBUG) {
-                showToast(
-                    getApplication<Application>().applicationContext,
-                    "ReminderEditorViewModel: savedStateHandle.get(REMINDER_ID) was null",
-                    Toast.LENGTH_LONG
-                )
-            }
-            ""
-        }
+        val savedReminderId = savedStateHandle.get<String>(EXTRA_REMINDER_ID).orEmpty()
         isEditing = savedReminderId.isNotEmpty()
 
         if (isEditing) {
@@ -200,13 +189,11 @@ class ReminderEditorViewModel @Inject constructor(
         } else {
             // If navigated to from calendar, startDate should be a stringified LocalDate to fill in
             // as the new reminder startDate
-            val startDate = savedStateHandle.get<String>(EXTRA_REMINDER_START_DATE)
-            startDate?.let {
+            val startDate = savedStateHandle.get<String>(EXTRA_REMINDER_START_DATE).orEmpty()
+            if (startDate.isNotBlank()) {
                 _reminder.value = _reminder.value.copy(
                     schedulingRules = _reminder.value.schedulingRules.copy(
-                        startDate = LocalDate.parse(
-                            startDate
-                        )
+                        startDate = LocalDate.parse(startDate)
                     )
                 )
                 _startDateState.value = _startDateState.value.copy(dirty = true)
