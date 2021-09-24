@@ -54,14 +54,14 @@ class ReminderEditorFragment : Fragment(R.layout.fragment_reminder_editor) {
 
             viewModel.startDateState.observe(viewLifecycleOwner) {
                 if (it.errorEnabled) {
-                    textlayoutEditorStartDate.error = "Start date must be after end date"
+                    textlayoutEditorStartDate.error = "Start date must be in future and after end date"
                 } else {
                     textlayoutEditorStartDate.error = ""
                 }
             }
             viewModel.endDateState.observe(viewLifecycleOwner) {
                 if (it.errorEnabled) {
-                    textlayoutEditorEndDate.error = "End date must be after start date"
+                    textlayoutEditorEndDate.error = "End date must be in future and after start date"
                 } else {
                     textlayoutEditorEndDate.error = ""
                 }
