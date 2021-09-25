@@ -39,9 +39,9 @@
     <string name="bottomnav_reminders">Reminders</string>
     <string name="bottomnav_history">History</string>
     <string name="menu_clear_history">Clear History</string>
-    <string name="dialog_clearHistory_message">Pressing OK will delete all history entries. This action is irreversible</string>
+    <string name="dialog_clearHistory_message">Pressing OK will delete all history entries. This action is irreversible.</string>
     <string name="dialog_clearHistory_title">Clear Entire History?</string>
-    <string name="dialog_clearReminders_message">Pressing OK will delete all reminder entries. This action is irreversible</string>
+    <string name="dialog_clearReminders_message">Pressing OK will delete all reminder entries. This action is irreversible.</string>
     <string name="dialog_clearReminders_title">Delete All Reminders?</string>
     <string name="dialog_ok">OK</string>
     <string name="dialog_apply">Apply</string>
@@ -118,4 +118,8 @@
     <string name="calendar_addReminder_content_description">Add reminder on current date</string>
     <string name="button_next_month_description">Next month</string>
     <string name="button_previous_month_description">Previous month</string>
+    <string name="menu_editor_delete">Delete</string>
+    <string name="menu_editor_save">Save</string>
+    <string name="dialog_editorDelete_title">Delete Reminder?</string>
+    <string name="dialog_editorDelete_message">Pressing OK will delete the current reminder. This action is irreversible.</string>
 </resources>

@@ -1,6 +1,10 @@
 package com.github.jeremyt135.reminderapp.screens.reminder.editor
 
+import android.app.AlertDialog
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 import android.view.View
 import androidx.annotation.VisibleForTesting
 import androidx.appcompat.app.AppCompatActivity
@@ -31,6 +35,11 @@ class ReminderEditorFragment : Fragment(R.layout.fragment_reminder_editor) {
     val viewModel: ReminderEditorViewModel by activityViewModels()
         @VisibleForTesting get
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setHasOptionsMenu(true)
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         Timber.d("onViewCreated")
@@ -46,6 +55,37 @@ class ReminderEditorFragment : Fragment(R.layout.fragment_reminder_editor) {
         setupBinding(FragmentReminderEditorBinding.bind(view))
     }
 
+    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        if (viewModel.isEditing) {
+            inflater.inflate(R.menu.editor_menu_editing, menu)
+        } else {
+            inflater.inflate(R.menu.editor_menu, menu)
+        }
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean = when (item.itemId) {
+        R.id.item_editor_delete -> {
+            buildDeleteDialog().show()
+            true
+        }
+        R.id.item_editor_save -> {
+            viewModel.saveReminder()
+            true
+        }
+        else -> super.onOptionsItemSelected(item)
+    }
+
+    private fun buildDeleteDialog(): AlertDialog {
+        return AlertDialog.Builder(requireActivity()).apply {
+            setMessage(R.string.dialog_editorDelete_message)
+            setTitle(R.string.dialog_editorDelete_title)
+            setPositiveButton(R.string.dialog_ok) { _, _ ->
+                viewModel.deleteReminder()
+            }
+            setNegativeButton(R.string.dialog_cancel) { _, _ -> }
+        }.create()
+    }
+
     private fun setupBinding(binding: FragmentReminderEditorBinding) {
         binding.apply {
             lifecycleOwner = viewLifecycleOwner
@@ -54,14 +94,16 @@ class ReminderEditorFragment : Fragment(R.layout.fragment_reminder_editor) {
 
             viewModel.startDateState.observe(viewLifecycleOwner) {
                 if (it.errorEnabled) {
-                    textlayoutEditorStartDate.error = "Start date must be in future and after end date"
+                    textlayoutEditorStartDate.error =
+                        "Start date must be in future and after end date"
                 } else {
                     textlayoutEditorStartDate.error = ""
                 }
             }
             viewModel.endDateState.observe(viewLifecycleOwner) {
                 if (it.errorEnabled) {
-                    textlayoutEditorEndDate.error = "End date must be in future and after start date"
+                    textlayoutEditorEndDate.error =
+                        "End date must be in future and after start date"
                 } else {
                     textlayoutEditorEndDate.error = ""
                 }

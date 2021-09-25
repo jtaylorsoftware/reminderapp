@@ -269,54 +269,6 @@
 
             </com.google.android.material.textfield.TextInputLayout>
 
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="48dp"
-                android:layout_alignParentBottom="true"
-                android:orientation="horizontal"
-                android:paddingStart="32dp"
-                android:paddingEnd="32dp"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/textlayout_editor_sound"
-                app:layout_constraintVertical_bias="1.0">
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/button_editor_cancel"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:onClick="@{() -> model.cancel()}"
-                    android:text="@string/editor_cancel"
-                    android:textColor="@color/white"
-                    app:cornerRadius="8dp" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/button_editor_delete"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_marginStart="2dp"
-                    android:layout_marginEnd="2dp"
-                    android:layout_weight="1"
-                    android:onClick="@{() -> model.deleteReminder()}"
-                    android:text="@string/editor_delete"
-                    android:textColor="@color/white"
-                    android:visibility="@{model.editing ? View.VISIBLE : View.GONE}"
-                    app:cornerRadius="8dp" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/button_editor_save"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:onClick="@{() -> model.saveReminder()}"
-                    android:text="@string/editor_save"
-                    android:textColor="@color/white"
-                    app:cornerRadius="8dp" />
-
-            </LinearLayout>
-
         </androidx.constraintlayout.widget.ConstraintLayout>
 
     </ScrollView>

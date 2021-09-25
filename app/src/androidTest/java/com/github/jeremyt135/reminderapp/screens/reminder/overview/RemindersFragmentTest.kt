@@ -4,6 +4,7 @@ import androidx.navigation.NavController
 import androidx.navigation.Navigation
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.click
+import androidx.test.espresso.action.ViewActions.scrollTo
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.contrib.RecyclerViewActions
 import androidx.test.espresso.matcher.ViewMatchers.*
@@ -100,22 +101,19 @@ class RemindersFragmentTest {
         }
     }
 
-    // Throws java.lang.NoClassDefFoundError: Failed resolution of: Lorg/opentest4j/AssertionFailedError
-    // Not sure why, stacktrace doesn't help a whole lot
-    // TODO: find solution, uncomment
-//    @Test
-//    fun fab_NavigatesToEditor() {
-//        val navController = mock(NavController::class.java)
-//        launchFragmentInHiltContainer<RemindersFragment>() {
-//            Navigation.setViewNavController(requireView(), navController)
-//        }
-//
-//        onView(withId(R.id.fab_reminders_add)).perform(click())
-//
-//        verify(navController).navigate(
-//            RemindersFragmentDirections.actionFragmentRemindersToReminderEditorActivity("")
-//        )
-//    }
+    @Test
+    fun fab_NavigatesToEditor() {
+        val navController = mock(NavController::class.java)
+        launchFragmentInHiltContainer<RemindersFragment>() {
+            Navigation.setViewNavController(requireView(), navController)
+        }
+
+        onView(withId(R.id.fab_reminders_add)).perform(click())
+
+        verify(navController).navigate(
+            RemindersFragmentDirections.actionFragmentRemindersToReminderEditorActivity("")
+        )
+    }
 
     @Test
     fun clickRecyclerItem_navigatesToEditor() {

@@ -6,9 +6,11 @@ import androidx.fragment.app.commitNow
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.Espresso.onView
-import androidx.test.espresso.action.ViewActions
-import androidx.test.espresso.action.ViewActions.*
+import androidx.test.espresso.NoMatchingViewException
+import androidx.test.espresso.action.ViewActions.click
+import androidx.test.espresso.action.ViewActions.replaceText
 import androidx.test.espresso.assertion.ViewAssertions.matches
+import androidx.test.espresso.matcher.RootMatchers.isDialog
 import androidx.test.espresso.matcher.ViewMatchers.*
 import androidx.test.filters.MediumTest
 import androidx.test.platform.app.InstrumentationRegistry
@@ -33,13 +35,14 @@ import dagger.hilt.android.testing.UninstallModules
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runBlockingTest
 import org.hamcrest.Matchers.not
+import org.junit.Assert.assertThrows
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.ExpectedException
 import java.time.DayOfWeek
 import java.time.LocalTime
 import javax.inject.Inject
@@ -68,11 +71,9 @@ class ReminderEditorFragmentTest {
         fun provideReminderRepository(): ReminderRepository =
             FakeReminderRepository(reminderCache, alarmCache, historyCache)
 
-
         @Provides
         @Singleton
         fun provideAlarmRepository(): AlarmRepository = FakeAlarmRepository(alarmCache)
-
 
         @Provides
         @Singleton
@@ -146,7 +147,6 @@ class ReminderEditorFragmentTest {
 
     @Test
     fun withNoId_displaysEmptyReminder() {
-        val time = LocalTime.now()
         launchEditorFragmentWithReminder("")
 
         val context = InstrumentationRegistry.getInstrumentation().targetContext
@@ -178,30 +178,12 @@ class ReminderEditorFragmentTest {
 
     @ExperimentalCoroutinesApi
     @Test
-    fun cancel_navigatesUpWithoutSaving() = runBlockingTest {
-        val initialReminders = reminderRepository.getAll().first()
-
-        launchEditorFragmentWithReminder("") {
-            fragmentVM = this.viewModel
-        }
-
-        onView(withId(R.id.button_editor_cancel)).perform(scrollTo(), click())
-        assertThat(fragmentVM.navigateToReminders.value).isNotNull()
-
-        // Assert that the size hasn't changed during this test
-        val finalReminders = reminderRepository.getAll().first()
-        assertThat(finalReminders).hasSize(initialReminders.size)
-    }
-
-
-    @ExperimentalCoroutinesApi
-    @Test
     fun save_navigatesUp() = runBlockingTest {
         launchEditorFragmentWithReminder(reminders[2].id) {
             fragmentVM = this.viewModel
         }
 
-        onView(withId(R.id.button_editor_save)).perform(scrollTo(), click())
+        onView(withId(R.id.item_editor_save)).perform(click())
         assertThat(fragmentVM.navigateToReminders.value).isNotNull()
     }
 
@@ -237,7 +219,7 @@ class ReminderEditorFragmentTest {
 //        )
 
         // Save changes
-        onView(withId(R.id.button_editor_save)).perform(scrollTo(), click())
+        onView(withId(R.id.item_editor_save)).perform(click())
 
         // Verify save happened
         val savedReminder: Reminder = runBlocking {
@@ -247,11 +229,10 @@ class ReminderEditorFragmentTest {
         assertThat(savedReminder).isEqualTo(editedReminder)
     }
 
-    @Test
+    @Test(expected = NoMatchingViewException::class)
     fun deleteButton_notEditing_isNotVisible() {
         launchEditorFragmentWithReminder("")
-
-        onView(withText("Delete")).check(matches(not(isDisplayed())))
+        onView(withText(R.id.item_editor_delete)).check(matches(not(isDisplayed())))
     }
 
     @Test
@@ -263,8 +244,9 @@ class ReminderEditorFragmentTest {
 
         launchEditorFragmentWithReminder(reminder.id)
 
-        onView(withId(R.id.button_editor_delete)).check(matches(isDisplayed()))
-        onView(withId(R.id.button_editor_delete)).perform(scrollTo(), click())
+        onView(withId(R.id.item_editor_delete)).check(matches(isDisplayed()))
+        onView(withId(R.id.item_editor_delete)).perform(click())
+        onView(withText("OK")).inRoot(isDialog()).check(matches(isDisplayed())).perform(click())
 
         assertThat(reminderRepository.findById(reminder.id)).isNull()
         assertThat(alarmRepository.findByReminderId(reminder.id)).isNull()
