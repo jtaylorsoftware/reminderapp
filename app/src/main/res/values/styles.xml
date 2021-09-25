@@ -9,7 +9,7 @@
         <item name="android:paddingBottom">2dp</item>
         <item name="android:paddingLeft">12dp</item>
         <item name="android:paddingRight">12dp</item>
-        <item name="iconPadding">2dp</item>
+        <item name="iconPadding">0dp</item>
         <item name="iconGravity">textStart</item>
         <item name="iconSize">16dp</item>
         <item name="android:minWidth">48dp</item>
