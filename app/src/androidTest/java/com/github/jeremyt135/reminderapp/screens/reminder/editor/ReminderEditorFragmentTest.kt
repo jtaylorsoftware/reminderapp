@@ -6,9 +6,7 @@ import androidx.fragment.app.commitNow
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.Espresso.onView
-import androidx.test.espresso.NoMatchingViewException
-import androidx.test.espresso.action.ViewActions.click
-import androidx.test.espresso.action.ViewActions.replaceText
+import androidx.test.espresso.action.ViewActions.*
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.RootMatchers.isDialog
 import androidx.test.espresso.matcher.ViewMatchers.*
@@ -38,11 +36,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runBlockingTest
 import org.hamcrest.Matchers.not
-import org.junit.Assert.assertThrows
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.ExpectedException
 import java.time.DayOfWeek
 import java.time.LocalTime
 import javax.inject.Inject
@@ -183,7 +179,7 @@ class ReminderEditorFragmentTest {
             fragmentVM = this.viewModel
         }
 
-        onView(withId(R.id.item_editor_save)).perform(click())
+        onView(withId(R.id.button_editor_save)).perform(click())
         assertThat(fragmentVM.navigateToReminders.value).isNotNull()
     }
 
@@ -219,7 +215,7 @@ class ReminderEditorFragmentTest {
 //        )
 
         // Save changes
-        onView(withId(R.id.item_editor_save)).perform(click())
+        onView(withId(R.id.button_editor_save)).perform(click())
 
         // Verify save happened
         val savedReminder: Reminder = runBlocking {
@@ -229,10 +225,10 @@ class ReminderEditorFragmentTest {
         assertThat(savedReminder).isEqualTo(editedReminder)
     }
 
-    @Test(expected = NoMatchingViewException::class)
+    @Test
     fun deleteButton_notEditing_isNotVisible() {
         launchEditorFragmentWithReminder("")
-        onView(withText(R.id.item_editor_delete)).check(matches(not(isDisplayed())))
+        onView(withText("Delete")).check(matches(not(isDisplayed())))
     }
 
     @Test
@@ -244,8 +240,8 @@ class ReminderEditorFragmentTest {
 
         launchEditorFragmentWithReminder(reminder.id)
 
-        onView(withId(R.id.item_editor_delete)).check(matches(isDisplayed()))
-        onView(withId(R.id.item_editor_delete)).perform(click())
+        onView(withId(R.id.button_editor_delete)).check(matches(isDisplayed()))
+        onView(withId(R.id.button_editor_delete)).perform(scrollTo(), click())
         onView(withText("OK")).inRoot(isDialog()).check(matches(isDisplayed())).perform(click())
 
         assertThat(reminderRepository.findById(reminder.id)).isNull()

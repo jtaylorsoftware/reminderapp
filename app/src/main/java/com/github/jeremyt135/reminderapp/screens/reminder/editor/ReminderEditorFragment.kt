@@ -35,11 +35,6 @@ class ReminderEditorFragment : Fragment(R.layout.fragment_reminder_editor) {
     val viewModel: ReminderEditorViewModel by activityViewModels()
         @VisibleForTesting get
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setHasOptionsMenu(true)
-    }
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         Timber.d("onViewCreated")
@@ -53,37 +48,6 @@ class ReminderEditorFragment : Fragment(R.layout.fragment_reminder_editor) {
         }
 
         setupBinding(FragmentReminderEditorBinding.bind(view))
-    }
-
-    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
-        if (viewModel.isEditing) {
-            inflater.inflate(R.menu.editor_menu_editing, menu)
-        } else {
-            inflater.inflate(R.menu.editor_menu, menu)
-        }
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean = when (item.itemId) {
-        R.id.item_editor_delete -> {
-            buildDeleteDialog().show()
-            true
-        }
-        R.id.item_editor_save -> {
-            viewModel.saveReminder()
-            true
-        }
-        else -> super.onOptionsItemSelected(item)
-    }
-
-    private fun buildDeleteDialog(): AlertDialog {
-        return AlertDialog.Builder(requireActivity()).apply {
-            setMessage(R.string.dialog_editorDelete_message)
-            setTitle(R.string.dialog_editorDelete_title)
-            setPositiveButton(R.string.dialog_ok) { _, _ ->
-                viewModel.deleteReminder()
-            }
-            setNegativeButton(R.string.dialog_cancel) { _, _ -> }
-        }.create()
     }
 
     private fun setupBinding(binding: FragmentReminderEditorBinding) {
@@ -150,7 +114,25 @@ class ReminderEditorFragment : Fragment(R.layout.fragment_reminder_editor) {
             checkboxEditorEndDate.setOnCheckedChangeListener { _, isChecked ->
                 viewModel.setHasEndDate(isChecked)
             }
+
+            buttonEditorDelete.setOnClickListener {
+                buildDeleteDialog().show()
+            }
+            buttonEditorSave.setOnClickListener {
+                viewModel.saveReminder()
+            }
         }
+    }
+
+    private fun buildDeleteDialog(): AlertDialog {
+        return AlertDialog.Builder(requireActivity()).apply {
+            setMessage(R.string.dialog_editorDelete_message)
+            setTitle(R.string.dialog_editorDelete_title)
+            setPositiveButton(R.string.dialog_ok) { _, _ ->
+                viewModel.deleteReminder()
+            }
+            setNegativeButton(R.string.dialog_cancel) { _, _ -> }
+        }.create()
     }
 
     private fun selectDate(view: View) {

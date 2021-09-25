@@ -7,6 +7,7 @@ import androidx.navigation.findNavController
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.click
+import androidx.test.espresso.action.ViewActions.scrollTo
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.contrib.RecyclerViewActions
 import androidx.test.espresso.matcher.RootMatchers
@@ -210,9 +211,10 @@ class RemindersActivityTest {
             /**
              * Press delete
              */
-            onView(withId(R.id.item_editor_delete)).check(matches(isDisplayed()))
-            onView(withId(R.id.item_editor_delete)).perform(click())
-            onView(withText("OK")).inRoot(RootMatchers.isDialog()).check(matches(isDisplayed())).perform(click())
+            onView(withId(R.id.button_editor_delete)).check(matches(isDisplayed()))
+            onView(withId(R.id.button_editor_delete)).perform(scrollTo(), click())
+            onView(withText("OK")).inRoot(RootMatchers.isDialog()).check(matches(isDisplayed()))
+                .perform(click())
 
             /**
              * Verify back on reminders list
