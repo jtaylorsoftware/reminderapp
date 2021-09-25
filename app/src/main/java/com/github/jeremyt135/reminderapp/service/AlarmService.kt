@@ -11,7 +11,6 @@ import android.os.*
 import com.github.jeremyt135.reminderapp.broadcast.*
 import com.github.jeremyt135.reminderapp.data.AlarmRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
-import com.github.jeremyt135.reminderapp.data.domain.Alarm
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.di.AppCoroutineScope
 import dagger.hilt.android.AndroidEntryPoint
@@ -237,7 +236,7 @@ class AlarmService : Service(), MediaPlayer.OnPreparedListener, MediaPlayer.OnEr
         /**
          * Starts the Service using a Reminder to determine vibration & sound settings.
          */
-        fun start(context: Context, reminder: Reminder, alarm: Alarm) {
+        fun start(context: Context, reminder: Reminder) {
             Intent(context, AlarmService::class.java).apply {
                 action = ACTION_ALARM_START
                 putExtra(EXTRA_REMINDER_ID, reminder.id)
@@ -266,6 +265,7 @@ class AlarmService : Service(), MediaPlayer.OnPreparedListener, MediaPlayer.OnEr
     }
 }
 
+@Suppress("DEPRECATION")
 private fun Vibrator.start() {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
         val audioAttributes =

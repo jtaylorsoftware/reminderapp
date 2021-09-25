@@ -140,6 +140,7 @@ class DialogDayViewModel constructor(daysOfWeek: SortedSet<DayOfWeek>) : ViewMod
 
     class Factory(private val previousDaysOfWeek: SortedSet<DayOfWeek>) :
         ViewModelProvider.NewInstanceFactory() {
+        @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel?> create(modelClass: Class<T>): T =
             (DialogDayViewModel(previousDaysOfWeek) as T)
     }

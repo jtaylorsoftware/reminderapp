@@ -43,11 +43,10 @@ class AlarmListAdapter(private val onAlarmClickListener: OnAlarmClickListener) :
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) =
         when (ViewType.fromPosition(position)) {
             ViewType.SEPARATOR -> {
-                val holder = holder as SeparatorViewHolder
-                holder.bind(getItem(position) as AlarmListSeparator)
+                (holder as SeparatorViewHolder).bind(getItem(position) as AlarmListSeparator)
             }
             ViewType.ALARM -> {
-                val holder = holder as ReminderAndAlarmViewHolder
+                holder as ReminderAndAlarmViewHolder
                 val reminderAndAlarm = getItem(position) as ReminderAndAlarm
                 holder.bind(reminderAndAlarm)
                 holder.itemView.setOnClickListener {

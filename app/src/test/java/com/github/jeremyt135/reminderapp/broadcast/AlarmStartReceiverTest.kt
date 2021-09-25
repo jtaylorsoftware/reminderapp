@@ -95,7 +95,7 @@ class AlarmStartReceiverTest {
         every { WorkManager.getInstance(any()) } returns mockWorkManager
 
         mockkObject(AlarmService.Companion)
-        justRun { AlarmService.start(any(), any(), any()) }
+        justRun { AlarmService.start(any(), any()) }
 
         mockkObject(AlarmActionHandler.Companion)
         every { AlarmActionHandler.createForAction(any(), any()) } returns
@@ -150,7 +150,7 @@ class AlarmStartReceiverTest {
         val savedData = reminderRepository.getReminderAndAlarm(reminder.id)!!
 
         verify {
-            AlarmService.start(context, savedData.reminder, savedData.alarm!!)
+            AlarmService.start(context, savedData.reminder)
         }
     }
 }

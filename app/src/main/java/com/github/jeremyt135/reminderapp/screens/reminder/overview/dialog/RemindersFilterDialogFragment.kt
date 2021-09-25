@@ -52,7 +52,7 @@ class RemindersFilterDialogFragment() : DialogFragment() {
     interface DialogListener {
         /**
          * Called when the filtering rules have been updated.
-         * @param dialog This dialog instance
+         * @param filterRules The new filter rules
          */
         fun onFilterRulesChange(filterRules: ReminderFilterRules)
     }
@@ -284,6 +284,7 @@ class ReminderFilterViewModel constructor(previousFilterRules: ReminderFilterRul
 
     class Factory(private val previousFilterRules: ReminderFilterRules) :
         ViewModelProvider.NewInstanceFactory() {
+        @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel?> create(modelClass: Class<T>): T =
             ReminderFilterViewModel(previousFilterRules) as T
     }

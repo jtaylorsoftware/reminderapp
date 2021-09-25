@@ -153,6 +153,7 @@ class SoundPickerViewModel(application: Application, vibrate: Boolean, soundUri:
         private val previousSoundUri: String
     ) :
         ViewModelProvider.NewInstanceFactory() {
+        @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel?> create(modelClass: Class<T>): T =
             SoundPickerViewModel(application, previousVibrate, previousSoundUri) as T
     }

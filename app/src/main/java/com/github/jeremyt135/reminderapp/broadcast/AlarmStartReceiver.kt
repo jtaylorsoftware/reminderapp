@@ -57,7 +57,7 @@ class AlarmStartReceiver : BroadcastReceiver() {
                     } else {
                         // started, so create service
                         Timber.d("AlarmStartReceiver starting service")
-                        AlarmService.start(context, reminder, alarm)
+                        AlarmService.start(context, reminder)
                     }
                 } ?: run {
                     // alarm?.let was null

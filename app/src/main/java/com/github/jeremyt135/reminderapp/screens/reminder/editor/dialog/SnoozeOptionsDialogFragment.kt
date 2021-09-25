@@ -147,6 +147,7 @@ class SnoozeOptionsViewModel(previousRules: SnoozeRules) : ViewModel() {
 
     class Factory(private val previousRules: SnoozeRules) :
         ViewModelProvider.NewInstanceFactory() {
+        @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel?> create(modelClass: Class<T>): T =
             SnoozeOptionsViewModel(previousRules) as T
     }

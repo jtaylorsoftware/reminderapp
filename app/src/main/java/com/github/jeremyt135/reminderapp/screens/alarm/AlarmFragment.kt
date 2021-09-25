@@ -19,7 +19,7 @@ class AlarmFragment : Fragment(R.layout.fragment_alarm) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val binding = FragmentAlarmBinding.bind(view).apply {
+        FragmentAlarmBinding.bind(view).apply {
             lifecycleOwner = viewLifecycleOwner
             model = viewModel
         }

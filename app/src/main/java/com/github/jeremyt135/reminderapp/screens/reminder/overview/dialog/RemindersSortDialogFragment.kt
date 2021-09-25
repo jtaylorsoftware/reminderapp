@@ -157,6 +157,7 @@ class ReminderSortViewModel constructor(previousSortRules: ReminderSortRules) : 
 
     class Factory(private val previousSortRules: ReminderSortRules) :
         ViewModelProvider.NewInstanceFactory() {
+        @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel?> create(modelClass: Class<T>): T =
             ReminderSortViewModel(previousSortRules) as T
     }

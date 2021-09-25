@@ -56,7 +56,7 @@ class AlarmActionReceiverTest {
 
         mockkObject(AlarmService.Companion)
         justRun { AlarmService.requestStop(any()) }
-        justRun { AlarmService.start(any(), any(), any()) }
+        justRun { AlarmService.start(any(), any()) }
 
         mockkObject(AlarmActionHandler.Companion)
         every { AlarmActionHandler.createForAction(any(), any()) } returns
