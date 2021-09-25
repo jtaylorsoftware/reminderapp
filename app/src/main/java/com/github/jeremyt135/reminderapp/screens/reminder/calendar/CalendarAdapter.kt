@@ -17,7 +17,7 @@ import com.google.android.material.color.MaterialColors
 import java.time.DayOfWeek
 import java.time.LocalDate
 
-typealias OnDaySelectedListener = (day: LocalDate) -> Unit
+typealias OnDaySelectedListener = (day: LocalDate?) -> Unit
 
 class CalendarAdapter(private val daySelectedListener: OnDaySelectedListener) :
     ListAdapter<Any, RecyclerView.ViewHolder>(CalendarDiffCallback) {
@@ -55,8 +55,8 @@ class CalendarAdapter(private val daySelectedListener: OnDaySelectedListener) :
             }
             ViewType.DAY -> {
                 item as CalendarDateItem
-                (holder as DateViewHolder).bind(item)
-                if (item.isCurrentMonth) {
+                (holder as DateViewHolder).bind(position, item)
+                if (item.isNotInPast) {
                     holder.itemView.setOnClickListener {
                         onDaySelected(holder)
                     }
@@ -91,7 +91,7 @@ class CalendarAdapter(private val daySelectedListener: OnDaySelectedListener) :
         RecyclerView.ViewHolder(view) {
         val id = uuid()
 
-        lateinit var date: LocalDate
+        var date: LocalDate? = null
             private set
 
         private val textView: TextView = view.findViewById(R.id.text_calendar_dayOfMonth)
@@ -109,20 +109,26 @@ class CalendarAdapter(private val daySelectedListener: OnDaySelectedListener) :
          * Binds this ViewHolder to a day of the month.
          * @param calendarDateItem Day of month data to bind
          */
-        fun bind(calendarDateItem: CalendarDateItem) {
+        fun bind(position: Int, calendarDateItem: CalendarDateItem) {
+            reset()
+
             this.date = calendarDateItem.date
-            textView.text = date.dayOfMonth.toString()
+            if (calendarDateItem.date != null) {
+                textView.text = date?.dayOfMonth.toString()
+            } else {
+                textView.text = (position - HEADING_SLOTS + 1).toString()
+            }
 
             if (isToday) {
                 useOutlineImage()
             }
 
-            if (!calendarDateItem.isCurrentMonth) {
+            if (!calendarDateItem.isCurrentMonth || !calendarDateItem.isNotInPast) {
                 // Use muted text color for other month days
                 textView.setTextColor(ContextCompat.getColor(view.context, R.color.text_secondary))
             }
 
-            if (calendarDateItem.hasReminder) {
+            if (calendarDateItem.hasReminder && calendarDateItem.isNotInPast) {
                 showIndicator()
             }
         }
@@ -169,6 +175,17 @@ class CalendarAdapter(private val daySelectedListener: OnDaySelectedListener) :
         private fun showIndicator() {
             reminderIndicator.setImageResource(R.drawable.ic_calendar_reminder_indicator)
             reminderIndicator.visibility = View.VISIBLE
+        }
+
+        private fun hideIndicator() {
+            reminderIndicator.setImageResource(0)
+            reminderIndicator.visibility = View.INVISIBLE
+        }
+
+        private fun reset() {
+            hideIndicator()
+            hideImage()
+            textView.setTextColor(defaultTextColor)
         }
     }
 
@@ -222,8 +239,7 @@ class CalendarAdapter(private val daySelectedListener: OnDaySelectedListener) :
 
             return when (oldItem) {
                 is CalendarDateItem -> {
-                    newItem as CalendarDateItem
-                    oldItem.position == newItem.position
+                    false
                 }
                 is DayOfWeek -> {
                     newItem as DayOfWeek
@@ -239,6 +255,7 @@ class CalendarAdapter(private val daySelectedListener: OnDaySelectedListener) :
 
             return when (oldItem) {
                 is CalendarDateItem -> {
+                    // return valid comparison even though areItemsTheSame currently always returns false
                     newItem as CalendarDateItem
                     oldItem == newItem
                 }
@@ -255,16 +272,11 @@ class CalendarAdapter(private val daySelectedListener: OnDaySelectedListener) :
 /**
  * Backing data for calendar
  */
-data class CalendarDateItem(
+open class CalendarDateItem(
     /**
-     * Position of the item in the adapter
+     * The date for the item, can be null to indicate a loading or placeholder status
      */
-    val position: Int,
-
-    /**
-     * The date for the item
-     */
-    val date: LocalDate,
+    val date: LocalDate?,
 
     /**
      * Flag indicating whether this item is in the current month
@@ -275,4 +287,28 @@ data class CalendarDateItem(
      * Flag indicating whether this item has a reminder on its date
      */
     val hasReminder: Boolean
-)
+) {
+    val isNotInPast = date?.let { date >= LocalDate.now() } ?: false
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as CalendarDateItem
+
+        if (date != other.date) return false
+        if (isCurrentMonth != other.isCurrentMonth) return false
+        if (hasReminder != other.hasReminder) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = date?.hashCode() ?: 0
+        result = 31 * result + isCurrentMonth.hashCode()
+        result = 31 * result + hasReminder.hashCode()
+        return result
+    }
+}
+
+object PlaceholderDateItem : CalendarDateItem(null, false, false)

@@ -44,33 +44,6 @@ class CalendarViewModel @Inject constructor(
         date.format(DateTimeFormatter.ofPattern("MMMM ''uu"))
     }.asLiveData()
 
-    @ExperimentalCoroutinesApi
-    private val _remindersOnSelectedDate = _selectedDate.flatMapLatest { selectedDate ->
-        selectedDate?.let {
-            // Get any reminders on the selected date and only the history for the selected date
-            reminderRepository.getAllInRangeWithHistoryOnDate(
-                startDate = selectedDate,
-                endDate = selectedDate,
-                historyDate = selectedDate
-            ).mapLatest { reminders ->
-                reminders.filter {
-                    with(it.reminder.schedulingRules) {
-                        when (type) {
-                            SchedulingType.SINGLE -> startDate == selectedDate
-                            else -> daysOfWeek.contains(selectedDate.dayOfWeek)
-                        }
-                    }
-                }
-            }.flowOn(dispatcher)
-        } ?: emptyFlow()
-    }
-
-    /**
-     * List of reminders for selected date
-     */
-    @ExperimentalCoroutinesApi
-    val remindersOnSelectedDate = _remindersOnSelectedDate.asLiveData()
-
     /**
      * Refresh "event" emitter to force calendar data to update
      */
@@ -79,6 +52,35 @@ class CalendarViewModel @Inject constructor(
         extraBufferCapacity = 1,
         onBufferOverflow = BufferOverflow.DROP_OLDEST
     )
+
+    @ExperimentalCoroutinesApi
+    private val _remindersOnSelectedDate = refresh.flatMapLatest {
+        _selectedDate.flatMapLatest { selectedDate ->
+            selectedDate?.let {
+                // Get any reminders on the selected date and only the history for the selected date
+                reminderRepository.getAllInRangeWithHistoryOnDate(
+                    startDate = selectedDate,
+                    endDate = selectedDate,
+                    historyDate = selectedDate
+                ).mapLatest { reminders ->
+                    reminders.filter {
+                        with(it.reminder.schedulingRules) {
+                            when (type) {
+                                SchedulingType.SINGLE -> startDate == selectedDate
+                                else -> daysOfWeek.contains(selectedDate.dayOfWeek)
+                            }
+                        }
+                    }
+                }.flowOn(dispatcher)
+            } ?: flowOf(null)
+        }
+    }
+
+    /**
+     * List of reminders for selected date
+     */
+    @ExperimentalCoroutinesApi
+    val remindersOnSelectedDate = _remindersOnSelectedDate.asLiveData()
 
     /**
      * The backing data for the Calendar. Contains all data necessary to produce
@@ -96,7 +98,15 @@ class CalendarViewModel @Inject constructor(
     }.flowOn(dispatcher).stateIn(
         viewModelScope,
         started = SharingStarted.Lazily,
-        getInitialCalendarData(_selectedYearMonth.value)
+        // Use placeholder data as initial data
+        (0 until CalendarAdapter.ITEM_COUNT).map { position ->
+            if (position < CalendarAdapter.HEADING_SLOTS) {
+                getHeadingItem(position)
+            } else {
+                // Use null date to indicate placeholder data
+                PlaceholderDateItem
+            }
+        }
     ).asLiveData()
 
     init {
@@ -175,21 +185,11 @@ class CalendarViewModel @Inject constructor(
         position: Int,
         monthData: CalculatedMonthData
     ): CalendarDateItem {
-        var isCurrentMonth = false
-        var hasReminder = false
 
         return with(monthData) {
-            val date = when {
-                position in firstPositionOfMonth..lastPositionOfMonth -> {
-                    isCurrentMonth = true
-                    yearMonthDate.withDayOfMonth(position - firstPositionOfMonth + 1)
-                }
-                position < firstPositionOfMonth -> yearMonthDate.minusMonths(1)
-                    .withDayOfMonth(lastDayOfPreviousMonth - firstPositionOfMonth + position + 1)
-                position > lastPositionOfMonth -> yearMonthDate.plusMonths(1)
-                    .withDayOfMonth(position - lastPositionOfMonth)
-                else -> throw IllegalStateException("Invalid position $position")
-            }
+            val date = calculateDateFromPosition(position, monthData)
+            val isCurrentMonth = date.month == monthData.yearMonthDate.month
+            var hasReminder = false
 
             if (isCurrentMonth) {
                 hasReminder =
@@ -197,7 +197,7 @@ class CalendarViewModel @Inject constructor(
                         ?: false
             }
 
-            CalendarDateItem(position, date, isCurrentMonth, hasReminder)
+            CalendarDateItem(date, isCurrentMonth, hasReminder)
         }
     }
 
@@ -213,38 +213,19 @@ class CalendarViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Calculates the items for the calendar, but without calculating hasReminder for any
-     * CalendarDateItems.
-     */
-    private fun getInitialCalendarData(yearMonth: YearMonth): List<Any> {
-        val monthData = CalculatedMonthData(yearMonth, emptyList())
-        val items = (0 until CalendarAdapter.ITEM_COUNT).map { position ->
-            with(monthData) {
-                if (position < CalendarAdapter.HEADING_SLOTS) {
-                    getHeadingItem(position)
-                } else {
-                    var isCurrentMonth = false
-
-                    val date = when {
-                        position in firstPositionOfMonth..lastPositionOfMonth -> {
-                            isCurrentMonth = true
-                            yearMonthDate.withDayOfMonth(position - firstPositionOfMonth + 1)
-                        }
-                        position < firstPositionOfMonth -> yearMonthDate.minusMonths(1)
-                            .withDayOfMonth(lastDayOfPreviousMonth - firstPositionOfMonth + position + 1)
-                        position > lastPositionOfMonth -> yearMonthDate.plusMonths(1)
-                            .withDayOfMonth(position - lastPositionOfMonth)
-                        else -> throw IllegalStateException("Invalid position $position")
-                    }
-
-                    CalendarDateItem(position, date, isCurrentMonth, false)
+    private fun calculateDateFromPosition(position: Int, monthData: CalculatedMonthData) =
+        with(monthData) {
+            when {
+                position in firstPositionOfMonth..lastPositionOfMonth -> {
+                    yearMonthDate.withDayOfMonth(position - firstPositionOfMonth + 1)
                 }
+                position < firstPositionOfMonth -> yearMonthDate.minusMonths(1)
+                    .withDayOfMonth(lastDayOfPreviousMonth - firstPositionOfMonth + position + 1)
+                position > lastPositionOfMonth -> yearMonthDate.plusMonths(1)
+                    .withDayOfMonth(position - lastPositionOfMonth)
+                else -> throw IllegalStateException("Invalid position $position")
             }
         }
-        Timber.d("getInitialCalendarData finished")
-        return items
-    }
 
     private inner class CalculatedMonthData(yearMonth: YearMonth, reminders: List<Reminder>) {
         // Date adjusted for yearMonth
