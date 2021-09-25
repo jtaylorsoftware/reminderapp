@@ -11,14 +11,17 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.findViewTreeLifecycleOwner
 import androidx.lifecycle.findViewTreeViewModelStoreOwner
-import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import com.github.jeremyt135.R
 import com.github.jeremyt135.databinding.ViewCalendarBinding
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.screens.reminder.overview.ReminderListAdapter
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.time.LocalDate
 import java.time.YearMonth
@@ -29,7 +32,7 @@ typealias OnAddReminderListener = (LocalDate?) -> Unit
 @AndroidEntryPoint
 class CalendarView : ConstraintLayout {
     private val viewModel: CalendarViewModel by lazy {
-        ViewModelProvider(findViewTreeViewModelStoreOwner()!!).get(CalendarViewModel::class.java)
+        ViewModelProvider(requireNotNull(findViewTreeViewModelStoreOwner())).get(CalendarViewModel::class.java)
     }
     private var binding: ViewCalendarBinding? =
         ViewCalendarBinding.inflate(LayoutInflater.from(context), this, true)
@@ -117,23 +120,27 @@ class CalendarView : ConstraintLayout {
         }
     }
 
+    private var coroutineScope: CoroutineScope? = CoroutineScope(Dispatchers.Main)
+
     private fun attachBinding() {
         Timber.d("attachBinding")
-        val lifecycleOwner = findViewTreeLifecycleOwner()
+        val lifecycleOwner = requireNotNull(findViewTreeLifecycleOwner())
+
         binding?.model = viewModel
         binding?.lifecycleOwner = lifecycleOwner
 
-        lifecycleOwner?.lifecycleScope?.launchWhenResumed {
-            // Adjust appearance of back button when selected month is in the future (so going back is not into the past)
-            viewModel.selectedYearMonth.collect { yearMonth ->
-                val enabled = yearMonth > YearMonth.now()
-                binding?.buttonCalendarBackward?.let { button ->
-                    button.isEnabled = enabled
+        coroutineScope = CoroutineScope(Dispatchers.Main).apply {
+            launch {
+                // Adjust appearance of back button when selected month is in the future (so going back is not into the past)
+                viewModel.selectedYearMonth.collect { yearMonth ->
+                    val enabled = yearMonth > YearMonth.now()
+                    binding?.buttonCalendarBackward?.isEnabled = enabled
                     val tintColor =
                         if (enabled) R.color.icon_button_tint_enable else R.color.icon_button_tint_disable
-                    button.imageTintList =
+
+                    binding?.buttonCalendarBackward?.imageTintList =
                         ColorStateList.valueOf(ContextCompat.getColor(context, tintColor))
-                    button.imageTintMode = PorterDuff.Mode.SRC_IN
+                    binding?.buttonCalendarBackward?.imageTintMode = PorterDuff.Mode.SRC_IN
                 }
             }
         }
@@ -142,5 +149,7 @@ class CalendarView : ConstraintLayout {
     private fun detachBinding() {
         Timber.d("detachBinding")
         binding = null
+        coroutineScope?.cancel()
+        coroutineScope = null
     }
 }
