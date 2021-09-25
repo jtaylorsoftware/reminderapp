@@ -14,6 +14,7 @@ import com.github.jeremyt135.databinding.ViewCalendarBinding
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.screens.reminder.overview.ReminderListAdapter
 import dagger.hilt.android.AndroidEntryPoint
+import timber.log.Timber
 import java.time.LocalDate
 
 typealias OnReminderSelectedListener = (Reminder) -> Unit
@@ -28,7 +29,6 @@ class CalendarView : ConstraintLayout {
         ViewCalendarBinding.inflate(LayoutInflater.from(context), this, true)
     private var reminderListAdapter: ReminderListAdapter? = null
     private var calendarAdapter: CalendarAdapter? = null
-    private var previouslyVisible: Boolean = false // Track if View has ever been visible
 
     var onReminderSelectedListener: OnReminderSelectedListener? = null
     var onAddReminderListener: OnAddReminderListener? = null
@@ -39,6 +39,7 @@ class CalendarView : ConstraintLayout {
             : super(context, attrs, defStyleAttr)
 
     init {
+        Timber.d("Init")
         setupBindingViews()
     }
 
@@ -54,27 +55,27 @@ class CalendarView : ConstraintLayout {
 
     override fun onVisibilityChanged(changedView: View, visibility: Int) {
         super.onVisibilityChanged(changedView, visibility)
+        Timber.d("onVisibilityChanged")
+    }
 
-        if (visibility != View.VISIBLE) {
-            clearSelectedDay()
-        } else {
-            // Only refresh if View has ever been visible
-            if (previouslyVisible) {
-                viewModel.refreshData()
-            }
-            previouslyVisible = true
-        }
+    /**
+     * Refreshes the data in the calendar.
+     */
+    fun refreshData() {
+        viewModel.refreshData()
     }
 
     /**
      * Deselects the currently selected date.
      */
-    private fun clearSelectedDay() {
+    fun clearSelectedDay() {
+        Timber.d("ClearSelectedDay")
         viewModel.setSelectedDate(null)
         calendarAdapter?.clearSelectedDay()
     }
 
     private fun setupBindingViews() {
+        Timber.d("setupBindingViews")
         reminderListAdapter = ReminderListAdapter(ReminderListAdapter.OnClickListener {
             onReminderSelectedListener?.invoke(it.reminder)
         })
@@ -108,6 +109,7 @@ class CalendarView : ConstraintLayout {
     }
 
     private fun attachBinding() {
+        Timber.d("attachBinding")
         binding?.apply {
             model = viewModel
             lifecycleOwner = findViewTreeLifecycleOwner()
@@ -115,6 +117,7 @@ class CalendarView : ConstraintLayout {
     }
 
     private fun detachBinding() {
+        Timber.d("detachBinding")
         binding = null
     }
 }

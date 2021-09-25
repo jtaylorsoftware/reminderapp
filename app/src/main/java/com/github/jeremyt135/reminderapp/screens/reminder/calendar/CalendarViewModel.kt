@@ -11,15 +11,12 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.*
-import java.time.DayOfWeek
-import java.time.LocalDate
-import java.time.YearMonth
+import kotlinx.coroutines.launch
+import timber.log.Timber
+import java.time.*
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
-import kotlin.coroutines.coroutineContext
 
 @HiltViewModel
 class CalendarViewModel @Inject constructor(
@@ -29,31 +26,7 @@ class CalendarViewModel @Inject constructor(
     /**
      * Currently selected year & month
      */
-    private val _selectedYearMonth = MutableStateFlow(YearMonth.now())
-
-    /**
-     * Fallback to refresh the calendar when data is updated or the view appears
-     */
-    private val refreshData =
-        MutableSharedFlow<Unit>(
-            replay = 1,
-            onBufferOverflow = BufferOverflow.DROP_OLDEST,
-        )
-
-    /**
-     * List of reminders in the currently selected yearMonth. Used to compute dates
-     * that should have an indicator dot displayed.
-     */
-    private val _remindersInSelectedMonth =
-        combine(_selectedYearMonth, refreshData) { selectedYearMonth, _ ->
-            reminderRepository.getAllInMonth(
-                selectedYearMonth.month.value.toString().padStart(2, '0')
-            ).first()
-        }.stateIn(
-            viewModelScope,
-            started = SharingStarted.Lazily,
-            emptyList()
-        )
+    private val selectedYearMonth = MutableStateFlow(YearMonth.now())
 
     /**
      * Currently tapped on date, including the current scrolled-to month & year, in the calendar
@@ -65,7 +38,7 @@ class CalendarViewModel @Inject constructor(
      * Display string for selected date's month & year. Format is full month and short year, such as
      * "September '21."
      */
-    val selectedYearMonthString = _selectedYearMonth.map { date ->
+    val selectedYearMonthString = selectedYearMonth.map { date ->
         date.format(DateTimeFormatter.ofPattern("MMMM ''uu"))
     }.asLiveData()
 
@@ -96,27 +69,16 @@ class CalendarViewModel @Inject constructor(
      */
     val remindersOnSelectedDate = _remindersOnSelectedDate.asLiveData()
 
-    // Initial "static" data that doesn't account for dates with reminders
-    private val initialCalendarData = getInitialCalendarData(_selectedYearMonth.value)
+    private val _calendarData = MutableStateFlow(getInitialCalendarData(selectedYearMonth.value))
 
     /**
      * The backing data for the Calendar. Contains all data necessary to produce
      * date views for the current month.
      */
-    val calendarData = combine(
-        _selectedYearMonth,
-        _remindersInSelectedMonth,
-    ) { yearMonth, reminders ->
-        getCalendarData(yearMonth, reminders)
-    }.flowOn(dispatcher).stateIn(
-        viewModelScope,
-        started = SharingStarted.Lazily,
-        initialCalendarData
-    ).asLiveData()
+    val calendarData = _calendarData.asLiveData()
 
     init {
-        // Trigger fetch of initial data
-        refreshData.tryEmit(Unit)
+        Timber.d("Init VM")
     }
 
     /**
@@ -133,14 +95,14 @@ class CalendarViewModel @Inject constructor(
      * Changes the calendar month to the next sequential month.
      */
     fun goToNextMonth() {
-        setSelectedMonth(_selectedYearMonth.value.plusMonths(1))
+        setSelectedMonth(selectedYearMonth.value.plusMonths(1))
     }
 
     /**
      * Changes the calendar month to the previous sequential month.
      */
     fun goToPreviousMonth() {
-        setSelectedMonth(_selectedYearMonth.value.minusMonths(1))
+        setSelectedMonth(selectedYearMonth.value.minusMonths(1))
     }
 
     /**
@@ -148,30 +110,37 @@ class CalendarViewModel @Inject constructor(
      * and one wants to notify the Calendar to update.
      */
     fun refreshData() {
-        refreshData.tryEmit(Unit)
+        Timber.d("Refreshing data")
+        getCalendarData(selectedYearMonth.value)
     }
 
     private fun setSelectedMonth(yearMonth: YearMonth) {
         setSelectedDate(null)
-        _selectedYearMonth.value = yearMonth
+        selectedYearMonth.value = yearMonth
+        getCalendarData(yearMonth)
     }
 
-    private suspend fun getCalendarData(
+    private fun getCalendarData(
         yearMonth: YearMonth,
-        reminders: List<Reminder>
-    ): List<Any> = coroutineScope {
-        val monthData = CalculatedMonthData(yearMonth, reminders)
-        val items = (0 until CalendarAdapter.ITEM_COUNT).map { position ->
-            async {
-                if (position < CalendarAdapter.HEADING_SLOTS) {
-                    getHeadingItem(position)
-                } else {
-                    getDateItem(position, monthData)
+    ) {
+        viewModelScope.launch(dispatcher) {
+            val remindersInSelectedMonth = reminderRepository.getAllInMonth(
+                yearMonth.month.value.toString().padStart(2, '0')
+            ).first()
+
+            val monthData = CalculatedMonthData(yearMonth, remindersInSelectedMonth)
+            val items = (0 until CalendarAdapter.ITEM_COUNT).map { position ->
+                async {
+                    if (position < CalendarAdapter.HEADING_SLOTS) {
+                        getHeadingItem(position)
+                    } else {
+                        getDateItem(position, monthData)
+                    }
                 }
             }
+            Timber.d("getCalendarData finished")
+            _calendarData.value = items.awaitAll()
         }
-
-        items.awaitAll()
     }
 
     private fun getHeadingItem(position: Int) = DayOfWeek.of(if (position == 0) 7 else position)
@@ -224,7 +193,7 @@ class CalendarViewModel @Inject constructor(
      */
     private fun getInitialCalendarData(yearMonth: YearMonth): List<Any> {
         val monthData = CalculatedMonthData(yearMonth, emptyList())
-        return (0 until CalendarAdapter.ITEM_COUNT).map { position ->
+        val items = (0 until CalendarAdapter.ITEM_COUNT).map { position ->
             with(monthData) {
                 if (position < CalendarAdapter.HEADING_SLOTS) {
                     getHeadingItem(position)
@@ -247,6 +216,8 @@ class CalendarViewModel @Inject constructor(
                 }
             }
         }
+        Timber.d("getInitialCalendarData finished")
+        return items
     }
 
     private inner class CalculatedMonthData(yearMonth: YearMonth, reminders: List<Reminder>) {
