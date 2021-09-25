@@ -23,10 +23,12 @@ class CalendarViewModel @Inject constructor(
     private val reminderRepository: ReminderRepository,
     @DefaultDispatcher private val dispatcher: CoroutineDispatcher,
 ) : ViewModel() {
+    private val _selectedYearMonth = MutableStateFlow(YearMonth.now())
+
     /**
      * Currently selected year & month
      */
-    private val selectedYearMonth = MutableStateFlow(YearMonth.now())
+    val selectedYearMonth = _selectedYearMonth.asStateFlow()
 
     /**
      * Currently tapped on date, including the current scrolled-to month & year, in the calendar
@@ -38,7 +40,7 @@ class CalendarViewModel @Inject constructor(
      * Display string for selected date's month & year. Format is full month and short year, such as
      * "September '21."
      */
-    val selectedYearMonthString = selectedYearMonth.map { date ->
+    val selectedYearMonthString = _selectedYearMonth.map { date ->
         date.format(DateTimeFormatter.ofPattern("MMMM ''uu"))
     }.asLiveData()
 
@@ -69,7 +71,7 @@ class CalendarViewModel @Inject constructor(
      */
     val remindersOnSelectedDate = _remindersOnSelectedDate.asLiveData()
 
-    private val _calendarData = MutableStateFlow(getInitialCalendarData(selectedYearMonth.value))
+    private val _calendarData = MutableStateFlow(getInitialCalendarData(_selectedYearMonth.value))
 
     /**
      * The backing data for the Calendar. Contains all data necessary to produce
@@ -95,14 +97,18 @@ class CalendarViewModel @Inject constructor(
      * Changes the calendar month to the next sequential month.
      */
     fun goToNextMonth() {
-        setSelectedMonth(selectedYearMonth.value.plusMonths(1))
+        setSelectedMonth(_selectedYearMonth.value.plusMonths(1))
     }
 
     /**
      * Changes the calendar month to the previous sequential month.
      */
     fun goToPreviousMonth() {
-        setSelectedMonth(selectedYearMonth.value.minusMonths(1))
+        if (_selectedYearMonth.value == YearMonth.now()){
+            // Do not go into the past if on the starting month
+            return
+        }
+        setSelectedMonth(_selectedYearMonth.value.minusMonths(1))
     }
 
     /**
@@ -111,12 +117,12 @@ class CalendarViewModel @Inject constructor(
      */
     fun refreshData() {
         Timber.d("Refreshing data")
-        getCalendarData(selectedYearMonth.value)
+        getCalendarData(_selectedYearMonth.value)
     }
 
     private fun setSelectedMonth(yearMonth: YearMonth) {
         setSelectedDate(null)
-        selectedYearMonth.value = yearMonth
+        _selectedYearMonth.value = yearMonth
         getCalendarData(yearMonth)
     }
 
