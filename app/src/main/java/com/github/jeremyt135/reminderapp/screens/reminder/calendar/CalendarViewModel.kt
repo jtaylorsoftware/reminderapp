@@ -8,13 +8,13 @@ import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.SchedulingType
 import com.github.jeremyt135.reminderapp.di.DefaultDispatcher
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 import timber.log.Timber
-import java.time.*
+import java.time.DayOfWeek
+import java.time.LocalDate
+import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 
@@ -44,40 +44,60 @@ class CalendarViewModel @Inject constructor(
         date.format(DateTimeFormatter.ofPattern("MMMM ''uu"))
     }.asLiveData()
 
-    private val _remindersOnSelectedDate = _selectedDate.map { selectedDate ->
+    @ExperimentalCoroutinesApi
+    private val _remindersOnSelectedDate = _selectedDate.flatMapLatest { selectedDate ->
         selectedDate?.let {
             // Get any reminders on the selected date and only the history for the selected date
             reminderRepository.getAllInRangeWithHistoryOnDate(
                 startDate = selectedDate,
                 endDate = selectedDate,
                 historyDate = selectedDate
-            ).first().filter {
-                with(it.reminder.schedulingRules) {
-                    when (type) {
-                        SchedulingType.SINGLE -> startDate == selectedDate
-                        else -> daysOfWeek.contains(selectedDate.dayOfWeek)
+            ).mapLatest { reminders ->
+                reminders.filter {
+                    with(it.reminder.schedulingRules) {
+                        when (type) {
+                            SchedulingType.SINGLE -> startDate == selectedDate
+                            else -> daysOfWeek.contains(selectedDate.dayOfWeek)
+                        }
                     }
                 }
-            }
-        } ?: emptyList()
-    }.flowOn(dispatcher).stateIn(
-        viewModelScope,
-        started = SharingStarted.Lazily,
-        emptyList()
-    )
+            }.flowOn(dispatcher)
+        } ?: emptyFlow()
+    }
 
     /**
      * List of reminders for selected date
      */
+    @ExperimentalCoroutinesApi
     val remindersOnSelectedDate = _remindersOnSelectedDate.asLiveData()
 
-    private val _calendarData = MutableStateFlow(getInitialCalendarData(_selectedYearMonth.value))
+    /**
+     * Refresh "event" emitter to force calendar data to update
+     */
+    private val refresh = MutableSharedFlow<Unit>(
+        replay = 0,
+        extraBufferCapacity = 1,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
 
     /**
      * The backing data for the Calendar. Contains all data necessary to produce
      * date views for the current month.
      */
-    val calendarData = _calendarData.asLiveData()
+    @ExperimentalCoroutinesApi
+    val calendarData = refresh.flatMapLatest {
+        _selectedYearMonth.flatMapLatest { yearMonth ->
+            reminderRepository.getAllInMonth(
+                yearMonth.month.value.toString().padStart(2, '0')
+            )
+        }
+    }.mapLatest { reminders ->
+        getCalendarData(_selectedYearMonth.value, reminders)
+    }.flowOn(dispatcher).stateIn(
+        viewModelScope,
+        started = SharingStarted.Lazily,
+        getInitialCalendarData(_selectedYearMonth.value)
+    ).asLiveData()
 
     init {
         Timber.d("Init VM")
@@ -104,8 +124,9 @@ class CalendarViewModel @Inject constructor(
      * Changes the calendar month to the previous sequential month.
      */
     fun goToPreviousMonth() {
-        if (_selectedYearMonth.value == YearMonth.now()){
+        if (_selectedYearMonth.value == YearMonth.now()) {
             // Do not go into the past if on the starting month
+            Timber.d("goToPreviousMonth: data was loading, skipped action")
             return
         }
         setSelectedMonth(_selectedYearMonth.value.minusMonths(1))
@@ -117,23 +138,19 @@ class CalendarViewModel @Inject constructor(
      */
     fun refreshData() {
         Timber.d("Refreshing data")
-        getCalendarData(_selectedYearMonth.value)
+        refresh.tryEmit(Unit)
     }
 
     private fun setSelectedMonth(yearMonth: YearMonth) {
         setSelectedDate(null)
         _selectedYearMonth.value = yearMonth
-        getCalendarData(yearMonth)
     }
 
-    private fun getCalendarData(
+    private suspend fun getCalendarData(
         yearMonth: YearMonth,
-    ) {
-        viewModelScope.launch(dispatcher) {
-            val remindersInSelectedMonth = reminderRepository.getAllInMonth(
-                yearMonth.month.value.toString().padStart(2, '0')
-            ).first()
-
+        remindersInSelectedMonth: List<Reminder>
+    ) = coroutineScope {
+        try {
             val monthData = CalculatedMonthData(yearMonth, remindersInSelectedMonth)
             val items = (0 until CalendarAdapter.ITEM_COUNT).map { position ->
                 async {
@@ -145,7 +162,10 @@ class CalendarViewModel @Inject constructor(
                 }
             }
             Timber.d("getCalendarData finished")
-            _calendarData.value = items.awaitAll()
+            items.awaitAll()
+        } catch (e: CancellationException) {
+            Timber.d("getCalendarData: cancelled")
+            null
         }
     }
 
