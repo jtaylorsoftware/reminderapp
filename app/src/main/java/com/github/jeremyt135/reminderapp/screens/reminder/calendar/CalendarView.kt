@@ -8,6 +8,7 @@ import android.view.LayoutInflater
 import androidx.annotation.AttrRes
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
+import androidx.core.widget.ImageViewCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.findViewTreeLifecycleOwner
 import androidx.lifecycle.findViewTreeViewModelStoreOwner
@@ -20,7 +21,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.time.LocalDate
@@ -103,16 +104,22 @@ class CalendarView : ConstraintLayout {
                 viewModel.goToPreviousMonth()
             }
 
-            buttonCalendarForward.setOnClickListener {
-                viewModel.goToNextMonth()
-            }
-            buttonCalendarForward.imageTintList = ColorStateList.valueOf(
-                ContextCompat.getColor(
-                    context,
-                    R.color.icon_button_tint_enable
+            buttonCalendarForward.let {
+                it.setOnClickListener {
+                    viewModel.goToNextMonth()
+                }
+
+                ImageViewCompat.setImageTintList(
+                    it,
+                    ColorStateList.valueOf(
+                        ContextCompat.getColor(
+                            context,
+                            R.color.icon_button_tint_enable
+                        )
+                    )
                 )
-            )
-            buttonCalendarForward.imageTintMode = PorterDuff.Mode.SRC_IN
+                ImageViewCompat.setImageTintMode(it, PorterDuff.Mode.SRC_ATOP)
+            }
 
             buttonCalendarAdd.setOnClickListener {
                 onAddReminderListener?.invoke(calendarAdapter?.selectedDate)
@@ -131,16 +138,23 @@ class CalendarView : ConstraintLayout {
 
         coroutineScope = CoroutineScope(Dispatchers.Main).apply {
             launch {
-                // Adjust appearance of back button when selected month is in the future (so going back is not into the past)
-                viewModel.selectedYearMonth.collect { yearMonth ->
+                viewModel.selectedYearMonth.collectLatest { yearMonth ->
+                    // Disable button if current month is selected, so user cannot go into past
                     val enabled = yearMonth > YearMonth.now()
+                    Timber.d("buttonCalendarBackward enabled = $enabled")
+
                     binding?.buttonCalendarBackward?.isEnabled = enabled
+
+                    // Tint the button lighter to indicate disabled status
                     val tintColor =
                         if (enabled) R.color.icon_button_tint_enable else R.color.icon_button_tint_disable
-
-                    binding?.buttonCalendarBackward?.imageTintList =
-                        ColorStateList.valueOf(ContextCompat.getColor(context, tintColor))
-                    binding?.buttonCalendarBackward?.imageTintMode = PorterDuff.Mode.SRC_IN
+                    binding?.buttonCalendarBackward?.let {
+                        ImageViewCompat.setImageTintList(
+                            it,
+                            ColorStateList.valueOf(ContextCompat.getColor(context, tintColor))
+                        )
+                        ImageViewCompat.setImageTintMode(it, PorterDuff.Mode.SRC_ATOP)
+                    }
                 }
             }
         }
