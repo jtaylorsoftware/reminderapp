@@ -7,6 +7,7 @@ import android.content.Context
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
+import android.view.View
 import android.widget.Button
 import androidx.activity.viewModels
 import androidx.annotation.IdRes
@@ -28,6 +29,7 @@ import com.github.jeremyt135.reminderapp.screens.reminder.overview.dialog.Remind
 import com.google.android.material.bottomappbar.BottomAppBar
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.color.MaterialColors
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
 
@@ -37,6 +39,16 @@ class RemindersActivity : AppCompatActivity(), RemindersSortDialogFragment.Dialo
     private lateinit var appBarConfiguration: AppBarConfiguration
     private val viewModel: RemindersViewModel by viewModels()
 
+    private val bottomAppBar: BottomAppBar by lazy {
+        requireNotNull(findViewById(R.id.bottom_app_bar))
+    }
+    private val bottomNavEmptyItem: View by lazy {
+        requireNotNull(bottomAppBar.findViewById(R.id.bottomNav_item_empty))
+    }
+    private val remindersFab: FloatingActionButton by lazy {
+        requireNotNull(findViewById(R.id.fab_reminders_add))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -44,7 +56,7 @@ class RemindersActivity : AppCompatActivity(), RemindersSortDialogFragment.Dialo
         setSupportActionBar(requireNotNull(findViewById(R.id.top_app_bar)))
 
         val bottomNavigationController = createBottomNavigationController()
-        val navController = setupNavHost()
+        val navController = setupNavController()
         bottomNavigationController.setUpWithNavController(navController)
 
         createNotificationChannels()
@@ -81,7 +93,7 @@ class RemindersActivity : AppCompatActivity(), RemindersSortDialogFragment.Dialo
         }
     }
 
-    private fun setupNavHost(): NavController {
+    private fun setupNavController(): NavController {
         val navHostFragment =
             requireNotNull(supportFragmentManager.findFragmentById(R.id.nav_host_fragment_main)) as NavHostFragment
         val navController = navHostFragment.navController
@@ -95,7 +107,30 @@ class RemindersActivity : AppCompatActivity(), RemindersSortDialogFragment.Dialo
                 )
             )
         setupActionBarWithNavController(navController, appBarConfiguration)
+        navController.addOnDestinationChangedListener { _, destination, _ ->
+            if (destination.id == R.id.fragment_reminders) {
+                showFab()
+            } else {
+                hideFab()
+            }
+        }
         return navController
+    }
+
+    private fun showFab() {
+        if (remindersFab.isOrWillBeHidden) {
+            remindersFab.show()
+            bottomNavEmptyItem.visibility = View.VISIBLE
+            bottomAppBar.invalidate()
+        }
+    }
+
+    private fun hideFab() {
+        if (remindersFab.isOrWillBeShown) {
+            remindersFab.hide()
+            bottomNavEmptyItem.visibility = View.GONE
+            bottomAppBar.invalidate()
+        }
     }
 
     private fun createNotificationChannels() {
@@ -197,8 +232,8 @@ class RemindersActivity : AppCompatActivity(), RemindersSortDialogFragment.Dialo
                     button.iconPadding = (valueAnimator.animatedValue as Float).toInt()
                 }
                 doOnStart {
-                    button.text = text
                     button.setTextColor(textColor)
+                    button.text = text
                 }
                 start()
             }
