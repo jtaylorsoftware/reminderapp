@@ -194,7 +194,7 @@ class ReminderTest {
         assertThat(reminder.schedulingRules.getNextTimeForAlarm(currentLocalDateTime())).isEqualTo(
             today.atTime(time)
                 .with(TemporalAdjusters.nextOrSame(days.firstOrNull { it > today.dayOfWeek }
-                    ?: today.dayOfWeek))
+                    ?: days.first()))
         )
     }
 
