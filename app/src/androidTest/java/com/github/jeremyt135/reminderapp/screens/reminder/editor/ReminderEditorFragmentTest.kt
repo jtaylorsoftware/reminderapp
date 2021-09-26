@@ -23,6 +23,7 @@ import com.github.jeremyt135.reminderapp.data.local.FakeHistoryLocalDataSource
 import com.github.jeremyt135.reminderapp.di.DatabaseModule
 import com.github.jeremyt135.reminderapp.di.RepositoryModule
 import com.github.jeremyt135.reminderapp.util.currentLocalDateTime
+import com.github.jeremyt135.reminderapp.util.nestedScrollTo
 import com.google.common.truth.Truth.assertThat
 import dagger.Module
 import dagger.Provides
@@ -241,7 +242,7 @@ class ReminderEditorFragmentTest {
         launchEditorFragmentWithReminder(reminder.id)
 
         onView(withId(R.id.button_editor_delete)).check(matches(isDisplayed()))
-        onView(withId(R.id.button_editor_delete)).perform(scrollTo(), click())
+        onView(withId(R.id.button_editor_delete)).perform(nestedScrollTo(), click())
         onView(withText("OK")).inRoot(isDialog()).check(matches(isDisplayed())).perform(click())
 
         assertThat(reminderRepository.findById(reminder.id)).isNull()
