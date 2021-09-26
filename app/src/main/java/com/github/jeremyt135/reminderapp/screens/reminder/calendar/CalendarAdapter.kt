@@ -56,7 +56,7 @@ class CalendarAdapter(private val daySelectedListener: OnDaySelectedListener) :
             ViewType.DAY -> {
                 item as CalendarDateItem
                 (holder as DateViewHolder).bind(position, item)
-                if (item.isNotInPast) {
+                if (item.isNotInPast && item.isCurrentMonth) {
                     holder.itemView.setOnClickListener {
                         onDaySelected(holder)
                     }
