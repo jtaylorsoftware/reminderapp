@@ -85,19 +85,17 @@ class RemindersFragment : Fragment() {
     }
 
     private fun showFab() {
-        if (remindersFab.visibility == View.VISIBLE){
-            return
+        if (remindersFab.isOrWillBeHidden) {
+            remindersFab.show()
+            bottomNavEmptyItem.visibility = View.VISIBLE
         }
-        remindersFab.show()
-        bottomNavEmptyItem.visibility = View.VISIBLE
     }
 
     private fun hideFab() {
-        if (remindersFab.visibility != View.VISIBLE){
-            return
+        if (remindersFab.isOrWillBeShown) {
+            remindersFab.hide()
+            bottomNavEmptyItem.visibility = View.GONE
         }
-        remindersFab.hide()
-        bottomNavEmptyItem.visibility = View.GONE
     }
 
     override fun onCreateContextMenu(
