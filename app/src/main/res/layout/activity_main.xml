@@ -27,6 +27,8 @@
         android:name="androidx.navigation.fragment.NavHostFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:paddingBottom="@dimen/bottom_app_bar_height"
         app:defaultNavHost="true"
         app:layout_behavior="@string/appbar_scrolling_view_behavior"
         app:navGraph="@navigation/nav_graph_main" />
@@ -42,8 +44,7 @@
         android:padding="0dp"
         app:contentInsetEnd="0dp"
         app:contentInsetStart="0dp"
-        app:contentInsetStartWithNavigation="0dp"
-        app:hideOnScroll="true">
+        app:contentInsetStartWithNavigation="0dp">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
@@ -133,7 +134,6 @@
         android:visibility="invisible"
         app:elevation="@dimen/fab_elevation"
         app:layout_anchor="@id/bottom_app_bar"
-        app:layout_behavior="@string/hide_bottom_view_on_scroll_behavior"
         app:srcCompat="@drawable/ic_baseline_add_24"
         tools:visibility="visible" />
 
