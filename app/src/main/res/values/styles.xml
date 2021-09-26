@@ -55,26 +55,31 @@
         <item name="iconSize">24dp</item>
         <item name="android:paddingTop">0dp</item>
         <item name="android:paddingBottom">0dp</item>
-        <item name="android:paddingStart">12dp</item>
-        <item name="android:paddingEnd">12dp</item>
+        <item name="android:paddingStart">@dimen/bottomNav_paddingStart</item>
+        <item name="android:paddingEnd">@dimen/bottomNav_paddingEnd</item>
         <item name="android:minWidth">@dimen/bottomNav_minWidth</item>
         <item name="android:maxWidth">@dimen/bottomNav_maxWidth</item>
         <item name="layout_constraintWidth_min">@dimen/bottomNav_minWidth</item>
         <item name="layout_constraintWidth_max">@dimen/bottomNav_maxWidth</item>
         <item name="android:minHeight">48dp</item>
+        <item name="android:textColor">?attr/colorOnPrimary</item>
         <item name="android:maxHeight">@dimen/bottom_app_bar_height</item>
         <item name="layout_constraintHeight_max">@dimen/bottom_app_bar_height</item>
-        <item name="android:textAllCaps">false</item>
-        <item name="android:textColor">?attr/colorOnPrimary</item>
         <item name="iconTint">?attr/colorOnPrimary</item>
-        <item name="android:textStyle">normal</item>
-        <item name="android:letterSpacing">0.0</item>
-        <item name="android:textAppearance">@style/TextAppearance.MaterialComponents.Caption</item>
+        <item name="android:textAppearance">@style/TextAppearance.App.Button.BottomNav</item>
         <item name="shapeAppearanceOverlay">@style/ShapeAppearanceOverlay.App.Button.NoCorners</item>
     </style>
 
     <style name="ShapeAppearanceOverlay.App.Button.NoCorners" parent="ShapeAppearance.MaterialComponents.SmallComponent">
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">0dp</item>
+    </style>
+
+    <style name="TextAppearance.App.Button.BottomNav" parent="TextAppearance.MaterialComponents.Caption">
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textStyle">normal</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:letterSpacing">0.0</item>
+        <item name="android:textSize">@dimen/bottomNav_textSize</item>
     </style>
 </resources>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Sizes for bottom navigation buttons -->
+    <dimen name="bottomNav_minWidth">64dp</dimen>
+    <dimen name="bottomNav_maxWidth">168dp</dimen>
+    <dimen name="bottomNav_iconPaddingActive">3dp</dimen>
+    <dimen name="bottomNav_iconPadding">1dp</dimen>
+    <dimen name="bottomNav_paddingStart">4dp</dimen>
+    <dimen name="bottomNav_paddingEnd">4dp</dimen>
+</resources>
