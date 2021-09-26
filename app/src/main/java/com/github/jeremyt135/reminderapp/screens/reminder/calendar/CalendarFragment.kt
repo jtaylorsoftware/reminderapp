@@ -16,7 +16,7 @@ class CalendarFragment : Fragment(R.layout.fragment_calendar) {
     private lateinit var calendarView: CalendarView
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        (requireActivity() as AppCompatActivity).supportActionBar?.hide()
+        (activity as? AppCompatActivity)?.supportActionBar?.hide()
 
         calendarView = view.findViewById<CalendarView>(R.id.calendarView).apply {
             onReminderSelectedListener = {
@@ -30,7 +30,7 @@ class CalendarFragment : Fragment(R.layout.fragment_calendar) {
 
     override fun onDestroyView() {
         super.onDestroyView()
-        (requireActivity() as AppCompatActivity).supportActionBar?.show()
+        (activity as? AppCompatActivity)?.supportActionBar?.show()
     }
 
     override fun onResume() {
