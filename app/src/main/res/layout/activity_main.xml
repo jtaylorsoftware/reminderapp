@@ -31,11 +31,6 @@
         app:layout_behavior="@string/appbar_scrolling_view_behavior"
         app:navGraph="@navigation/nav_graph_main" />
 
-    <com.google.android.material.bottomnavigation.BottomNavigationView
-        style="@style/Widget.MaterialComponents.BottomNavigationView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
-
     <com.google.android.material.bottomappbar.BottomAppBar
         android:id="@+id/bottom_app_bar"
         style="@style/Widget.MaterialComponents.BottomAppBar.Colored"
