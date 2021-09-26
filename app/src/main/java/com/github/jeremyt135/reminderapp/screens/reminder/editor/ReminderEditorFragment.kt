@@ -39,9 +39,9 @@ class ReminderEditorFragment : Fragment(R.layout.fragment_reminder_editor) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         Timber.d("onViewCreated")
-        with(requireActivity()) {
-            (this as AppCompatActivity).supportActionBar?.title =
-                if ((intent.getStringExtra(EXTRA_REMINDER_ID) ?: "").isNotEmpty()) {
+        with(activity as? AppCompatActivity) {
+            this?.supportActionBar?.title =
+                if ((this?.intent?.getStringExtra(EXTRA_REMINDER_ID) ?: "").isNotEmpty()) {
                     getString(R.string.editor_heading_edit)
                 } else {
                     getString(R.string.editor_heading_add)
@@ -160,7 +160,7 @@ class ReminderEditorFragment : Fragment(R.layout.fragment_reminder_editor) {
             }
 
             buttonEditorDelete.setOnClickListener {
-                buildDeleteDialog().show()
+                buildDeleteDialog()?.show()
             }
             buttonEditorSave.setOnClickListener {
                 viewModel.saveReminder()
@@ -168,15 +168,17 @@ class ReminderEditorFragment : Fragment(R.layout.fragment_reminder_editor) {
         }
     }
 
-    private fun buildDeleteDialog(): AlertDialog {
-        return AlertDialog.Builder(requireActivity()).apply {
-            setMessage(R.string.dialog_editorDelete_message)
-            setTitle(R.string.dialog_editorDelete_title)
-            setPositiveButton(R.string.dialog_ok) { _, _ ->
-                viewModel.deleteReminder()
-            }
-            setNegativeButton(R.string.dialog_cancel) { _, _ -> }
-        }.create()
+    private fun buildDeleteDialog(): AlertDialog? {
+        return activity?.let {
+            AlertDialog.Builder(it).apply {
+                setMessage(R.string.dialog_editorDelete_message)
+                setTitle(R.string.dialog_editorDelete_title)
+                setPositiveButton(R.string.dialog_ok) { _, _ ->
+                    viewModel.deleteReminder()
+                }
+                setNegativeButton(R.string.dialog_cancel) { _, _ -> }
+            }.create()
+        }
     }
 
     private fun selectDate(view: View) {
