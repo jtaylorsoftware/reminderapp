@@ -67,7 +67,7 @@ class SoundPickerDialogFragment() :
     }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        val builder = AlertDialog.Builder(requireActivity())
+        val builder = AlertDialog.Builder(requireContext())
         val inflater = LayoutInflater.from(context)
         binding = DialogSoundOptionsBinding.inflate(inflater)
 
@@ -101,7 +101,7 @@ class SoundPickerDialogFragment() :
 
     private fun setupBinding(binding: DialogSoundOptionsBinding) {
         binding.apply {
-            lifecycleOwner = requireActivity()
+            lifecycleOwner = activity
             model = viewModel
 
             // When the "sound" switch is toggled, open sound selector

@@ -49,7 +49,7 @@ class SnoozeOptionsDialogFragment() :
     }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        val builder = AlertDialog.Builder(requireActivity())
+        val builder = AlertDialog.Builder(requireContext())
         val inflater = LayoutInflater.from(context)
         binding = DialogSnoozeOptionsBinding.inflate(inflater)
 
@@ -82,7 +82,7 @@ class SnoozeOptionsDialogFragment() :
 
     private fun setupBinding(binding: DialogSnoozeOptionsBinding) {
         binding.apply {
-            lifecycleOwner = requireActivity()
+            lifecycleOwner = activity
             model = viewModel
             snoozeRules = viewModel.snoozeRules.asLiveData()
 

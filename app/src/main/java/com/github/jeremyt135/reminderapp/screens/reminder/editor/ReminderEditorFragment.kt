@@ -1,10 +1,8 @@
 package com.github.jeremyt135.reminderapp.screens.reminder.editor
 
 import android.app.AlertDialog
+import android.content.res.Configuration
 import android.os.Bundle
-import android.view.Menu
-import android.view.MenuInflater
-import android.view.MenuItem
 import android.view.View
 import androidx.annotation.VisibleForTesting
 import androidx.appcompat.app.AppCompatActivity
@@ -35,6 +33,9 @@ class ReminderEditorFragment : Fragment(R.layout.fragment_reminder_editor) {
     val viewModel: ReminderEditorViewModel by activityViewModels()
         @VisibleForTesting get
 
+    private val startDatePickerTag = "startDatePicker"
+    private val endDatePickerTag = "endDatePicker"
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         Timber.d("onViewCreated")
@@ -48,6 +49,49 @@ class ReminderEditorFragment : Fragment(R.layout.fragment_reminder_editor) {
         }
 
         setupBinding(FragmentReminderEditorBinding.bind(view))
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+
+        Timber.d("onConfigurationChanged")
+
+        // Recreate pickers because orientation changes remove their listeners. Also
+        // handling configChanges="orientation|keyboardHidden|screenSize" makes them not resize appropriately.
+        recreateStartDatePicker()
+        recreateEndDatePicker()
+        recreateTimePicker()
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun recreateStartDatePicker() {
+        val startDatePicker =
+            childFragmentManager.findFragmentByTag("startDatePicker") as? MaterialDatePicker<Long>
+        Timber.d("startDatePicker: $startDatePicker")
+        startDatePicker?.addOnDismissListener {
+            createStartDatePicker().show(childFragmentManager, startDatePickerTag)
+        }
+        startDatePicker?.dismiss()
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun recreateEndDatePicker() {
+        val endDatePicker =
+            childFragmentManager.findFragmentByTag("endDatePicker") as? MaterialDatePicker<Long>
+        Timber.d("endDatePicker: $endDatePicker")
+        endDatePicker?.addOnDismissListener {
+            createEndDatePicker().show(childFragmentManager, endDatePickerTag)
+        }
+        endDatePicker?.dismiss()
+    }
+
+    private fun recreateTimePicker() {
+        val timePicker = childFragmentManager.findFragmentByTag("timePicker") as? MaterialTimePicker
+        Timber.d("timePicker: $timePicker")
+        timePicker?.addOnDismissListener {
+            createTimePicker().show(childFragmentManager, "timePicker")
+        }
+        timePicker?.dismiss()
     }
 
     private fun setupBinding(binding: FragmentReminderEditorBinding) {
@@ -136,56 +180,75 @@ class ReminderEditorFragment : Fragment(R.layout.fragment_reminder_editor) {
     }
 
     private fun selectDate(view: View) {
-        val datePickerBuilder =
-            MaterialDatePicker.Builder.datePicker()
-                .setTitleText("Select date")
-
+        val tag: String
         val datePicker = when (view.id) {
             R.id.textinput_editor_startDate -> {
-                // Only allow start dates beginning from today
-                val constraintsBuilder =
-                    CalendarConstraints.Builder().setValidator(DateValidatorPointForward.now())
-                        .build()
-
-                datePickerBuilder.setSelection(
-                    viewModel.reminder.value.schedulingRules.startDate.atTime(
-                        LocalTime.now()
-                    ).toEpochMilli(ZoneId.of("Z"))
-                ).setCalendarConstraints(constraintsBuilder)
-                datePickerBuilder.build().apply {
-                    addOnPositiveButtonClickListener {
-                        viewModel.onStartDateChanged(it.toLocalDate(ZoneId.of("Z")))
-                    }
-                }
+                tag = startDatePickerTag
+                createStartDatePicker()
             }
             R.id.textinput_editor_endDate -> {
-                // Only allow end dates beginning from the start date
-                val constraintsBuilder =
-                    CalendarConstraints.Builder().setValidator(
-                        DateValidatorPointForward.from(
-                            viewModel.reminder.value.schedulingRules.startDate.atTime(LocalTime.now())
-                                .toEpochMilli(ZoneId.of("Z"))
-                        )
-                    ).build()
-
-                datePickerBuilder.setSelection(
-                    viewModel.reminder.value.schedulingRules.endDate.atTime(
-                        LocalTime.now()
-                    ).toEpochMilli(ZoneId.of("Z"))
-                ).setCalendarConstraints(constraintsBuilder)
-                datePickerBuilder.build().apply {
-                    addOnPositiveButtonClickListener {
-                        viewModel.onEndDateChanged(it.toLocalDate(ZoneId.of("Z")))
-                    }
-                }
+                tag = endDatePickerTag
+                createEndDatePicker()
             }
             else -> throw IllegalStateException("selectDate called with unexpected view")
         }
 
-        datePicker.show(parentFragmentManager, "datePicker")
+        datePicker.show(childFragmentManager, tag)
+    }
+
+    private fun createStartDatePicker(): MaterialDatePicker<*> {
+        val datePickerBuilder =
+            MaterialDatePicker.Builder.datePicker()
+                .setTitleText("Select start date")
+
+        // Only allow start dates beginning from today
+        val constraintsBuilder =
+            CalendarConstraints.Builder().setValidator(DateValidatorPointForward.now())
+                .build()
+
+        datePickerBuilder.setSelection(
+            viewModel.reminder.value.schedulingRules.startDate.atTime(
+                LocalTime.now()
+            ).toEpochMilli(ZoneId.of("Z"))
+        ).setCalendarConstraints(constraintsBuilder)
+        return datePickerBuilder.build().apply {
+            addOnPositiveButtonClickListener {
+                viewModel.onStartDateChanged(it.toLocalDate(ZoneId.of("Z")))
+            }
+        }
+    }
+
+    private fun createEndDatePicker(): MaterialDatePicker<*> {
+        val datePickerBuilder =
+            MaterialDatePicker.Builder.datePicker()
+                .setTitleText("Select end date")
+
+        // Only allow end dates beginning from the start date
+        val constraintsBuilder =
+            CalendarConstraints.Builder().setValidator(
+                DateValidatorPointForward.from(
+                    viewModel.reminder.value.schedulingRules.startDate.atTime(LocalTime.now())
+                        .toEpochMilli(ZoneId.of("Z"))
+                )
+            ).build()
+
+        datePickerBuilder.setSelection(
+            viewModel.reminder.value.schedulingRules.endDate.atTime(
+                LocalTime.now()
+            ).toEpochMilli(ZoneId.of("Z"))
+        ).setCalendarConstraints(constraintsBuilder)
+        return datePickerBuilder.build().apply {
+            addOnPositiveButtonClickListener {
+                viewModel.onEndDateChanged(it.toLocalDate(ZoneId.of("Z")))
+            }
+        }
     }
 
     private fun selectTime() {
+        createTimePicker().show(childFragmentManager, "timePicker")
+    }
+
+    private fun createTimePicker(): MaterialTimePicker {
         val previousSelectedTime = viewModel.reminder.value.schedulingRules.time
         val timePicker =
             MaterialTimePicker.Builder()
@@ -199,7 +262,7 @@ class ReminderEditorFragment : Fragment(R.layout.fragment_reminder_editor) {
             viewModel.onTimeChanged(LocalTime.of(timePicker.hour, timePicker.minute))
         }
 
-        timePicker.show(parentFragmentManager, "timePicker")
+        return timePicker
     }
 
     private fun selectDaysOfWeek() {
@@ -209,7 +272,7 @@ class ReminderEditorFragment : Fragment(R.layout.fragment_reminder_editor) {
                     viewModel.reminder.value.schedulingRules.daysOfWeek
                 } else sortedSetOf()
             )
-        dialog.show(parentFragmentManager, "dialogDaysOfWeek")
+        dialog.show(childFragmentManager, "dialogDaysOfWeek")
     }
 
     private fun selectSound() {
@@ -217,13 +280,13 @@ class ReminderEditorFragment : Fragment(R.layout.fragment_reminder_editor) {
             viewModel.reminder.value.vibrate,
             viewModel.reminder.value.notifSoundUri
         )
-        dialog.show(parentFragmentManager, "dialogSoundPicker")
+        dialog.show(childFragmentManager, "dialogSoundPicker")
     }
 
     private fun selectSnooze() {
         val dialog = SnoozeOptionsDialogFragment(
             viewModel.reminder.value.snoozeRules
         )
-        dialog.show(parentFragmentManager, "dialogSnooze")
+        dialog.show(childFragmentManager, "dialogSnooze")
     }
 }

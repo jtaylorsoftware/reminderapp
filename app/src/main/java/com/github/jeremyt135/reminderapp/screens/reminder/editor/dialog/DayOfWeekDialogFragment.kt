@@ -44,7 +44,7 @@ class DayOfWeekDialogFragment() :
     }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        val builder = AlertDialog.Builder(requireActivity())
+        val builder = AlertDialog.Builder(requireContext())
         val inflater = LayoutInflater.from(context)
         binding = DialogDayBinding.inflate(inflater)
 
@@ -77,7 +77,7 @@ class DayOfWeekDialogFragment() :
 
     private fun setupBinding(binding: DialogDayBinding) {
         binding.apply {
-            lifecycleOwner = requireActivity()
+            lifecycleOwner = activity
             model = viewModel
             daysOfWeek = viewModel.daysOfWeek.asLiveData()
 

@@ -58,7 +58,7 @@ class RemindersFilterDialogFragment() : DialogFragment() {
     }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        val builder = AlertDialog.Builder(requireActivity())
+        val builder = AlertDialog.Builder(requireContext())
         val inflater = LayoutInflater.from(context)
         binding = DialogFilterRemindersBinding.inflate(inflater)
 
@@ -112,7 +112,7 @@ class RemindersFilterDialogFragment() : DialogFragment() {
 
     private fun setupBinding() {
         binding.apply {
-            lifecycleOwner = requireActivity()
+            lifecycleOwner = activity
             model = viewModel
             filterRules = viewModel.filterRules.asLiveData()
         }

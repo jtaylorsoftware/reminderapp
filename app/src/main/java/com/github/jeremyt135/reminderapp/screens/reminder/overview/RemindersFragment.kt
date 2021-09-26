@@ -99,12 +99,12 @@ class RemindersFragment : Fragment() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean = when (item.itemId) {
         R.id.item_reminders_sort -> {
             val dialog = RemindersSortDialogFragment(viewModel.reminderSortRules)
-            dialog.show(requireParentFragment().childFragmentManager, "dialogReminderSort")
+            dialog.show(childFragmentManager, "dialogReminderSort")
             true
         }
         R.id.item_reminders_filter -> {
             val dialog = RemindersFilterDialogFragment(viewModel.reminderFilterRules)
-            dialog.show(requireParentFragment().childFragmentManager, "dialogReminderFilter")
+            dialog.show(childFragmentManager, "dialogReminderFilter")
             true
         }
         R.id.item_reminders_clear -> {
