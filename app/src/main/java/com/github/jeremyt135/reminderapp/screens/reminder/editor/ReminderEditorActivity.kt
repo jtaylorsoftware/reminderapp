@@ -24,6 +24,8 @@ class ReminderEditorActivity : AppCompatActivity(), SoundPickerDialogFragment.Di
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_reminder_editor)
 
+        setSupportActionBar(requireNotNull(findViewById(R.id.top_app_bar)))
+
         viewModel.navigateToReminders.asLiveData().observe(this) { event ->
             event.value?.let {
                 // When "Cancel" button is pressed in editor, finish activity

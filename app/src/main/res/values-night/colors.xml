@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <color name="color_on_primary">@color/black</color>
+    <color name="color_on_primary_ripple">#3D000000</color>
     <color name="status_pending">#FBBB</color>
     <color name="status_skip">#FF5252</color>
     <color name="status_complete">#00E676</color>

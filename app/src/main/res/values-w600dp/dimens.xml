@@ -2,4 +2,7 @@
 <resources>
     <!-- Common dimens constraints for views -->
     <dimen name="constraint_widthPercent">0.80</dimen>
+
+    <!-- Height of Bottom app/navigation bar, using values according to material design page -->
+    <dimen name="bottom_app_bar_height">64dp</dimen>
 </resources>

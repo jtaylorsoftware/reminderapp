@@ -1,15 +1,22 @@
 package com.github.jeremyt135.reminderapp
 
+import android.animation.ValueAnimator
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
+import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
+import android.widget.Button
 import androidx.activity.viewModels
+import androidx.annotation.IdRes
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.animation.doOnEnd
+import androidx.core.animation.doOnStart
+import androidx.core.graphics.ColorUtils
+import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.AppBarConfiguration
-import androidx.navigation.ui.NavigationUI
 import androidx.navigation.ui.setupActionBarWithNavController
 import com.github.jeremyt135.R
 import com.github.jeremyt135.reminderapp.broadcast.NOTIFICATION_LED_ARGB
@@ -18,23 +25,65 @@ import com.github.jeremyt135.reminderapp.screens.reminder.overview.ReminderSortR
 import com.github.jeremyt135.reminderapp.screens.reminder.overview.RemindersViewModel
 import com.github.jeremyt135.reminderapp.screens.reminder.overview.dialog.RemindersFilterDialogFragment
 import com.github.jeremyt135.reminderapp.screens.reminder.overview.dialog.RemindersSortDialogFragment
-import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.android.material.bottomappbar.BottomAppBar
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.color.MaterialColors
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class RemindersActivity : AppCompatActivity(), RemindersSortDialogFragment.DialogListener,
     RemindersFilterDialogFragment.DialogListener {
     private lateinit var appBarConfiguration: AppBarConfiguration
-
     private val viewModel: RemindersViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        setSupportActionBar(requireNotNull(findViewById(R.id.top_app_bar)))
+
+        val bottomNavigationController = createBottomNavigationController()
+        val navController = setupNavHost()
+        bottomNavigationController.setUpWithNavController(navController)
+
+        createNotificationChannels()
+    }
+
+    private fun createBottomNavigationController(): BottomNavigationController {
+        return requireNotNull(findViewById<BottomAppBar>(R.id.bottom_app_bar)).run {
+            navigationIcon = null
+            setContentInsetsAbsolute(0, 0)
+
+            val navButtons = listOf(
+                BottomNavigationItem(
+                    findViewById(R.id.bottomNav_item_calendar),
+                    getString(R.string.bottomnav_calendar),
+                    R.id.fragment_calendar
+                ),
+                BottomNavigationItem(
+                    findViewById(R.id.bottomNav_item_reminders),
+                    getString(R.string.bottomnav_reminders),
+                    R.id.fragment_reminders
+                ),
+                BottomNavigationItem(
+                    findViewById(R.id.bottomNav_item_alarms),
+                    getString(R.string.bottomnav_alams),
+                    R.id.fragment_alarm_list
+                ),
+                BottomNavigationItem(
+                    findViewById(R.id.bottomNav_item_history),
+                    getString(R.string.bottomnav_history),
+                    R.id.fragment_history
+                )
+            )
+            BottomNavigationController(navButtons)
+        }
+    }
+
+    private fun setupNavHost(): NavController {
         val navHostFragment =
-            supportFragmentManager.findFragmentById(R.id.nav_host_fragment_main) as NavHostFragment?
-        val navController = navHostFragment?.navController
+            requireNotNull(supportFragmentManager.findFragmentById(R.id.nav_host_fragment_main)) as NavHostFragment
+        val navController = navHostFragment.navController
         appBarConfiguration =
             AppBarConfiguration(
                 setOf(
@@ -44,18 +93,8 @@ class RemindersActivity : AppCompatActivity(), RemindersSortDialogFragment.Dialo
                     R.id.fragment_alarm_list
                 )
             )
-        if (navController != null) {
-            setupActionBarWithNavController(navController, appBarConfiguration)
-            val bottomNav: BottomNavigationView? = findViewById(R.id.bottom_navigation)
-            if (bottomNav != null) {
-                bottomNav.setOnItemReselectedListener {
-                    // ignore reselection
-                }
-                NavigationUI.setupWithNavController(bottomNav, navController)
-            }
-        }
-
-        createNotificationChannels()
+        setupActionBarWithNavController(navController, appBarConfiguration)
+        return navController
     }
 
     private fun createNotificationChannels() {
@@ -95,5 +134,93 @@ class RemindersActivity : AppCompatActivity(), RemindersSortDialogFragment.Dialo
 
     override fun onFilterRulesChange(filterRules: ReminderFilterRules) {
         viewModel.changeFilterRules(filterRules)
+    }
+
+    private data class BottomNavigationItem(
+        val button: Button,
+        val text: String,
+        @IdRes val destination: Int
+    )
+
+    private inner class BottomNavigationController(items: List<BottomNavigationItem>) {
+        private val destinations = mutableMapOf<Int, BottomNavigationItem>()
+
+        private lateinit var navController: NavController
+
+        private var currentItem: BottomNavigationItem? = null
+            private set(value) {
+                field?.deactivate()
+                field = value
+                field?.activate()
+            }
+
+        private val iconPaddingActive = resources.getDimension(R.dimen.bottomNav_iconPaddingActive)
+        private val iconPadding = resources.getDimension(R.dimen.bottomNav_iconPadding)
+        private val textColor =
+            MaterialColors.getColor(applicationContext, R.attr.colorOnPrimary, Color.WHITE)
+
+        init {
+            items.forEach { navItem ->
+                destinations[navItem.destination] = navItem
+                navItem.button.apply {
+                    setOnClickListener { navigateToDestination(navItem) }
+                }
+            }
+        }
+
+        fun setUpWithNavController(navController: NavController) {
+            this.navController = navController
+            navController.addOnDestinationChangedListener { _, destination, _ ->
+                val newDestination = destinations[destination.id]
+                if (currentItem != newDestination) {
+                    currentItem = newDestination
+                }
+            }
+        }
+
+        private fun navigateToDestination(navItem: BottomNavigationItem) {
+            if (currentItem == navItem) {
+                return
+            }
+            currentItem = navItem
+            navController.navigate(navItem.destination)
+        }
+
+        private fun BottomNavigationItem.activate() {
+            button as MaterialButton
+            ValueAnimator.ofFloat(iconPadding, iconPaddingActive).apply {
+                duration = 300
+
+                addUpdateListener { valueAnimator ->
+                    button.iconPadding = (valueAnimator.animatedValue as Float).toInt()
+                }
+                doOnStart {
+                    button.text = text
+                    button.setTextColor(textColor)
+                }
+                start()
+            }
+        }
+
+        private fun BottomNavigationItem.deactivate() {
+            button as MaterialButton
+            ValueAnimator.ofFloat(iconPaddingActive, iconPadding).apply {
+                duration = 300
+
+                addUpdateListener { valueAnimator ->
+                    button.iconPadding = (valueAnimator.animatedValue as Float).toInt()
+                    button.setTextColor(
+                        ColorUtils.setAlphaComponent(
+                            textColor,
+                            (255 * (1 - valueAnimator.animatedFraction)).toInt()
+                        )
+                    )
+                }
+                doOnEnd {
+                    button.text = ""
+                }
+                start()
+            }
+        }
     }
 }

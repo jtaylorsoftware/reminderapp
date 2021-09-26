@@ -1,31 +1,145 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/coordinatorLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".reminderapp.RemindersActivity">
 
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:liftOnScroll="true">
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/top_app_bar"
+            style="@style/Widget.MaterialComponents.Toolbar.Primary"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            app:layout_scrollFlags="scroll|enterAlways|snap"
+            app:title="Reminders" />
+
+    </com.google.android.material.appbar.AppBarLayout>
+
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/nav_host_fragment_main"
         android:name="androidx.navigation.fragment.NavHostFragment"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        app:layout_constraintBottom_toTopOf="@id/bottom_navigation"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         app:defaultNavHost="true"
-        app:navGraph="@navigation/nav_graph_main"/>
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"
+        app:navGraph="@navigation/nav_graph_main" />
 
     <com.google.android.material.bottomnavigation.BottomNavigationView
-        android:id="@+id/bottom_navigation"
-        style="@style/Widget.MaterialComponents.BottomNavigationView.Colored"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:menu="@menu/bottom_navigation_menu" />
+        style="@style/Widget.MaterialComponents.BottomNavigationView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+    <com.google.android.material.bottomappbar.BottomAppBar
+        android:id="@+id/bottom_app_bar"
+        style="@style/Widget.MaterialComponents.BottomAppBar.Colored"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/bottom_app_bar_height"
+        android:layout_gravity="bottom"
+        android:layout_margin="0dp"
+        android:inset="0dp"
+        android:padding="0dp"
+        app:contentInsetEnd="0dp"
+        app:contentInsetStart="0dp"
+        app:contentInsetStartWithNavigation="0dp"
+        app:hideOnScroll="true">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:animateLayoutChanges="true">
+
+            <Button
+                android:id="@+id/bottomNav_item_calendar"
+                style="@style/Widget.App.Button.BottomNav"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                app:icon="@drawable/ic_baseline_calendar_24"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/bottomNav_item_reminders"
+                app:layout_constraintHorizontal_bias="0.5"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:rippleColor="@color/color_on_primary_ripple"
+                tools:text="Calendar" />
+
+            <Button
+                android:id="@+id/bottomNav_item_reminders"
+                style="@style/Widget.App.Button.BottomNav"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                app:icon="@drawable/ic_baseline_format_list_bulleted_24"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/bottomNav_item_empty"
+                app:layout_constraintHorizontal_bias="0.5"
+                app:layout_constraintStart_toEndOf="@+id/bottomNav_item_calendar"
+                app:layout_constraintTop_toTopOf="parent"
+                app:rippleColor="@color/color_on_primary_ripple"
+                tools:text="Reminders" />
+
+            <Button
+                android:id="@+id/bottomNav_item_empty"
+                style="@style/Widget.App.Button.BottomNav"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:enabled="false"
+                android:visibility="visible"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/bottomNav_item_alarms"
+                app:layout_constraintHorizontal_bias="0.5"
+                app:layout_constraintStart_toEndOf="@+id/bottomNav_item_reminders"
+                app:layout_constraintTop_toTopOf="parent"
+                app:rippleColor="@color/color_on_primary_ripple" />
+
+
+            <Button
+                android:id="@+id/bottomNav_item_alarms"
+                style="@style/Widget.App.Button.BottomNav"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                app:icon="@drawable/ic_notification_alarm"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/bottomNav_item_history"
+                app:layout_constraintHorizontal_bias="0.5"
+                app:layout_constraintStart_toEndOf="@+id/bottomNav_item_empty"
+                app:layout_constraintTop_toTopOf="parent"
+                app:rippleColor="@color/color_on_primary_ripple"
+                tools:text="Alarms" />
+
+            <Button
+                android:id="@+id/bottomNav_item_history"
+                style="@style/Widget.App.Button.BottomNav"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                app:icon="@drawable/ic_baseline_history_24"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.5"
+                app:layout_constraintStart_toEndOf="@+id/bottomNav_item_alarms"
+                app:layout_constraintTop_toTopOf="parent"
+                app:rippleColor="@color/color_on_primary_ripple"
+                tools:text="History" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+    </com.google.android.material.bottomappbar.BottomAppBar>
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fab_reminders_add"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:contentDescription="@string/overview_fab_description"
+        android:visibility="invisible"
+        app:elevation="@dimen/fab_elevation"
+        app:layout_anchor="@id/bottom_app_bar"
+        app:layout_behavior="@string/hide_bottom_view_on_scroll_behavior"
+        app:srcCompat="@drawable/ic_baseline_add_24"
+        tools:visibility="visible" />
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

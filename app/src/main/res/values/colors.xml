@@ -5,6 +5,8 @@
     <color name="color_primary_variant">#FF001064</color>
     <color name="color_secondary">#FF40c4ff</color>
     <color name="color_secondary_variant">#FF0094cc</color>
+    <color name="color_on_primary">@color/white</color>
+    <color name="color_on_primary_ripple">#3DFFFFFF</color>
     <color name="black">#FF000000</color>
     <color name="text_secondary">#F888</color>
     <color name="white">#FFFFFFFF</color>

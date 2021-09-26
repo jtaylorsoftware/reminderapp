@@ -2,7 +2,12 @@ package com.github.jeremyt135.reminderapp.screens.reminder.overview
 
 import android.app.AlertDialog
 import android.os.Bundle
+import android.util.TypedValue
 import android.view.*
+import android.widget.Button
+import androidx.constraintlayout.solver.state.Dimension
+import androidx.coordinatorlayout.widget.CoordinatorLayout
+import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
@@ -10,6 +15,9 @@ import com.github.jeremyt135.R
 import com.github.jeremyt135.databinding.FragmentRemindersBinding
 import com.github.jeremyt135.reminderapp.screens.reminder.overview.dialog.RemindersFilterDialogFragment
 import com.github.jeremyt135.reminderapp.screens.reminder.overview.dialog.RemindersSortDialogFragment
+import com.google.android.material.bottomappbar.BottomAppBar
+import com.google.android.material.bottomappbar.BottomAppBar.FAB_ALIGNMENT_MODE_END
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
 
@@ -18,6 +26,9 @@ class RemindersFragment : Fragment() {
     private val viewModel: RemindersViewModel by activityViewModels()
 
     private lateinit var reminderListAdapter: ReminderListAdapter
+    private lateinit var remindersFab: FloatingActionButton
+    private lateinit var bottomAppBar: BottomAppBar
+    private lateinit var bottomNavEmptyItem: Button
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -41,10 +52,14 @@ class RemindersFragment : Fragment() {
 
             lifecycleOwner = viewLifecycleOwner
             model = viewModel
+        }
 
-            fabRemindersAdd.setOnClickListener {
-                viewModel.addReminder()
-            }
+        bottomAppBar = requireNotNull(requireActivity().findViewById(R.id.bottom_app_bar))
+        bottomNavEmptyItem = requireNotNull(bottomAppBar.findViewById(R.id.bottomNav_item_empty))
+        remindersFab =
+            requireNotNull(requireActivity().findViewById(R.id.fab_reminders_add))
+        remindersFab.setOnClickListener {
+            viewModel.addReminder()
         }
 
         viewModel.navigateToEditor.asLiveData().observe(viewLifecycleOwner) { event ->
@@ -57,6 +72,32 @@ class RemindersFragment : Fragment() {
                 )
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        showFab()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        hideFab()
+    }
+
+    private fun showFab() {
+        if (remindersFab.visibility == View.VISIBLE){
+            return
+        }
+        remindersFab.show()
+        bottomNavEmptyItem.visibility = View.VISIBLE
+    }
+
+    private fun hideFab() {
+        if (remindersFab.visibility != View.VISIBLE){
+            return
+        }
+        remindersFab.hide()
+        bottomNavEmptyItem.visibility = View.GONE
     }
 
     override fun onCreateContextMenu(

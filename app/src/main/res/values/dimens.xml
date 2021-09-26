@@ -19,5 +19,19 @@
     <dimen name="constraint_widthPercent">0.95</dimen>
 
     <!-- Specific overrides -->
+
+    <!-- Margin for the alarms (not separators) in fragment_alarm_list -->
     <dimen name="recycler_alarm_item_margin_h">32dp</dimen>
+
+    <!-- Height of Bottom app/navigation bar, using values according to material design page -->
+    <dimen name="bottom_app_bar_height">56dp</dimen>
+
+    <!-- FAB elevation so it appears above bottom bar -->
+    <dimen name="fab_elevation">10dp</dimen>
+
+    <!-- Sizes for bottom navigation buttons -->
+    <dimen name="bottomNav_minWidth">80dp</dimen>
+    <dimen name="bottomNav_maxWidth">168dp</dimen>
+    <dimen name="bottomNav_iconPaddingActive">2dp</dimen>
+    <dimen name="bottomNav_iconPadding">0dp</dimen>
 </resources>
