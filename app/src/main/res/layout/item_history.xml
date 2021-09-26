@@ -17,8 +17,6 @@
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="@dimen/recycler_item_margin_h"
         android:layout_marginVertical="8dp"
-        android:clickable="true"
-        android:focusable="true"
         app:cardElevation="@dimen/recycler_item_cardView_elevation">
 
         <androidx.constraintlayout.widget.ConstraintLayout
