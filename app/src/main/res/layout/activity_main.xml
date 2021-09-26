@@ -84,7 +84,7 @@
                 android:layout_width="0dp"
                 android:layout_height="0dp"
                 android:enabled="false"
-                android:visibility="visible"
+                android:visibility="invisible"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toStartOf="@+id/bottomNav_item_alarms"
                 app:layout_constraintHorizontal_bias="0.5"
