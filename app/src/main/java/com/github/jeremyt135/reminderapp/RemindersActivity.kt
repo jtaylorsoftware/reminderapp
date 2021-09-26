@@ -29,6 +29,7 @@ import com.google.android.material.bottomappbar.BottomAppBar
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.color.MaterialColors
 import dagger.hilt.android.AndroidEntryPoint
+import timber.log.Timber
 
 @AndroidEntryPoint
 class RemindersActivity : AppCompatActivity(), RemindersSortDialogFragment.DialogListener,
@@ -157,9 +158,10 @@ class RemindersActivity : AppCompatActivity(), RemindersSortDialogFragment.Dialo
         private val iconPaddingActive = resources.getDimension(R.dimen.bottomNav_iconPaddingActive)
         private val iconPadding = resources.getDimension(R.dimen.bottomNav_iconPadding)
         private val textColor =
-            MaterialColors.getColor(applicationContext, R.attr.colorOnPrimary, Color.WHITE)
+            MaterialColors.getColor(this@RemindersActivity, R.attr.colorOnPrimary, Color.BLACK)
 
         init {
+            Timber.d("textColor $textColor")
             items.forEach { navItem ->
                 destinations[navItem.destination] = navItem
                 navItem.button.apply {
