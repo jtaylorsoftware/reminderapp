@@ -108,23 +108,25 @@ class RemindersFragment : Fragment() {
             true
         }
         R.id.item_reminders_clear -> {
-            buildClearDialog().show()
+            buildClearDialog()?.show()
             true
         }
         else -> super.onOptionsItemSelected(item)
     }
 
-    private fun buildClearDialog(): AlertDialog {
-        return AlertDialog.Builder(requireActivity()).apply {
-            setMessage(R.string.dialog_clearReminders_message)
-            setTitle(R.string.dialog_clearReminders_title)
-            setPositiveButton(R.string.dialog_ok) { _, _ ->
-                Timber.d("User confirmed clear reminders")
-                viewModel.deleteAllReminders()
-            }
-            setNegativeButton(R.string.dialog_cancel) { _, _ ->
-                Timber.d("User cancelled clear reminders")
-            }
-        }.create()
+    private fun buildClearDialog(): AlertDialog? {
+        return activity?.let {
+            AlertDialog.Builder(it).apply {
+                setMessage(R.string.dialog_clearReminders_message)
+                setTitle(R.string.dialog_clearReminders_title)
+                setPositiveButton(R.string.dialog_ok) { _, _ ->
+                    Timber.d("User confirmed clear reminders")
+                    viewModel.deleteAllReminders()
+                }
+                setNegativeButton(R.string.dialog_cancel) { _, _ ->
+                    Timber.d("User cancelled clear reminders")
+                }
+            }.create()
+        }
     }
 }
