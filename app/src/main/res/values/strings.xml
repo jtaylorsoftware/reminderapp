@@ -9,7 +9,7 @@
     <string name="scheduling_notification_channel_name">Alarm scheduling</string>
     <string name="scheduling_notification_channel_id">AlarmScheduling</string>
     <string name="scheduling_notification_channel_description">Scheduling notifications for reminders. Only displays infrequently.</string>
-    <string name="overview_fab_description">Add Reminder Button</string>
+    <string name="overview_fab_description">Add Reminder</string>
     <string name="editor_descriptionEdit_hint">Edit reminder text</string>
     <string name="saturday_abbrev">S</string>
     <string name="sunday_abbrev">S</string>
