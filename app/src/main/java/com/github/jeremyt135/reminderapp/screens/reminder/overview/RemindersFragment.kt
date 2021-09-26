@@ -43,8 +43,10 @@ class RemindersFragment : Fragment() {
             model = viewModel
         }
 
-        requireNotNull(requireActivity().findViewById(R.id.fab_reminders_add)).setOnClickListener {
+        activity?.findViewById<View>(R.id.fab_reminders_add)?.setOnClickListener {
             viewModel.addReminder()
+        } ?: run {
+            Timber.e("RemindersFragment: could not set up FAB, activity null.")
         }
 
         viewModel.navigateToEditor.asLiveData().observe(viewLifecycleOwner) { event ->

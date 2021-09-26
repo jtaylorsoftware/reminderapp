@@ -102,20 +102,6 @@ class RemindersFragmentTest {
     }
 
     @Test
-    fun fab_NavigatesToEditor() {
-        val navController = mock(NavController::class.java)
-        launchFragmentInHiltContainer<RemindersFragment>() {
-            Navigation.setViewNavController(requireView(), navController)
-        }
-
-        onView(withId(R.id.fab_reminders_add)).perform(click())
-
-        verify(navController).navigate(
-            RemindersFragmentDirections.actionFragmentRemindersToReminderEditorActivity("")
-        )
-    }
-
-    @Test
     fun clickRecyclerItem_navigatesToEditor() {
         val navController = mock(NavController::class.java)
         launchFragmentInHiltContainer<RemindersFragment>() {
