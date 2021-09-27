@@ -8,4 +8,10 @@
     <dimen name="calendar_cell_padding_v">0dp</dimen>
     <dimen name="calendar_cell_margin_h">8dp</dimen>
     <dimen name="calendar_cell_margin_v">3dp</dimen>
+
+    <!-- Common dimens constraints for views -->
+    <dimen name="constraint_widthPercent">0.80</dimen>
+
+    <!-- Height of Bottom app/navigation bar, using values according to material design page -->
+    <dimen name="bottom_app_bar_height">64dp</dimen>
 </resources>

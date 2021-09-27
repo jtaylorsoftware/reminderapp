@@ -8,4 +8,12 @@
     <dimen name="calendar_cell_padding_v">0dp</dimen>
     <dimen name="calendar_cell_margin_h">3dp</dimen>
     <dimen name="calendar_cell_margin_v">0dp</dimen>
+
+    <!-- Sizes for bottom navigation buttons -->
+    <dimen name="bottomNav_minWidth">64dp</dimen>
+    <dimen name="bottomNav_maxWidth">168dp</dimen>
+    <dimen name="bottomNav_iconPaddingActive">3dp</dimen>
+    <dimen name="bottomNav_iconPadding">1dp</dimen>
+    <dimen name="bottomNav_paddingStart">4dp</dimen>
+    <dimen name="bottomNav_paddingEnd">4dp</dimen>
 </resources>
