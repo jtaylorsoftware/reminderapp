@@ -374,14 +374,12 @@ class ReminderEditorViewModel @Inject constructor(
                     nextAlarm.id = alarmRepository.save(nextAlarm)
                 }
 
-                // schedule the next alarm again if the one being saved is an edit, or
-                // if the AlarmService is not already running for some other reminder
+                // stop currently running AlarmService if saved reminder is the one scheduled
                 if (wasScheduled) {
                     AlarmService.requestStop(getApplication())
-                    scheduleNextAlarm()
-                } else if (!AlarmService.running) {
-                    scheduleNextAlarm()
                 }
+
+                scheduleNextAlarm()
             }
         }
 
