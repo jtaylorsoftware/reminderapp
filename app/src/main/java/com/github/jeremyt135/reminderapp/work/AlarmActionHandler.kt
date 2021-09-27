@@ -12,10 +12,7 @@ import com.github.jeremyt135.reminderapp.broadcast.*
 import com.github.jeremyt135.reminderapp.data.AlarmRepository
 import com.github.jeremyt135.reminderapp.data.HistoryRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
-import com.github.jeremyt135.reminderapp.data.domain.Alarm
-import com.github.jeremyt135.reminderapp.data.domain.History
-import com.github.jeremyt135.reminderapp.data.domain.Reminder
-import com.github.jeremyt135.reminderapp.data.domain.ReminderStatus
+import com.github.jeremyt135.reminderapp.data.domain.*
 import com.github.jeremyt135.reminderapp.util.NotificationId
 import com.github.jeremyt135.reminderapp.util.currentLocalDateTime
 import dagger.assisted.Assisted
@@ -136,10 +133,10 @@ class AlarmActionHandlerImpl(
         } else Result.failure()
 
     private suspend fun handleSkip(reminderId: String): Result =
-        saveHistoryWithStatus(reminderId, ReminderStatus.SKIPPED)
+        saveHistoryForReminder(reminderId, ReminderStatus.SKIPPED)
 
     private suspend fun handleCompleted(reminderId: String): Result =
-        saveHistoryWithStatus(reminderId, ReminderStatus.COMPLETED)
+        saveHistoryForReminder(reminderId, ReminderStatus.COMPLETED)
 
     private fun enqueueScheduleNext() {
         AlarmActionHandler.createForAction(ACTION_ALARM_SCHEDULE_NEXT, "").let {
@@ -154,40 +151,43 @@ class AlarmActionHandlerImpl(
     }
 
     /**
-     * Performs completion of a Reminder - cancels alarms, saves a new alarm and history entry,
-     * schedules next alarm
+     * Saves a history entry for a reminder and saves a fresh alarm for the reminder if possible.
+     * Always results in a call to enqueueScheduleNext.
+     * @param reminderId Id of the reminder to save history for.
+     * @param completionStatus Status to use for the new history entry.
      */
-    private suspend fun saveHistoryWithStatus(
+    private suspend fun saveHistoryForReminder(
         reminderId: String,
         completionStatus: ReminderStatus
     ): Result {
         val reminder = reminderRepository.findById(reminderId) ?: return Result.failure()
+
+        // Save the history for the reminder
         saveHistoryEntry(reminder, completionStatus)
 
-        // Allow a Reminder with no associated Alarm, in which case only interested in saving history
-        alarmRepository.findByReminderId(reminder.id)?.let { alarm ->
-
-            // Save a new alarm if appropriate - not one-off and has an upcoming time
-            if (!reminder.schedulingRules.isOneOff) {
-                reminder.schedulingRules.getNextTimeForAlarm(currentLocalDateTime())
-                    ?.let { nextTime ->
-                        alarmRepository.save(
-                            alarm.copy(
-                                id = 0,
-                                triggerAt = nextTime,
-                                snoozeCount = 0,
-                                scheduled = null,
-                                notificationId = NotificationId.next
-                            )
-                        )
-                    }
-            } else {
-                // is a one-off, delete the reminder since it can no longer be scheduled
-                reminderRepository.delete(reminder)
-            }
-            alarmRepository.delete(alarm)
+        // Delete previous alarm if it exists
+        alarmRepository.findByReminderId(reminder.id)?.let {
+            alarmRepository.delete(it)
         }
 
+        // Try to save a new alarm, if reminder's type is repeating
+        if (reminder.schedulingRules.type != SchedulingType.SINGLE) {
+            // Get next time for alarm, save if there is a next time
+            reminder.schedulingRules.getNextTimeForAlarm(currentLocalDateTime())?.let { nextDateTime ->
+                alarmRepository.save(Alarm(
+                    reminderId = reminder.id,
+                    triggerAt = nextDateTime,
+                    maxSnoozeRepeats = reminder.maxSnoozeRepeats,
+                    snoozeDuration = reminder.snoozeDuration
+                ))
+            }
+        } else {
+            // Single reminders are deleted after they have completed - this is a design decision
+            // to avoid confusion that a reminder is in the list but never rescheduled.
+            reminderRepository.delete(reminder)
+        }
+
+        // Schedule the next alarm, whatever it ends up being
         enqueueScheduleNext()
 
         return Result.success()
@@ -228,7 +228,7 @@ class AlarmActionHandlerImpl(
             Timber.d("Not snoozing Alarm: beyond allowed limit")
             enqueueSkip(reminder.id)
             showSkipNotification(context, reminder, alarm)
-            Result.failure()
+            Result.failure() // Fail rather than retry, because this alarm is done snoozing
         } else {
             // Determine next triggerAt for a snoozing alarm
             val nextAlarm = alarm.copy(
@@ -236,16 +236,13 @@ class AlarmActionHandlerImpl(
                 scheduled = null,
                 notificationId = NotificationId.next,
                 snoozeCount = alarm.snoozeCount + 1,
-                // may cause backed up scheduling if multiple alarms scheduled w/in a certain time window
-                // triggerAt = alarm.triggerAt.plusMinutes(SNOOZE_TIME_MIN),
 
-                // if Alarm A, B, C all are scheduled for time T, you wouldn't want the last one C
-                // to snooze until T+2:00, you'd want it to snooze until T_next=T_current+2:00 since
-                // T could be now in the past by a minute or more
+                // Always save the snooze as an offset from the current time to avoid
+                // this alarm getting backed up behind others.
                 triggerAt = currentLocalDateTime().plusMinutes(alarm.snoozeDuration),
             )
 
-            // Delete previous, save changes
+            // Save next alarm
             nextAlarm.id = alarmRepository.save(nextAlarm)
             Timber.d("Saved next alarm: $nextAlarm")
 
