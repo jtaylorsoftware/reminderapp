@@ -12,6 +12,7 @@ import android.widget.Button
 import androidx.activity.viewModels
 import androidx.annotation.IdRes
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
 import androidx.core.animation.doOnEnd
 import androidx.core.animation.doOnStart
 import androidx.core.graphics.ColorUtils
@@ -48,12 +49,15 @@ class RemindersActivity : AppCompatActivity(), RemindersSortDialogFragment.Dialo
     private val remindersFab: FloatingActionButton by lazy {
         requireNotNull(findViewById(R.id.fab_reminders_add))
     }
+    private val toolbar: Toolbar by lazy {
+        requireNotNull(findViewById(R.id.top_app_bar))
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        setSupportActionBar(requireNotNull(findViewById(R.id.top_app_bar)))
+        setSupportActionBar(toolbar)
 
         val bottomNavigationController = createBottomNavigationController()
         val navController = setupNavController()
@@ -112,6 +116,11 @@ class RemindersActivity : AppCompatActivity(), RemindersSortDialogFragment.Dialo
                 showFab()
             } else {
                 hideFab()
+            }
+            if (destination.id == R.id.fragment_calendar) {
+                toolbar.visibility = View.GONE
+            } else {
+                toolbar.visibility = View.VISIBLE
             }
         }
         return navController
