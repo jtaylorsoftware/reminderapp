@@ -15,10 +15,13 @@
             app:destination="@id/fragment_history" />
         <action
             android:id="@+id/action_fragment_reminders_to_reminderEditorActivity"
-            app:destination="@id/activity_reminder_editor">
-            <argument android:name="com.github.jeremyt135.reminderapp.EXTRA_REMINDER_ID"
+            app:destination="@id/activity_reminder_editor"
+            app:launchSingleTop="true">
+            <argument
+                android:name="com.github.jeremyt135.reminderapp.EXTRA_REMINDER_ID"
                 android:defaultValue="@null" />
-            <argument android:name="com.github.jeremyt135.reminderapp.EXTRA_REMINDER_START_DATE"
+            <argument
+                android:name="com.github.jeremyt135.reminderapp.EXTRA_REMINDER_START_DATE"
                 android:defaultValue="@null" />
         </action>
         <action
@@ -54,10 +57,13 @@
         android:label="Calendar">
         <action
             android:id="@+id/action_fragment_calendar_to_activity_reminder_editor"
-            app:destination="@id/activity_reminder_editor">
-            <argument android:name="com.github.jeremyt135.reminderapp.EXTRA_REMINDER_ID"
+            app:destination="@id/activity_reminder_editor"
+            app:launchSingleTop="true">
+            <argument
+                android:name="com.github.jeremyt135.reminderapp.EXTRA_REMINDER_ID"
                 android:defaultValue="@null" />
-            <argument android:name="com.github.jeremyt135.reminderapp.EXTRA_REMINDER_START_DATE"
+            <argument
+                android:name="com.github.jeremyt135.reminderapp.EXTRA_REMINDER_START_DATE"
                 android:defaultValue="@null" />
         </action>
     </fragment>
@@ -67,10 +73,13 @@
         android:label="Alarms">
         <action
             android:id="@+id/action_alarmListFragment_to_activity_reminder_editor"
-            app:destination="@id/activity_reminder_editor">
-            <argument android:name="com.github.jeremyt135.reminderapp.EXTRA_REMINDER_ID"
+            app:destination="@id/activity_reminder_editor"
+            app:launchSingleTop="true">
+            <argument
+                android:name="com.github.jeremyt135.reminderapp.EXTRA_REMINDER_ID"
                 android:defaultValue="@null" />
-            <argument android:name="com.github.jeremyt135.reminderapp.EXTRA_REMINDER_START_DATE"
+            <argument
+                android:name="com.github.jeremyt135.reminderapp.EXTRA_REMINDER_START_DATE"
                 android:defaultValue="@null" />
         </action>
     </fragment>
