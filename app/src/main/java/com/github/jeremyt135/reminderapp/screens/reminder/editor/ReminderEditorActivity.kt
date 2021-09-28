@@ -25,6 +25,7 @@ class ReminderEditorActivity : AppCompatActivity(), SoundPickerDialogFragment.Di
         setContentView(R.layout.activity_reminder_editor)
 
         setSupportActionBar(requireNotNull(findViewById(R.id.top_app_bar)))
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         viewModel.navigateToReminders.asLiveData().observe(this) { event ->
             event.value?.let {
