@@ -234,18 +234,9 @@ class RemindersActivity : AppCompatActivity(), RemindersSortDialogFragment.Dialo
 
         private fun BottomNavigationItem.activate() {
             button as MaterialButton
-            ValueAnimator.ofFloat(iconPadding, iconPaddingActive).apply {
-                duration = 300
-
-                addUpdateListener { valueAnimator ->
-                    button.iconPadding = (valueAnimator.animatedValue as Float).toInt()
-                }
-                doOnStart {
-                    button.setTextColor(textColor)
-                    button.text = text
-                }
-                start()
-            }
+            button.setTextColor(textColor)
+            button.text = text
+            button.iconPadding = iconPaddingActive.toInt()
         }
 
         private fun BottomNavigationItem.deactivate() {
