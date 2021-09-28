@@ -3,7 +3,11 @@
     <color name="error">#CF6679</color>
     <color name="status_pending">#FBBB</color>
     <color name="status_complete">#00E676</color>
+
     <color name="reminder_day_of_week_tint">@color/color_secondary</color>
+
     <color name="icon_button_tint_enable">#42000000</color>
     <color name="icon_button_tint_disable">#89000000</color>
+
+    <color name="calendar_card_tint">#0DFFFFFF</color>
 </resources>

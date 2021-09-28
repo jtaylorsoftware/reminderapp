@@ -82,4 +82,24 @@
         <item name="android:letterSpacing">0.0</item>
         <item name="android:textSize">@dimen/bottomNav_textSize</item>
     </style>
+
+    <style name="Widget.App.CardView.Calendar" parent="Widget.MaterialComponents.CardView">
+        <item name="strokeColor">@null</item>
+        <item name="strokeWidth">0dp</item>
+        <item name="cardElevation">0dp</item>
+        <item name="android:backgroundTint">@color/calendar_card_tint</item>
+        <item name="shapeAppearanceOverlay">@style/ShapeAppearance.App.CardView.Calendar</item>
+    </style>
+
+    <style name="Widget.App.CardView.Calendar.ReminderList" parent="Widget.MaterialComponents.CardView">
+        <item name="strokeColor">@null</item>
+        <item name="strokeWidth">0dp</item>
+        <item name="cardElevation">0dp</item>
+        <item name="android:backgroundTint">@color/transparent</item>
+        <item name="shapeAppearanceOverlay">@style/ShapeAppearance.App.CardView.Calendar</item>
+    </style>
+
+    <style name="ShapeAppearance.App.CardView.Calendar" parent="ShapeAppearance.MaterialComponents.MediumComponent">
+        <item name="cornerSize">0dp</item>
+    </style>
 </resources>

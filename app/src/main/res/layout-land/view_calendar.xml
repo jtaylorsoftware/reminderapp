@@ -17,140 +17,171 @@
         android:layout_height="match_parent"
         tools:parentTag="androidx.constraintlayout.widget.ConstraintLayout">
 
-        <TextView
-            android:id="@+id/text_calendar_monthYear"
-            style="@style/TextAppearance.App.Calendar.YearMonth"
-            android:layout_width="wrap_content"
-            android:layout_height="48dp"
-            android:gravity="center"
-            android:text="@{model.selectedYearMonthString}"
-            android:textSize="20sp"
-            app:layout_constraintEnd_toStartOf="@+id/button_calendar_forward"
-            app:layout_constraintHorizontal_bias="0.5"
-            app:layout_constraintStart_toEndOf="@+id/button_calendar_backward"
-            app:layout_constraintTop_toTopOf="@+id/button_calendar_backward"
-            tools:text="September 00" />
 
-        <ImageButton
-            android:id="@+id/button_calendar_forward"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@color/transparent"
-            android:contentDescription="@string/button_next_month_description"
-            android:padding="12dp"
-            app:layout_constraintEnd_toEndOf="@+id/recycler_calendar"
-            app:layout_constraintHorizontal_bias="0.5"
-            app:layout_constraintStart_toEndOf="@+id/text_calendar_monthYear"
-            app:layout_constraintTop_toTopOf="@+id/text_calendar_monthYear"
-            app:srcCompat="@drawable/ic_baseline_arrow_forward_24" />
-
-        <ImageButton
-            android:id="@+id/button_calendar_backward"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@color/transparent"
-            android:contentDescription="@string/button_previous_month_description"
-            android:padding="12dp"
-            app:layout_constraintBottom_toTopOf="@+id/recycler_calendar"
-            app:layout_constraintEnd_toStartOf="@+id/text_calendar_monthYear"
-            app:layout_constraintHorizontal_bias="0.5"
-            app:layout_constraintHorizontal_chainStyle="spread_inside"
-            app:layout_constraintStart_toStartOf="@+id/recycler_calendar"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_bias="0.0"
-            app:layout_constraintVertical_chainStyle="packed"
-            app:srcCompat="@drawable/ic_baseline_arrow_back_24" />
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recycler_calendar"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:nestedScrollingEnabled="false"
-            app:calendarData="@{model.calendarData}"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/divider"
-            app:layout_constraintHorizontal_bias="0.5"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/button_calendar_backward"
-            tools:itemCount="42"
-            tools:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
-            tools:layout_height="250dp"
-            tools:listitem="@layout/item_calendar_day"
-            tools:spanCount="7" />
-
-        <TextView
-            android:id="@+id/text_calendar_reminder_heading"
-            style="@style/TextAppearance.MaterialComponents.Caption"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:text="@string/calendar_reminder_heading"
-            app:layout_constraintBottom_toBottomOf="@+id/button_calendar_forward"
-            app:layout_constraintEnd_toStartOf="@+id/button_calendar_add"
-            app:layout_constraintHorizontal_bias="0.5"
-            app:layout_constraintHorizontal_chainStyle="spread_inside"
-            app:layout_constraintStart_toEndOf="@+id/divider"
-            app:layout_constraintTop_toTopOf="@+id/button_calendar_forward" />
-
-        <TextView
-            android:id="@+id/text_calendar_reminder_empty_hint"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/calendar_reminder_empty_hint"
-            android:visibility="@{model.remindersOnSelectedDate.size() > 0 ? View.GONE : View.VISIBLE}"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.514"
-            app:layout_constraintStart_toEndOf="@+id/divider"
-            app:layout_constraintTop_toTopOf="@+id/recycler_calendar_reminders" />
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recycler_calendar_reminders"
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/card_calendar"
+            style="@style/Widget.App.CardView.Calendar"
             android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:layout_marginStart="2dp"
-            android:layout_marginTop="2dp"
-            android:layout_marginEnd="2dp"
-            android:fadeScrollbars="true"
-            android:nestedScrollingEnabled="false"
-            android:orientation="vertical"
-            android:paddingHorizontal="2dp"
-            android:scrollbarSize="3dp"
-            android:scrollbarStyle="insideOverlay"
-            android:scrollbars="vertical"
-            android:visibility="@{model.remindersOnSelectedDate.size() == 0 ? View.GONE : View.VISIBLE}"
-            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+            android:layout_height="match_parent"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/divider"
-            app:layout_constraintTop_toBottomOf="@+id/button_calendar_add"
-            app:reminderListData="@{model.remindersOnSelectedDate}"
-            tools:listitem="@layout/item_reminder" />
-
-        <View
-            android:id="@+id/divider"
-            android:layout_width="1dp"
-            android:layout_height="409dp"
-            android:background="?android:attr/listDivider"
-            android:visibility="invisible"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.6"
+            app:layout_constraintEnd_toStartOf="@+id/card_calendar_reminderList"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintHorizontal_chainStyle="packed"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintWidth_default="percent"
+            app:layout_constraintWidth_max="wrap"
+            app:layout_constraintWidth_percent="0.5">
 
-        <Button
-            android:id="@+id/button_calendar_add"
-            style="@style/Widget.App.Button.Compact.Round"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
-            android:contentDescription="@string/calendar_addReminder_content_description"
-            android:enabled="@{model.selectedDate != null}"
-            app:icon="@drawable/ic_baseline_add_24"
-            app:layout_constraintBaseline_toBaselineOf="@+id/text_calendar_reminder_heading"
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:padding="8dp">
+
+                <TextView
+                    android:id="@+id/text_calendar_monthYear"
+                    style="@style/TextAppearance.App.Calendar.YearMonth"
+                    android:layout_width="wrap_content"
+                    android:layout_height="48dp"
+                    android:gravity="center"
+                    android:text="@{model.selectedYearMonthString}"
+                    android:textSize="20sp"
+                    app:layout_constraintEnd_toStartOf="@+id/button_calendar_forward"
+                    app:layout_constraintHorizontal_bias="0.5"
+                    app:layout_constraintStart_toEndOf="@+id/button_calendar_backward"
+                    app:layout_constraintTop_toTopOf="@+id/button_calendar_backward"
+                    tools:text="September 00" />
+
+                <ImageButton
+                    android:id="@+id/button_calendar_forward"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@color/transparent"
+                    android:contentDescription="@string/button_next_month_description"
+                    android:padding="12dp"
+                    app:layout_constraintEnd_toEndOf="@+id/recycler_calendar"
+                    app:layout_constraintHorizontal_bias="0.5"
+                    app:layout_constraintStart_toEndOf="@+id/text_calendar_monthYear"
+                    app:layout_constraintTop_toTopOf="@+id/text_calendar_monthYear"
+                    app:srcCompat="@drawable/ic_baseline_arrow_forward_24" />
+
+                <ImageButton
+                    android:id="@+id/button_calendar_backward"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@color/transparent"
+                    android:contentDescription="@string/button_previous_month_description"
+                    android:padding="12dp"
+                    app:layout_constraintBottom_toTopOf="@+id/recycler_calendar"
+                    app:layout_constraintEnd_toStartOf="@+id/text_calendar_monthYear"
+                    app:layout_constraintHorizontal_bias="0.5"
+                    app:layout_constraintHorizontal_chainStyle="spread_inside"
+                    app:layout_constraintStart_toStartOf="@+id/recycler_calendar"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintVertical_bias="0.0"
+                    app:layout_constraintVertical_chainStyle="packed"
+                    app:srcCompat="@drawable/ic_baseline_arrow_back_24" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/recycler_calendar"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:nestedScrollingEnabled="false"
+                    app:calendarData="@{model.calendarData}"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintHorizontal_bias="0.5"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/button_calendar_backward"
+                    tools:itemCount="42"
+                    tools:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
+                    tools:layout_height="250dp"
+                    tools:listitem="@layout/item_calendar_day"
+                    tools:spanCount="7" />
+
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/card_calendar_reminderList"
+            style="@style/Widget.App.CardView.Calendar.ReminderList"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.5"
-            app:layout_constraintStart_toEndOf="@+id/text_calendar_reminder_heading" />
+            app:layout_constraintStart_toEndOf="@+id/card_calendar"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <TextView
+                    android:id="@+id/text_calendar_reminder_heading"
+                    style="@style/TextAppearance.MaterialComponents.Caption"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginTop="24dp"
+                    android:text="@string/calendar_reminder_heading"
+                    app:layout_constraintEnd_toStartOf="@+id/button_calendar_add"
+                    app:layout_constraintHorizontal_bias="0.5"
+                    app:layout_constraintHorizontal_chainStyle="spread_inside"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <TextView
+                    android:id="@+id/text_calendar_reminder_empty_hint"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/calendar_reminder_empty_hint"
+                    android:visibility="@{model.remindersOnSelectedDate.size() > 0 ? View.GONE : View.VISIBLE}"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="@+id/recycler_calendar_reminders" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/recycler_calendar_reminders"
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_marginStart="2dp"
+                    android:layout_marginTop="2dp"
+                    android:layout_marginEnd="2dp"
+                    android:fadeScrollbars="true"
+                    android:nestedScrollingEnabled="false"
+                    android:orientation="vertical"
+                    android:paddingHorizontal="2dp"
+                    android:scrollbarSize="3dp"
+                    android:scrollbarStyle="insideOverlay"
+                    android:scrollbars="vertical"
+                    android:visibility="@{model.remindersOnSelectedDate.size() == 0 ? View.GONE : View.VISIBLE}"
+                    app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/button_calendar_add"
+                    app:reminderListData="@{model.remindersOnSelectedDate}"
+                    tools:listitem="@layout/item_reminder" />
+
+                <Button
+                    android:id="@+id/button_calendar_add"
+                    style="@style/Widget.App.Button.Compact.Round"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp"
+                    android:contentDescription="@string/calendar_addReminder_content_description"
+                    android:enabled="@{model.selectedDate != null}"
+                    app:icon="@drawable/ic_baseline_add_24"
+                    app:layout_constraintBaseline_toBaselineOf="@+id/text_calendar_reminder_heading"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintHorizontal_bias="0.5"
+                    app:layout_constraintStart_toEndOf="@+id/text_calendar_reminder_heading" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+        </com.google.android.material.card.MaterialCardView>
 
     </merge>
 </layout>
