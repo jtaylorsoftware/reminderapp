@@ -4,8 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginHorizontal="@dimen/recycler_item_margin_h"
-    android:layout_marginVertical="8dp"
+    android:layout_margin="8dp"
     tools:layout_editor_absoluteX="12dp"
     tools:layout_editor_absoluteY="8dp">
 
@@ -22,11 +21,8 @@
 
     <View
         android:id="@+id/divider2"
-        android:layout_width="0dp"
         android:layout_height="1dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="8dp"
+        style="@style/Widget.App.RecyclerListItem"
         android:background="?android:attr/listDivider"
         app:layout_constraintBottom_toTopOf="@+id/text_item_alarmSeparator_title"
         app:layout_constraintEnd_toEndOf="parent"

@@ -21,8 +21,6 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:clickable="true"
-            android:focusable="true"
             android:gravity="center"
             android:paddingStart="16dp"
             android:paddingEnd="16dp"
@@ -32,7 +30,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintWidth_percent="@dimen/constraint_widthPercent" />
+            style="@style/Widget.App.RecyclerListItem" />
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recycler_history_list"
@@ -44,7 +42,6 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintWidth_percent="@dimen/constraint_widthPercent"
             tools:listitem="@layout/item_alarm" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>

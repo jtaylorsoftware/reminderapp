@@ -38,17 +38,11 @@
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/textlayout_editor_description"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
-                android:layout_marginTop="8dp"
-                android:layout_marginEnd="16dp"
+                style="@style/Widget.App.TextInputLayout.OutlinedBox.Editor"
                 android:hint="@string/editor_descriptionEdit_hint"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintWidth_percent="@dimen/constraint_widthPercent"
                 app:startIconContentDescription="Edit icon"
                 app:startIconDrawable="@drawable/ic_baseline_edit_24">
 
@@ -64,12 +58,7 @@
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/textlayout_editor_startDate"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
-                android:layout_marginTop="8dp"
-                android:layout_marginEnd="16dp"
+                style="@style/Widget.App.TextInputLayout.OutlinedBox.Editor"
                 android:hint="@string/editor_startDate_hint"
                 app:boxStrokeErrorColor="@color/error"
                 app:errorEnabled="@{model.startDateState.errorEnabled}"
@@ -78,7 +67,6 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/textlayout_editor_description"
-                app:layout_constraintWidth_percent="@dimen/constraint_widthPercent"
                 app:startIconContentDescription="Calendar icon"
                 app:startIconDrawable="@drawable/ic_baseline_event_note_24">
 
@@ -121,12 +109,7 @@
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/textlayout_editor_endDate"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
-                android:layout_marginTop="8dp"
-                android:layout_marginEnd="16dp"
+                style="@style/Widget.App.TextInputLayout.OutlinedBox.Editor"
                 android:hint="@string/editor_endDate_hint"
                 android:visibility="@{model.repeats &amp;&amp; model.hasEndDate ? View.VISIBLE : View.GONE}"
                 app:boxStrokeErrorColor="@color/error"
@@ -136,7 +119,6 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/textlayout_editor_daysOfWeek"
-                app:layout_constraintWidth_percent="@dimen/constraint_widthPercent"
                 app:startIconContentDescription="Calendar icon"
                 app:startIconDrawable="@drawable/ic_baseline_event_note_24">
 
@@ -153,12 +135,7 @@
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/textlayout_editor_daysOfWeek"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
-                android:layout_marginTop="8dp"
-                android:layout_marginEnd="16dp"
+                style="@style/Widget.App.TextInputLayout.OutlinedBox.Editor"
                 android:hint="@string/editor_daysOfWeek_hint"
                 android:visibility="@{model.repeats ? View.VISIBLE : View.GONE}"
                 app:boxStrokeErrorColor="@color/error"
@@ -168,7 +145,6 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/checkbox_editor_repeat"
-                app:layout_constraintWidth_percent="@dimen/constraint_widthPercent"
                 app:startIconContentDescription="Date range icon"
                 app:startIconDrawable="@drawable/ic_baseline_date_range_24">
 
@@ -185,12 +161,7 @@
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/textlayout_editor_time"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
-                android:layout_marginTop="8dp"
-                android:layout_marginEnd="16dp"
+                style="@style/Widget.App.TextInputLayout.OutlinedBox.Editor"
                 android:hint="@string/editor_time_hint"
                 app:boxStrokeErrorColor="@color/error"
                 app:errorEnabled="@{model.timeState.errorEnabled}"
@@ -199,7 +170,6 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/textlayout_editor_startDate"
-                app:layout_constraintWidth_percent="@dimen/constraint_widthPercent"
                 app:startIconContentDescription="Clock icon"
                 app:startIconDrawable="@drawable/ic_baseline_access_time_24">
 
@@ -216,17 +186,11 @@
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/textlayout_editor_snooze"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
-                android:layout_marginTop="8dp"
-                android:layout_marginEnd="16dp"
+                style="@style/Widget.App.TextInputLayout.OutlinedBox.Editor"
                 android:hint="@string/editor_snooze_hint"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/textlayout_editor_endDate"
-                app:layout_constraintWidth_percent="@dimen/constraint_widthPercent"
                 app:startIconContentDescription="Snooze icon"
                 app:startIconDrawable="@drawable/ic_notification_snooze">
 
@@ -243,17 +207,11 @@
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/textlayout_editor_sound"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
-                android:layout_marginTop="8dp"
-                android:layout_marginEnd="16dp"
+                style="@style/Widget.App.TextInputLayout.OutlinedBox.Editor"
                 android:hint="@string/editor_sound_hint"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/textlayout_editor_snooze"
-                app:layout_constraintWidth_percent="@dimen/constraint_widthPercent"
                 app:startIconContentDescription="Snooze icon"
                 app:startIconDrawable="@drawable/ic_notification_alarm">
 

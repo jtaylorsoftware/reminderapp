@@ -34,7 +34,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintWidth_percent="@dimen/constraint_widthPercent" />
+            style="@style/Widget.App.RecyclerListItem" />
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recycler_reminders_list"
@@ -46,7 +46,6 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintWidth_percent="@dimen/constraint_widthPercent"
             app:reminderListData="@{model.reminders}"
             tools:listitem="@layout/item_reminder" />
 

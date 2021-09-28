@@ -16,240 +16,246 @@
             type="com.github.jeremyt135.reminderapp.data.domain.ReminderAndHistory" />
     </data>
 
-    <com.google.android.material.card.MaterialCardView
-        android:id="@+id/card_item_reminder"
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginHorizontal="@dimen/recycler_item_margin_h"
-        android:layout_marginVertical="8dp"
-        android:clickable="true"
-        android:focusable="true"
-        app:cardElevation="@dimen/recycler_item_cardView_elevation">
+        android:layout_height="wrap_content">
 
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:padding="4dp">
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/card_item_reminder"
+            style="@style/Widget.App.CardView.RecyclerListItem"
+            android:clickable="true"
+            android:focusable="true"
+            app:cardElevation="@dimen/recycler_item_cardView_elevation"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
 
-            <ImageView
-                android:id="@+id/image_item_reminder_status"
-                android:layout_width="wrap_content"
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:contentDescription="@string/notification_icon_description"
-                app:layout_constraintBottom_toBottomOf="@+id/text_itemReminder_saturday"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/text_item_reminder_description"
-                app:statusForIcon="@{data.history}"
-                tools:srcCompat="@drawable/ic_notification_pending"
-                tools:tint="@color/status_complete" />
+                android:padding="4dp">
 
-            <ImageView
-                android:id="@+id/image_item_reminder_until"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:src="@drawable/ic_baseline_arrow_forward_12"
-                app:layout_constraintBottom_toBottomOf="@+id/text_item_reminder_startDate"
-                app:layout_constraintEnd_toStartOf="@+id/text_item_reminder_endDate"
-                app:layout_constraintHorizontal_bias="0.5"
-                app:layout_constraintStart_toEndOf="@+id/text_item_reminder_startDate"
-                app:layout_constraintTop_toTopOf="@+id/text_item_reminder_startDate" />
+                <ImageView
+                    android:id="@+id/image_item_reminder_status"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:contentDescription="@string/notification_icon_description"
+                    app:layout_constraintBottom_toBottomOf="@+id/text_itemReminder_saturday"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/text_item_reminder_description"
+                    app:statusForIcon="@{data.history}"
+                    tools:srcCompat="@drawable/ic_notification_pending"
+                    tools:tint="@color/status_complete" />
 
-            <TextView
-                android:id="@+id/text_item_reminder_startDate"
-                style="@style/TextAppearance.MaterialComponents.Caption"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:padding="2dp"
-                android:text="@{data.reminder.schedulingRules.startDateDisplayString()}"
-                app:layout_constraintBottom_toBottomOf="@+id/text_item_reminder_time"
-                app:layout_constraintEnd_toStartOf="@+id/image_item_reminder_until"
-                app:layout_constraintHorizontal_bias="1.0"
-                app:layout_constraintHorizontal_chainStyle="packed"
-                app:layout_constraintStart_toEndOf="@+id/text_item_reminder_time"
-                tools:text="9/5/21" />
+                <ImageView
+                    android:id="@+id/image_item_reminder_until"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/ic_baseline_arrow_forward_12"
+                    app:layout_constraintBottom_toBottomOf="@+id/text_item_reminder_startDate"
+                    app:layout_constraintEnd_toStartOf="@+id/text_item_reminder_endDate"
+                    app:layout_constraintHorizontal_bias="0.5"
+                    app:layout_constraintStart_toEndOf="@+id/text_item_reminder_startDate"
+                    app:layout_constraintTop_toTopOf="@+id/text_item_reminder_startDate" />
 
-            <TextView
-                android:id="@+id/text_item_reminder_endDate"
-                style="@style/TextAppearance.MaterialComponents.Caption"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:padding="2dp"
-                android:text="@{data.reminder.schedulingRules.endDateDisplayString()}"
-                app:layout_constraintBottom_toBottomOf="@+id/image_item_reminder_until"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="0.5"
-                app:layout_constraintStart_toEndOf="@+id/image_item_reminder_until"
-                app:layout_constraintTop_toTopOf="@+id/image_item_reminder_until"
-                tools:text="9/6/21" />
+                <TextView
+                    android:id="@+id/text_item_reminder_startDate"
+                    style="@style/TextAppearance.MaterialComponents.Caption"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:padding="2dp"
+                    android:text="@{data.reminder.schedulingRules.startDateDisplayString()}"
+                    app:layout_constraintBottom_toBottomOf="@+id/text_item_reminder_time"
+                    app:layout_constraintEnd_toStartOf="@+id/image_item_reminder_until"
+                    app:layout_constraintHorizontal_bias="1.0"
+                    app:layout_constraintHorizontal_chainStyle="packed"
+                    app:layout_constraintStart_toEndOf="@+id/text_item_reminder_time"
+                    tools:text="9/5/21" />
 
-            <TextView
-                android:id="@+id/text_itemReminder_sunday"
-                style="@style/TextAppearance.MaterialComponents.Caption"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="2dp"
-                android:gravity="center"
-                android:text="@string/sunday_abbrev"
-                android:textColor="@{data.reminder.schedulingRules.dayIsScheduled(DayOfWeek.SUNDAY) ? @color/reminder_day_of_week_tint : @color/text_secondary}"
-                android:textStyle="bold"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@+id/text_itemReminder_monday"
-                app:layout_constraintHorizontal_bias="0.0"
-                app:layout_constraintHorizontal_chainStyle="packed"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/text_item_reminder_description"
-                app:useMaterialThemeColors="false"
-                tools:textColor="@color/reminder_day_of_week_tint" />
+                <TextView
+                    android:id="@+id/text_item_reminder_endDate"
+                    style="@style/TextAppearance.MaterialComponents.Caption"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:padding="2dp"
+                    android:text="@{data.reminder.schedulingRules.endDateDisplayString()}"
+                    app:layout_constraintBottom_toBottomOf="@+id/image_item_reminder_until"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintHorizontal_bias="0.5"
+                    app:layout_constraintStart_toEndOf="@+id/image_item_reminder_until"
+                    app:layout_constraintTop_toTopOf="@+id/image_item_reminder_until"
+                    tools:text="9/6/21" />
 
-            <TextView
-                android:id="@+id/text_itemReminder_monday"
-                style="@style/TextAppearance.MaterialComponents.Caption"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="2dp"
-                android:text="@string/monday_abbrev"
-                android:textColor="@{data.reminder.schedulingRules.dayIsScheduled(DayOfWeek.MONDAY) ? @color/reminder_day_of_week_tint : @color/text_secondary}"
-                android:textStyle="bold"
-                app:layout_constraintEnd_toStartOf="@+id/text_itemReminder_tuesday"
-                app:layout_constraintHorizontal_bias="0.5"
-                app:layout_constraintStart_toEndOf="@+id/text_itemReminder_sunday"
-                app:layout_constraintTop_toTopOf="@+id/text_itemReminder_sunday"
-                app:useMaterialThemeColors="false" />
+                <TextView
+                    android:id="@+id/text_itemReminder_sunday"
+                    style="@style/TextAppearance.MaterialComponents.Caption"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="2dp"
+                    android:gravity="center"
+                    android:text="@string/sunday_abbrev"
+                    android:textColor="@{data.reminder.schedulingRules.dayIsScheduled(DayOfWeek.SUNDAY) ? @color/reminder_day_of_week_tint : @color/text_secondary}"
+                    android:textStyle="bold"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toStartOf="@+id/text_itemReminder_monday"
+                    app:layout_constraintHorizontal_bias="0.0"
+                    app:layout_constraintHorizontal_chainStyle="packed"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/text_item_reminder_description"
+                    app:useMaterialThemeColors="false"
+                    tools:textColor="@color/reminder_day_of_week_tint" />
 
-
-            <TextView
-                android:id="@+id/text_itemReminder_tuesday"
-                style="@style/TextAppearance.MaterialComponents.Caption"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="2dp"
-                android:text="@string/tuesday_abbrev"
-                android:textColor="@{data.reminder.schedulingRules.dayIsScheduled(DayOfWeek.TUESDAY) ? @color/reminder_day_of_week_tint : @color/text_secondary}"
-                android:textStyle="bold"
-                app:layout_constraintEnd_toStartOf="@+id/text_itemReminder_wednesday"
-                app:layout_constraintHorizontal_bias="0.5"
-                app:layout_constraintStart_toEndOf="@+id/text_itemReminder_monday"
-                app:layout_constraintTop_toTopOf="@+id/text_itemReminder_monday"
-                app:useMaterialThemeColors="false" />
-
-            <TextView
-                android:id="@+id/text_itemReminder_wednesday"
-                style="@style/TextAppearance.MaterialComponents.Caption"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="2dp"
-                android:text="@string/wednesday_abbrev"
-                android:textColor="@{data.reminder.schedulingRules.dayIsScheduled(DayOfWeek.WEDNESDAY) ? @color/reminder_day_of_week_tint : @color/text_secondary}"
-                android:textStyle="bold"
-                app:layout_constraintEnd_toStartOf="@+id/text_itemReminder_thursday"
-                app:layout_constraintHorizontal_bias="0.5"
-                app:layout_constraintStart_toEndOf="@+id/text_itemReminder_tuesday"
-                app:layout_constraintTop_toTopOf="@+id/text_itemReminder_tuesday"
-                app:useMaterialThemeColors="false" />
+                <TextView
+                    android:id="@+id/text_itemReminder_monday"
+                    style="@style/TextAppearance.MaterialComponents.Caption"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="2dp"
+                    android:text="@string/monday_abbrev"
+                    android:textColor="@{data.reminder.schedulingRules.dayIsScheduled(DayOfWeek.MONDAY) ? @color/reminder_day_of_week_tint : @color/text_secondary}"
+                    android:textStyle="bold"
+                    app:layout_constraintEnd_toStartOf="@+id/text_itemReminder_tuesday"
+                    app:layout_constraintHorizontal_bias="0.5"
+                    app:layout_constraintStart_toEndOf="@+id/text_itemReminder_sunday"
+                    app:layout_constraintTop_toTopOf="@+id/text_itemReminder_sunday"
+                    app:useMaterialThemeColors="false" />
 
 
-            <TextView
-                android:id="@+id/text_itemReminder_thursday"
-                style="@style/TextAppearance.MaterialComponents.Caption"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="2dp"
-                android:text="@string/thursday_abbrev"
-                android:textColor="@{data.reminder.schedulingRules.dayIsScheduled(DayOfWeek.THURSDAY) ? @color/reminder_day_of_week_tint : @color/text_secondary}"
-                android:textStyle="bold"
-                app:layout_constraintEnd_toStartOf="@+id/text_itemReminder_friday"
-                app:layout_constraintHorizontal_bias="0.5"
-                app:layout_constraintStart_toEndOf="@+id/text_itemReminder_wednesday"
-                app:layout_constraintTop_toTopOf="@+id/text_itemReminder_wednesday"
-                app:useMaterialThemeColors="false" />
+                <TextView
+                    android:id="@+id/text_itemReminder_tuesday"
+                    style="@style/TextAppearance.MaterialComponents.Caption"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="2dp"
+                    android:text="@string/tuesday_abbrev"
+                    android:textColor="@{data.reminder.schedulingRules.dayIsScheduled(DayOfWeek.TUESDAY) ? @color/reminder_day_of_week_tint : @color/text_secondary}"
+                    android:textStyle="bold"
+                    app:layout_constraintEnd_toStartOf="@+id/text_itemReminder_wednesday"
+                    app:layout_constraintHorizontal_bias="0.5"
+                    app:layout_constraintStart_toEndOf="@+id/text_itemReminder_monday"
+                    app:layout_constraintTop_toTopOf="@+id/text_itemReminder_monday"
+                    app:useMaterialThemeColors="false" />
 
-            <TextView
-                android:id="@+id/text_itemReminder_friday"
-                style="@style/TextAppearance.MaterialComponents.Caption"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="2dp"
-                android:text="@string/friday_abbrev"
-                android:textColor="@{data.reminder.schedulingRules.dayIsScheduled(DayOfWeek.FRIDAY) ? @color/reminder_day_of_week_tint : @color/text_secondary}"
-                android:textStyle="bold"
-                app:layout_constraintEnd_toStartOf="@+id/text_itemReminder_saturday"
-                app:layout_constraintHorizontal_bias="0.5"
-                app:layout_constraintStart_toEndOf="@+id/text_itemReminder_thursday"
-                app:layout_constraintTop_toTopOf="@+id/text_itemReminder_thursday"
-                app:useMaterialThemeColors="false" />
-
-            <TextView
-                android:id="@+id/text_itemReminder_saturday"
-                style="@style/TextAppearance.MaterialComponents.Caption"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="2dp"
-                android:text="@string/saturday_abbrev"
-                android:textColor="@{data.reminder.schedulingRules.dayIsScheduled(DayOfWeek.SATURDAY) ? @color/reminder_day_of_week_tint : @color/text_secondary}"
-                android:textStyle="bold"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="0.5"
-                app:layout_constraintStart_toEndOf="@+id/text_itemReminder_friday"
-                app:layout_constraintTop_toTopOf="@+id/text_itemReminder_friday"
-                app:useMaterialThemeColors="false" />
+                <TextView
+                    android:id="@+id/text_itemReminder_wednesday"
+                    style="@style/TextAppearance.MaterialComponents.Caption"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="2dp"
+                    android:text="@string/wednesday_abbrev"
+                    android:textColor="@{data.reminder.schedulingRules.dayIsScheduled(DayOfWeek.WEDNESDAY) ? @color/reminder_day_of_week_tint : @color/text_secondary}"
+                    android:textStyle="bold"
+                    app:layout_constraintEnd_toStartOf="@+id/text_itemReminder_thursday"
+                    app:layout_constraintHorizontal_bias="0.5"
+                    app:layout_constraintStart_toEndOf="@+id/text_itemReminder_tuesday"
+                    app:layout_constraintTop_toTopOf="@+id/text_itemReminder_tuesday"
+                    app:useMaterialThemeColors="false" />
 
 
-            <TextView
-                android:id="@+id/text_item_reminder_description"
-                style="@style/TextAppearance.MaterialComponents.Body1"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:layout_marginBottom="4dp"
-                android:ellipsize="end"
-                android:maxLines="2"
-                android:paddingHorizontal="2dp"
-                android:paddingVertical="2dp"
-                android:scrollHorizontally="true"
-                android:text="@{data.reminder.description}"
-                app:layout_constraintBottom_toTopOf="@+id/text_itemReminder_sunday"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_chainStyle="spread_inside"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/text_item_reminder_time"
-                app:layout_constraintWidth_percent="0.95"
-                tools:text="Reminder text that is an example and is long enough for ellipses" />
+                <TextView
+                    android:id="@+id/text_itemReminder_thursday"
+                    style="@style/TextAppearance.MaterialComponents.Caption"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="2dp"
+                    android:text="@string/thursday_abbrev"
+                    android:textColor="@{data.reminder.schedulingRules.dayIsScheduled(DayOfWeek.THURSDAY) ? @color/reminder_day_of_week_tint : @color/text_secondary}"
+                    android:textStyle="bold"
+                    app:layout_constraintEnd_toStartOf="@+id/text_itemReminder_friday"
+                    app:layout_constraintHorizontal_bias="0.5"
+                    app:layout_constraintStart_toEndOf="@+id/text_itemReminder_wednesday"
+                    app:layout_constraintTop_toTopOf="@+id/text_itemReminder_wednesday"
+                    app:useMaterialThemeColors="false" />
 
-            <androidx.constraintlayout.widget.Group
-                android:layout_width="0dp"
-                android:layout_height="0dp"
-                android:visibility="@{data.reminder.schedulingRules.type != SchedulingType.SINGLE ? View.VISIBLE : View.INVISIBLE}"
-                app:constraint_referenced_ids="text_itemReminder_monday,text_itemReminder_tuesday,text_itemReminder_wednesday,text_itemReminder_thursday,text_itemReminder_friday,text_itemReminder_saturday,text_itemReminder_sunday"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                <TextView
+                    android:id="@+id/text_itemReminder_friday"
+                    style="@style/TextAppearance.MaterialComponents.Caption"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="2dp"
+                    android:text="@string/friday_abbrev"
+                    android:textColor="@{data.reminder.schedulingRules.dayIsScheduled(DayOfWeek.FRIDAY) ? @color/reminder_day_of_week_tint : @color/text_secondary}"
+                    android:textStyle="bold"
+                    app:layout_constraintEnd_toStartOf="@+id/text_itemReminder_saturday"
+                    app:layout_constraintHorizontal_bias="0.5"
+                    app:layout_constraintStart_toEndOf="@+id/text_itemReminder_thursday"
+                    app:layout_constraintTop_toTopOf="@+id/text_itemReminder_thursday"
+                    app:useMaterialThemeColors="false" />
 
-            <androidx.constraintlayout.widget.Group
-                android:layout_width="0dp"
-                android:layout_height="0dp"
-                android:visibility="@{data.reminder.schedulingRules.type != SchedulingType.SINGLE ? View.VISIBLE : View.GONE}"
-                app:constraint_referenced_ids="image_item_reminder_until,text_item_reminder_endDate"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                <TextView
+                    android:id="@+id/text_itemReminder_saturday"
+                    style="@style/TextAppearance.MaterialComponents.Caption"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="2dp"
+                    android:text="@string/saturday_abbrev"
+                    android:textColor="@{data.reminder.schedulingRules.dayIsScheduled(DayOfWeek.SATURDAY) ? @color/reminder_day_of_week_tint : @color/text_secondary}"
+                    android:textStyle="bold"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintHorizontal_bias="0.5"
+                    app:layout_constraintStart_toEndOf="@+id/text_itemReminder_friday"
+                    app:layout_constraintTop_toTopOf="@+id/text_itemReminder_friday"
+                    app:useMaterialThemeColors="false" />
 
-            <TextView
-                android:id="@+id/text_item_reminder_time"
-                style="@style/TextAppearance.MaterialComponents.Caption"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingVertical="2dp"
-                android:text="@{data.reminder.timeDisplayString}"
-                app:layout_constraintBottom_toTopOf="@+id/text_item_reminder_description"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintVertical_chainStyle="packed"
-                tools:text="6:15 AM" />
 
-        </androidx.constraintlayout.widget.ConstraintLayout>
+                <TextView
+                    android:id="@+id/text_item_reminder_description"
+                    style="@style/TextAppearance.MaterialComponents.Body1"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:layout_marginBottom="4dp"
+                    android:ellipsize="end"
+                    android:maxLines="2"
+                    android:paddingHorizontal="2dp"
+                    android:paddingVertical="2dp"
+                    android:scrollHorizontally="true"
+                    android:text="@{data.reminder.description}"
+                    app:layout_constraintBottom_toTopOf="@+id/text_itemReminder_sunday"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintHorizontal_chainStyle="spread_inside"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/text_item_reminder_time"
+                    app:layout_constraintWidth_percent="0.95"
+                    tools:text="Reminder text that is an example and is long enough for ellipses" />
 
-    </com.google.android.material.card.MaterialCardView>
+                <androidx.constraintlayout.widget.Group
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:visibility="@{data.reminder.schedulingRules.type != SchedulingType.SINGLE ? View.VISIBLE : View.INVISIBLE}"
+                    app:constraint_referenced_ids="text_itemReminder_monday,text_itemReminder_tuesday,text_itemReminder_wednesday,text_itemReminder_thursday,text_itemReminder_friday,text_itemReminder_saturday,text_itemReminder_sunday"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <androidx.constraintlayout.widget.Group
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:visibility="@{data.reminder.schedulingRules.type != SchedulingType.SINGLE ? View.VISIBLE : View.GONE}"
+                    app:constraint_referenced_ids="image_item_reminder_until,text_item_reminder_endDate"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <TextView
+                    android:id="@+id/text_item_reminder_time"
+                    style="@style/TextAppearance.MaterialComponents.Caption"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingVertical="2dp"
+                    android:text="@{data.reminder.timeDisplayString}"
+                    app:layout_constraintBottom_toTopOf="@+id/text_item_reminder_description"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintVertical_chainStyle="packed"
+                    tools:text="6:15 AM" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 
 </layout>

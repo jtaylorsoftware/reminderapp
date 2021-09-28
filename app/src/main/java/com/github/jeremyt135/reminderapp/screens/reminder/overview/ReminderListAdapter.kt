@@ -1,10 +1,12 @@
 package com.github.jeremyt135.reminderapp.screens.reminder.overview
 
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.github.jeremyt135.R
 import com.github.jeremyt135.databinding.ItemReminderBinding
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.ReminderAndHistory
@@ -30,14 +32,22 @@ class ReminderListAdapter(private val clickListener: OnClickListener) :
 
     override fun onBindViewHolder(holder: ReminderViewHolder, position: Int) {
         val reminderAndHistory = getItem(position)
-        holder.itemView.setOnClickListener {
-            clickListener.onClick(reminderAndHistory)
+
+        val touchTarget = holder.itemView.findViewById<View>(R.id.card_item_reminder)
+
+        touchTarget?.let{
+            it.setOnClickListener {
+                clickListener.onClick(reminderAndHistory)
+            }
+
+            it.setOnCreateContextMenuListener { _, _, _ ->
+                Timber.d("Selected $position with reminder $reminderAndHistory")
+                selectedContextReminder = reminderAndHistory.reminder
+            }
+        } ?: run {
+            Timber.e("onBindViewHolder: could not access desired touch target for listener binding")
         }
 
-        holder.itemView.setOnCreateContextMenuListener { _, _, _ ->
-            Timber.d("Selected $position with reminder $reminderAndHistory")
-            selectedContextReminder = reminderAndHistory.reminder
-        }
         holder.bind(reminderAndHistory)
     }
 

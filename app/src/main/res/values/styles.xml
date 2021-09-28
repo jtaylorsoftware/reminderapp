@@ -102,4 +102,30 @@
     <style name="ShapeAppearance.App.CardView.Calendar" parent="ShapeAppearance.MaterialComponents.MediumComponent">
         <item name="cornerSize">0dp</item>
     </style>
+
+    <style name="Widget.App.CardView.RecyclerListItem" parent="Widget.MaterialComponents.CardView">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_margin">8dp</item>
+        <item name="cardElevation">@dimen/recycler_item_cardView_elevation</item>
+        <item name="layout_constraintWidth_max">300dp</item>
+        <item name="layout_constraintWidth_min">200dp</item>
+    </style>
+
+    <style name="Widget.App.RecyclerListItem" parent="Widget.MaterialComponents.CardView">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_margin">8dp</item>
+        <item name="layout_constraintWidth_max">300dp</item>
+        <item name="layout_constraintWidth_min">200dp</item>
+    </style>
+
+    <style name="Widget.App.TextInputLayout.OutlinedBox.Editor" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginStart">16dp</item>
+        <item name="android:layout_marginEnd">16dp</item>
+        <item name="android:layout_marginTop">8dp</item>
+        <item name="layout_constraintWidth_max">460dp</item>
+    </style>
 </resources>

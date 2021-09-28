@@ -13,6 +13,7 @@ import com.github.jeremyt135.databinding.ItemAlarmBinding
 import com.github.jeremyt135.reminderapp.data.domain.ReminderAndAlarm
 import com.github.jeremyt135.reminderapp.util.getShortLocalDateDisplay
 import com.github.jeremyt135.reminderapp.util.getShortLocalTimeDisplay
+import timber.log.Timber
 
 /**
  * Separator between the next & upcoming alarms
@@ -49,8 +50,14 @@ class AlarmListAdapter(private val onAlarmClickListener: OnAlarmClickListener) :
                 holder as ReminderAndAlarmViewHolder
                 val reminderAndAlarm = getItem(position) as ReminderAndAlarm
                 holder.bind(reminderAndAlarm)
-                holder.itemView.setOnClickListener {
-                    onAlarmClickListener(reminderAndAlarm)
+                val touchTarget = holder.itemView.findViewById<View>(R.id.card_item_alarm)
+
+                touchTarget?.let {
+                    it.setOnClickListener {
+                        onAlarmClickListener(reminderAndAlarm)
+                    }
+                } ?: run {
+                    Timber.e("onBindViewHolder: could not access desired touch target for listener binding")
                 }
             }
         }
