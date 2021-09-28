@@ -95,7 +95,7 @@ class CalendarAdapter(private val daySelectedListener: OnDaySelectedListener) :
             private set
 
         private val textView: TextView = view.findViewById(R.id.text_calendar_dayOfMonth)
-        private val defaultTextColor: Int = textView.currentTextColor
+        private val defaultTextColor: Int = MaterialColors.getColor(view, R.attr.colorOnSurface)
         private val selectedImage: ImageView = view.findViewById(R.id.image_calendar_dayOfMonth)
         private val reminderIndicator: ImageView =
             view.findViewById(R.id.image_calendar_reminderIndicator)
@@ -144,7 +144,7 @@ class CalendarAdapter(private val daySelectedListener: OnDaySelectedListener) :
 
         private fun onSelect() {
             useFilledImage()
-            val colorId = MaterialColors.getColor(view, R.attr.colorOnSecondary)
+            val colorId = MaterialColors.getColor(view, R.attr.colorOnPrimary)
             textView.setTextColor(colorId)
         }
 

@@ -1,25 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="color_primary_dark">#FF5f5fc4</color>
-    <color name="color_primary">#FF283593</color>
-    <color name="color_primary_variant">#FF001064</color>
-    <color name="color_secondary">#FF40c4ff</color>
-    <color name="color_secondary_variant">#FF0094cc</color>
-    <color name="color_on_primary">@color/white</color>
+    <!-- Colors from material color tool -->
+    <color name="primaryColor">#283593</color>
+    <color name="primaryLightColor">#5f5fc4</color>
+    <color name="primaryDarkColor">#001064</color>
+    <color name="secondaryColor">#40c4ff</color>
+    <color name="secondaryLightColor">#82f7ff</color>
+    <color name="secondaryDarkColor">#0094cc</color>
+    <color name="primaryTextColor">#ffffff</color>
+    <color name="secondaryTextColor">#000000</color>
+
+    <color name="color_primary_dark">@color/primaryLightColor</color>
+    <color name="color_primary">@color/primaryColor</color>
+    <color name="color_primary_variant">@color/primaryDarkColor</color>
+    <color name="color_secondary">@color/secondaryColor</color>
+    <color name="color_secondary_variant">@color/secondaryLightColor</color>
+    <color name="color_on_primary">@color/primaryTextColor</color>
     <color name="color_on_primary_ripple">#3DFFFFFF</color>
+
     <color name="black">#FF000000</color>
     <color name="text_secondary">#F888</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="error">#B71C1C</color>
+    <color name="error">#B00020</color>
     <color name="transparent">#0000</color>
     <color name="card_stroke">#F888</color>
     <color name="status_pending">#F888</color>
-    <color name="status_skip">#B71C1C</color>
+    <color name="status_skip">@color/error</color>
     <color name="status_complete">#1B5E20</color>
-    <color name="calendar_day_outline">@color/black</color>
-    <color name="calendar_day_filled">@color/color_secondary_variant</color>
-    <color name="calendar_reminder_indicator">@color/color_primary</color>
-    <color name="reminder_day_of_week_tint">@color/color_secondary_variant</color>
+    <color name="reminder_day_of_week_tint">@color/color_primary</color>
+    <color name="reminder_day_of_week_tint_disabled">@color/material_on_surface_disabled</color>
     <color name="icon_button_tint_enable">#89000000</color>
     <color name="icon_button_tint_disable">#42000000</color>
 </resources>

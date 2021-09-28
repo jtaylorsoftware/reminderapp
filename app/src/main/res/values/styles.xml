@@ -62,10 +62,10 @@
         <item name="layout_constraintWidth_min">@dimen/bottomNav_minWidth</item>
         <item name="layout_constraintWidth_max">@dimen/bottomNav_maxWidth</item>
         <item name="android:minHeight">48dp</item>
-        <item name="android:textColor">?attr/colorOnPrimary</item>
+        <item name="android:textColor">?attr/colorOnPrimarySurface</item>
         <item name="android:maxHeight">@dimen/bottom_app_bar_height</item>
         <item name="layout_constraintHeight_max">@dimen/bottom_app_bar_height</item>
-        <item name="iconTint">?attr/colorOnPrimary</item>
+        <item name="iconTint">?attr/colorControlNormal</item>
         <item name="android:textAppearance">@style/TextAppearance.App.Button.BottomNav</item>
         <item name="shapeAppearanceOverlay">@style/ShapeAppearanceOverlay.App.Button.NoCorners</item>
     </style>
