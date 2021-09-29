@@ -3,15 +3,11 @@ package com.github.jeremyt135.reminderapp
 import android.app.Application
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
-import androidx.work.WorkManager
 import com.github.jeremyt135.BuildConfig
-import com.github.jeremyt135.reminderapp.broadcast.ACTION_ALARM_SCHEDULE_NEXT
 import com.github.jeremyt135.reminderapp.broadcast.rescheduleReminders
 import com.github.jeremyt135.reminderapp.data.AlarmRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.di.AppCoroutineScope
-import com.github.jeremyt135.reminderapp.util.currentEpochMilli
-import com.github.jeremyt135.reminderapp.work.AlarmActionHandler
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -51,5 +47,4 @@ class ReminderApplication : Application(), Configuration.Provider {
         Configuration.Builder()
             .setWorkerFactory(workerFactory)
             .build()
-
 }
