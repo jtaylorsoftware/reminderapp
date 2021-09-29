@@ -8,4 +8,9 @@
     <dimen name="calendar_cell_padding_v">0dp</dimen>
     <dimen name="calendar_cell_margin_h">6dp</dimen>
     <dimen name="calendar_cell_margin_v">2dp</dimen>
+
+    <!-- Common dimens for recycler items -->
+    <dimen name="recycler_item_constraintWidth_min">200dp</dimen>
+    <dimen name="recycler_item_constraintWidth_max">400dp</dimen>
+    <dimen name="recycler_item_constraintWidth_max_land">560dp</dimen>
 </resources>

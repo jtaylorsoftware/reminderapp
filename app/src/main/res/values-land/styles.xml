@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Widget.App.CardView.RecyclerListItem" parent="Widget.MaterialComponents.CardView">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_margin">8dp</item>
+        <item name="cardElevation">@dimen/recycler_item_cardView_elevation</item>
+        <item name="layout_constraintWidth_max">@dimen/recycler_item_constraintWidth_max_land</item>
+        <item name="layout_constraintWidth_min">@dimen/recycler_item_constraintWidth_min</item>
+    </style>
+
+    <style name="Widget.App.RecyclerListItem" parent="Widget.MaterialComponents.CardView">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_margin">8dp</item>
+        <item name="layout_constraintWidth_max">@dimen/recycler_item_constraintWidth_max_land</item>
+        <item name="layout_constraintWidth_min">@dimen/recycler_item_constraintWidth_min</item>
+    </style>
+</resources>

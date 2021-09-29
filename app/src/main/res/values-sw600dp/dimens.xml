@@ -14,4 +14,8 @@
 
     <!-- Height of Bottom app/navigation bar, using values according to material design page -->
     <dimen name="bottom_app_bar_height">64dp</dimen>
+
+    <!-- Common dimens for recycler items -->
+    <dimen name="recycler_item_constraintWidth_min">200dp</dimen>
+    <dimen name="recycler_item_constraintWidth_max">480dp</dimen>
 </resources>
