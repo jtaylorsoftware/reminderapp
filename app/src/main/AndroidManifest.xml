@@ -16,7 +16,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:theme="@style/Theme.ReminderApp">
         <activity
-            android:name=".reminderapp.RemindersActivity"
+            android:name=".reminderapp.MainActivity"
             android:configChanges="uiMode"
             android:exported="true"
             android:windowSoftInputMode="adjustPan">
@@ -28,7 +28,7 @@
         <activity
             android:name=".reminderapp.screens.reminder.editor.ReminderEditorActivity"
             android:configChanges="orientation|keyboardHidden|screenSize|uiMode"
-            android:parentActivityName=".reminderapp.RemindersActivity"
+            android:parentActivityName=".reminderapp.MainActivity"
             android:windowSoftInputMode="adjustPan" />
         <activity
             android:name=".reminderapp.screens.preferences.PreferencesActivity"

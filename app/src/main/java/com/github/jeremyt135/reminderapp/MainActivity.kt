@@ -18,14 +18,12 @@ import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupActionBarWithNavController
-import androidx.preference.PreferenceManager
 import com.github.jeremyt135.R
 import com.github.jeremyt135.reminderapp.broadcast.NOTIFICATION_LED_ARGB
 import com.github.jeremyt135.reminderapp.screens.reminder.overview.*
 import com.github.jeremyt135.reminderapp.screens.reminder.overview.dialog.RemindersFilterDialogFragment
 import com.github.jeremyt135.reminderapp.screens.reminder.overview.dialog.RemindersSortDialogFragment
 import com.github.jeremyt135.reminderapp.settings.SettingsActivity
-import com.github.jeremyt135.reminderapp.theme.ThemeActivity
 import com.github.jeremyt135.reminderapp.util.*
 import com.google.android.material.bottomappbar.BottomAppBar
 import com.google.android.material.button.MaterialButton
@@ -35,7 +33,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
 
 @AndroidEntryPoint
-class RemindersActivity : SettingsActivity(), RemindersSortDialogFragment.DialogListener,
+class MainActivity : SettingsActivity(), RemindersSortDialogFragment.DialogListener,
     RemindersFilterDialogFragment.DialogListener {
 
     private val viewModel: RemindersViewModel by viewModels()
@@ -202,7 +200,7 @@ class RemindersActivity : SettingsActivity(), RemindersSortDialogFragment.Dialog
         private val iconPaddingActive = resources.getDimension(R.dimen.bottomNav_iconPaddingActive)
         private val iconPadding = resources.getDimension(R.dimen.bottomNav_iconPadding)
         private val textColor =
-            MaterialColors.getColor(this@RemindersActivity, R.attr.colorOnPrimary, Color.BLACK)
+            MaterialColors.getColor(this@MainActivity, R.attr.colorOnPrimary, Color.BLACK)
 
         init {
             Timber.d("textColor $textColor")

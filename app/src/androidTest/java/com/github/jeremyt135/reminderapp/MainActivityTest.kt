@@ -29,12 +29,11 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import java.time.LocalTime
 import javax.inject.Inject
 
 @HiltAndroidTest
 @LargeTest
-class RemindersActivityTest {
+class MainActivityTest {
     @get:Rule
     var hiltRule = HiltAndroidRule(this)
 
@@ -71,7 +70,7 @@ class RemindersActivityTest {
 
     @Test
     fun activity_launches() {
-        withActivityScenario(RemindersActivity::class.java)
+        withActivityScenario(MainActivity::class.java)
     }
 
     @Test
@@ -80,7 +79,7 @@ class RemindersActivityTest {
 
         val reminder = reminders[0]
 
-        withActivityScenario(RemindersActivity::class.java) {
+        withActivityScenario(MainActivity::class.java) {
             onView(withText(reminder.description)).check(
                 matches(isDisplayed())
             )
@@ -89,7 +88,7 @@ class RemindersActivityTest {
 
     @Test
     fun fab_NavigatesToEditorWithEmptyReminder() {
-        withActivityScenario(RemindersActivity::class.java) {
+        withActivityScenario(MainActivity::class.java) {
             onView(withId(R.id.fab_reminders_add)).perform(click())
 
             val context = InstrumentationRegistry.getInstrumentation().targetContext
@@ -179,7 +178,7 @@ class RemindersActivityTest {
             reminderRepo.save(reminder)
         }
 
-        withActivityScenario(RemindersActivity::class.java) {
+        withActivityScenario(MainActivity::class.java) {
             lateinit var navController: NavController
             onActivity {
                 navController = it.findNavController(R.id.nav_host_fragment_main)
