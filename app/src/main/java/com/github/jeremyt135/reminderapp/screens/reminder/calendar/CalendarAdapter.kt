@@ -310,5 +310,3 @@ open class CalendarDateItem(
         return result
     }
 }
-
-object PlaceholderDateItem : CalendarDateItem(null, false, false)

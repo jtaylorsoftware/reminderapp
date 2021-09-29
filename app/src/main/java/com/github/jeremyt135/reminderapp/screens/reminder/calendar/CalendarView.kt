@@ -7,22 +7,22 @@ import android.util.AttributeSet
 import android.view.LayoutInflater
 import androidx.annotation.AttrRes
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.content.ContextCompat
 import androidx.core.widget.ImageViewCompat
+import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.findViewTreeLifecycleOwner
 import androidx.lifecycle.findViewTreeViewModelStoreOwner
 import androidx.recyclerview.widget.GridLayoutManager
+import androidx.transition.TransitionManager
 import com.github.jeremyt135.R
 import com.github.jeremyt135.databinding.ViewCalendarBinding
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.screens.reminder.overview.ReminderListAdapter
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.time.LocalDate
 import java.time.YearMonth
@@ -53,8 +53,10 @@ class CalendarView : ConstraintLayout {
         setupBindingViews()
     }
 
+    @ExperimentalCoroutinesApi
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
+        observeCalendarData()
         attachBinding()
     }
 
@@ -125,6 +127,22 @@ class CalendarView : ConstraintLayout {
                 onAddReminderListener?.invoke(calendarAdapter?.selectedDate)
             }
         }
+    }
+
+    @ExperimentalCoroutinesApi
+    private fun observeCalendarData() {
+        viewModel.calendarData.observe(requireNotNull(findViewTreeLifecycleOwner()), object : Observer<List<Any>?> {
+            override fun onChanged(data: List<Any>?) {
+                if (data != null) {
+                    val constraintSet = ConstraintSet()
+                    constraintSet.load(context, R.layout.view_calendar_loaded)
+                    TransitionManager.beginDelayedTransition(this@CalendarView)
+                    constraintSet.applyTo(this@CalendarView)
+                    viewModel.calendarData.removeObserver(this)
+                }
+            }
+
+        })
     }
 
     private var coroutineScope: CoroutineScope? = CoroutineScope(Dispatchers.Main)

@@ -17,21 +17,19 @@
         android:layout_height="match_parent"
         tools:parentTag="androidx.constraintlayout.widget.ConstraintLayout">
 
-
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/card_calendar"
             style="@style/Widget.App.CardView.Calendar"
             android:layout_width="0dp"
             android:layout_height="match_parent"
+            android:visibility="invisible"
+            app:layout_constraintWidth_percent="0.4"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/card_calendar_reminderList"
             app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintHorizontal_chainStyle="packed"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintWidth_default="percent"
-            app:layout_constraintWidth_max="wrap"
-            app:layout_constraintWidth_percent="0.5">
+            app:layout_constraintTop_toTopOf="parent">
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="wrap_content"

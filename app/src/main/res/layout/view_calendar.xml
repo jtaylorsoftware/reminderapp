@@ -14,8 +14,7 @@
 
     <merge
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        tools:layout_height="match_parent"
+        android:layout_height="match_parent"
         tools:parentTag="androidx.constraintlayout.widget.ConstraintLayout">
 
         <com.google.android.material.card.MaterialCardView
@@ -23,11 +22,10 @@
             style="@style/Widget.App.CardView.Calendar"
             android:layout_width="match_parent"
             android:layout_height="0dp"
+            android:visibility="invisible"
             app:layout_constraintBottom_toTopOf="@+id/card_calendar_reminderList"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHeight_default="percent"
-            app:layout_constraintHeight_max="wrap"
-            app:layout_constraintHeight_percent="0.5"
+            app:layout_constraintHeight_percent="0.3"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent">
 

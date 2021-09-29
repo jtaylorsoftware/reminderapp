@@ -98,15 +98,7 @@ class CalendarViewModel @Inject constructor(
     }.flowOn(dispatcher).stateIn(
         viewModelScope,
         started = SharingStarted.Lazily,
-        // Use placeholder data as initial data
-        (0 until CalendarAdapter.ITEM_COUNT).map { position ->
-            if (position < CalendarAdapter.HEADING_SLOTS) {
-                getHeadingItem(position)
-            } else {
-                // Use null date to indicate placeholder data
-                PlaceholderDateItem
-            }
-        }
+        null
     ).asLiveData()
 
     init {
