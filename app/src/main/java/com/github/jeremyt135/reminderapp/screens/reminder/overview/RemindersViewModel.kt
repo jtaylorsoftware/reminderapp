@@ -315,9 +315,9 @@ class RemindersViewModel @Inject constructor(
                 // then sort by an alphabetical ordering of the description
                 comparator = when (reminderSortRules.description) {
                     SortRule.ASCENDING ->
-                        comparator.thenBy { it.reminder.description }
+                        comparator.thenBy(String.CASE_INSENSITIVE_ORDER) { it.reminder.description }
                     SortRule.DESCENDING ->
-                        comparator.thenByDescending { it.reminder.description }
+                        comparator.thenByDescending(String.CASE_INSENSITIVE_ORDER) { it.reminder.description }
                     else -> comparator
                 }
 
