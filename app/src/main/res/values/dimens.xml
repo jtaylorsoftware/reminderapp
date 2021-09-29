@@ -10,7 +10,7 @@
     <dimen name="calendar_cell_margin_v">0dp</dimen>
 
     <!-- Item CardView dimens -->
-    <dimen name="recycler_item_cardView_elevation">6dp</dimen>
+    <dimen name="recycler_item_cardView_elevation">4dp</dimen>
 
     <!-- Common dimens for recycler items -->
     <dimen name="recycler_item_margin_h">12dp</dimen>
