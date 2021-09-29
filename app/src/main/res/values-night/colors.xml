@@ -10,4 +10,6 @@
     <color name="icon_button_tint_disable">#89000000</color>
 
     <color name="calendar_card_tint">#0DFFFFFF</color>
+
+    <color name="background">#0000</color>
 </resources>
