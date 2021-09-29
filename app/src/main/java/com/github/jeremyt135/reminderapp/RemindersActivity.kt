@@ -1,22 +1,16 @@
 package com.github.jeremyt135.reminderapp
 
 import android.animation.ValueAnimator
-import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
-import android.content.Intent
-import android.content.SharedPreferences
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
-import android.view.Menu
-import android.view.MenuItem
 import android.view.View
 import android.widget.Button
 import androidx.activity.viewModels
 import androidx.annotation.IdRes
-import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.animation.doOnEnd
 import androidx.core.graphics.ColorUtils
@@ -27,10 +21,11 @@ import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.preference.PreferenceManager
 import com.github.jeremyt135.R
 import com.github.jeremyt135.reminderapp.broadcast.NOTIFICATION_LED_ARGB
-import com.github.jeremyt135.reminderapp.screens.preferences.PreferencesActivity
 import com.github.jeremyt135.reminderapp.screens.reminder.overview.*
 import com.github.jeremyt135.reminderapp.screens.reminder.overview.dialog.RemindersFilterDialogFragment
 import com.github.jeremyt135.reminderapp.screens.reminder.overview.dialog.RemindersSortDialogFragment
+import com.github.jeremyt135.reminderapp.settings.SettingsActivity
+import com.github.jeremyt135.reminderapp.theme.ThemeActivity
 import com.github.jeremyt135.reminderapp.util.*
 import com.google.android.material.bottomappbar.BottomAppBar
 import com.google.android.material.button.MaterialButton
@@ -38,19 +33,12 @@ import com.google.android.material.color.MaterialColors
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
-import javax.inject.Inject
 
 @AndroidEntryPoint
-class RemindersActivity : AppCompatActivity(), RemindersSortDialogFragment.DialogListener,
+class RemindersActivity : SettingsActivity(), RemindersSortDialogFragment.DialogListener,
     RemindersFilterDialogFragment.DialogListener {
 
     private val viewModel: RemindersViewModel by viewModels()
-
-    @Inject
-    lateinit var sharedPreferences: SharedPreferences
-
-    // Theme set at time Activity was created or last resumed
-    private lateinit var localTheme: ThemeSetting
 
     private val bottomAppBar: BottomAppBar by lazy {
         requireNotNull(findViewById(R.id.bottom_app_bar))
@@ -67,7 +55,6 @@ class RemindersActivity : AppCompatActivity(), RemindersSortDialogFragment.Dialo
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Timber.d("OnCreate")
         setContentView(R.layout.activity_main)
 
         setSupportActionBar(toolbar)
@@ -77,62 +64,6 @@ class RemindersActivity : AppCompatActivity(), RemindersSortDialogFragment.Dialo
         bottomNavigationController.setUpWithNavController(navController)
 
         createNotificationChannels()
-
-        setDefaultPreferences()
-
-        localTheme = ThemeSetting.valueOf(
-            sharedPreferences.getString(
-                getString(R.string.preference_key_theme),
-                ""
-            )!!)
-    }
-
-    override fun onPrepareOptionsMenu(menu: Menu): Boolean {
-        super.onPrepareOptionsMenu(menu)
-
-        prepareMenuForSettings(menu)
-
-        return true
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean = when (item.itemId) {
-        ITEM_SETTINGS -> {
-            startActivity(Intent(this, PreferencesActivity::class.java))
-            true
-        }
-        else -> super.onOptionsItemSelected(item)
-    }
-
-    override fun onResume() {
-        super.onResume()
-        Timber.d("ON RESUME")
-        // Handle any unknown theme change
-        val theme = sharedPreferences.getString(getString(R.string.preference_key_theme), "")!!
-        onThemeChanged(ThemeSetting.valueOf(theme))
-    }
-
-    private fun setDefaultPreferences(){
-        /**
-         * Put default values for theme
-         */
-        val preferencesName = getString(R.string.preference_file_name)
-
-        PreferenceManager.setDefaultValues(
-            this,
-            preferencesName,
-            Context.MODE_PRIVATE,
-            R.xml.preference_screen,
-            false
-        )
-        val theme = sharedPreferences.getString(getString(R.string.preference_key_theme), "")!!
-        Timber.d("Theme: $theme")
-    }
-
-    private fun onThemeChanged(theme: ThemeSetting) {
-        Timber.d("onThemeChanged: $theme")
-        if (onThemeChanged(theme, localTheme)) {
-            localTheme = theme
-        }
     }
 
     private fun createBottomNavigationController(): BottomNavigationController {

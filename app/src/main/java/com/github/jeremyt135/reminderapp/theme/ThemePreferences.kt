@@ -1,5 +1,7 @@
-package com.github.jeremyt135.reminderapp.util
+package com.github.jeremyt135.reminderapp.theme
 
+import android.content.SharedPreferences
+import android.content.res.Configuration
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import timber.log.Timber
@@ -24,18 +26,6 @@ enum class ThemeSetting {
 }
 
 /**
- * Recreates the activity with the new theme if it is not the same as the local one.
- * @param newTheme New theme to swap to
- * @param localTheme The previous theme, should usually be set once in onCreate and after onThemeChanged
- * @return Returns true if the theme changed.
+ * Gets the current theme setting from shared preferences.
  */
-fun AppCompatActivity.onThemeChanged(newTheme: ThemeSetting, localTheme: ThemeSetting): Boolean {
-    if (newTheme == localTheme){
-        return false
-    }
-
-    Timber.d("Theme changed: $newTheme")
-    AppCompatDelegate.setDefaultNightMode(newTheme.toAppNightMode())
-    recreate()
-    return true
-}
+fun SharedPreferences.getTheme(key: String) = ThemeSetting.valueOf(getString(key, "")!!)

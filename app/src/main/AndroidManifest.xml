@@ -17,8 +17,8 @@
         android:theme="@style/Theme.ReminderApp">
         <activity
             android:name=".reminderapp.RemindersActivity"
-            android:exported="true"
             android:configChanges="uiMode"
+            android:exported="true"
             android:windowSoftInputMode="adjustPan">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -27,17 +27,21 @@
         </activity>
         <activity
             android:name=".reminderapp.screens.reminder.editor.ReminderEditorActivity"
-            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:configChanges="orientation|keyboardHidden|screenSize|uiMode"
             android:parentActivityName=".reminderapp.RemindersActivity"
             android:windowSoftInputMode="adjustPan" />
-        <activity android:name=".reminderapp.screens.preferences.PreferencesActivity" android:theme="@style/Theme.Preferences" />
+        <activity
+            android:name=".reminderapp.screens.preferences.PreferencesActivity"
+            android:configChanges="uiMode"
+            android:theme="@style/Theme.Preferences" />
         <activity android:name=".reminderapp.screens.reminder.editor.ReminderEditorTestActivity" />
         <activity android:name=".reminderapp.HiltTestActivity" />
         <activity android:name=".reminderapp.screens.alarm.AlarmTestActivity" />
+        <activity android:name=".reminderapp.settings.SettingsActivity" />
+        <activity android:name=".reminderapp.theme.ThemeActivity" />
         <activity
             android:name=".reminderapp.screens.alarm.AlarmActivity"
-            android:configChanges="orientation"
-            android:exported="false"
+            android:configChanges="orientation|uiMode"
             android:theme="@style/Theme.ReminderApp.Alarm" />
 
         <receiver android:name=".reminderapp.broadcast.AlarmStartReceiver" />
@@ -56,8 +60,8 @@
         <provider
             android:name="androidx.work.impl.WorkManagerInitializer"
             android:authorities="${applicationId}.workmanager-init"
-            tools:node="remove"
-            android:exported="false" />
+            android:exported="false"
+            tools:node="remove" />
     </application>
 
 </manifest>

@@ -4,21 +4,17 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.os.Bundle
 import android.view.MenuItem
-import androidx.appcompat.app.AppCompatActivity
 import com.github.jeremyt135.R
-import com.github.jeremyt135.reminderapp.util.ThemeSetting
-import com.github.jeremyt135.reminderapp.util.onThemeChanged
-import timber.log.Timber
+import com.github.jeremyt135.reminderapp.theme.ThemeActivity
+import com.github.jeremyt135.reminderapp.theme.ThemeSetting
 
-class PreferencesActivity : AppCompatActivity(),
+class PreferencesActivity : ThemeActivity(),
     SharedPreferences.OnSharedPreferenceChangeListener {
-    private lateinit var sharedPreferences: SharedPreferences
     private lateinit var localTheme: ThemeSetting
     private lateinit var themeKey: String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Timber.d("onCreate")
 
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.title = getString(R.string.settings)
@@ -42,14 +38,6 @@ class PreferencesActivity : AppCompatActivity(),
     override fun onPause() {
         super.onPause()
         sharedPreferences.unregisterOnSharedPreferenceChangeListener(this)
-
-    }
-
-    private fun onThemeChanged(theme: ThemeSetting) {
-        Timber.d("onThemeChanged: $theme")
-        if (onThemeChanged(theme, localTheme)) {
-            localTheme = theme
-        }
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean =
@@ -64,7 +52,7 @@ class PreferencesActivity : AppCompatActivity(),
 
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String) {
         if (key == themeKey) {
-            onThemeChanged(ThemeSetting.valueOf(sharedPreferences.getString(themeKey, "")!!))
+            super.onThemeChanged(ThemeSetting.valueOf(sharedPreferences.getString(themeKey, "")!!))
         }
     }
 }
