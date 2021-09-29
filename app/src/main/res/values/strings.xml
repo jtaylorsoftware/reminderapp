@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">ReminderApp</string>
+    <string name="app_name">Time to Remind</string>
     <string name="toggle_theme_dark">Toggle dark theme</string>
     <string name="toggle_theme_light">Toggle light theme</string>
     <string name="theme_setting_summary">Tap to set the app theme.</string>
