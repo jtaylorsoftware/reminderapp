@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:title="Settings"
+    >
+
+    <ListPreference
+        android:title="Theme"
+        android:summary="@string/theme_setting_summary"
+        android:key="@string/preference_key_theme"
+        android:defaultValue="SYSTEM"
+        android:icon="@drawable/ic_toggle_light_theme"
+        android:dialogIcon="@drawable/ic_toggle_light_theme"
+        android:entries="@array/themeOptions"
+        android:entryValues="@array/themeOptionsValues"
+        />
+
+</PreferenceScreen>

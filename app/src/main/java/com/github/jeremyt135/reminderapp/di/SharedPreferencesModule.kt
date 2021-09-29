@@ -18,7 +18,7 @@ object SharedPreferencesModule {
     @Provides
     fun provideGlobalSharedPreferences(@ApplicationContext context: Context): SharedPreferences {
         return with(context) {
-            getSharedPreferences(getString(R.string.preference_file_key), Context.MODE_PRIVATE)
+            getSharedPreferences(getString(R.string.preference_file_name), Context.MODE_PRIVATE)
         }
     }
 }

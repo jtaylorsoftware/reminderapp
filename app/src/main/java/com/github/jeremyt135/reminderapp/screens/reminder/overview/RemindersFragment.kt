@@ -1,6 +1,7 @@
 package com.github.jeremyt135.reminderapp.screens.reminder.overview
 
 import android.app.AlertDialog
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.view.*
 import androidx.fragment.app.Fragment
@@ -12,12 +13,16 @@ import com.github.jeremyt135.reminderapp.screens.reminder.overview.dialog.Remind
 import com.github.jeremyt135.reminderapp.screens.reminder.overview.dialog.RemindersSortDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class RemindersFragment : Fragment() {
     private val viewModel: RemindersViewModel by activityViewModels()
 
     private lateinit var reminderListAdapter: ReminderListAdapter
+
+    @Inject
+    lateinit var sharedPreferences: SharedPreferences
 
     override fun onCreateView(
         inflater: LayoutInflater,
