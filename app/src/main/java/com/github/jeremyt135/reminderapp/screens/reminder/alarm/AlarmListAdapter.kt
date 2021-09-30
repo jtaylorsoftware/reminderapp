@@ -42,7 +42,7 @@ class AlarmListAdapter(private val onAlarmClickListener: OnAlarmClickListener) :
         }
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) =
-        when (ViewType.fromPosition(position)) {
+        when (position.asViewType) {
             ViewType.SEPARATOR -> {
                 (holder as SeparatorViewHolder).bind(getItem(position) as AlarmListSeparator)
             }
@@ -62,7 +62,7 @@ class AlarmListAdapter(private val onAlarmClickListener: OnAlarmClickListener) :
             }
         }
 
-    override fun getItemViewType(position: Int): Int = ViewType.fromPosition(position).value
+    override fun getItemViewType(position: Int): Int = position.asViewType.value
 
     class SeparatorViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         private val textView = view.findViewById<TextView>(R.id.text_item_alarmSeparator_title)
@@ -128,11 +128,13 @@ class AlarmListAdapter(private val onAlarmClickListener: OnAlarmClickListener) :
                 1 -> ALARM
                 else -> throw IllegalArgumentException("Invalid value for ViewType enum.")
             }
-
-            fun fromPosition(position: Int) = when (position) {
-                0, 2 -> SEPARATOR
-                else -> ALARM
-            }
         }
     }
+
+    private val Int.asViewType: ViewType
+        get() = when (getItem(this)) {
+            is AlarmListSeparator -> ViewType.SEPARATOR
+            is ReminderAndAlarm -> ViewType.ALARM
+            else -> throw IllegalStateException("Unknown ViewType")
+        }
 }
