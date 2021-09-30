@@ -123,10 +123,6 @@
         <item name="android:textAppearance">@style/TextAppearance.MaterialComponents.Caption</item>
     </style>
 
-    <style name="Widget.App.RecyclerList.Card.Layout" parent="">
-        
-    </style>
-
     <style name="Widget.App.RecyclerList.Hint" parent="Widget.MaterialComponents.TextView">
         <item name="android:textAppearance">@style/TextAppearance.MaterialComponents.Body2</item>
         <item name="android:maxWidth">@dimen/recycler_item_width</item>
@@ -147,5 +143,9 @@
         <item name="android:layout_marginEnd">16dp</item>
         <item name="android:layout_marginTop">8dp</item>
         <item name="layout_constraintWidth_max">460dp</item>
+    </style>
+
+    <style name="Widget.App.Calendar.ReminderItem" parent="Widget.App.RecyclerList.Card">
+        <item name="android:layout_width">@dimen/recycler_item_calendar_width</item>
     </style>
 </resources>

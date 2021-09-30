@@ -7,25 +7,23 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.github.jeremyt135.R
 import com.github.jeremyt135.databinding.ItemReminderBinding
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.ReminderAndHistory
-import com.google.android.flexbox.AlignItems
 import com.google.android.flexbox.AlignSelf
 import com.google.android.flexbox.FlexboxLayoutManager
 import timber.log.Timber
 
-class ReminderListAdapter(private val clickListener: OnClickListener) :
+open class ReminderListAdapter(protected val clickListener: OnClickListener) :
     ListAdapter<ReminderAndHistory, ReminderListAdapter.ReminderViewHolder>(
         ReminderDiffCallback
     ) {
 
     var selectedContextReminder: Reminder? = null
-        private set
+        protected set
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ReminderViewHolder {
-        return ReminderViewHolder(
+        return ReminderViewHolderImpl(
             ItemReminderBinding.inflate(
                 LayoutInflater.from(parent.context),
                 parent,
@@ -38,7 +36,7 @@ class ReminderListAdapter(private val clickListener: OnClickListener) :
     override fun onBindViewHolder(holder: ReminderViewHolder, position: Int) {
         val reminderAndHistory = getItem(position)
 
-        holder.itemView.let{
+        holder.itemView.let {
             (it.layoutParams as? FlexboxLayoutManager.LayoutParams)?.apply {
                 flexShrink = 0f
                 alignSelf = AlignSelf.CENTER
@@ -54,17 +52,23 @@ class ReminderListAdapter(private val clickListener: OnClickListener) :
             }
         }
 
-        holder.bind(reminderAndHistory)
+        (holder as ReminderViewHolderImpl).bind(reminderAndHistory)
     }
 
-    class ReminderViewHolder(private val binding: ItemReminderBinding) :
-        RecyclerView.ViewHolder(binding.root) {
-        val reminder: Reminder?
-            get() = binding.data?.reminder
+    abstract class ReminderViewHolder(root: View) :
+        RecyclerView.ViewHolder(root) {
+        abstract var reminder: Reminder?
+            protected set
+    }
 
-        fun bind(reminder: ReminderAndHistory) {
+    private class ReminderViewHolderImpl(private val binding: ItemReminderBinding) :
+        ReminderListAdapter.ReminderViewHolder(binding.root) {
+        override var reminder: Reminder? = null
+
+        fun bind(reminderAndHistory: ReminderAndHistory) {
+            this.reminder = reminderAndHistory.reminder
             binding.apply {
-                this.data = reminder
+                this.data = reminderAndHistory
                 executePendingBindings()
             }
         }

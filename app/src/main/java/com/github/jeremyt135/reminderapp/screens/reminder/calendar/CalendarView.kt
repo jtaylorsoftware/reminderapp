@@ -37,7 +37,6 @@ class CalendarView : ConstraintLayout {
     }
     private var binding: ViewCalendarBinding? =
         ViewCalendarBinding.inflate(LayoutInflater.from(context), this, true)
-    private var reminderListAdapter: ReminderListAdapter? = null
     private var calendarAdapter: CalendarAdapter? = null
 
     var onReminderSelectedListener: OnReminderSelectedListener? = null
@@ -83,12 +82,12 @@ class CalendarView : ConstraintLayout {
 
     private fun setupBindingViews() {
         Timber.d("setupBindingViews")
-        reminderListAdapter = ReminderListAdapter(ReminderListAdapter.OnClickListener {
-            onReminderSelectedListener?.invoke(it.reminder)
-        })
 
         binding?.apply {
-            recyclerCalendarReminders.adapter = reminderListAdapter
+            recyclerCalendarReminders.adapter =
+                CalendarReminderListAdapter(ReminderListAdapter.OnClickListener {
+                    onReminderSelectedListener?.invoke(it.reminder)
+                })
 
             // Use a GLM with Calendar's RecyclerView that has disabled scrolling in both directions
             recyclerCalendar.layoutManager =
@@ -131,18 +130,20 @@ class CalendarView : ConstraintLayout {
 
     @ExperimentalCoroutinesApi
     private fun observeCalendarData() {
-        viewModel.calendarData.observe(requireNotNull(findViewTreeLifecycleOwner()), object : Observer<List<Any>?> {
-            override fun onChanged(data: List<Any>?) {
-                if (data != null) {
-                    val constraintSet = ConstraintSet()
-                    constraintSet.load(context, R.layout.view_calendar_loaded)
-                    TransitionManager.beginDelayedTransition(this@CalendarView)
-                    constraintSet.applyTo(this@CalendarView)
-                    viewModel.calendarData.removeObserver(this)
+        viewModel.calendarData.observe(
+            requireNotNull(findViewTreeLifecycleOwner()),
+            object : Observer<List<Any>?> {
+                override fun onChanged(data: List<Any>?) {
+                    if (data != null) {
+                        val constraintSet = ConstraintSet()
+                        constraintSet.load(context, R.layout.view_calendar_loaded)
+                        TransitionManager.beginDelayedTransition(this@CalendarView)
+                        constraintSet.applyTo(this@CalendarView)
+                        viewModel.calendarData.removeObserver(this)
+                    }
                 }
-            }
 
-        })
+            })
     }
 
     private var coroutineScope: CoroutineScope? = CoroutineScope(Dispatchers.Main)

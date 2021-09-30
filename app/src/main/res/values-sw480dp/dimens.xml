@@ -12,4 +12,8 @@
     <!-- Common dimens for recycler items -->
     <dimen name="recycler_item_width">400dp</dimen>
     <dimen name="recycler_item_width_land">560dp</dimen>
+
+    <!-- Size of recycler reminder item in calendar view -->
+    <dimen name="recycler_item_calendar_width">360dp</dimen>
+    <dimen name="recycler_item_calendar_width_land">360dp</dimen>
 </resources>

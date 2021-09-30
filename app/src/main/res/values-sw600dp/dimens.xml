@@ -9,12 +9,14 @@
     <dimen name="calendar_cell_margin_h">8dp</dimen>
     <dimen name="calendar_cell_margin_v">3dp</dimen>
 
-    <!-- Common dimens constraints for views -->
-    <dimen name="constraint_widthPercent">0.80</dimen>
-
     <!-- Height of Bottom app/navigation bar, using values according to material design page -->
     <dimen name="bottom_app_bar_height">64dp</dimen>
 
     <!-- Common dimens for recycler items -->
     <dimen name="recycler_item_width">480dp</dimen>
+    <dimen name="recycler_item_width_land">560dp</dimen>
+    
+    <!-- Size of recycler reminder item in calendar view -->
+    <dimen name="recycler_item_calendar_width">400dp</dimen>
+    <dimen name="recycler_item_calendar_width_land">400dp</dimen>
 </resources>

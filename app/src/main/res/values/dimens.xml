@@ -19,10 +19,11 @@
     <dimen name="recycler_item_width">250dp</dimen>
     <dimen name="recycler_item_width_land">300dp</dimen>
 
-    <!-- Common dimens constraints for views -->
-    <dimen name="constraint_widthPercent">0.95</dimen>
-
     <!-- Specific overrides -->
+
+    <!-- Size of recycler reminder item in calendar view -->
+    <dimen name="recycler_item_calendar_width">250dp</dimen>
+    <dimen name="recycler_item_calendar_width_land">250</dimen>
 
     <!-- Margin for the alarms (not separators) in fragment_alarm_list -->
     <dimen name="recycler_alarm_item_margin_h">32dp</dimen>
