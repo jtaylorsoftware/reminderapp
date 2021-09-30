@@ -41,11 +41,11 @@ class RemindersFragment : Fragment() {
         })
 
         FragmentRemindersBinding.bind(view).apply {
+            model = viewModel
+            lifecycleOwner = viewLifecycleOwner
+
             recyclerRemindersList.adapter = reminderListAdapter
             registerForContextMenu(recyclerRemindersList)
-
-            lifecycleOwner = viewLifecycleOwner
-            model = viewModel
         }
 
         activity?.findViewById<View>(R.id.fab_reminders_add)?.setOnClickListener {

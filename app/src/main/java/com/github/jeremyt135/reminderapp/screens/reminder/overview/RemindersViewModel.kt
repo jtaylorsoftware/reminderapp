@@ -1,5 +1,6 @@
 package com.github.jeremyt135.reminderapp.screens.reminder.overview
 
+import android.annotation.SuppressLint
 import android.app.Application
 import android.content.Context
 import android.content.SharedPreferences
@@ -17,7 +18,9 @@ import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.ReminderAndHistory
 import com.github.jeremyt135.reminderapp.data.domain.ReminderStatus
+import com.github.jeremyt135.reminderapp.di.AppCoroutineScope
 import com.github.jeremyt135.reminderapp.di.DefaultDispatcher
+import com.github.jeremyt135.reminderapp.di.IoDispatcher
 import com.github.jeremyt135.reminderapp.service.AlarmService
 import com.github.jeremyt135.reminderapp.util.MutableEventFlow
 import com.github.jeremyt135.reminderapp.util.asEventFlow
@@ -25,9 +28,8 @@ import com.github.jeremyt135.reminderapp.util.currentLocalDateTime
 import com.github.jeremyt135.reminderapp.util.toEpochMilli
 import com.github.jeremyt135.reminderapp.work.AlarmActionHandler
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -39,28 +41,41 @@ class RemindersViewModel @Inject constructor(
     private val reminderRepository: ReminderRepository,
     private val alarmRepository: AlarmRepository,
     private val preferences: SharedPreferences,
-    @DefaultDispatcher private val dispatcher: CoroutineDispatcher
+    @DefaultDispatcher private val dispatcher: CoroutineDispatcher,
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+    @AppCoroutineScope private val appCoroutineScope: CoroutineScope = MainScope(),
 ) : AndroidViewModel(application) {
+    private val _sortAndFilterRules = MutableStateFlow(SortAndFilterRules())
+
     /**
      * Determines how to sort `reminders`
      */
-    lateinit var reminderSortRules: ReminderSortRules
-        private set
+    val reminderSortRules: ReminderSortRules
+        get() = _sortAndFilterRules.value.sortRules
 
     /**
      * Determines what data to include in `reminders`
      */
-    lateinit var reminderFilterRules: ReminderFilterRules
-        private set
-
-    private val _reminders = MutableStateFlow(emptyList<ReminderAndHistory>())
+    val reminderFilterRules: ReminderFilterRules
+        get() = _sortAndFilterRules.value.filterRules
 
     /**
      * List of `ReminderAndHistory` where each object's `History` corresponds to
      * the most recent saved `History` entity for its `Reminder`.
      */
+    @ExperimentalCoroutinesApi
     val reminders: LiveData<List<ReminderAndHistory>> =
-        _reminders.asLiveData(viewModelScope.coroutineContext)
+        _sortAndFilterRules.flatMapLatest { sortAndFilterRules  ->
+            reminderRepository.getAllWithTodayHistory().mapLatest { list ->
+                filterReminders(list, sortAndFilterRules.filterRules)
+            }.mapLatest { list ->
+                sortReminders(list, sortAndFilterRules.sortRules)
+            }.flowOn(dispatcher)
+        }.stateIn(
+            viewModelScope,
+            started = SharingStarted.Lazily,
+            emptyList()
+        ).asLiveData(viewModelScope.coroutineContext)
 
     private val _navigateToEditor = MutableEventFlow<Reminder>()
 
@@ -72,50 +87,63 @@ class RemindersViewModel @Inject constructor(
     init {
         loadSortPreferences()
         loadFilterPreferences()
-        sortAndFilterList()
     }
 
     private fun loadSortPreferences() {
-        val sortTime = preferences.getString("SORT_REMINDER_TIME", "NONE")!!
-        val sortDescription = preferences.getString("SORT_REMINDER_DESCRIPTION", "NONE")!!
-        reminderSortRules =
-            ReminderSortRules(SortRule.valueOf(sortTime), SortRule.valueOf(sortDescription))
+        viewModelScope.launch(ioDispatcher) {
+            val sortTime = preferences.getString("SORT_REMINDER_TIME", "NONE")!!
+            val sortDescription = preferences.getString("SORT_REMINDER_DESCRIPTION", "NONE")!!
+            _sortAndFilterRules.value = _sortAndFilterRules.value.copy(
+                sortRules =
+                ReminderSortRules(
+                    SortRule.valueOf(sortTime),
+                    SortRule.valueOf(sortDescription)
+                )
+            )
+        }
     }
 
     private fun loadFilterPreferences() {
-        val includeToday = preferences.getBoolean("FILTER_REMINDER_TODAY", true)
-        val daysOfWeek =
-            preferences.getString("FILTER_REMINDER_DAYS", DayOfWeek.values().joinToString(","))!!
-                .let { storedValue ->
-                    if (storedValue.isEmpty()) {
-                        emptySet()
-                    } else {
-                        storedValue.split(",").map { DayOfWeek.valueOf(it) }.toSet()
+        viewModelScope.launch(ioDispatcher) {
+            val includeToday = preferences.getBoolean("FILTER_REMINDER_TODAY", true)
+            val daysOfWeek =
+                preferences.getString(
+                    "FILTER_REMINDER_DAYS",
+                    DayOfWeek.values().joinToString(",")
+                )!!
+                    .let { storedValue ->
+                        if (storedValue.isEmpty()) {
+                            emptySet()
+                        } else {
+                            storedValue.split(",").map { DayOfWeek.valueOf(it) }.toSet()
+                        }
                     }
+            val statuses = preferences.getString(
+                "FILTER_REMINDER_STATUS",
+                ReminderStatus.values().joinToString(",")
+            )!!.let { storedValue ->
+                if (storedValue.isEmpty()) {
+                    emptySet()
+                } else {
+                    storedValue.split(",").map { ReminderStatus.valueOf(it) }.toSet()
                 }
-        val statuses = preferences.getString(
-            "FILTER_REMINDER_STATUS",
-            ReminderStatus.values().joinToString(",")
-        )!!.let { storedValue ->
-            if (storedValue.isEmpty()) {
-                emptySet()
-            } else {
-                storedValue.split(",").map { ReminderStatus.valueOf(it) }.toSet()
             }
+            val filterStartDate = preferences.getString("FILTER_REMINDER_START_DATE", "")!!.let {
+                if (it.isNotEmpty()) LocalDate.parse(it) else null
+            }
+            val filterEndDate = preferences.getString("FILTER_REMINDER_END_DATE", "")!!.let {
+                if (it.isNotEmpty()) LocalDate.parse(it) else null
+            }
+            _sortAndFilterRules.value = _sortAndFilterRules.value.copy(
+                filterRules = ReminderFilterRules(
+                    includeToday,
+                    daysOfWeek,
+                    statuses,
+                    startDate = filterStartDate,
+                    endDate = filterEndDate
+                )
+            )
         }
-        val filterStartDate = preferences.getString("FILTER_REMINDER_START_DATE", "")!!.let {
-            if (it.isNotEmpty()) LocalDate.parse(it) else null
-        }
-        val filterEndDate = preferences.getString("FILTER_REMINDER_END_DATE", "")!!.let {
-            if (it.isNotEmpty()) LocalDate.parse(it) else null
-        }
-        reminderFilterRules = ReminderFilterRules(
-            includeToday,
-            daysOfWeek,
-            statuses,
-            startDate = filterStartDate,
-            endDate = filterEndDate
-        )
     }
 
     /**
@@ -241,16 +269,20 @@ class RemindersViewModel @Inject constructor(
         if (newRules == reminderSortRules) {
             return
         }
-        reminderSortRules = newRules
+        _sortAndFilterRules.value = _sortAndFilterRules.value.copy(
+            sortRules = newRules
+        )
         saveSortRules()
-        sortAndFilterList()
     }
 
+    @SuppressLint("ApplySharedPref")
     private fun saveSortRules() {
-        with(preferences.edit()) {
-            putString("SORT_REMINDER_TIME", reminderSortRules.time.toString())
-            putString("SORT_REMINDER_DESCRIPTION", reminderSortRules.description.toString())
-            apply()
+        appCoroutineScope.launch(ioDispatcher) {
+            with(preferences.edit()) {
+                putString("SORT_REMINDER_TIME", reminderSortRules.time.toString())
+                putString("SORT_REMINDER_DESCRIPTION", reminderSortRules.description.toString())
+                commit()
+            }
         }
     }
 
@@ -263,67 +295,25 @@ class RemindersViewModel @Inject constructor(
         if (newRules == reminderFilterRules) {
             return
         }
-        reminderFilterRules = newRules
+        _sortAndFilterRules.value = _sortAndFilterRules.value.copy(
+            filterRules = newRules
+        )
         saveFilterRules()
-        sortAndFilterList()
     }
 
+    @SuppressLint("ApplySharedPref")
     private fun saveFilterRules() {
-        with(preferences.edit()) {
-            putBoolean("FILTER_REMINDER_TODAY", reminderFilterRules.includeToday)
-            putString("FILTER_REMINDER_DAYS", reminderFilterRules.daysOfWeek.joinToString(","))
-            putString(
-                "FILTER_REMINDER_STATUS",
-                reminderFilterRules.reminderStatuses.joinToString(",")
-            )
-            putString("FILTER_REMINDER_START_DATE", reminderFilterRules.startDate?.toString())
-            putString("FILTER_REMINDER_END_DATE", reminderFilterRules.endDate?.toString())
-            apply()
-        }
-    }
-
-    private fun sortAndFilterList() {
-        viewModelScope.launch {
-            reminderRepository.getAllWithTodayHistory().map { list ->
-                list.filter {
-                    // is the reminder within the filter's start and end date
-                    val withinDateRange =
-                        reminderFilterRules.checkWithinDateRange(it.reminder.schedulingRules)
-                    if (!withinDateRange) {
-                        return@filter false
-                    }
-
-                    // does the filter include at least one of the reminder's DayOfWeeks?
-                    val withinDayOfWeek =
-                        reminderFilterRules.checkWithinDaysOfWeek(it.reminder.schedulingRules)
-                    // does the filter include the reminder's status?
-                    val status =
-                        it.history?.completionStatus ?: ReminderStatus.PENDING in reminderFilterRules.reminderStatuses
-
-                    // include reminder if the date or time is included and its status is included
-                    withinDateRange && withinDayOfWeek && status
-                }
-            }.map { list ->
-                // sort by time first
-                var comparator = compareBy<ReminderAndHistory> {
-                    when (reminderSortRules.time) {
-                        SortRule.ASCENDING -> calculateTimeOrder(it.reminder)
-                        SortRule.DESCENDING -> -1.0 * calculateTimeOrder(it.reminder)
-                        else -> 0.0
-                    }
-                }
-                // then sort by an alphabetical ordering of the description
-                comparator = when (reminderSortRules.description) {
-                    SortRule.ASCENDING ->
-                        comparator.thenBy(String.CASE_INSENSITIVE_ORDER) { it.reminder.description }
-                    SortRule.DESCENDING ->
-                        comparator.thenByDescending(String.CASE_INSENSITIVE_ORDER) { it.reminder.description }
-                    else -> comparator
-                }
-
-                list.sortedWith(comparator)
-            }.flowOn(dispatcher).collect {
-                _reminders.emit(it)
+        appCoroutineScope.launch(ioDispatcher) {
+            with(preferences.edit()) {
+                putBoolean("FILTER_REMINDER_TODAY", reminderFilterRules.includeToday)
+                putString("FILTER_REMINDER_DAYS", reminderFilterRules.daysOfWeek.joinToString(","))
+                putString(
+                    "FILTER_REMINDER_STATUS",
+                    reminderFilterRules.reminderStatuses.joinToString(",")
+                )
+                putString("FILTER_REMINDER_START_DATE", reminderFilterRules.startDate?.toString())
+                putString("FILTER_REMINDER_END_DATE", reminderFilterRules.endDate?.toString())
+                commit()
             }
         }
     }
@@ -334,5 +324,58 @@ class RemindersViewModel @Inject constructor(
             allowSameDay = true
         )?.toEpochMilli()
             ?: 0
+    }
+
+    private data class SortAndFilterRules(
+        val filterRules: ReminderFilterRules = ReminderFilterRules(),
+        val sortRules: ReminderSortRules = ReminderSortRules()
+    )
+
+    private suspend fun filterReminders(
+        list: List<ReminderAndHistory>,
+        filterRules: ReminderFilterRules
+    ): List<ReminderAndHistory> = list.filter {
+        yield()
+        // is the reminder within the filter's start and end date
+        val withinDateRange =
+            filterRules.checkWithinDateRange(it.reminder.schedulingRules)
+        if (!withinDateRange) {
+            return@filter false
+        }
+
+        // does the filter include at least one of the reminder's DayOfWeeks?
+        val withinDayOfWeek =
+            filterRules.checkWithinDaysOfWeek(it.reminder.schedulingRules)
+        // does the filter include the reminder's status?
+        val status =
+            it.history?.completionStatus ?: ReminderStatus.PENDING in filterRules.reminderStatuses
+
+        // include reminder if the date or time is included and its status is included
+        withinDateRange && withinDayOfWeek && status
+    }
+
+    private suspend fun sortReminders(
+        list: List<ReminderAndHistory>,
+        sortRules: ReminderSortRules
+    ): List<ReminderAndHistory> {
+        yield()
+        // sort by time first
+        var comparator = compareBy<ReminderAndHistory> {
+            when (sortRules.time) {
+                SortRule.ASCENDING -> calculateTimeOrder(it.reminder)
+                SortRule.DESCENDING -> -1.0 * calculateTimeOrder(it.reminder)
+                else -> 0.0
+            }
+        }
+        // then sort by an alphabetical ordering of the description
+        comparator = when (sortRules.description) {
+            SortRule.ASCENDING ->
+                comparator.thenBy(String.CASE_INSENSITIVE_ORDER) { it.reminder.description }
+            SortRule.DESCENDING ->
+                comparator.thenByDescending(String.CASE_INSENSITIVE_ORDER) { it.reminder.description }
+            else -> comparator
+        }
+
+        return list.sortedWith(comparator)
     }
 }
