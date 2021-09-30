@@ -17,7 +17,6 @@
         android:theme="@style/Theme.ReminderApp">
         <activity
             android:name=".reminderapp.MainActivity"
-            android:configChanges="uiMode"
             android:exported="true"
             android:windowSoftInputMode="adjustPan">
             <intent-filter>
@@ -27,12 +26,11 @@
         </activity>
         <activity
             android:name=".reminderapp.screens.reminder.editor.ReminderEditorActivity"
-            android:configChanges="orientation|keyboardHidden|screenSize|uiMode"
+            android:configChanges="orientation|keyboardHidden|screenSize"
             android:parentActivityName=".reminderapp.MainActivity"
             android:windowSoftInputMode="adjustPan" />
         <activity
             android:name=".reminderapp.screens.preferences.PreferencesActivity"
-            android:configChanges="uiMode"
             android:theme="@style/Theme.Preferences" />
         <activity android:name=".reminderapp.screens.reminder.editor.ReminderEditorTestActivity" />
         <activity android:name=".reminderapp.HiltTestActivity" />

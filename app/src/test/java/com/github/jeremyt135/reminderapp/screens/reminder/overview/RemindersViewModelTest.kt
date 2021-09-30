@@ -1,7 +1,9 @@
 package com.github.jeremyt135.reminderapp.screens.reminder.overview
 
-import android.content.SharedPreferences
+import android.app.Application
+import android.content.Context
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
+import androidx.test.core.app.ApplicationProvider
 import androidx.work.WorkManager
 import com.github.jeremyt135.reminderapp.MainCoroutineRule
 import com.github.jeremyt135.reminderapp.broadcast.cancelAlarmIntentsForReminder
@@ -11,9 +13,9 @@ import com.github.jeremyt135.reminderapp.data.local.FakeHistoryLocalDataSource
 import com.github.jeremyt135.reminderapp.getOrAwaitValue
 import com.github.jeremyt135.reminderapp.service.AlarmService
 import com.github.jeremyt135.reminderapp.util.currentEpochMilli
-import com.github.jeremyt135.reminderapp.util.currentLocalDateTime
 import com.github.jeremyt135.reminderapp.work.AlarmActionHandler
 import com.google.common.truth.Truth.assertThat
+import dagger.hilt.android.testing.HiltTestApplication
 import io.mockk.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collect
@@ -22,11 +24,17 @@ import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.RuntimeEnvironment
+import org.robolectric.annotation.Config
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
 
 @ExperimentalCoroutinesApi
+@RunWith(RobolectricTestRunner::class)
+@Config(application = Application::class)
 class RemindersViewModelTest {
     private lateinit var fakeReminderRepository: ReminderRepository
     private lateinit var fakeAlarmRepository: AlarmRepository
@@ -95,20 +103,6 @@ class RemindersViewModelTest {
             )
         fakeAlarmRepository = FakeAlarmRepository(alarms)
         fakeHistoryRepository = FakeHistoryRepository(FakeHistoryLocalDataSource(historyEntries))
-        val mockSharedPrefs = mockkClass(SharedPreferences::class, relaxed = true)
-
-        every { mockSharedPrefs.edit() } returns mockk(relaxed = true)
-        every {
-            mockSharedPrefs.getString("FILTER_REMINDER_STATUS", any())
-        } returns ReminderStatus.values().joinToString(",")
-        every {
-            mockSharedPrefs.getString("FILTER_REMINDER_DAYS", any())
-        } returns DayOfWeek.values().joinToString(",")
-        every {
-            mockSharedPrefs.getBoolean("FILTER_REMINDER_TODAY", any())
-        } returns true
-        every { mockSharedPrefs.getString("SORT_REMINDER_TIME", "NONE") } returns "NONE"
-        every { mockSharedPrefs.getString("SORT_REMINDER_DESCRIPTION", "NONE") } returns "NONE"
 
         mockkObject(AlarmService.Companion)
         justRun { AlarmService.requestStop(any()) }
@@ -119,12 +113,14 @@ class RemindersViewModelTest {
         mockkStatic(::cancelAlarmIntentsForReminder)
         justRun { cancelAlarmIntentsForReminder(any(), any()) }
 
+
         viewModel = RemindersViewModel(
-            mockk(relaxed = true),
+            RuntimeEnvironment.getApplication(),
             fakeReminderRepository,
             fakeAlarmRepository,
-            mockSharedPrefs,
-            mainCoroutineRule.dispatcher
+            mainCoroutineRule.dispatcher,
+            mainCoroutineRule.dispatcher,
+            mainCoroutineRule
         )
     }
 

@@ -22,9 +22,6 @@ class RemindersFragment : Fragment() {
 
     private lateinit var reminderListAdapter: ReminderListAdapter
 
-    @Inject
-    lateinit var sharedPreferences: SharedPreferences
-
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,

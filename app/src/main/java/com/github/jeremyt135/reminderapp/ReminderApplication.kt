@@ -3,6 +3,7 @@ package com.github.jeremyt135.reminderapp
 import android.app.Application
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.preference.PreferenceManager
 import com.github.jeremyt135.BuildConfig
@@ -11,6 +12,7 @@ import com.github.jeremyt135.reminderapp.broadcast.rescheduleReminders
 import com.github.jeremyt135.reminderapp.data.AlarmRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.di.AppCoroutineScope
+import com.github.jeremyt135.reminderapp.settings.getBaseSharedPreferences
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -32,11 +34,9 @@ class ReminderApplication : Application(), androidx.work.Configuration.Provider 
     @Inject
     lateinit var workerFactory: HiltWorkerFactory
 
-    @Inject
-    lateinit var sharedPreferences: SharedPreferences
-
     override fun onCreate() {
         super.onCreate()
+        setDefaultPreferences()
         applicationScope.launch { delayedInit() }
     }
 
@@ -53,4 +53,26 @@ class ReminderApplication : Application(), androidx.work.Configuration.Provider 
         androidx.work.Configuration.Builder()
             .setWorkerFactory(workerFactory)
             .build()
+
+    /**
+     * Changes the default night mode for the app.
+     */
+    fun setDefaultNightMode(mode: Int) {
+        AppCompatDelegate.setDefaultNightMode(mode)
+    }
+
+    /**
+     * Sets the default theme preferences.
+     */
+    private fun setDefaultPreferences() {
+        val preferencesName = getString(R.string.preference_file_name)
+
+        PreferenceManager.setDefaultValues(
+            this,
+            preferencesName,
+            Context.MODE_PRIVATE,
+            R.xml.preference_screen,
+            false
+        )
+    }
 }

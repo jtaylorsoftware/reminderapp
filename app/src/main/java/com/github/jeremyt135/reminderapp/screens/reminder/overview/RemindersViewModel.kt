@@ -22,6 +22,7 @@ import com.github.jeremyt135.reminderapp.di.AppCoroutineScope
 import com.github.jeremyt135.reminderapp.di.DefaultDispatcher
 import com.github.jeremyt135.reminderapp.di.IoDispatcher
 import com.github.jeremyt135.reminderapp.service.AlarmService
+import com.github.jeremyt135.reminderapp.settings.getBaseSharedPreferences
 import com.github.jeremyt135.reminderapp.util.MutableEventFlow
 import com.github.jeremyt135.reminderapp.util.asEventFlow
 import com.github.jeremyt135.reminderapp.util.currentLocalDateTime
@@ -40,11 +41,14 @@ class RemindersViewModel @Inject constructor(
     application: Application,
     private val reminderRepository: ReminderRepository,
     private val alarmRepository: AlarmRepository,
-    private val preferences: SharedPreferences,
     @DefaultDispatcher private val dispatcher: CoroutineDispatcher,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
     @AppCoroutineScope private val appCoroutineScope: CoroutineScope = MainScope(),
 ) : AndroidViewModel(application) {
+    private val sharedPreferences: SharedPreferences by lazy {
+        application.applicationContext.getBaseSharedPreferences()
+    }
+
     private val _sortAndFilterRules = MutableStateFlow(SortAndFilterRules())
 
     /**
@@ -91,8 +95,8 @@ class RemindersViewModel @Inject constructor(
 
     private fun loadSortPreferences() {
         viewModelScope.launch(ioDispatcher) {
-            val sortTime = preferences.getString("SORT_REMINDER_TIME", "NONE")!!
-            val sortDescription = preferences.getString("SORT_REMINDER_DESCRIPTION", "NONE")!!
+            val sortTime = sharedPreferences.getString("SORT_REMINDER_TIME", "NONE")!!
+            val sortDescription = sharedPreferences.getString("SORT_REMINDER_DESCRIPTION", "NONE")!!
             _sortAndFilterRules.value = _sortAndFilterRules.value.copy(
                 sortRules =
                 ReminderSortRules(
@@ -105,9 +109,9 @@ class RemindersViewModel @Inject constructor(
 
     private fun loadFilterPreferences() {
         viewModelScope.launch(ioDispatcher) {
-            val includeToday = preferences.getBoolean("FILTER_REMINDER_TODAY", true)
+            val includeToday = sharedPreferences.getBoolean("FILTER_REMINDER_TODAY", true)
             val daysOfWeek =
-                preferences.getString(
+                sharedPreferences.getString(
                     "FILTER_REMINDER_DAYS",
                     DayOfWeek.values().joinToString(",")
                 )!!
@@ -118,7 +122,7 @@ class RemindersViewModel @Inject constructor(
                             storedValue.split(",").map { DayOfWeek.valueOf(it) }.toSet()
                         }
                     }
-            val statuses = preferences.getString(
+            val statuses = sharedPreferences.getString(
                 "FILTER_REMINDER_STATUS",
                 ReminderStatus.values().joinToString(",")
             )!!.let { storedValue ->
@@ -128,10 +132,10 @@ class RemindersViewModel @Inject constructor(
                     storedValue.split(",").map { ReminderStatus.valueOf(it) }.toSet()
                 }
             }
-            val filterStartDate = preferences.getString("FILTER_REMINDER_START_DATE", "")!!.let {
+            val filterStartDate = sharedPreferences.getString("FILTER_REMINDER_START_DATE", "")!!.let {
                 if (it.isNotEmpty()) LocalDate.parse(it) else null
             }
-            val filterEndDate = preferences.getString("FILTER_REMINDER_END_DATE", "")!!.let {
+            val filterEndDate = sharedPreferences.getString("FILTER_REMINDER_END_DATE", "")!!.let {
                 if (it.isNotEmpty()) LocalDate.parse(it) else null
             }
             _sortAndFilterRules.value = _sortAndFilterRules.value.copy(
@@ -278,7 +282,7 @@ class RemindersViewModel @Inject constructor(
     @SuppressLint("ApplySharedPref")
     private fun saveSortRules() {
         appCoroutineScope.launch(ioDispatcher) {
-            with(preferences.edit()) {
+            with(sharedPreferences.edit()) {
                 putString("SORT_REMINDER_TIME", reminderSortRules.time.toString())
                 putString("SORT_REMINDER_DESCRIPTION", reminderSortRules.description.toString())
                 commit()
@@ -304,7 +308,7 @@ class RemindersViewModel @Inject constructor(
     @SuppressLint("ApplySharedPref")
     private fun saveFilterRules() {
         appCoroutineScope.launch(ioDispatcher) {
-            with(preferences.edit()) {
+            with(sharedPreferences.edit()) {
                 putBoolean("FILTER_REMINDER_TODAY", reminderFilterRules.includeToday)
                 putString("FILTER_REMINDER_DAYS", reminderFilterRules.daysOfWeek.joinToString(","))
                 putString(

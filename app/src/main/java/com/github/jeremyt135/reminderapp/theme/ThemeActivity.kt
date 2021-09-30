@@ -1,16 +1,14 @@
 package com.github.jeremyt135.reminderapp.theme
 
-import android.content.Context
 import android.content.SharedPreferences
-import android.content.res.Configuration
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
-import androidx.preference.PreferenceManager
 import com.github.jeremyt135.R
+import com.github.jeremyt135.reminderapp.ReminderApplication
+import com.github.jeremyt135.reminderapp.settings.getBaseSharedPreferences
 import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
-import javax.inject.Inject
 
 /**
  * An Activity that is aware of the theme preference and will recreate itself on changes.
@@ -18,8 +16,10 @@ import javax.inject.Inject
  */
 @AndroidEntryPoint
 open class ThemeActivity: AppCompatActivity() {
-    @Inject
-    lateinit var sharedPreferences: SharedPreferences
+
+    protected val sharedPreferences: SharedPreferences by lazy {
+        getBaseSharedPreferences()
+    }
 
     // Theme set at time Activity was created or last resumed
     private lateinit var localTheme: ThemeSetting
@@ -29,31 +29,23 @@ open class ThemeActivity: AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        setDefaultPreferences()
         localTheme = sharedPreferences.getTheme(themeKey)
-    }
-
-    override fun onConfigurationChanged(newConfig: Configuration) {
-        super.onConfigurationChanged(newConfig)
-
-        onUiModeChanged(sharedPreferences.getTheme(themeKey))
+        setInitialTheme(localTheme)
+        super.onCreate(savedInstanceState)
     }
 
     override fun onResume() {
         super.onResume()
         // Handle any unknown theme change
         val theme = sharedPreferences.getTheme(themeKey)
-        onThemeChanged(theme)
+        handleThemeChange(theme)
     }
-
 
     /**
      * Recreates the activity with the new theme if it is not the same as the local one.
      * @param theme The new theme
      */
-    fun onThemeChanged(theme: ThemeSetting) {
+    protected fun handleThemeChange(theme: ThemeSetting) {
         if (handleThemeChange(theme, localTheme)) {
             localTheme = theme
         }
@@ -72,38 +64,17 @@ open class ThemeActivity: AppCompatActivity() {
         }
 
         Timber.d("Theme changed: $newTheme")
-        AppCompatDelegate.setDefaultNightMode(newTheme.toAppNightMode())
-        recreate()
+        setDefaultNightMode(newTheme.toAppNightMode())
         return true
     }
 
-    /**
-     * Recreates the activity with a new night mode value based on the theme setting.
-     * If the theme setting is not set to ThemeSetting.SYSTEM, nothing is done and the current ThemeSetting
-     * is left in place as the value used as the default night mode.
-     * @param themeSetting The current theme setting.
-     */
-    private fun onUiModeChanged(themeSetting: ThemeSetting) {
-        if (themeSetting != ThemeSetting.SYSTEM) {
-            return
-        }
-
-        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
-        recreate()
+    private fun setInitialTheme(themeSetting: ThemeSetting) {
+        setDefaultNightMode(themeSetting.toAppNightMode())
     }
 
-    /**
-     * Sets the default theme preferences.
-     */
-    private fun setDefaultPreferences() {
-        val preferencesName = getString(R.string.preference_file_name)
-
-        PreferenceManager.setDefaultValues(
-            this,
-            preferencesName,
-            Context.MODE_PRIVATE,
-            R.xml.preference_screen,
-            false
-        )
+    private fun setDefaultNightMode(mode: Int) {
+        (application as? ReminderApplication)?.run {
+            setDefaultNightMode(mode)
+        }
     }
 }
