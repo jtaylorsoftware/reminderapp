@@ -33,11 +33,6 @@ class CalendarFragment : Fragment(R.layout.fragment_calendar) {
         calendarView.refreshData()
     }
 
-    override fun onStop() {
-        super.onStop()
-        calendarView.clearSelectedDay()
-    }
-
     private fun navigateToEditor(reminder: Reminder) {
         Timber.d("Navigating")
         findNavController().navigate(

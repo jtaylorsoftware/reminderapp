@@ -78,15 +78,6 @@ class CalendarView : ConstraintLayout {
         viewModel.refreshData()
     }
 
-    /**
-     * Deselects the currently selected date.
-     */
-    fun clearSelectedDay() {
-        Timber.d("ClearSelectedDay")
-        viewModel.setSelectedDate(null)
-        calendarAdapter?.clearSelectedDay()
-    }
-
     override fun onConfigurationChanged(newConfig: Configuration?) {
         Timber.d("onConfigurationChanged")
         super.onConfigurationChanged(newConfig)

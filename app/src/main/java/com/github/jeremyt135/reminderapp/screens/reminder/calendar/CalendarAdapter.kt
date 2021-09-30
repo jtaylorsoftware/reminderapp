@@ -27,11 +27,6 @@ class CalendarAdapter(private val daySelectedListener: OnDaySelectedListener) :
 
     private var selectedDateViewHolder: DateViewHolder? = null
 
-    fun clearSelectedDay() {
-        selectedDateViewHolder?.toggleSelected()
-        selectedDateViewHolder = null
-    }
-
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder =
         when (ViewType.fromValue(viewType)) {
             ViewType.HEADING -> HeadingViewHolder(
