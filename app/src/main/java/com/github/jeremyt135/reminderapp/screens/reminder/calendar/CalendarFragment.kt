@@ -7,10 +7,12 @@ import androidx.navigation.fragment.findNavController
 import com.github.jeremyt135.R
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import timber.log.Timber
 import java.time.LocalDate
 
 @AndroidEntryPoint
+@ExperimentalCoroutinesApi
 class CalendarFragment : Fragment(R.layout.fragment_calendar) {
     private lateinit var calendarView: CalendarView
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

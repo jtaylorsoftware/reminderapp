@@ -2,6 +2,7 @@ package com.github.jeremyt135.reminderapp.screens.reminder.calendar
 
 import android.content.Context
 import android.content.res.ColorStateList
+import android.content.res.Configuration
 import android.graphics.PorterDuff
 import android.util.AttributeSet
 import android.view.LayoutInflater
@@ -30,6 +31,7 @@ import java.time.YearMonth
 typealias OnReminderSelectedListener = (Reminder) -> Unit
 typealias OnAddReminderListener = (LocalDate?) -> Unit
 
+@ExperimentalCoroutinesApi
 @AndroidEntryPoint
 class CalendarView : ConstraintLayout {
     private val viewModel: CalendarViewModel by lazy {
@@ -47,19 +49,24 @@ class CalendarView : ConstraintLayout {
     constructor(context: Context, attrs: AttributeSet?, @AttrRes defStyleAttr: Int)
             : super(context, attrs, defStyleAttr)
 
+    private var coroutineScope: CoroutineScope? = MainScope() + CoroutineName("CalendarView")
+
     init {
         Timber.d("Init")
-        setupBindingViews()
+        coroutineScope?.launch {
+            setupBindingViews()
+        }
     }
 
-    @ExperimentalCoroutinesApi
     override fun onAttachedToWindow() {
+        Timber.d("onAttached")
         super.onAttachedToWindow()
         observeCalendarData()
         attachBinding()
     }
 
     override fun onDetachedFromWindow() {
+        Timber.d("onDetached")
         super.onDetachedFromWindow()
         detachBinding()
     }
@@ -78,6 +85,16 @@ class CalendarView : ConstraintLayout {
         Timber.d("ClearSelectedDay")
         viewModel.setSelectedDate(null)
         calendarAdapter?.clearSelectedDay()
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration?) {
+        Timber.d("onConfigurationChanged")
+        super.onConfigurationChanged(newConfig)
+        removeAllViews()
+        binding = ViewCalendarBinding.inflate(LayoutInflater.from(context), this, true)
+        observeCalendarData()
+        setupBindingViews()
+        attachBinding()
     }
 
     private fun setupBindingViews() {
@@ -146,7 +163,6 @@ class CalendarView : ConstraintLayout {
             })
     }
 
-    private var coroutineScope: CoroutineScope? = CoroutineScope(Dispatchers.Main)
 
     private fun attachBinding() {
         Timber.d("attachBinding")
