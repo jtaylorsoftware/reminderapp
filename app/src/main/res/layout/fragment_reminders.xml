@@ -24,7 +24,7 @@
             android:layout_marginTop="16dp"
             android:clickable="true"
             android:focusable="true"
-            android:gravity="start|center_vertical"
+            android:gravity="center"
             android:onClick="@{() -> model.addReminder()}"
             android:paddingStart="16dp"
             android:paddingEnd="16dp"
