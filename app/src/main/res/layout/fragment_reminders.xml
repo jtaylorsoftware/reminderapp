@@ -12,42 +12,32 @@
             type="com.github.jeremyt135.reminderapp.screens.reminder.overview.RemindersViewModel" />
     </data>
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center"
         tools:context=".reminderapp.screens.reminder.overview.RemindersFragment">
 
         <TextView
             android:id="@+id/text_reminders_hint"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
             android:clickable="true"
             android:focusable="true"
-            android:gravity="center"
             android:onClick="@{() -> model.addReminder()}"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp"
             android:text="@string/reminders_empty_hint"
-            android:textColor="@color/text_secondary"
             android:visibility="@{model.reminders.size() > 0 ? View.GONE : View.VISIBLE}"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            style="@style/Widget.App.RecyclerListItem" />
+            style="@style/Widget.App.RecyclerList.Hint" />
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recycler_reminders_list"
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:visibility="@{model.reminders.size() == 0 ? View.GONE : View.VISIBLE}"
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
             app:reminderListData="@{model.reminders}"
             tools:listitem="@layout/item_reminder" />
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+    </LinearLayout>
 </layout>
