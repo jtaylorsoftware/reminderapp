@@ -7,6 +7,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import com.github.jeremyt135.R
 import com.github.jeremyt135.databinding.FragmentHistoryBinding
+import com.google.android.flexbox.*
 import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
 
@@ -31,6 +32,12 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
             lifecycleOwner = viewLifecycleOwner
             model = viewModel
 
+            recyclerHistoryList.layoutManager = FlexboxLayoutManager(requireContext()).apply {
+                flexDirection = FlexDirection.COLUMN
+                flexWrap = FlexWrap.NOWRAP
+                alignItems = AlignItems.CENTER
+                justifyContent = JustifyContent.FLEX_START
+            }
             recyclerHistoryList.adapter = HistoryListAdapter()
         }
     }

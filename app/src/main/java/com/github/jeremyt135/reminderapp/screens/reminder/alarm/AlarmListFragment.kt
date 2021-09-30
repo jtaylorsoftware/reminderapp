@@ -8,6 +8,7 @@ import androidx.navigation.fragment.findNavController
 import com.github.jeremyt135.R
 import com.github.jeremyt135.databinding.FragmentAlarmListBinding
 import com.github.jeremyt135.reminderapp.data.domain.ReminderAndAlarm
+import com.google.android.flexbox.*
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -21,7 +22,14 @@ class AlarmListFragment : Fragment(R.layout.fragment_alarm_list) {
             model = viewModel
             lifecycleOwner = viewLifecycleOwner
 
-            recyclerHistoryList.adapter = AlarmListAdapter {
+            recyclerAlarmList.layoutManager = FlexboxLayoutManager(requireContext()).apply {
+                flexDirection = FlexDirection.COLUMN
+                flexWrap = FlexWrap.NOWRAP
+                alignItems = AlignItems.CENTER
+                justifyContent = JustifyContent.FLEX_START
+            }
+
+            recyclerAlarmList.adapter = AlarmListAdapter {
                 navigateToEditor(it)
             }
         }

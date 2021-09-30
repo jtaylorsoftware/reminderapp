@@ -1,5 +1,6 @@
 package com.github.jeremyt135.reminderapp.screens.reminder.overview
 
+import android.annotation.SuppressLint
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -10,6 +11,9 @@ import com.github.jeremyt135.R
 import com.github.jeremyt135.databinding.ItemReminderBinding
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.ReminderAndHistory
+import com.google.android.flexbox.AlignItems
+import com.google.android.flexbox.AlignSelf
+import com.google.android.flexbox.FlexboxLayoutManager
 import timber.log.Timber
 
 class ReminderListAdapter(private val clickListener: OnClickListener) :
@@ -30,12 +34,16 @@ class ReminderListAdapter(private val clickListener: OnClickListener) :
         )
     }
 
+    @SuppressLint("WrongConstant")
     override fun onBindViewHolder(holder: ReminderViewHolder, position: Int) {
         val reminderAndHistory = getItem(position)
 
-        val touchTarget = holder.itemView.findViewById<View>(R.id.card_item_reminder)
+        holder.itemView.let{
+            (it.layoutParams as? FlexboxLayoutManager.LayoutParams)?.apply {
+                flexShrink = 0f
+                alignSelf = AlignSelf.CENTER
+            }
 
-        touchTarget?.let{
             it.setOnClickListener {
                 clickListener.onClick(reminderAndHistory)
             }
@@ -44,8 +52,6 @@ class ReminderListAdapter(private val clickListener: OnClickListener) :
                 Timber.d("Selected $position with reminder $reminderAndHistory")
                 selectedContextReminder = reminderAndHistory.reminder
             }
-        } ?: run {
-            Timber.e("onBindViewHolder: could not access desired touch target for listener binding")
         }
 
         holder.bind(reminderAndHistory)

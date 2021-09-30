@@ -27,11 +27,11 @@
             android:visibility="@{model.remindersAndAlarms.size() > 0 ? View.GONE : View.VISIBLE}" />
 
         <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recycler_history_list"
-            android:layout_width="match_parent"
+            android:id="@+id/recycler_alarm_list"
+            android:layout_width="wrap_content"
             android:layout_height="match_parent"
             app:alarmListData="@{model.remindersAndAlarms}"
-            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+            tools:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
             tools:listitem="@layout/item_alarm" />
 
     </LinearLayout>

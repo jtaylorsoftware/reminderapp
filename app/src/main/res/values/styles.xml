@@ -103,30 +103,40 @@
         <item name="cornerSize">0dp</item>
     </style>
 
-    <style name="Widget.App.CardView.RecyclerListItem" parent="Widget.MaterialComponents.CardView">
-        <item name="android:layout_width">0dp</item>
-        <item name="android:layout_height">wrap_content</item>
+    <style name="Widget.App.RecyclerList.Card" parent="Widget.MaterialComponents.CardView">
+        <item name="android:layout_width">@dimen/recycler_item_width</item>
+        <item name="android:layout_height">@dimen/recycler_item_height</item>
         <item name="android:layout_margin">8dp</item>
         <item name="cardElevation">@dimen/recycler_item_cardView_elevation</item>
-        <item name="layout_constraintWidth_max">@dimen/recycler_item_constraintWidth_max</item>
-        <item name="layout_constraintWidth_min">@dimen/recycler_item_constraintWidth_min</item>
     </style>
 
-    <style name="Widget.App.RecyclerListItem" parent="Widget.MaterialComponents.CardView">
-        <item name="android:layout_width">0dp</item>
-        <item name="android:layout_height">wrap_content</item>
+    <style name="Widget.App.RecyclerList.Divider" parent="">
+        <item name="android:layout_height">1dp</item>
+        <item name="android:layout_width">@dimen/recycler_item_width</item>
         <item name="android:layout_margin">8dp</item>
-        <item name="layout_constraintWidth_max">@dimen/recycler_item_constraintWidth_max</item>
-        <item name="layout_constraintWidth_min">@dimen/recycler_item_constraintWidth_min</item>
     </style>
 
-    <style name="Widget.App.RecyclerList.Hint" parent="Widget.App.RecyclerListItem">
+    <style name="Widget.App.RecyclerList.Divider.Title" parent="">
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_width">@dimen/recycler_item_width</item>
+        <item name="android:paddingStart">8dp</item>
+        <item name="android:textAppearance">@style/TextAppearance.MaterialComponents.Caption</item>
+    </style>
+
+    <style name="Widget.App.RecyclerList.Card.Layout" parent="">
+        
+    </style>
+
+    <style name="Widget.App.RecyclerList.Hint" parent="Widget.MaterialComponents.TextView">
         <item name="android:textAppearance">@style/TextAppearance.MaterialComponents.Body2</item>
-        <item name="android:maxWidth">@dimen/recycler_item_constraintWidth_max</item>
+        <item name="android:maxWidth">@dimen/recycler_item_width</item>
         <item name="android:minHeight">48dp</item>
         <item name="android:paddingStart">16dp</item>
         <item name="android:paddingEnd">16dp</item>
         <item name="android:gravity">left</item>
+        <item name="android:layout_marginStart">8dp</item>
+        <item name="android:layout_marginEnd">8dp</item>
+        <item name="android:layout_marginBottom">8dp</item>
         <item name="android:layout_marginTop">16dp</item>
     </style>
 

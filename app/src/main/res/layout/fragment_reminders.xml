@@ -15,28 +15,28 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
         android:gravity="center"
+        android:orientation="vertical"
         tools:context=".reminderapp.screens.reminder.overview.RemindersFragment">
 
         <TextView
             android:id="@+id/text_reminders_hint"
+            style="@style/Widget.App.RecyclerList.Hint"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:clickable="true"
             android:focusable="true"
             android:onClick="@{() -> model.addReminder()}"
             android:text="@string/reminders_empty_hint"
-            android:visibility="@{model.reminders.size() > 0 ? View.GONE : View.VISIBLE}"
-            style="@style/Widget.App.RecyclerList.Hint" />
+            android:visibility="@{model.reminders.size() > 0 ? View.GONE : View.VISIBLE}" />
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recycler_reminders_list"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:visibility="@{model.reminders.size() == 0 ? View.GONE : View.VISIBLE}"
-            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
             app:reminderListData="@{model.reminders}"
+            tools:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
             tools:listitem="@layout/item_reminder" />
 
     </LinearLayout>

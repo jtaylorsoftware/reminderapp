@@ -13,6 +13,8 @@ import com.github.jeremyt135.databinding.ItemAlarmBinding
 import com.github.jeremyt135.reminderapp.data.domain.ReminderAndAlarm
 import com.github.jeremyt135.reminderapp.util.getShortLocalDateDisplay
 import com.github.jeremyt135.reminderapp.util.getShortLocalTimeDisplay
+import com.google.android.flexbox.AlignSelf
+import com.google.android.flexbox.FlexboxLayoutManager
 import timber.log.Timber
 
 /**
@@ -41,26 +43,35 @@ class AlarmListAdapter(private val onAlarmClickListener: OnAlarmClickListener) :
             )
         }
 
-    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) =
+    @SuppressLint("WrongConstant")
+    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         when (position.asViewType) {
             ViewType.SEPARATOR -> {
                 (holder as SeparatorViewHolder).bind(getItem(position) as AlarmListSeparator)
+                (holder.itemView.layoutParams as? FlexboxLayoutManager.LayoutParams)?.apply {
+                    flexShrink = 0f
+                    alignSelf = AlignSelf.CENTER
+                }
             }
             ViewType.ALARM -> {
                 holder as ReminderAndAlarmViewHolder
                 val reminderAndAlarm = getItem(position) as ReminderAndAlarm
                 holder.bind(reminderAndAlarm)
-                val touchTarget = holder.itemView.findViewById<View>(R.id.card_item_alarm)
 
-                touchTarget?.let {
+
+                holder.itemView.let {
+                    (it.layoutParams as? FlexboxLayoutManager.LayoutParams)?.apply {
+                        flexShrink = 0f
+                        alignSelf = AlignSelf.CENTER
+                    }
+
                     it.setOnClickListener {
                         onAlarmClickListener(reminderAndAlarm)
                     }
-                } ?: run {
-                    Timber.e("onBindViewHolder: could not access desired touch target for listener binding")
                 }
             }
         }
+    }
 
     override fun getItemViewType(position: Int): Int = position.asViewType.value
 

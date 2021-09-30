@@ -11,6 +11,7 @@ import com.github.jeremyt135.R
 import com.github.jeremyt135.databinding.FragmentRemindersBinding
 import com.github.jeremyt135.reminderapp.screens.reminder.overview.dialog.RemindersFilterDialogFragment
 import com.github.jeremyt135.reminderapp.screens.reminder.overview.dialog.RemindersSortDialogFragment
+import com.google.android.flexbox.*
 import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
 import javax.inject.Inject
@@ -36,14 +37,19 @@ class RemindersFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        reminderListAdapter = ReminderListAdapter(ReminderListAdapter.OnClickListener {
-            viewModel.editReminder(it.reminder)
-        })
-
         FragmentRemindersBinding.bind(view).apply {
             model = viewModel
             lifecycleOwner = viewLifecycleOwner
 
+            recyclerRemindersList.layoutManager = FlexboxLayoutManager(requireContext()).apply {
+                flexDirection = FlexDirection.COLUMN
+                flexWrap = FlexWrap.NOWRAP
+                alignItems = AlignItems.CENTER
+                justifyContent = JustifyContent.FLEX_START
+            }
+            reminderListAdapter = ReminderListAdapter(ReminderListAdapter.OnClickListener {
+                viewModel.editReminder(it.reminder)
+            })
             recyclerRemindersList.adapter = reminderListAdapter
             registerForContextMenu(recyclerRemindersList)
         }

@@ -28,10 +28,10 @@
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recycler_history_list"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="match_parent"
             app:historyListData="@{model.historyEntries}"
-            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+            tools:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
             tools:listitem="@layout/item_history" />
 
     </LinearLayout>
