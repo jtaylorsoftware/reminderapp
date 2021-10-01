@@ -21,6 +21,8 @@ import com.github.jeremyt135.R
 import com.github.jeremyt135.databinding.ViewCalendarBinding
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.screens.reminder.overview.ReminderListAdapter
+import com.github.jeremyt135.reminderapp.util.RandomColorCache
+import com.google.android.material.color.MaterialColors
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest
@@ -53,15 +55,11 @@ class CalendarView : ConstraintLayout {
 
     init {
         Timber.d("Init")
-        coroutineScope?.launch {
-            setupBindingViews()
-        }
     }
 
     override fun onAttachedToWindow() {
         Timber.d("onAttached")
         super.onAttachedToWindow()
-        observeCalendarData()
         attachBinding()
     }
 
@@ -83,19 +81,23 @@ class CalendarView : ConstraintLayout {
         super.onConfigurationChanged(newConfig)
         removeAllViews()
         binding = ViewCalendarBinding.inflate(LayoutInflater.from(context), this, true)
-        observeCalendarData()
-        setupBindingViews()
         attachBinding()
     }
 
     private fun setupBindingViews() {
         Timber.d("setupBindingViews")
-
         binding?.apply {
+            // Set calendar adapter and immediately begin observing calendarData for layout updates
+            calendarAdapter = CalendarAdapter(viewModel.selectedDate.value, viewModel.indicatorColors) {
+                viewModel.setSelectedDate(it)
+            }
+            observeCalendarData()
+
             recyclerCalendarReminders.adapter =
-                CalendarReminderListAdapter(ReminderListAdapter.OnClickListener {
-                    onReminderSelectedListener?.invoke(it.reminder)
-                })
+                CalendarReminderListAdapter(
+                    CalendarReminderListAdapter.OnClickListener {
+                        onReminderSelectedListener?.invoke(it.reminder)
+                    })
 
             // Use a GLM with Calendar's RecyclerView that has disabled scrolling in both directions
             recyclerCalendar.layoutManager =
@@ -104,20 +106,26 @@ class CalendarView : ConstraintLayout {
                     override fun canScrollHorizontally() = false
                 }
 
-            calendarAdapter = CalendarAdapter() {
-                viewModel.setSelectedDate(it)
-            }
+
             recyclerCalendar.adapter = calendarAdapter
 
             buttonCalendarBackward.setOnClickListener {
                 viewModel.goToPreviousMonth()
+                calendarAdapter?.clearSelectedDate()
+            }
+            buttonCalendarForward.setOnClickListener {
+                viewModel.goToNextMonth()
+                calendarAdapter?.clearSelectedDate()
             }
 
-            buttonCalendarForward.let {
-                it.setOnClickListener {
-                    viewModel.goToNextMonth()
-                }
+            buttonCalendarAdd.setOnClickListener {
+                onAddReminderListener?.invoke(calendarAdapter?.selectedDate)
+            }
+        }
 
+        // Allow the tint to be set a little later by starting a coroutine without immediate mode
+        coroutineScope?.launch {
+            binding?.buttonCalendarForward?.let {
                 ImageViewCompat.setImageTintList(
                     it,
                     ColorStateList.valueOf(
@@ -129,20 +137,16 @@ class CalendarView : ConstraintLayout {
                 )
                 ImageViewCompat.setImageTintMode(it, PorterDuff.Mode.SRC_ATOP)
             }
-
-            buttonCalendarAdd.setOnClickListener {
-                onAddReminderListener?.invoke(calendarAdapter?.selectedDate)
-            }
         }
     }
 
-    @ExperimentalCoroutinesApi
     private fun observeCalendarData() {
         viewModel.calendarData.observe(
             requireNotNull(findViewTreeLifecycleOwner()),
             object : Observer<List<Any>?> {
                 override fun onChanged(data: List<Any>?) {
                     if (data != null) {
+                        Timber.d("Applying layout transition (${data.size} elements")
                         val constraintSet = ConstraintSet()
                         constraintSet.load(context, R.layout.view_calendar_loaded)
                         TransitionManager.beginDelayedTransition(this@CalendarView)
@@ -154,7 +158,6 @@ class CalendarView : ConstraintLayout {
             })
     }
 
-
     private fun attachBinding() {
         Timber.d("attachBinding")
         val lifecycleOwner = requireNotNull(findViewTreeLifecycleOwner())
@@ -162,11 +165,13 @@ class CalendarView : ConstraintLayout {
         binding?.model = viewModel
         binding?.lifecycleOwner = lifecycleOwner
 
-        coroutineScope = CoroutineScope(Dispatchers.Main).apply {
+        setupBindingViews()
+
+        coroutineScope = (CoroutineScope(Dispatchers.Main) + CoroutineName("CalendarView")).apply {
             launch {
                 viewModel.selectedYearMonth.collectLatest { yearMonth ->
                     // Disable button if current month is selected, so user cannot go into past
-                    val enabled = yearMonth > YearMonth.now()
+                    val enabled = yearMonth != null && yearMonth > YearMonth.now()
                     Timber.d("buttonCalendarBackward enabled = $enabled")
 
                     binding?.buttonCalendarBackward?.isEnabled = enabled

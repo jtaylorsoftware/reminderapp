@@ -149,7 +149,7 @@
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@+id/text_calendar_reminder_heading"
-                    app:reminderListData="@{model.remindersOnSelectedDate}"
+                    app:reminderWithColorListData="@{model.remindersOnSelectedDate}"
                     tools:listitem="@layout/item_reminder" />
 
                 <Button

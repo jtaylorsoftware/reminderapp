@@ -1,12 +1,18 @@
 package com.github.jeremyt135.reminderapp.screens.reminder.calendar
 
+import android.app.Application
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
+import com.github.jeremyt135.R
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
+import com.github.jeremyt135.reminderapp.data.domain.ReminderAndHistory
 import com.github.jeremyt135.reminderapp.data.domain.SchedulingType
 import com.github.jeremyt135.reminderapp.di.DefaultDispatcher
+import com.github.jeremyt135.reminderapp.util.RandomColorCache
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
@@ -20,9 +26,10 @@ import javax.inject.Inject
 
 @HiltViewModel
 class CalendarViewModel @Inject constructor(
+    application: Application,
     private val reminderRepository: ReminderRepository,
     @DefaultDispatcher private val dispatcher: CoroutineDispatcher,
-) : ViewModel() {
+) : AndroidViewModel(application) {
     private val _selectedYearMonth = MutableStateFlow(YearMonth.now())
 
     /**
@@ -48,7 +55,7 @@ class CalendarViewModel @Inject constructor(
      * Refresh "event" emitter to force calendar data to update
      */
     private val refresh = MutableSharedFlow<Unit>(
-        replay = 0,
+        replay = 1,
         extraBufferCapacity = 1,
         onBufferOverflow = BufferOverflow.DROP_OLDEST
     )
@@ -63,14 +70,11 @@ class CalendarViewModel @Inject constructor(
                     endDate = selectedDate,
                     historyDate = selectedDate
                 ).mapLatest { reminders ->
-                    reminders.filter {
-                        with(it.reminder.schedulingRules) {
-                            when (type) {
-                                SchedulingType.SINGLE -> startDate == selectedDate
-                                else -> daysOfWeek.contains(selectedDate.dayOfWeek)
-                            }
-                        }
-                    }
+                    filterReminders(selectedDate, reminders)
+                }.mapLatest { reminders ->
+                    sortReminders(reminders)
+                }.mapLatest {
+                    addColors(it)
                 }.flowOn(dispatcher)
             } ?: flowOf(null)
         }
@@ -100,6 +104,15 @@ class CalendarViewModel @Inject constructor(
         started = SharingStarted.Lazily,
         null
     ).asLiveData()
+
+    private val randomColorCache = RandomColorCache(15)
+    val indicatorColors: List<Int> by lazy {
+        listOf(
+            ContextCompat.getColor(application.applicationContext, R.color.indicator_primary),
+            ContextCompat.getColor(application.applicationContext, R.color.indicator_secondary),
+            ContextCompat.getColor(application.applicationContext, R.color.indicator_tertiary)
+        )
+    }
 
     init {
         Timber.d("Init VM")
@@ -148,6 +161,30 @@ class CalendarViewModel @Inject constructor(
         _selectedYearMonth.value = yearMonth
     }
 
+    private fun filterReminders(
+        selectedDate: LocalDate,
+        reminders: List<ReminderAndHistory>
+    ) = reminders.filter {
+        with(it.reminder.schedulingRules) {
+            when (type) {
+                SchedulingType.SINGLE -> startDate == selectedDate
+                else -> daysOfWeek.contains(selectedDate.dayOfWeek)
+            }
+        }
+    }
+
+    private fun sortReminders(reminders: List<ReminderAndHistory>) = reminders.sortedBy {
+        it.reminder.schedulingRules.time
+    }
+
+    private fun addColors(reminders: List<ReminderAndHistory>) =
+        reminders.mapIndexed { i, reminderAndHistory ->
+            ReminderAndColor(
+                reminderAndHistory,
+                color = if (i < 3) indicatorColors[i] else randomColorCache.randomColor()
+            )
+        }
+
     private suspend fun getCalendarData(
         yearMonth: YearMonth,
         remindersInSelectedMonth: List<Reminder>
@@ -181,18 +218,17 @@ class CalendarViewModel @Inject constructor(
         return with(monthData) {
             val date = calculateDateFromPosition(position, monthData)
             val isCurrentMonth = date.month == monthData.yearMonthDate.month
-            var hasReminder = false
+            val reminders =
+                daysWithReminders.elementAtOrNull(position - firstPositionOfMonth) ?: emptyList()
 
-            if (isCurrentMonth) {
-                hasReminder =
-                    daysWithReminders.elementAtOrNull(position - firstPositionOfMonth)
-                        ?: false
-            }
-
-            CalendarDateItem(date, isCurrentMonth, hasReminder)
+            CalendarDateItem(date, isCurrentMonth, reminders)
         }
     }
 
+    /**
+     * Transforms the list of all reminders in the month into a list of sublists, where each sublist
+     * is a list of reminders on a day of the month.
+     */
     private fun getDaysWithReminders(
         yearMonth: YearMonth,
         reminders: List<Reminder>
@@ -200,9 +236,7 @@ class CalendarViewModel @Inject constructor(
         // Transform each array index representing a dayOfMonth into a true/false
         // value for presence of reminders
         val date = LocalDate.of(yearMonth.year, yearMonth.monthValue, dayOfMonth)
-        reminders.any {
-            it.schedulingRules.containsDate(date)
-        }
+        reminders.filter { it.schedulingRules.containsDate(date) }
     }
 
     private fun calculateDateFromPosition(position: Int, monthData: CalculatedMonthData) =
@@ -238,6 +272,9 @@ class CalendarViewModel @Inject constructor(
         // Last calendar day (not position) of previous month
         val lastDayOfPreviousMonth: Int = yearMonth.minusMonths(1).lengthOfMonth()
 
+        // List of sublists of reminders on the given date, for the entire month
         val daysWithReminders = getDaysWithReminders(yearMonth, reminders)
     }
 }
+
+data class ReminderAndColor(val data: ReminderAndHistory, val color: Int)

@@ -1,29 +1,38 @@
 package com.github.jeremyt135.reminderapp.screens.reminder.calendar
 
 import android.annotation.SuppressLint
+import android.content.res.ColorStateList
+import android.graphics.PorterDuff
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.content.ContextCompat
+import androidx.core.widget.ImageViewCompat
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.github.jeremyt135.R
+import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.util.getShortLocaleDisplay
 import com.github.jeremyt135.reminderapp.util.uuid
 import com.google.android.material.color.MaterialColors
 import java.time.DayOfWeek
 import java.time.LocalDate
+import kotlin.math.min
 
 typealias OnDaySelectedListener = (day: LocalDate?) -> Unit
 
-class CalendarAdapter(private val daySelectedListener: OnDaySelectedListener) :
+class CalendarAdapter(
+    initialSelectedDate: LocalDate?,
+    private val indicatorColors: List<Int>,
+    private val daySelectedListener: OnDaySelectedListener
+) :
     ListAdapter<Any, RecyclerView.ViewHolder>(CalendarDiffCallback) {
 
-    val selectedDate: LocalDate?
-        get() = selectedDateViewHolder?.date
+    var selectedDate: LocalDate? = initialSelectedDate
+        private set
 
     private var selectedDateViewHolder: DateViewHolder? = null
 
@@ -38,7 +47,9 @@ class CalendarAdapter(private val daySelectedListener: OnDaySelectedListener) :
                 LayoutInflater
                     .from(parent.context)
                     .inflate(R.layout.item_calendar_day, parent, false)
-            )
+            ) {
+                onDateViewClicked(it)
+            }
         }
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
@@ -50,39 +61,41 @@ class CalendarAdapter(private val daySelectedListener: OnDaySelectedListener) :
             }
             ViewType.DAY -> {
                 item as CalendarDateItem
-                (holder as DateViewHolder).bind(position, item)
-                if (item.isNotInPast && item.isCurrentMonth) {
+                (holder as DateViewHolder).bind(position, item, selectedDate, indicatorColors)
+                if (!item.isInPast && item.isCurrentMonth) {
                     holder.itemView.setOnClickListener {
-                        onDaySelected(holder)
+                        daySelectedListener(holder.date)
+                        holder.select()
                     }
                 }
             }
         }
     }
 
+    fun clearSelectedDate() {
+        selectedDateViewHolder?.deselect()
+        selectedDateViewHolder = null
+        selectedDate = null
+    }
+
+    private fun onDateViewClicked(dateViewHolder: DateViewHolder) {
+        selectedDateViewHolder?.deselect()
+        selectedDateViewHolder = dateViewHolder
+        selectedDate = dateViewHolder.date
+    }
+
     override fun getItemViewType(position: Int): Int {
         return ViewType.fromPosition(position).value
-    }
-
-    private fun onDaySelected(dateViewHolder: DateViewHolder) {
-        daySelectedListener(dateViewHolder.date)
-        setSelectedDay(dateViewHolder)
-    }
-
-    private fun setSelectedDay(dateViewHolder: DateViewHolder) {
-        // Unselect previous
-        selectedDateViewHolder?.toggleSelected()
-
-        // Select new
-        dateViewHolder.toggleSelected()
-        selectedDateViewHolder = dateViewHolder
     }
 
     /**
      * ViewHolder for a date on the calendar. Displays numeric dayOfMonth and
      * a background image that changes if it is today's date or the selected date.
      */
-    class DateViewHolder(private val view: View) :
+    class DateViewHolder(
+        private val view: View,
+        private val onSelected: (DateViewHolder) -> Unit
+    ) :
         RecyclerView.ViewHolder(view) {
         val id = uuid()
 
@@ -92,22 +105,33 @@ class CalendarAdapter(private val daySelectedListener: OnDaySelectedListener) :
         private val textView: TextView = view.findViewById(R.id.text_calendar_dayOfMonth)
         private val defaultTextColor: Int = MaterialColors.getColor(view, R.attr.colorOnSurface)
         private val selectedImage: ImageView = view.findViewById(R.id.image_calendar_dayOfMonth)
-        private val reminderIndicator: ImageView =
-            view.findViewById(R.id.image_calendar_reminderIndicator)
+        private var reminders: List<Reminder>? = null
+        private val reminderIndicators: List<ImageView> =
+            listOf(
+                view.findViewById(R.id.image_calendar_reminderIndicator0),
+                view.findViewById(R.id.image_calendar_reminderIndicator1),
+                view.findViewById(R.id.image_calendar_reminderIndicator2)
+            )
         private var selected = false
 
-        private val isToday: Boolean by lazy {
-            date == LocalDate.now()
-        }
+        private val isToday: Boolean
+            get() = date == LocalDate.now()
+
 
         /**
          * Binds this ViewHolder to a day of the month.
          * @param calendarDateItem Day of month data to bind
          */
-        fun bind(position: Int, calendarDateItem: CalendarDateItem) {
+        fun bind(
+            position: Int,
+            calendarDateItem: CalendarDateItem,
+            selectedDate: LocalDate?,
+            indicatorColors: List<Int>
+        ) {
             reset()
 
             this.date = calendarDateItem.date
+            this.reminders = calendarDateItem.reminders
             if (calendarDateItem.date != null) {
                 textView.text = date?.dayOfMonth.toString()
             } else {
@@ -118,23 +142,29 @@ class CalendarAdapter(private val daySelectedListener: OnDaySelectedListener) :
                 useOutlineImage()
             }
 
-            if (!calendarDateItem.isCurrentMonth || !calendarDateItem.isNotInPast) {
+            if (!calendarDateItem.isCurrentMonth || calendarDateItem.isInPast) {
                 // Use muted text color for other month days
                 textView.setTextColor(ContextCompat.getColor(view.context, R.color.text_secondary))
             }
 
-            if (calendarDateItem.hasReminder && calendarDateItem.isNotInPast) {
-                showIndicator()
+            if (calendarDateItem.reminders.isNotEmpty() && !calendarDateItem.isInPast) {
+                showIndicators(calendarDateItem.reminders, indicatorColors)
+            }
+
+            if (date != null && selectedDate == date && !selected) {
+                select()
             }
         }
 
-        fun toggleSelected() {
-            selected = !selected
-            if (selected) {
-                onSelect()
-            } else {
-                onUnselect()
-            }
+        fun select() {
+            selected = true
+            onSelected(this)
+            onSelect()
+        }
+
+        fun deselect() {
+            selected = false
+            onDeselect()
         }
 
         private fun onSelect() {
@@ -143,11 +173,11 @@ class CalendarAdapter(private val daySelectedListener: OnDaySelectedListener) :
             textView.setTextColor(colorId)
         }
 
-        private fun onUnselect() {
+        private fun onDeselect() {
             if (isToday) {
                 useOutlineImage()
             } else {
-                hideImage()
+                hideBackgroundImage()
             }
             textView.setTextColor(defaultTextColor)
         }
@@ -162,24 +192,44 @@ class CalendarAdapter(private val daySelectedListener: OnDaySelectedListener) :
             selectedImage.visibility = View.VISIBLE
         }
 
-        private fun hideImage() {
+        private fun hideBackgroundImage() {
             selectedImage.setImageResource(0)
             selectedImage.visibility = View.INVISIBLE
         }
 
-        private fun showIndicator() {
-            reminderIndicator.setImageResource(R.drawable.ic_calendar_reminder_indicator)
-            reminderIndicator.visibility = View.VISIBLE
+        private fun showIndicators(reminders: List<Reminder>, indicatorColors: List<Int>) {
+            val numIndicators = min(reminders.size, 3)
+            (0 until numIndicators).forEach { i ->
+                showIndicator(i, indicatorColors[i])
+            }
         }
 
-        private fun hideIndicator() {
-            reminderIndicator.setImageResource(0)
-            reminderIndicator.visibility = View.INVISIBLE
+        private fun showIndicator(index: Int, indicatorColor: Int) {
+            reminderIndicators.elementAtOrNull(index)?.let { indicator ->
+                ImageViewCompat.setImageTintMode(indicator, PorterDuff.Mode.SRC_ATOP)
+                ImageViewCompat.setImageTintList(
+                    indicator,
+                    ColorStateList.valueOf(indicatorColor)
+                )
+                indicator.visibility = View.VISIBLE
+            }
+        }
+
+        private fun hideIndicator(index: Int) {
+            reminderIndicators.elementAtOrNull(index)?.let { indicator ->
+                indicator.visibility = View.GONE
+            }
+        }
+
+        private fun hideAllIndicators() {
+            hideIndicator(0)
+            hideIndicator(1)
+            hideIndicator(2)
         }
 
         private fun reset() {
-            hideIndicator()
-            hideImage()
+            hideAllIndicators()
+            hideBackgroundImage()
             textView.setTextColor(defaultTextColor)
         }
     }
@@ -234,7 +284,8 @@ class CalendarAdapter(private val daySelectedListener: OnDaySelectedListener) :
 
             return when (oldItem) {
                 is CalendarDateItem -> {
-                    false
+                    newItem as CalendarDateItem
+                    oldItem.date == newItem.date
                 }
                 is DayOfWeek -> {
                     newItem as DayOfWeek
@@ -252,7 +303,7 @@ class CalendarAdapter(private val daySelectedListener: OnDaySelectedListener) :
                 is CalendarDateItem -> {
                     // return valid comparison even though areItemsTheSame currently always returns false
                     newItem as CalendarDateItem
-                    oldItem == newItem
+                    oldItem.date == newItem.date && oldItem.reminders.size == newItem.reminders.size
                 }
                 is DayOfWeek -> {
                     newItem as DayOfWeek
@@ -279,11 +330,11 @@ open class CalendarDateItem(
     val isCurrentMonth: Boolean,
 
     /**
-     * Flag indicating whether this item has a reminder on its date
+     * Reminders on the selected date
      */
-    val hasReminder: Boolean
+    val reminders: List<Reminder>
 ) {
-    val isNotInPast = date?.let { date >= LocalDate.now() } ?: false
+    val isInPast = date?.let { date < LocalDate.now() } ?: true
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -293,7 +344,7 @@ open class CalendarDateItem(
 
         if (date != other.date) return false
         if (isCurrentMonth != other.isCurrentMonth) return false
-        if (hasReminder != other.hasReminder) return false
+        if (reminders != other.reminders) return false
 
         return true
     }
@@ -301,7 +352,7 @@ open class CalendarDateItem(
     override fun hashCode(): Int {
         var result = date?.hashCode() ?: 0
         result = 31 * result + isCurrentMonth.hashCode()
-        result = 31 * result + hasReminder.hashCode()
+        result = 31 * result + reminders.hashCode()
         return result
     }
 }

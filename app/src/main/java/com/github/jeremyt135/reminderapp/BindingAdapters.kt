@@ -12,12 +12,19 @@ import com.github.jeremyt135.reminderapp.data.domain.ReminderAndHistory
 import com.github.jeremyt135.reminderapp.data.domain.ReminderStatus
 import com.github.jeremyt135.reminderapp.screens.reminder.alarm.AlarmListAdapter
 import com.github.jeremyt135.reminderapp.screens.reminder.calendar.CalendarAdapter
+import com.github.jeremyt135.reminderapp.screens.reminder.calendar.CalendarReminderListAdapter
+import com.github.jeremyt135.reminderapp.screens.reminder.calendar.ReminderAndColor
 import com.github.jeremyt135.reminderapp.screens.reminder.history.HistoryListAdapter
 import com.github.jeremyt135.reminderapp.screens.reminder.overview.ReminderListAdapter
 
 @BindingAdapter("reminderListData")
 fun bindReminderRecyclerView(recyclerView: RecyclerView, data: List<ReminderAndHistory>?) {
     (recyclerView.adapter as ReminderListAdapter?)?.submitList(data)
+}
+
+@BindingAdapter("reminderWithColorListData")
+fun bindReminderRecyclerViewWithColor(recyclerView: RecyclerView, data: List<ReminderAndColor>?) {
+    (recyclerView.adapter as CalendarReminderListAdapter?)?.submitList(data)
 }
 
 @BindingAdapter("historyListData")

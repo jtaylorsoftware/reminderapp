@@ -36,5 +36,11 @@
 
     <color name="calendar_card_tint">#0F7E7E7E</color>
 
+    <!-- The background used in Activities -->
     <color name="background">#0F4D4D4D</color>
+
+    <!-- Calendar indicator colors -->
+    <color name="indicator_primary">@color/secondaryDarkColor</color>
+    <color name="indicator_secondary">@color/secondaryColor</color>
+    <color name="indicator_tertiary">@color/secondaryLightColor</color>
 </resources>

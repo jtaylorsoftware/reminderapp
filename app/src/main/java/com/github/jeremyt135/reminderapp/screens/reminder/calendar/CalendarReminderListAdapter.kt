@@ -1,20 +1,28 @@
 package com.github.jeremyt135.reminderapp.screens.reminder.calendar
 
 import android.annotation.SuppressLint
+import android.graphics.drawable.ColorDrawable
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListAdapter
+import androidx.recyclerview.widget.RecyclerView
 import com.github.jeremyt135.databinding.ItemReminderCalendarBinding
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.ReminderAndHistory
-import com.github.jeremyt135.reminderapp.screens.reminder.overview.ReminderListAdapter
+import com.github.jeremyt135.reminderapp.util.RandomColorCache
 import com.google.android.flexbox.AlignSelf
 import com.google.android.flexbox.FlexboxLayoutManager
-import timber.log.Timber
 
-class CalendarReminderListAdapter(clickListener: OnClickListener) :
-    ReminderListAdapter(clickListener) {
+class CalendarReminderListAdapter(
+    private val clickListener: OnClickListener
+) :
+    ListAdapter<ReminderAndColor, CalendarReminderListAdapter.ReminderViewHolder>(
+        ReminderDiffCallback
+    ) {
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ReminderViewHolder {
-        return ReminderViewHolderCalendar(
+        return ReminderViewHolder(
             ItemReminderCalendarBinding.inflate(
                 LayoutInflater.from(parent.context),
                 parent,
@@ -25,7 +33,7 @@ class CalendarReminderListAdapter(clickListener: OnClickListener) :
 
     @SuppressLint("WrongConstant")
     override fun onBindViewHolder(holder: ReminderViewHolder, position: Int) {
-        val reminderAndHistory = getItem(position)
+        val reminderAndColor = getItem(position)
 
         holder.itemView.let {
             (it.layoutParams as? FlexboxLayoutManager.LayoutParams)?.apply {
@@ -34,28 +42,37 @@ class CalendarReminderListAdapter(clickListener: OnClickListener) :
             }
 
             it.setOnClickListener {
-                clickListener.onClick(reminderAndHistory)
-            }
-
-            it.setOnCreateContextMenuListener { _, _, _ ->
-                Timber.d("Selected $position with reminder $reminderAndHistory")
-                selectedContextReminder = reminderAndHistory.reminder
+                clickListener.onClick(reminderAndColor.data)
             }
         }
 
-        (holder as ReminderViewHolderCalendar).bind(reminderAndHistory)
+        holder.bind(reminderAndColor, ColorDrawable(reminderAndColor.color))
     }
 
-    private class ReminderViewHolderCalendar(private val binding: ItemReminderCalendarBinding) :
-        ReminderViewHolder(binding.root) {
-        override var reminder: Reminder? = null
+    class ReminderViewHolder(private val binding: ItemReminderCalendarBinding) :
+        RecyclerView.ViewHolder(binding.root) {
+        var reminder: Reminder? = null
+            private set
 
-        fun bind(reminderAndHistory: ReminderAndHistory) {
-            this.reminder = reminderAndHistory.reminder
+        fun bind(reminder: ReminderAndColor, color: ColorDrawable) {
+            this.reminder = reminder.data.reminder
             binding.apply {
-                this.data = reminderAndHistory
+                data = reminder.data
+                viewItemReminderCalendarColorIndicator.background = color
                 executePendingBindings()
             }
         }
+    }
+
+    companion object ReminderDiffCallback : DiffUtil.ItemCallback<ReminderAndColor>() {
+        override fun areItemsTheSame(oldItem: ReminderAndColor, newItem: ReminderAndColor) =
+            oldItem.data.reminder.id == newItem.data.reminder.id
+
+        override fun areContentsTheSame(oldItem: ReminderAndColor, newItem: ReminderAndColor) =
+            oldItem == newItem
+    }
+
+    class OnClickListener(val clickListener: (reminder: ReminderAndHistory) -> Unit) {
+        fun onClick(reminder: ReminderAndHistory) = clickListener(reminder)
     }
 }

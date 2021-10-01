@@ -2,7 +2,6 @@ package com.github.jeremyt135.reminderapp.screens.reminder.overview
 
 import android.annotation.SuppressLint
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
@@ -14,16 +13,16 @@ import com.google.android.flexbox.AlignSelf
 import com.google.android.flexbox.FlexboxLayoutManager
 import timber.log.Timber
 
-open class ReminderListAdapter(protected val clickListener: OnClickListener) :
+class ReminderListAdapter(private val clickListener: OnClickListener) :
     ListAdapter<ReminderAndHistory, ReminderListAdapter.ReminderViewHolder>(
         ReminderDiffCallback
     ) {
 
     var selectedContextReminder: Reminder? = null
-        protected set
+        private set
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ReminderViewHolder {
-        return ReminderViewHolderImpl(
+        return ReminderViewHolder(
             ItemReminderBinding.inflate(
                 LayoutInflater.from(parent.context),
                 parent,
@@ -52,18 +51,13 @@ open class ReminderListAdapter(protected val clickListener: OnClickListener) :
             }
         }
 
-        (holder as ReminderViewHolderImpl).bind(reminderAndHistory)
+        holder.bind(reminderAndHistory)
     }
 
-    abstract class ReminderViewHolder(root: View) :
-        RecyclerView.ViewHolder(root) {
-        abstract var reminder: Reminder?
-            protected set
-    }
-
-    private class ReminderViewHolderImpl(private val binding: ItemReminderBinding) :
-        ReminderListAdapter.ReminderViewHolder(binding.root) {
-        override var reminder: Reminder? = null
+    class ReminderViewHolder(private val binding: ItemReminderBinding) :
+        RecyclerView.ViewHolder(binding.root) {
+        var reminder: Reminder? = null
+            private set
 
         fun bind(reminderAndHistory: ReminderAndHistory) {
             this.reminder = reminderAndHistory.reminder

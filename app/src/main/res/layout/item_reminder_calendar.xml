@@ -26,9 +26,25 @@
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:paddingHorizontal="@dimen/recycler_item_padding_h"
-            android:paddingVertical="@dimen/recycler_item_padding_v"
-            android:clipToPadding="false">
+            android:clipToPadding="false"
+            android:paddingVertical="0dp"
+            android:paddingStart="0dp"
+            android:paddingEnd="@dimen/recycler_item_padding_h">
+
+            <View
+                android:id="@+id/view_item_reminderCalendar_colorIndicator"
+                android:layout_width="8dp"
+                android:layout_height="0dp"
+                android:backgroundTintMode="src_atop"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/text_item_reminderCalendar_description"
+                app:layout_constraintHorizontal_bias="0.5"
+                app:layout_constraintHorizontal_chainStyle="spread_inside"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                tools:background="@color/primaryDarkColor"
+                tools:backgroundTint="#3DFFFFFF"
+                tools:visibility="visible" />
 
             <ImageView
                 android:id="@+id/image_item_reminderCalendar_status"
@@ -89,6 +105,7 @@
                 style="@style/TextAppearance.MaterialComponents.Caption"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
                 android:layout_marginEnd="2dp"
                 android:gravity="center"
                 android:text="@string/sunday_abbrev"
@@ -98,7 +115,7 @@
                 app:layout_constraintEnd_toStartOf="@+id/text_itemReminder_monday"
                 app:layout_constraintHorizontal_bias="0.0"
                 app:layout_constraintHorizontal_chainStyle="packed"
-                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintStart_toEndOf="@id/view_item_reminderCalendar_colorIndicator"
                 app:layout_constraintTop_toBottomOf="@+id/text_item_reminderCalendar_description"
                 app:useMaterialThemeColors="false"
                 tools:textColor="@color/reminder_day_of_week_tint" />
@@ -211,8 +228,9 @@
                 android:text="@{data.reminder.description}"
                 app:layout_constraintBottom_toTopOf="@+id/text_itemReminder_sunday"
                 app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.5"
                 app:layout_constraintHorizontal_chainStyle="spread_inside"
-                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/view_item_reminderCalendar_colorIndicator"
                 app:layout_constraintTop_toBottomOf="@+id/text_item_reminderCalendar_time"
                 app:layout_constraintWidth_percent="0.95"
                 tools:text="Reminder text that is an example and is long enough for ellipses" />
@@ -238,10 +256,11 @@
                 style="@style/TextAppearance.MaterialComponents.Caption"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
                 android:paddingVertical="2dp"
                 android:text="@{data.reminder.timeDisplayString}"
                 app:layout_constraintBottom_toTopOf="@+id/text_item_reminderCalendar_description"
-                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintStart_toEndOf="@id/view_item_reminderCalendar_colorIndicator"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintVertical_chainStyle="packed"
                 tools:text="6:15 AM" />
