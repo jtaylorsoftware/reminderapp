@@ -14,6 +14,7 @@ import java.util.concurrent.atomic.AtomicReference
  */
 class AlarmTimerManager {
     private var _timer = AtomicReference<AlarmTimer?>(null)
+    private var currentTimerJob: Job? = null
 
     /**
      * The current running timer. Holding a reference to this
@@ -39,13 +40,13 @@ class AlarmTimerManager {
             return false
         }
 
-        val newTimer = AlarmTimer(coroutineScope, onFinish).also { it ->
-            coroutineScope.launch {
-                it.timerFinished.flow.collect { finished ->
-                    finished.peek()?.let {
-                        Timber.d("AlarmTimer clearing timer instance")
-                        _timer.set(null)
-                    }
+        val newTimer = AlarmTimer(coroutineScope, onFinish)
+        currentTimerJob = coroutineScope.launch {
+            newTimer.timerFinished.flow.collect { finished ->
+                finished.value?.let {
+                    Timber.d("AlarmTimerManager clearing AlarmTimer instance")
+                    _timer.set(null)
+                    currentTimerJob?.cancel()
                 }
             }
         }
@@ -65,6 +66,7 @@ class AlarmTimerManager {
     fun unsafeReset(): Boolean {
         val stopped = timer?.stop() ?: false
         _timer.set(null)
+        currentTimerJob?.cancel()
         return stopped
     }
 }
