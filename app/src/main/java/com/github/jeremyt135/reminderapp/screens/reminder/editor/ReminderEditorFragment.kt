@@ -1,9 +1,12 @@
 package com.github.jeremyt135.reminderapp.screens.reminder.editor
 
 import android.app.AlertDialog
+import android.content.Context
 import android.content.res.Configuration
 import android.os.Bundle
 import android.view.View
+import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
 import androidx.annotation.VisibleForTesting
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
@@ -133,6 +136,16 @@ class ReminderEditorFragment : Fragment(R.layout.fragment_reminder_editor) {
                 }
             }
 
+            textinputEditorDescription.setOnEditorActionListener { v, actionId, event ->
+                if (actionId == EditorInfo.IME_ACTION_DONE) {
+                    v.clearFocus()
+                    (context?.getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager)?.run {
+                        hideSoftInputFromWindow(v.windowToken, 0)
+                    }
+                    return@setOnEditorActionListener true
+                }
+                return@setOnEditorActionListener false
+            }
             textinputEditorStartDate.setOnClickListener {
                 selectDate(it)
             }
