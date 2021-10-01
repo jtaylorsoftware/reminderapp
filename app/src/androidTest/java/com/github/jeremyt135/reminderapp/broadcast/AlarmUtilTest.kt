@@ -25,6 +25,7 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import java.time.DayOfWeek
 import java.time.LocalDate
 
 @ExperimentalCoroutinesApi
@@ -177,7 +178,14 @@ class AlarmUtilTest {
         mockkStatic(::enqueueScheduleNext)
         justRun { enqueueScheduleNext(any()) }
 
-        val reminders = (1L..4).map { Reminder() }
+        val reminders = (1L..4).map {
+            Reminder(
+                schedulingRules = SchedulingRules(
+                    type = SchedulingType.REPEAT_FOREVER,
+                    daysOfWeek = DayOfWeek.values().toSortedSet()
+                )
+            )
+        }
 
         // Save 2 history, one pending one completed. Pending should be allowed, but not completed.
         historyRepository.saveAll(
@@ -204,7 +212,9 @@ class AlarmUtilTest {
         assertThat(numRescheduled).isEqualTo(reminders.size)
 
         // The reminder with history COMPLETED should have an alarm saved for tomorrow
-        assertThat(alarms[0].triggerAt.toLocalDate().dayOfWeek).isEqualTo(LocalDate.now().plusDays(1).dayOfWeek)
+        assertThat(alarms[0].triggerAt.toLocalDate().dayOfWeek).isEqualTo(
+            LocalDate.now().plusDays(1).dayOfWeek
+        )
 
         // The reminders with pending or missing history should have alarms saved for today
         (1 until reminders.size).forEach { i ->
@@ -226,7 +236,9 @@ class AlarmUtilTest {
         val reminders = (1L..4).map {
             Reminder(
                 schedulingRules = SchedulingRules(
-                    time = currentLocalTime().plusMinutes(it)
+                    time = currentLocalTime().plusMinutes(it),
+                    type = SchedulingType.REPEAT_FOREVER,
+                    daysOfWeek = DayOfWeek.values().toSortedSet()
                 )
             )
         }.toMutableList()
