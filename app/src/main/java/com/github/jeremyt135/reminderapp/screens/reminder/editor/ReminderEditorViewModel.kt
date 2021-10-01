@@ -245,17 +245,25 @@ class ReminderEditorViewModel @Inject constructor(
 
         _repeats.value = repeat
         _daysOfWeekState.value = _daysOfWeekState.value.copy(dirty = false, errorEnabled = false)
-        _reminder.value = _reminder.value.let {
-            it.copy(
+        _reminder.value = _reminder.value.let { reminder ->
+            reminder.copy(
                 schedulingRules = if (repeat) {
-                    it.schedulingRules.copy(
-                        type = SchedulingType.REPEAT_FOREVER,
-                        daysOfWeek = DayOfWeek.values().toSortedSet()
-                    )
+                    // Repeats some amount, so check hasEndDate to retain endDate state
+                    if (_hasEndDate.value) {
+                        reminder.schedulingRules.copy(
+                            type = SchedulingType.REPEATING,
+                        )
+                    } else {
+                        reminder.schedulingRules.copy(
+                            type = SchedulingType.REPEAT_FOREVER,
+                            daysOfWeek = DayOfWeek.values().toSortedSet()
+                        )
+                    }.also {
+                        onDaysOfWeekChanged(it.daysOfWeek)
+                    }
                 } else {
-                    it.schedulingRules.copy(
+                    reminder.schedulingRules.copy(
                         type = SchedulingType.SINGLE,
-                        daysOfWeek = sortedSetOf()
                     )
                 }
             )
@@ -272,8 +280,7 @@ class ReminderEditorViewModel @Inject constructor(
             _reminder.value = _reminder.value.let {
                 it.copy(
                     schedulingRules = it.schedulingRules.copy(
-                        type = SchedulingType.REPEATING,
-                        endDate = it.schedulingRules.startDate.plusDays(1)
+                        type = SchedulingType.REPEATING
                     )
                 )
             }
@@ -356,7 +363,10 @@ class ReminderEditorViewModel @Inject constructor(
         }
 
         applicationScope.launch {
-            _reminder.value.copy().let { reminder ->
+            _reminder.value.copy().let {
+                // get the "sanitized" reminder
+                getReminderToSave(it)
+            }.let { reminder ->
                 reminderRepository.save(reminder)
 
                 val wasScheduled = stopAlarmsForReminder(getApplication(), reminder)
@@ -384,6 +394,26 @@ class ReminderEditorViewModel @Inject constructor(
         }
 
         _navigateToReminders.value = Unit
+    }
+
+    // Get a reminder with "initial" values for its type to save, so old data won't show up later
+    private fun getReminderToSave(reminder: Reminder) = when (reminder.schedulingRules.type) {
+        SchedulingType.SINGLE -> reminder.schedulingRules.let { oldSchedule ->
+            reminder.copy(
+                schedulingRules = oldSchedule.copy(
+                    endDate = oldSchedule.startDate.plusDays(1),
+                    daysOfWeek = sortedSetOf()
+                )
+            )
+        }
+        SchedulingType.REPEATING -> reminder // do nothing, all values are used
+        SchedulingType.REPEAT_FOREVER -> reminder.schedulingRules.let { oldSchedule ->
+            reminder.copy(
+                schedulingRules = oldSchedule.copy(
+                    endDate = oldSchedule.startDate.plusDays(1),
+                )
+            )
+        }
     }
 
     fun deleteReminder() {
