@@ -206,11 +206,11 @@ enum class SchedulingType {
  * Data for determining how to schedule a Reminder.
  */
 class SchedulingRules(
-    val type: SchedulingType = SchedulingType.REPEAT_FOREVER,
+    val type: SchedulingType = SchedulingType.SINGLE,
     val startDate: LocalDate = LocalDate.now(),
     val endDate: LocalDate = startDate.plusDays(1),
     time: LocalTime = currentLocalTime(),
-    val daysOfWeek: SortedSet<DayOfWeek> = DayOfWeek.values().toSortedSet(),
+    val daysOfWeek: SortedSet<DayOfWeek> = sortedSetOf(),
 ) {
     var time: LocalTime = time.truncatedTo(ChronoUnit.MINUTES)
         private set(value) {
@@ -230,9 +230,6 @@ class SchedulingRules(
                 field = value
             }
         }
-
-    // True if this Reminder was scheduled for the same day as it was created and does not repeat.
-    val isOneOff: Boolean = type == SchedulingType.SINGLE
 
     // True if this Reminder runs every day.
     val isEveryDay: Boolean = daysOfWeek.size == ChronoField.DAY_OF_WEEK.range().maximum.toInt()

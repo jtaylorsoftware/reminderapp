@@ -120,7 +120,7 @@ class ReminderEditorViewModelTest {
         assertThat(viewModel.reminder.value.copy(id = "")).isEqualTo(
             Reminder(
                 id = "",
-                schedulingRules = SchedulingRules(type = SchedulingType.REPEAT_FOREVER)
+                schedulingRules = SchedulingRules()
             )
         )
     }
@@ -193,7 +193,7 @@ class ReminderEditorViewModelTest {
     @Test
     fun saveReminder_emitsNavigateToReminders() = mainCoroutineRule.runBlockingTest {
         val reminder =
-            Reminder(description="Test", schedulingRules = SchedulingRules(time = LocalTime.now().minusMinutes(1)))
+            Reminder(description="Test", schedulingRules = SchedulingRules(time = LocalTime.now().plusMinutes(10)))
 
         every { mockSavedState.get<String>(EXTRA_REMINDER_ID) } returns reminder.id
         coEvery { mockReminderRepo.findById(reminder.id) } returns reminder

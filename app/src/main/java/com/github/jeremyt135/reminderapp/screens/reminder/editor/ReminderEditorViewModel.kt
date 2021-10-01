@@ -158,7 +158,7 @@ class ReminderEditorViewModel @Inject constructor(
     /**
      * "Repeats" Checkbox state
      */
-    private val _repeats = MutableStateFlow(true)
+    private val _repeats = MutableStateFlow(false)
     val repeats = _repeats.asLiveData()
 
     /**
