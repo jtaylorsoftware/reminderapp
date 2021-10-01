@@ -4,8 +4,8 @@ import android.annotation.SuppressLint
 import android.app.Application
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.LiveData
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import androidx.work.WorkManager
@@ -63,23 +63,28 @@ class RemindersViewModel @Inject constructor(
     val reminderFilterRules: ReminderFilterRules
         get() = _sortAndFilterRules.value.filterRules
 
+
+    @ExperimentalCoroutinesApi
+    @VisibleForTesting(otherwise = VisibleForTesting.NONE)
+    val _reminders: StateFlow<List<ReminderAndHistory>?> = combine(
+        _sortAndFilterRules,
+        reminderRepository.getAllWithTodayHistory()
+    ) { sortAndFilterRules, reminderAndHistory ->
+        val filtered = filterReminders(reminderAndHistory,sortAndFilterRules.filterRules)
+        yield()
+        sortReminders(filtered,sortAndFilterRules.sortRules)
+    }.flowOn(dispatcher).stateIn(
+        viewModelScope,
+        started = SharingStarted.Lazily,
+        null
+    )
+
     /**
      * List of `ReminderAndHistory` where each object's `History` corresponds to
      * the most recent saved `History` entity for its `Reminder`.
      */
     @ExperimentalCoroutinesApi
-    val reminders: LiveData<List<ReminderAndHistory>> =
-        _sortAndFilterRules.flatMapLatest { sortAndFilterRules  ->
-            reminderRepository.getAllWithTodayHistory().mapLatest { list ->
-                filterReminders(list, sortAndFilterRules.filterRules)
-            }.mapLatest { list ->
-                sortReminders(list, sortAndFilterRules.sortRules)
-            }.flowOn(dispatcher)
-        }.stateIn(
-            viewModelScope,
-            started = SharingStarted.Lazily,
-            emptyList()
-        ).asLiveData(viewModelScope.coroutineContext)
+    val reminders = _reminders.asLiveData(viewModelScope.coroutineContext)
 
     private val _navigateToEditor = MutableEventFlow<Reminder>()
 
@@ -132,9 +137,10 @@ class RemindersViewModel @Inject constructor(
                     storedValue.split(",").map { ReminderStatus.valueOf(it) }.toSet()
                 }
             }
-            val filterStartDate = sharedPreferences.getString("FILTER_REMINDER_START_DATE", "")!!.let {
-                if (it.isNotEmpty()) LocalDate.parse(it) else null
-            }
+            val filterStartDate =
+                sharedPreferences.getString("FILTER_REMINDER_START_DATE", "")!!.let {
+                    if (it.isNotEmpty()) LocalDate.parse(it) else null
+                }
             val filterEndDate = sharedPreferences.getString("FILTER_REMINDER_END_DATE", "")!!.let {
                 if (it.isNotEmpty()) LocalDate.parse(it) else null
             }
