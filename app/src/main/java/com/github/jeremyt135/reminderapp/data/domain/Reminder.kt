@@ -262,25 +262,36 @@ class SchedulingRules(
                     null // expired
                 } else if (currentDateTime.toLocalDate() < startDate) {
                     // in future
-                    val nextDayOfWeek = firstDayOfWeek { it >= startDate.dayOfWeek } // first day of week on or after startDate
-                    startDate.atTime(time).with(TemporalAdjusters.nextOrSame(nextDayOfWeek))
+                    val nextDayOfWeek =
+                        firstDayOfWeek { it >= startDate.dayOfWeek } // first day of week on or after startDate
+                    nextDayOfWeek?.let {
+                        startDate.atTime(time).with(TemporalAdjusters.nextOrSame(it))
+                    }
                 } else {
                     // check if the reminder time is in the past, preventing it from being scheduled today
                     if (currentDateTime.toLocalTime() > time) {
                         val nextDayOfWeek = firstDayOfWeek { it > currentDateTime.dayOfWeek }
-                        currentDateTime.toLocalDate()
-                            .atTime(time)
-                            .with(TemporalAdjusters.next(nextDayOfWeek))
+                        nextDayOfWeek?.let {
+                            currentDateTime.toLocalDate()
+                                .atTime(time)
+                                .with(TemporalAdjusters.next(it))
+                        }
                     } else {
                         // time is in the future (t >= now), so it could be scheduled for today
                         if (allowSameDay) {
-                            currentDateTime.toLocalDate()
-                                .atTime(time)
-                                .with(TemporalAdjusters.nextOrSame(firstDayOfWeek { it >= currentDateTime.dayOfWeek }))
+                            val nextDayOfWeek = firstDayOfWeek { it >= currentDateTime.dayOfWeek }
+                            nextDayOfWeek?.let {
+                                currentDateTime.toLocalDate()
+                                    .atTime(time)
+                                    .with(TemporalAdjusters.nextOrSame(it))
+                            }
                         } else {
-                            currentDateTime.toLocalDate()
-                                .atTime(time)
-                                .with(TemporalAdjusters.next(firstDayOfWeek { it > currentDateTime.dayOfWeek }))
+                            val nextDayOfWeek = firstDayOfWeek { it > currentDateTime.dayOfWeek }
+                            nextDayOfWeek?.let {
+                                currentDateTime.toLocalDate()
+                                    .atTime(time)
+                                    .with(TemporalAdjusters.next(it))
+                            }
                         }
 
                     }
@@ -291,11 +302,15 @@ class SchedulingRules(
 
     /**
      * Returns first day of week matching the predicate, falling back to the first
-     * selected DayOfWeek if none of the daysOfWeek match the predicate.
+     * selected DayOfWeek if none of the daysOfWeek match the predicate. If the
+     * set is empty, returns null.
      */
-    private fun firstDayOfWeek(predicate: (DayOfWeek) -> Boolean) =
+    private fun firstDayOfWeek(predicate: (DayOfWeek) -> Boolean) = if (daysOfWeek.isEmpty()) {
+        null
+    } else {
         daysOfWeek.firstOrNull { predicate(it) }
             ?: daysOfWeek.first()
+    }
 
     /**
      * Determines if the date falls within the schedule's
