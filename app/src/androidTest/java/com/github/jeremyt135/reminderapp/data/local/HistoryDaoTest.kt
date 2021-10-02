@@ -5,6 +5,8 @@ import androidx.test.filters.SmallTest
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.ReminderStatus
 import com.github.jeremyt135.reminderapp.util.InMemoryDatabaseRule
+import com.github.jeremyt135.reminderapp.util.currentLocalDateTime
+import com.github.jeremyt135.reminderapp.util.toEpochMilli
 import com.google.common.truth.Truth.assertThat
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -49,6 +51,18 @@ class HistoryDaoTest {
     @Test
     fun getAll_returnsAllHistory() = runBlockingTest {
         assertThat(historyDao.getAll().first()).containsExactlyElementsIn(historyEntries)
+    }
+
+    @Test
+    fun getLatestForReminder_returnsSingleLatestHistory() = runBlockingTest {
+        val histories = (0..4).map {
+            History(
+                reminderId = "id",
+                completedAt = currentLocalDateTime().plusMinutes(it * 10L).toEpochMilli()
+            )
+        }
+        historyDao.insertAll(histories)
+        assertThat(historyDao.getLatestForReminder("id")!!).isEqualTo(histories.last())
     }
 
     @Test

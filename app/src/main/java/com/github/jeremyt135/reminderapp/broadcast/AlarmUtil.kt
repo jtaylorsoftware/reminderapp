@@ -15,15 +15,19 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.work.WorkManager
 import com.github.jeremyt135.R
 import com.github.jeremyt135.reminderapp.data.AlarmRepository
+import com.github.jeremyt135.reminderapp.data.HistoryRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.Alarm
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.ReminderStatus
+import com.github.jeremyt135.reminderapp.data.domain.SchedulingType
 import com.github.jeremyt135.reminderapp.screens.alarm.AlarmActivity
 import com.github.jeremyt135.reminderapp.screens.reminder.editor.ReminderEditorActivity
-import com.github.jeremyt135.reminderapp.util.*
+import com.github.jeremyt135.reminderapp.util.currentLocalDateTime
+import com.github.jeremyt135.reminderapp.util.getShortLocalDateDisplay
+import com.github.jeremyt135.reminderapp.util.getShortLocalTimeDisplay
+import com.github.jeremyt135.reminderapp.util.toEpochMilli
 import com.github.jeremyt135.reminderapp.work.AlarmActionHandler
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
 import timber.log.Timber
 
@@ -76,7 +80,7 @@ const val EXTRA_ALARM_ID = "com.github.jeremyt135.reminderapp.EXTRA_ALARM_ID"
 /**
  *
  */
-const val EXTRA_REMINDER_START_DATE =  "com.github.jeremyt135.reminderapp.EXTRA_REMINDER_START_DATE"
+const val EXTRA_REMINDER_START_DATE = "com.github.jeremyt135.reminderapp.EXTRA_REMINDER_START_DATE"
 
 /**
  * Bool: The on-off should-vibrate setting from the Reminder as entered into the editor.
@@ -146,14 +150,15 @@ suspend fun scheduleNextAlarm(
  * been completed on the current date will not be schedule on the same day, instead they
  * are scheduled when next available.
  * For use when the application has restarted from a force stop, reinstalled, or when phone restarts.
- * Reminders that expired while the app was unable to run cannot be recovered and will not be rescheduled
- * because that would cause an "avalanche" of past alarms.
+ * Type SINGLE reminders that expired while the app was unable to run will be rescheduled if they don't have
+ * any history.
  * @return Number of saved alarms.
  */
 suspend fun rescheduleReminders(
     context: Context,
     reminderRepository: ReminderRepository,
-    alarmRepository: AlarmRepository
+    alarmRepository: AlarmRepository,
+    historyRepository: HistoryRepository
 ): Int {
     Timber.d("Rescheduling all reminders and their alarms...")
 
@@ -162,31 +167,47 @@ suspend fun rescheduleReminders(
 
     Timber.d("Cleared all past alarms, saving new ones...")
 
-    var nextAlarmId: Long = 0L
     // Get all reminders and re-save their alarms
     val reminders = reminderRepository.getAllWithTodayHistory().first()
-    val numRescheduled = reminders.map { reminderAndHistory ->
+    val rescheduledAlarmIds: List<Long> = reminders.map { (reminder, historyToday) ->
         // Allow same day alarm if either a) no history or b) history.status is PENDING
         val allowSameDay =
-            reminderAndHistory.history?.let { it.completionStatus == ReminderStatus.PENDING }
+            historyToday?.let { it.completionStatus == ReminderStatus.PENDING }
                 ?: true
 
-        reminderAndHistory.reminder.let {
-            it.schedulingRules.getNextTimeForAlarm(
+
+        // The actual time that's scheduled next
+        val scheduledNextTimeForAlarm =
+            reminder.schedulingRules.getNextTimeForAlarm(
                 currentLocalDateTime(),
                 allowSameDay = allowSameDay
-            )?.let { time ->
+            )
+
+        // If no history or pending history, SINGLE reminders can be rescheduled (they may exist
+        // on restart depending on several factors including how the app crashed and when it next
+        // started)
+        val recoveredNextTimeForAlarm = scheduledNextTimeForAlarm
+            ?: if (reminder.schedulingRules.type == SchedulingType.SINGLE) {
+                // Check if there's any history for it
+                val latestHistory = historyRepository.getLatestForReminder(reminder.id)
+                if (latestHistory == null) currentLocalDateTime().plusMinutes(5) else null
+            } else null
+
+        with(reminder) {
+            recoveredNextTimeForAlarm?.let { time ->
                 val nextAlarm = Alarm(
-                    reminderId = it.id,
+                    reminderId = id,
                     triggerAt = time,
-                    maxSnoozeRepeats = it.maxSnoozeRepeats,
-                    snoozeDuration = it.snoozeDuration
+                    maxSnoozeRepeats = maxSnoozeRepeats,
+                    snoozeDuration = snoozeDuration
                 )
-                nextAlarm.id = alarmRepository.save(nextAlarm)
-                nextAlarmId = nextAlarm.id
-            }
+                alarmRepository.save(nextAlarm)
+            } ?: 0L
         }
-    }.count { it != null }
+    }
+
+    val numRescheduled = rescheduledAlarmIds.count { it != 0L }
+    val nextAlarmId = rescheduledAlarmIds.firstOrNull() ?: 0L
 
     Timber.d("Saved $numRescheduled new alarms, starting action for SCHEDULE_NEXT...")
 

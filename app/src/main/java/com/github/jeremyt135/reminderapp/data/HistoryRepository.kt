@@ -11,6 +11,8 @@ interface HistoryRepository {
 
     fun findByReminderId(reminderId: String): Flow<List<History>>
 
+    suspend fun getLatestForReminder(reminderId: String): History?
+
     suspend fun findById(id: String): History?
 
     suspend fun save(history: History)
@@ -28,6 +30,10 @@ class HistoryRepositoryImpl @Inject constructor(
 
     override fun findByReminderId(reminderId: String) =
         historyLocalDataSource.findByReminderId(reminderId)
+
+    override suspend fun getLatestForReminder(reminderId: String): History? =
+        historyLocalDataSource.getLatestForReminder(reminderId)
+
 
     override suspend fun findById(id: String): History? = historyLocalDataSource.findById(id)
 

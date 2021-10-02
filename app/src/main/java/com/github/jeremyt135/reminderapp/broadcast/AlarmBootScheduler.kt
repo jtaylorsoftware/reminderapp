@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import com.github.jeremyt135.reminderapp.data.AlarmRepository
+import com.github.jeremyt135.reminderapp.data.HistoryRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.di.AppCoroutineScope
 import dagger.hilt.android.AndroidEntryPoint
@@ -26,6 +27,9 @@ class AlarmBootScheduler : BroadcastReceiver() {
     @Inject
     lateinit var alarmRepository: AlarmRepository
 
+    @Inject
+    lateinit var historyRepository: HistoryRepository
+
     @AppCoroutineScope
     @Inject
     lateinit var applicationScope: CoroutineScope
@@ -47,7 +51,7 @@ class AlarmBootScheduler : BroadcastReceiver() {
         val pendingResult = goAsync()
         applicationScope.launch {
             // Try to reschedule each reminder
-            rescheduleReminders(context, reminderRepository, alarmRepository)
+            rescheduleReminders(context, reminderRepository, alarmRepository, historyRepository)
             pendingResult.finish()
         }
     }

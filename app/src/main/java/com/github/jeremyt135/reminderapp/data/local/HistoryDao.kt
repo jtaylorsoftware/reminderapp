@@ -18,6 +18,11 @@ interface HistoryDao {
     @Query("SELECT * FROM history WHERE history_id = :id")
     suspend fun findById(id: String): History?
 
+    @Query("""
+        SELECT * FROM history WHERE reminder_id = :reminderId ORDER BY completed_at DESC LIMIT 1
+    """)
+    suspend fun getLatestForReminder(reminderId: String): History?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(history: History)
 

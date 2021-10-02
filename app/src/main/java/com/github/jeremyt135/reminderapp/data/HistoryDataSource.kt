@@ -8,6 +8,8 @@ interface HistoryDataSource {
 
     fun findByReminderId(reminderId: String): Flow<List<History>>
 
+    suspend fun getLatestForReminder(reminderId: String): History?
+
     suspend fun findById(id: String): History?
 
     suspend fun save(history: History)

@@ -13,6 +13,9 @@ class FakeHistoryRepository(private val localDataSource: FakeHistoryLocalDataSou
     override fun findByReminderId(reminderId: String): Flow<List<History>> =
         localDataSource.findByReminderId(reminderId)
 
+    override suspend fun getLatestForReminder(reminderId: String): History? =
+        localDataSource.getLatestForReminder(reminderId)
+
     override suspend fun findById(id: String): History? = localDataSource.findById(id)
 
     override suspend fun save(history: History) {

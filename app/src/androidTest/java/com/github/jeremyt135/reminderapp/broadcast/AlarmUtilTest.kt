@@ -26,6 +26,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import java.time.DayOfWeek
+import java.time.Instant
 import java.time.LocalDate
 
 @ExperimentalCoroutinesApi
@@ -162,7 +163,7 @@ class AlarmUtilTest {
 
         reminderRepository.saveAll(reminders)
 
-        val numRescheduled = rescheduleReminders(context, reminderRepository, alarmRepo)
+        val numRescheduled = rescheduleReminders(context, reminderRepository, alarmRepo, historyRepository)
 
         val alarms = alarmRepo.getAll().first()
         assertThat(alarms).hasSize(reminders.size)
@@ -205,7 +206,7 @@ class AlarmUtilTest {
 
         reminderRepository.saveAll(reminders)
 
-        val numRescheduled = rescheduleReminders(context, reminderRepository, alarmRepo)
+        val numRescheduled = rescheduleReminders(context, reminderRepository, alarmRepo, historyRepository)
 
         val alarms = alarmRepo.getAll().first()
         assertThat(alarms).hasSize(reminders.size)
@@ -229,7 +230,7 @@ class AlarmUtilTest {
     }
 
     @Test
-    fun rescheduleAlarms_doesNotSaveAlarmsInPast() = runBlockingTest {
+    fun rescheduleAlarms_doesNotSaveAlarmsInPast_ifHasHistory() = runBlockingTest {
         mockkStatic(::enqueueScheduleNext)
         justRun { enqueueScheduleNext(any(), any()) }
 
@@ -242,7 +243,8 @@ class AlarmUtilTest {
                 )
             )
         }.toMutableList()
-        // Save one in past
+
+        // Save one in past that will have a history with it
         reminders.add(
             Reminder(
                 schedulingRules = SchedulingRules(
@@ -251,10 +253,18 @@ class AlarmUtilTest {
                 )
             )
         )
+        // Save history as not PENDING so it doesn't get a new time
+        historyRepository.save(
+            History(
+                reminderId = reminders.last().id,
+                completionStatus = ReminderStatus.COMPLETED,
+                completedAt = Instant.now().toEpochMilli()
+            )
+        )
 
         reminderRepository.saveAll(reminders)
 
-        val numRescheduled = rescheduleReminders(context, reminderRepository, alarmRepo)
+        val numRescheduled = rescheduleReminders(context, reminderRepository, alarmRepo, historyRepository)
 
         val alarms = alarmRepo.getAll().first()
 
@@ -264,6 +274,35 @@ class AlarmUtilTest {
             enqueueScheduleNext(any(), any())
         }
     }
+
+
+    @Test
+    fun rescheduleAlarms_doesSaveAlarmsInPast_ifNoHistory() = runBlockingTest {
+        mockkStatic(::enqueueScheduleNext)
+        justRun { enqueueScheduleNext(any(), any()) }
+
+        // save a bunch of single in past
+        val reminders = (1L..4).map {
+            Reminder(
+                schedulingRules = SchedulingRules(
+                    time = currentLocalTime().minusMinutes(it * 10),
+                    type = SchedulingType.SINGLE,
+                )
+            )
+        }.toMutableList()
+        reminderRepository.saveAll(reminders)
+
+        val numRescheduled = rescheduleReminders(context, reminderRepository, alarmRepo, historyRepository)
+
+        val alarms = alarmRepo.getAll().first()
+
+        assertThat(alarms).hasSize(reminders.size)
+        assertThat(numRescheduled).isEqualTo(reminders.size)
+        verify {
+            enqueueScheduleNext(any(), any())
+        }
+    }
+
 
     @Test
     fun buildNotificationForAlarmIntent_createsActionIntents() {

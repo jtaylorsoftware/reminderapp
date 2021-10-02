@@ -14,9 +14,13 @@ class HistoryLocalDataSource @Inject constructor(private val historyDao: History
     HistoryDataSource {
 
     override fun getAll(): Flow<List<History>> = historyDao.getAll().map { it.asDomainModel() }
-    override fun findByReminderId(reminderId: String) = historyDao.findByReminderId(reminderId).map{
-        it.asDomainModel()
-    }
+    override fun findByReminderId(reminderId: String) =
+        historyDao.findByReminderId(reminderId).map {
+            it.asDomainModel()
+        }
+
+    override suspend fun getLatestForReminder(reminderId: String): History? =
+        historyDao.getLatestForReminder(reminderId)?.asDomainModel()
 
     override suspend fun findById(id: String): History? = historyDao.findById(id)?.asDomainModel()
 

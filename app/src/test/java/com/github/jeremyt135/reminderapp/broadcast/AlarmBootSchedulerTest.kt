@@ -47,7 +47,7 @@ class AlarmBootSchedulerTest {
         MockKAnnotations.init(this)
 
         mockkStatic(::rescheduleReminders)
-        coJustRun { rescheduleReminders(any(), any(), any()) }
+        coJustRun { rescheduleReminders(any(), any(), any(), any()) }
 
         receiver = spyk(AlarmBootScheduler().apply {
             applicationScope = mainCoroutineRule
@@ -81,7 +81,7 @@ class AlarmBootSchedulerTest {
         receiver.onReceive(context, intent)
 
         coVerifyOrder {
-            rescheduleReminders(any(), any(), any())
+            rescheduleReminders(any(), any(), any(), any())
         }
     }
 
@@ -93,7 +93,7 @@ class AlarmBootSchedulerTest {
         receiver.onReceive(context, intent)
 
         coVerifyOrder {
-            rescheduleReminders(any(), any(), any())
+            rescheduleReminders(any(), any(), any(), any())
         }
     }
 
@@ -106,7 +106,7 @@ class AlarmBootSchedulerTest {
         receiver.onReceive(context, intent)
 
         coVerifyOrder {
-            rescheduleReminders(any(), any(), any())
+            rescheduleReminders(any(), any(), any(), any())
         }
     }
 }

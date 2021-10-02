@@ -16,6 +16,10 @@ class FakeHistoryLocalDataSource(private val cache: MutableList<History> = mutab
         emit(cache.filter { it.reminderId == reminderId })
     }
 
+    override suspend fun getLatestForReminder(reminderId: String): History? = cache.filter {
+        it.reminderId == reminderId
+    }.maxByOrNull { it.completedAt }
+
     override suspend fun findById(id: String): History? = cache.find { it.id == id }
 
     override suspend fun save(history: History) {

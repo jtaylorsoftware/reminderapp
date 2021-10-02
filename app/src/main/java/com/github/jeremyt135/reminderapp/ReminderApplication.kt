@@ -10,6 +10,7 @@ import com.github.jeremyt135.BuildConfig
 import com.github.jeremyt135.R
 import com.github.jeremyt135.reminderapp.broadcast.rescheduleReminders
 import com.github.jeremyt135.reminderapp.data.AlarmRepository
+import com.github.jeremyt135.reminderapp.data.HistoryRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.di.AppCoroutineScope
 import com.github.jeremyt135.reminderapp.settings.getBaseSharedPreferences
@@ -32,6 +33,9 @@ class ReminderApplication : Application(), androidx.work.Configuration.Provider 
     lateinit var reminderRepository: ReminderRepository
 
     @Inject
+    lateinit var historyRepository: HistoryRepository
+
+    @Inject
     lateinit var workerFactory: HiltWorkerFactory
 
     override fun onCreate() {
@@ -46,7 +50,7 @@ class ReminderApplication : Application(), androidx.work.Configuration.Provider 
         }
 
         // Try to reschedule each reminder which may be necessary due to a force stop
-        rescheduleReminders(this, reminderRepository, alarmRepository)
+        rescheduleReminders(this, reminderRepository, alarmRepository, historyRepository)
     }
 
     override fun getWorkManagerConfiguration() =
