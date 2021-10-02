@@ -29,4 +29,10 @@ enum class ThemeSetting {
  * Gets the current theme setting from shared preferences.
  */
 fun SharedPreferences.getTheme(key: String) =
-    ThemeSetting.valueOf(getString(key, ThemeSetting.SYSTEM.toString())!!)
+    try {
+        getString(key, ThemeSetting.SYSTEM.toString())?.let {
+            ThemeSetting.valueOf(it)
+        } ?: ThemeSetting.SYSTEM
+    } catch(e: Exception) {
+        ThemeSetting.SYSTEM
+    }
