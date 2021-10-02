@@ -11,23 +11,29 @@ class RandomColorCache(private val cacheSize: Int) {
     private var cache = ArrayDeque<Int>(initialCapacity = cacheSize)
     private var nextColors = ArrayDeque<Int>(initialCapacity = cacheSize)
 
-    /**
-     * Gets a random color value.
-     */
-    fun randomColor(): Int = when {
-        nextColors.size != 0 -> {
-            nextColor()
-        }
-        cache.size == cacheSize -> {
-            flipCache()
-            nextColor()
-        }
-        else -> {
-            createColor()
+    init {
+        if (cacheSize <= 0) {
+            throw IllegalArgumentException("RandomColorCache cacheSize must be positive")
         }
     }
 
-    private fun nextColor(): Int = nextColors.removeLast()
+    /**
+     * Gets a random color value.
+     */
+    fun randomColor(): Int = if (nextColors.size > 0) {
+        nextColor()
+    } else {
+        if (cache.size != cacheSize) {
+            createColor()
+        } else {
+            flipCache()
+            nextColor()
+        }
+    }
+
+    private fun nextColor() = nextColors.removeAt(Random.nextInt(0, nextColors.size)).also {
+        cache.addLast(it)
+    }
 
     private fun flipCache() {
         val t = nextColors
@@ -37,7 +43,6 @@ class RandomColorCache(private val cacheSize: Int) {
 
     private fun createColor(): Int {
         val color = getRandomColor()
-        nextColors.addLast(color)
         cache.addLast(color)
         return color
     }
