@@ -9,7 +9,7 @@ import timber.log.Timber
 enum class ThemeSetting {
     DARK, LIGHT, SYSTEM;
 
-    fun toAppNightMode() = when(this) {
+    fun toAppNightMode() = when (this) {
         DARK -> AppCompatDelegate.MODE_NIGHT_YES
         LIGHT -> AppCompatDelegate.MODE_NIGHT_NO
         SYSTEM -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
@@ -28,4 +28,5 @@ enum class ThemeSetting {
 /**
  * Gets the current theme setting from shared preferences.
  */
-fun SharedPreferences.getTheme(key: String) = ThemeSetting.valueOf(getString(key, "")!!)
+fun SharedPreferences.getTheme(key: String) =
+    ThemeSetting.valueOf(getString(key, ThemeSetting.SYSTEM.toString())!!)
