@@ -9,7 +9,6 @@ import androidx.work.WorkManager
 import androidx.work.WorkRequest
 import com.github.jeremyt135.reminderapp.MainCoroutineRule
 import com.github.jeremyt135.reminderapp.ReminderApplication
-import com.github.jeremyt135.reminderapp.broadcast.ACTION_ALARM_SCHEDULE_NEXT
 import com.github.jeremyt135.reminderapp.broadcast.EXTRA_REMINDER_ID
 import com.github.jeremyt135.reminderapp.broadcast.EXTRA_REMINDER_START_DATE
 import com.github.jeremyt135.reminderapp.broadcast.cancelAlarmIntentsForReminder
@@ -18,8 +17,6 @@ import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.Alarm
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.SchedulingRules
-import com.github.jeremyt135.reminderapp.data.domain.SchedulingType
-import com.github.jeremyt135.reminderapp.getOrAwaitValue
 import com.github.jeremyt135.reminderapp.service.AlarmService
 import com.github.jeremyt135.reminderapp.util.currentLocalDateTime
 import com.github.jeremyt135.reminderapp.work.AlarmActionHandler
@@ -142,7 +139,10 @@ class ReminderEditorViewModelTest {
     @Test
     fun saveReminder_savesToRepository_schedulesAlarm() = mainCoroutineRule.runBlockingTest {
         val reminder =
-            Reminder(description="Test", schedulingRules = SchedulingRules(time = LocalTime.now().plusMinutes(1)))
+            Reminder(
+                description = "Test",
+                schedulingRules = SchedulingRules(time = LocalTime.now().plusMinutes(1))
+            )
         val savedReminder = slot<Reminder>()
 
         val alarm = Alarm(id = 1, reminderId = reminder.id, scheduled = true)
@@ -177,7 +177,7 @@ class ReminderEditorViewModelTest {
             // Should save and schedule the next available alarm
             mockAlarmRepo.save(any())
             AlarmService.requestStop(mockApplication)
-            AlarmActionHandler.createForAction(ACTION_ALARM_SCHEDULE_NEXT, "")
+            AlarmActionHandler.createForScheduleNext( "", alarm.id + 1)
         }
 
         assertThat(savedReminder.captured.id).isEqualTo(reminder.id)
@@ -193,7 +193,10 @@ class ReminderEditorViewModelTest {
     @Test
     fun saveReminder_emitsNavigateToReminders() = mainCoroutineRule.runBlockingTest {
         val reminder =
-            Reminder(description="Test", schedulingRules = SchedulingRules(time = LocalTime.now().plusMinutes(10)))
+            Reminder(
+                description = "Test",
+                schedulingRules = SchedulingRules(time = LocalTime.now().plusMinutes(10))
+            )
 
         every { mockSavedState.get<String>(EXTRA_REMINDER_ID) } returns reminder.id
         coEvery { mockReminderRepo.findById(reminder.id) } returns reminder
@@ -254,7 +257,7 @@ class ReminderEditorViewModelTest {
                 mockAlarmRepo.delete(alarm)
                 AlarmService.requestStop(mockApplication)
                 mockReminderRepo.delete(reminder)
-                AlarmActionHandler.createForAction(ACTION_ALARM_SCHEDULE_NEXT, "")
+                AlarmActionHandler.createForScheduleNext("", 0)
             }
         }
 }

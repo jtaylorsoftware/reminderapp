@@ -22,6 +22,7 @@ import timber.log.Timber
 import java.time.Instant
 import java.time.ZoneId
 import java.util.concurrent.TimeUnit
+import kotlin.properties.Delegates
 
 /**
  * Performs the necessary work to handle an Alarm action like
@@ -31,19 +32,18 @@ import java.util.concurrent.TimeUnit
 class AlarmActionHandler @AssistedInject constructor(
     @Assisted context: Context,
     @Assisted workerParameters: WorkerParameters,
-    alarmRepository: AlarmRepository,
-    reminderRepository: ReminderRepository,
-    historyRepository: HistoryRepository
+    private val alarmRepository: AlarmRepository,
+    private val reminderRepository: ReminderRepository,
+    private val historyRepository: HistoryRepository
 ) : CoroutineWorker(context, workerParameters) {
 
-    // Using pimpl because the test worker builders don't work well with injection & easier to test
-    private val impl = AlarmActionHandlerImpl(
-        context, inputData, alarmRepository, reminderRepository, historyRepository
-    )
+    private lateinit var action: String
+    private lateinit var reminderId: String
+    private var nextAlarmId by Delegates.notNull<Long>()
 
     override suspend fun doWork(): Result {
         setForeground(createForegroundInfo())
-        return impl.doWork()
+        return doWorkImpl()
     }
 
     private fun createForegroundInfo(): ForegroundInfo {
@@ -60,34 +60,6 @@ class AlarmActionHandler @AssistedInject constructor(
         return ForegroundInfo(Int.MAX_VALUE, notification)
     }
 
-    companion object {
-        fun createForAction(action: String, reminderId: String) =
-            OneTimeWorkRequestBuilder<AlarmActionHandler>()
-                .setInputData(
-                    workDataOf(
-                        EXTRA_ALARM_ACTION_NAME to action,
-                        EXTRA_REMINDER_ID to reminderId
-                    )
-                )
-                .setBackoffCriteria(
-                    BackoffPolicy.LINEAR,
-                    OneTimeWorkRequest.MIN_BACKOFF_MILLIS,
-                    TimeUnit.MILLISECONDS
-                )
-                .build()
-
-    }
-
-}
-
-@VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-class AlarmActionHandlerImpl(
-    private val applicationContext: Context,
-    private val inputData: Data,
-    private val alarmRepository: AlarmRepository,
-    private val reminderRepository: ReminderRepository,
-    private val historyRepository: HistoryRepository
-) {
     private val actions = arrayOf(
         ACTION_ALARM_SCHEDULE_NEXT,
         ACTION_ALARM_SNOOZE,
@@ -95,16 +67,18 @@ class AlarmActionHandlerImpl(
         ACTION_ALARM_COMPLETE,
     )
 
-    suspend fun doWork(): Result {
-        val action = inputData.getString(EXTRA_ALARM_ACTION_NAME) ?: return Result.failure()
-        val reminderId = inputData.getString(EXTRA_REMINDER_ID) ?: ""
+    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+    suspend fun doWorkImpl(): Result {
+        action = inputData.getString(EXTRA_ALARM_ACTION_NAME) ?: return Result.failure()
+        reminderId = inputData.getString(EXTRA_REMINDER_ID) ?: ""
+        nextAlarmId = inputData.getLong(EXTRA_ALARM_ID, 0L)
         return try {
             if (action !in actions) {
-                Timber.e("Invalid action for doWork: $action")
+                Timber.e("AlarmActionHandler failing: Invalid action for doWork: $action")
                 Result.failure()
             } else {
                 Timber.d("Started doWork for $action")
-                handleAction(action, reminderId)
+                handleAction()
             }
         } catch (e: Exception) {
             Timber.e(e)
@@ -115,13 +89,15 @@ class AlarmActionHandlerImpl(
     /**
      * Attempts to handle an action
      */
-    private suspend fun handleAction(action: String, reminderId: String): Result {
+    private suspend fun handleAction(): Result {
         return when (action) {
             ACTION_ALARM_SNOOZE -> handleSnooze(reminderId)
             ACTION_ALARM_SKIP -> handleSkip(reminderId)
             ACTION_ALARM_COMPLETE -> handleCompleted(reminderId)
             ACTION_ALARM_SCHEDULE_NEXT -> scheduleNext()
-            else -> Result.failure()
+            else -> Result.failure().also {
+                Timber.e("AlarmActionHandler failing: invalid action")
+            }
         }
     }
 
@@ -130,7 +106,22 @@ class AlarmActionHandlerImpl(
             if (scheduleNextAlarm(applicationContext, alarmRepository, reminderRepository)) {
                 Result.success()
             } else Result.retry()
-        } else Result.failure()
+        } else when (nextAlarmId) {
+            // Do not expect anything to be in the alarm, very well might not be and that's ok
+            NO_ALARM_ID -> if (runAttemptCount < MAX_SCHEDULE_RETRIES) {
+                Result.retry().also {
+                    Timber.e("AlarmActionHandler retrying: no alarms, current run $runAttemptCount")
+                }
+            } else {
+                Result.failure().also {
+                    Timber.e("AlarmActionHandler failing: no alarms after 3 tries")
+                }
+            }
+            // Expecting the repository to have an alarm
+            else -> Result.retry().also {
+                Timber.e("AlarmActionHandler retrying: no alarms but expected one, id $nextAlarmId")
+            }
+        }
 
     private suspend fun handleSkip(reminderId: String): Result =
         saveHistoryForReminder(reminderId, ReminderStatus.SKIPPED)
@@ -138,14 +129,14 @@ class AlarmActionHandlerImpl(
     private suspend fun handleCompleted(reminderId: String): Result =
         saveHistoryForReminder(reminderId, ReminderStatus.COMPLETED)
 
-    private fun enqueueScheduleNext() {
-        AlarmActionHandler.createForAction(ACTION_ALARM_SCHEDULE_NEXT, "").let {
+    private fun enqueueScheduleNext(nextAlarmId: Long) {
+        createForScheduleNext("", nextAlarmId).let {
             WorkManager.getInstance(applicationContext).enqueue(it)
         }
     }
 
     private fun enqueueSkip(reminderId: String) {
-        AlarmActionHandler.createForAction(ACTION_ALARM_SKIP, reminderId).let {
+        createForAction(ACTION_ALARM_SKIP, reminderId).let {
             WorkManager.getInstance(applicationContext).enqueue(it)
         }
     }
@@ -160,7 +151,9 @@ class AlarmActionHandlerImpl(
         reminderId: String,
         completionStatus: ReminderStatus
     ): Result {
-        val reminder = reminderRepository.findById(reminderId) ?: return Result.failure()
+        val reminder = reminderRepository.findById(reminderId) ?: return Result.failure().also {
+            Timber.e("AlarmActionHandler failing: no reminder found saving history")
+        }
 
         // Save the history for the reminder
         saveHistoryEntry(reminder, completionStatus)
@@ -170,17 +163,22 @@ class AlarmActionHandlerImpl(
             alarmRepository.delete(it)
         }
 
+        var nextAlarmId = NO_ALARM_ID
+
         // Try to save a new alarm, if reminder's type is repeating
         if (reminder.schedulingRules.type != SchedulingType.SINGLE) {
             // Get next time for alarm, save if there is a next time
-            reminder.schedulingRules.getNextTimeForAlarm(currentLocalDateTime())?.let { nextDateTime ->
-                alarmRepository.save(Alarm(
-                    reminderId = reminder.id,
-                    triggerAt = nextDateTime,
-                    maxSnoozeRepeats = reminder.maxSnoozeRepeats,
-                    snoozeDuration = reminder.snoozeDuration
-                ))
-            }
+            reminder.schedulingRules.getNextTimeForAlarm(currentLocalDateTime())
+                ?.let { nextDateTime ->
+                    nextAlarmId = alarmRepository.save(
+                        Alarm(
+                            reminderId = reminder.id,
+                            triggerAt = nextDateTime,
+                            maxSnoozeRepeats = reminder.maxSnoozeRepeats,
+                            snoozeDuration = reminder.snoozeDuration
+                        )
+                    )
+                }
         } else {
             // Single reminders are deleted after they have completed - this is a design decision
             // to avoid confusion that a reminder is in the list but never rescheduled.
@@ -188,7 +186,7 @@ class AlarmActionHandlerImpl(
         }
 
         // Schedule the next alarm, whatever it ends up being
-        enqueueScheduleNext()
+        enqueueScheduleNext(nextAlarmId)
 
         return Result.success()
     }
@@ -209,8 +207,12 @@ class AlarmActionHandlerImpl(
     }
 
     private suspend fun handleSnooze(reminderId: String): Result {
-        val reminder = reminderRepository.findById(reminderId) ?: return Result.failure()
-        val alarm = alarmRepository.findByReminderId(reminder.id) ?: return Result.failure()
+        val reminder = reminderRepository.findById(reminderId) ?: return Result.failure().also {
+            Timber.e("AlarmActionHandler failing: no reminder found snoozing")
+        }
+        val alarm = alarmRepository.findByReminderId(reminder.id) ?: return Result.failure().also {
+            Timber.e("AlarmActionHandler failing: no alarm found snoozing")
+        }
         Timber.d("Handle snooze: ${reminder.id}")
         return snoozeAlarm(applicationContext, reminder, alarm)
     }
@@ -218,6 +220,8 @@ class AlarmActionHandlerImpl(
     private suspend fun snoozeAlarm(context: Context, reminder: Reminder, alarm: Alarm): Result {
         Timber.d("Cancelling previous notification: ${alarm.notificationId}")
         NotificationManagerCompat.from(context).cancel(alarm.notificationId)
+
+        var nextAlarmId = NO_ALARM_ID
 
         // Determine if the alarm can snooze again
         val result = if (
@@ -228,7 +232,9 @@ class AlarmActionHandlerImpl(
             Timber.d("Not snoozing Alarm: beyond allowed limit")
             enqueueSkip(reminder.id)
             showSkipNotification(context, reminder, alarm)
-            Result.failure() // Fail rather than retry, because this alarm is done snoozing
+            Result.failure().also {
+                Timber.e("AlarmActionHandler failing: not allowed to snooze")
+            } // Fail rather than retry, because this alarm is done snoozing
         } else {
             // Determine next triggerAt for a snoozing alarm
             val nextAlarm = alarm.copy(
@@ -244,6 +250,7 @@ class AlarmActionHandlerImpl(
 
             // Save next alarm
             nextAlarm.id = alarmRepository.save(nextAlarm)
+            nextAlarmId = nextAlarm.id
             Timber.d("Saved next alarm: $nextAlarm")
 
             Timber.d("Creating notification: ${nextAlarm.notificationId}")
@@ -253,8 +260,55 @@ class AlarmActionHandlerImpl(
         }
 
         alarmRepository.delete(alarm)
-        enqueueScheduleNext()
+        enqueueScheduleNext(nextAlarmId)
 
         return result
+    }
+
+    companion object {
+        const val NO_ALARM_ID = 0L
+        private const val MAX_SCHEDULE_RETRIES = 5L
+
+        fun createForAction(action: String, reminderId: String): OneTimeWorkRequest {
+            if (action == ACTION_ALARM_SCHEDULE_NEXT) {
+                throw IllegalArgumentException("createForAction: cannot invoke for action $ACTION_ALARM_SCHEDULE_NEXT")
+            }
+
+            return OneTimeWorkRequestBuilder<AlarmActionHandler>()
+                .setInputData(
+                    workDataOf(
+                        EXTRA_ALARM_ACTION_NAME to action,
+                        EXTRA_REMINDER_ID to reminderId,
+                    )
+                )
+                .setBackoffCriteria(
+                    BackoffPolicy.LINEAR,
+                    OneTimeWorkRequest.MIN_BACKOFF_MILLIS,
+                    TimeUnit.MILLISECONDS
+                )
+                .addTag(action)
+                .addTag("Reminder $reminderId")
+                .build()
+        }
+
+        fun createForScheduleNext(reminderId: String, alarmId: Long) =
+            OneTimeWorkRequestBuilder<AlarmActionHandler>()
+                .setInputData(
+                    workDataOf(
+                        EXTRA_ALARM_ACTION_NAME to ACTION_ALARM_SCHEDULE_NEXT,
+                        EXTRA_REMINDER_ID to reminderId,
+                        EXTRA_ALARM_ID to alarmId
+                    )
+                )
+                .setBackoffCriteria(
+                    BackoffPolicy.LINEAR,
+                    OneTimeWorkRequest.MIN_BACKOFF_MILLIS,
+                    TimeUnit.MILLISECONDS
+                )
+                .addTag(ACTION_ALARM_SCHEDULE_NEXT)
+                .addTag("Reminder $reminderId")
+                .addTag("Alarm $alarmId")
+                .build()
+
     }
 }

@@ -247,7 +247,7 @@ class RemindersViewModel @Inject constructor(
         alarmRepository.findByReminderId(reminder.id)?.scheduled == true
 
     private fun scheduleNextAlarm() {
-        AlarmActionHandler.createForAction(ACTION_ALARM_SCHEDULE_NEXT, "").let {
+        AlarmActionHandler.createForScheduleNext( "", 0).let {
             WorkManager.getInstance(getApplication()).enqueue(it)
         }
     }

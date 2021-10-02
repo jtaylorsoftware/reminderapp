@@ -17,8 +17,8 @@
         android:theme="@style/Theme.ReminderApp">
         <activity
             android:name=".reminderapp.MainActivity"
-            android:exported="true"
             android:configChanges="orientation|screenSize"
+            android:exported="true"
             android:windowSoftInputMode="adjustPan">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -56,11 +56,13 @@
         </receiver>
 
         <service android:name=".reminderapp.service.AlarmService" />
+
         <provider
-            android:name="androidx.work.impl.WorkManagerInitializer"
-            android:authorities="${applicationId}.workmanager-init"
-            android:exported="false"
-            tools:node="remove" />
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            tools:node="remove">
+        </provider>
+
     </application>
 
 </manifest>

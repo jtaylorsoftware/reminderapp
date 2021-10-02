@@ -371,6 +371,7 @@ class ReminderEditorViewModel @Inject constructor(
 
                 val wasScheduled = stopAlarmsForReminder(getApplication(), reminder)
 
+                var nextAlarmId = AlarmActionHandler.NO_ALARM_ID
                 reminder.schedulingRules.getNextTimeForAlarm(
                     currentLocalDateTime(),
                     allowSameDay = true
@@ -382,6 +383,7 @@ class ReminderEditorViewModel @Inject constructor(
                         snoozeDuration = reminder.snoozeDuration
                     )
                     nextAlarm.id = alarmRepository.save(nextAlarm)
+                    nextAlarmId = nextAlarm.id
                 }
 
                 // stop currently running AlarmService if saved reminder is the one scheduled
@@ -389,7 +391,7 @@ class ReminderEditorViewModel @Inject constructor(
                     AlarmService.requestStop(getApplication())
                 }
 
-                scheduleNextAlarm()
+                scheduleNextAlarm(nextAlarmId)
             }
         }
 
@@ -427,7 +429,7 @@ class ReminderEditorViewModel @Inject constructor(
                     if (stopAlarmsForReminder(this, reminder)) {
                         // Was currently scheduled, so try to schedule next
                         AlarmService.requestStop(this)
-                        scheduleNextAlarm()
+                        scheduleNextAlarm(AlarmActionHandler.NO_ALARM_ID)
                     }
                 }
 
@@ -443,8 +445,8 @@ class ReminderEditorViewModel @Inject constructor(
             .getTitle(getApplication())
 
 
-    private fun scheduleNextAlarm() {
-        AlarmActionHandler.createForAction(ACTION_ALARM_SCHEDULE_NEXT, "").let {
+    private fun scheduleNextAlarm(nextAlarmId: Long) {
+        AlarmActionHandler.createForScheduleNext("", nextAlarmId).let {
             WorkManager.getInstance(getApplication()).enqueue(it)
         }
     }

@@ -36,7 +36,7 @@ class AlarmStartReceiver : BroadcastReceiver() {
             return
         }
 
-        val reminderId = intent.getStringExtra(EXTRA_REMINDER_ID) ?: return scheduleNext(context)
+        val reminderId = intent.getStringExtra(EXTRA_REMINDER_ID) ?: return scheduleNext(context, 0)
 
         val pendingResult = goAsync()
         applicationScope.launch {
@@ -53,7 +53,7 @@ class AlarmStartReceiver : BroadcastReceiver() {
                     if (!started) {
                         // the previous timer wasn't cleared, or there's other problems making timers
                         Timber.e("Could not create AlarmTimer for reminder ${reminder.id}")
-                        scheduleNext(context)
+                        scheduleNext(context, alarm.id)
                     } else {
                         // started, so create service
                         Timber.d("AlarmStartReceiver starting service")
@@ -63,20 +63,20 @@ class AlarmStartReceiver : BroadcastReceiver() {
                     // alarm?.let was null
                     // schedule next because current reminder/alarm can't be displayed
                     Timber.e("Reminder had no alarm")
-                    scheduleNext(context)
+                    scheduleNext(context, 0)
                 }
             } ?: run {
                 // getReminderAndAlarm?.let was null
                 // had no data to work with, try to schedule next
                 Timber.e("Could not get ReminderAndAlarm")
-                scheduleNext(context)
+                scheduleNext(context, 0)
             }
             pendingResult.finish()
         }
     }
 
-    private fun scheduleNext(context: Context) {
-        AlarmActionHandler.createForAction(ACTION_ALARM_SCHEDULE_NEXT, "").let {
+    private fun scheduleNext(context: Context, nextAlarmId: Long) {
+        AlarmActionHandler.createForScheduleNext("", nextAlarmId).let {
             WorkManager.getInstance(context).enqueue(it)
         }
     }

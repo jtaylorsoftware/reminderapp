@@ -150,7 +150,7 @@ class AlarmUtilTest {
     @Test
     fun rescheduleAlarms_savesNewAlarms_schedulesNext() = runBlockingTest {
         mockkStatic(::enqueueScheduleNext)
-        justRun { enqueueScheduleNext(any()) }
+        justRun { enqueueScheduleNext(any(), any()) }
 
         val reminders = (1L..4).map {
             Reminder(
@@ -168,7 +168,7 @@ class AlarmUtilTest {
         assertThat(alarms).hasSize(reminders.size)
         assertThat(numRescheduled).isEqualTo(reminders.size)
         verify {
-            enqueueScheduleNext(any())
+            enqueueScheduleNext(any(), any())
         }
     }
 
@@ -176,7 +176,7 @@ class AlarmUtilTest {
     @Test
     fun rescheduleAlarms_doesNotSaveRemindersWithHistoryOnSameDay() = runBlockingTest {
         mockkStatic(::enqueueScheduleNext)
-        justRun { enqueueScheduleNext(any()) }
+        justRun { enqueueScheduleNext(any(), any()) }
 
         val reminders = (1L..4).map {
             Reminder(
@@ -224,14 +224,14 @@ class AlarmUtilTest {
         }
 
         verify {
-            enqueueScheduleNext(any())
+            enqueueScheduleNext(any(), any())
         }
     }
 
     @Test
     fun rescheduleAlarms_doesNotSaveAlarmsInPast() = runBlockingTest {
         mockkStatic(::enqueueScheduleNext)
-        justRun { enqueueScheduleNext(any()) }
+        justRun { enqueueScheduleNext(any(), any()) }
 
         val reminders = (1L..4).map {
             Reminder(
@@ -261,7 +261,7 @@ class AlarmUtilTest {
         assertThat(alarms).hasSize(reminders.size - 1)
         assertThat(numRescheduled).isEqualTo(reminders.size - 1)
         verify {
-            enqueueScheduleNext(any())
+            enqueueScheduleNext(any(), any())
         }
     }
 

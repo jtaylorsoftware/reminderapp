@@ -69,6 +69,11 @@ const val EXTRA_ALARM_ACTION_NAME = "com.github.jeremyt135.reminderapp.EXTRA_ALA
 const val EXTRA_REMINDER_ID = "com.github.jeremyt135.reminderapp.EXTRA_REMINDER_ID"
 
 /**
+ * Long: The ID of the Alarm
+ */
+const val EXTRA_ALARM_ID = "com.github.jeremyt135.reminderapp.EXTRA_ALARM_ID"
+
+/**
  *
  */
 const val EXTRA_REMINDER_START_DATE =  "com.github.jeremyt135.reminderapp.EXTRA_REMINDER_START_DATE"
@@ -157,6 +162,7 @@ suspend fun rescheduleReminders(
 
     Timber.d("Cleared all past alarms, saving new ones...")
 
+    var nextAlarmId: Long = 0L
     // Get all reminders and re-save their alarms
     val reminders = reminderRepository.getAllWithTodayHistory().first()
     val numRescheduled = reminders.map { reminderAndHistory ->
@@ -177,20 +183,21 @@ suspend fun rescheduleReminders(
                     snoozeDuration = it.snoozeDuration
                 )
                 nextAlarm.id = alarmRepository.save(nextAlarm)
+                nextAlarmId = nextAlarm.id
             }
         }
     }.count { it != null }
 
     Timber.d("Saved $numRescheduled new alarms, starting action for SCHEDULE_NEXT...")
 
-    enqueueScheduleNext(context)
+    enqueueScheduleNext(context, nextAlarmId)
 
     return numRescheduled
 }
 
 @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-fun enqueueScheduleNext(context: Context) {
-    val worker = AlarmActionHandler.createForAction(ACTION_ALARM_SCHEDULE_NEXT, "")
+fun enqueueScheduleNext(context: Context, nextAlarmId: Long) {
+    val worker = AlarmActionHandler.createForScheduleNext("", nextAlarmId)
     WorkManager.getInstance(context).enqueue(worker)
 }
 

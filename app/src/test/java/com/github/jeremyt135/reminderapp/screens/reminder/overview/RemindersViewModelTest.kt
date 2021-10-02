@@ -96,7 +96,7 @@ class RemindersViewModelTest {
         assertThat(fakeAlarmRepository.findById(1)).isNull()
         verify {
             AlarmService.requestStop(any())
-            AlarmActionHandler.createForAction(any(), any())
+            AlarmActionHandler.createForScheduleNext(any(), any())
             cancelAlarmIntentsForReminder(any(), reminder)
         }
     }
