@@ -45,7 +45,7 @@ class AlarmListViewModel @Inject constructor(
         var future: List<Any> = emptyList()
         coroutineScope {
             launch {
-                today = getTodayAlarms(list)
+                today = getTodayAlarms(list.subList(1, list.size))
             }
             launch {
                 thisWeek = getThisWeekAlarms(list)
