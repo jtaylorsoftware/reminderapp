@@ -24,7 +24,7 @@ import java.util.*
 class Reminder(
     val id: String = uuid(),
     description: String = "",
-    vibrate: Boolean = false,
+    var vibrate: Boolean = false,
     var notifSoundUri: String = "",
     snoozeRules: SnoozeRules = SnoozeRules(),
     schedulingRules: SchedulingRules = SchedulingRules(),
@@ -44,32 +44,19 @@ class Reminder(
             }
         }
 
-    @get:Bindable
-    var vibrate: Boolean = vibrate
-        set(value) {
-            if (field != value) {
-                field = value
-                notifyPropertyChanged(BR.vibrate)
-            }
-        }
-
-    @get:Bindable
     var maxSnoozeRepeats: Long
         get() = snoozeRules.maxRepeats
         set(value) {
             if (snoozeRules.maxRepeats != value) {
                 snoozeRules = snoozeRules.copy(maxRepeats = value)
-                notifyPropertyChanged(BR.maxSnoozeRepeats)
             }
         }
 
-    @get:Bindable
     var snoozeDuration: Long
         get() = snoozeRules.duration
         set(value) {
             if (snoozeRules.duration != value) {
                 snoozeRules = snoozeRules.copy(duration = value)
-                notifyPropertyChanged(BR.snoozeDuration)
             }
         }
 
@@ -328,14 +315,10 @@ class SchedulingRules(
         }
     }
 
-    fun startDateDisplayString() = if (startDate == LocalDate.now()) {
-        "Today"
-    } else startDate.getShortLocalDateDisplay()
+    fun startDateDisplayString() = startDate.getShortLocalDateDisplay()
 
     fun endDateDisplayString() = when (type) {
-        SchedulingType.REPEATING -> if (endDate == LocalDate.now()) {
-            "Today"
-        } else endDate.getShortLocalDateDisplay()
+        SchedulingType.REPEATING -> endDate.getShortLocalDateDisplay()
         SchedulingType.REPEAT_FOREVER -> "Forever"
         SchedulingType.SINGLE -> {
             ""

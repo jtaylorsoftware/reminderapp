@@ -24,6 +24,7 @@ import com.github.jeremyt135.reminderapp.di.DatabaseModule
 import com.github.jeremyt135.reminderapp.di.RepositoryModule
 import com.github.jeremyt135.reminderapp.util.currentLocalDateTime
 import com.github.jeremyt135.reminderapp.util.nestedScrollTo
+import com.github.jeremyt135.reminderapp.util.uuid
 import com.google.common.truth.Truth.assertThat
 import dagger.Module
 import dagger.Provides
@@ -117,7 +118,7 @@ class ReminderEditorFragmentTest {
 
     private val reminders =
         listOf(
-            Reminder(),
+            Reminder(description = uuid()),
             Reminder(
                 description = "My Reminder",
                 schedulingRules = SchedulingRules(
@@ -129,6 +130,7 @@ class ReminderEditorFragmentTest {
                 vibrate = true,
             ),
             Reminder(
+                description = uuid(),
                 schedulingRules = SchedulingRules(
                     time = LocalTime.now().plusHours(1).plusMinutes(10)
                 ),

@@ -34,7 +34,6 @@
     <string name="vibrate">Vibrate</string>
     <string name="reminder">Reminder</string>
     <string name="every_day">Every day</string>
-    <string name="today">Today</string>
     <string name="reset">Reset</string>
 
     <string name="notification_icon_description">Reminder status icon</string>

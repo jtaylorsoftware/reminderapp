@@ -6,6 +6,7 @@ import android.media.RingtoneManager
 import android.net.Uri
 import androidx.lifecycle.*
 import androidx.work.WorkManager
+import com.github.jeremyt135.R
 import com.github.jeremyt135.reminderapp.broadcast.*
 import com.github.jeremyt135.reminderapp.data.AlarmRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
@@ -38,6 +39,9 @@ class ReminderEditorViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     @AppCoroutineScope private val applicationScope: CoroutineScope
 ) : AndroidViewModel(application) {
+    var todayString: String = ""
+    var tomorrowString: String = ""
+
     private val _reminder =
         MutableStateFlow(Reminder())
 
@@ -57,9 +61,7 @@ class ReminderEditorViewModel @Inject constructor(
      */
     val reminderDaysDisplayString: LiveData<String> =
         _daysOfWeekState.combine(reminder) { state, reminder ->
-            if (!isEditing && !state.dirty) {
-                ""
-            } else reminder.getDaysDisplayString()
+            reminder.getDaysDisplayString()
         }.asLiveData(viewModelScope.coroutineContext)
 
     /**
@@ -73,9 +75,7 @@ class ReminderEditorViewModel @Inject constructor(
      */
     val startDateString: LiveData<String> =
         _startDateState.combine(_reminder) { state, reminder ->
-            if (!isEditing && !state.dirty) {
-                ""
-            } else reminder.schedulingRules.startDateDisplayString()
+            reminder.schedulingRules.startDate.getShortLocalDateDisplay()
         }.asLiveData(viewModelScope.coroutineContext)
 
     /**
@@ -89,15 +89,7 @@ class ReminderEditorViewModel @Inject constructor(
      */
     val endDateString: LiveData<String> =
         _endDateState.combine(_reminder) { state, reminder ->
-            if (!isEditing && !state.dirty) {
-                ""
-            } else reminder.schedulingRules.endDate.let {
-                if (it == LocalDate.now()) {
-                    "Today"
-                } else {
-                    it.getShortLocalDateDisplay()
-                }
-            }
+            reminder.schedulingRules.endDate.getShortLocalDateDisplay()
         }.asLiveData(viewModelScope.coroutineContext)
 
     /**
@@ -111,9 +103,7 @@ class ReminderEditorViewModel @Inject constructor(
      */
     val timeDisplayString: LiveData<String> =
         _timeState.combine(_reminder) { state, reminder ->
-            if (!isEditing && !state.dirty) {
-                ""
-            } else reminder.getTimeDisplayString()
+            reminder.getTimeDisplayString()
         }.asLiveData(viewModelScope.coroutineContext)
 
 
@@ -128,7 +118,7 @@ class ReminderEditorViewModel @Inject constructor(
      */
     val snoozeDisplayString: LiveData<String> =
         _snoozeRulesState.combine(_reminder) { state, reminder ->
-            if (!isEditing && !state.dirty) "" else reminder.snoozeRules.getDisplayString()
+            reminder.snoozeRules.getDisplayString()
         }.asLiveData(viewModelScope.coroutineContext)
 
 
@@ -143,14 +133,21 @@ class ReminderEditorViewModel @Inject constructor(
      */
     val vibrateAndSoundDisplayString: LiveData<String> =
         _soundState.combine(_reminder) { state, reminder ->
-            if (!isEditing && !state.dirty) {
-                ""
-            } else (if (_reminder.value.vibrate) "Vibrate" else "No vibrate") + ", ${
+            (if (_reminder.value.vibrate) "Vibrate" else "No vibrate") + ", ${
                 getSoundTitle(
                     reminder.notifSoundUri
                 )
             }"
         }.asLiveData(viewModelScope.coroutineContext)
+
+
+    /**
+     * Error state for description
+     */
+    private val _descriptionState = MutableStateFlow(TextFieldState())
+    val descriptionState = _descriptionState.asLiveData(viewModelScope.coroutineContext)
+
+    private var formHasErrors = false
 
     /**
      * "Repeats" Checkbox state
@@ -193,7 +190,6 @@ class ReminderEditorViewModel @Inject constructor(
                         startDate = LocalDate.parse(startDate)
                     )
                 )
-                _startDateState.value = _startDateState.value.copy(dirty = true)
             }
         }
     }
@@ -231,6 +227,7 @@ class ReminderEditorViewModel @Inject constructor(
                         errorEnabled = endDate <= _reminder.value.schedulingRules.startDate
                     )
             }
+            formHasErrors = _startDateState.value.errorEnabled || _endDateState.value.errorEnabled
         }
 
     }
@@ -241,21 +238,27 @@ class ReminderEditorViewModel @Inject constructor(
         }
 
         _repeats.value = repeat
-        _daysOfWeekState.value = _daysOfWeekState.value.copy(dirty = false, errorEnabled = false)
+
         _reminder.value = _reminder.value.let { reminder ->
+            val previousDaysOfWeek =
+                if (_daysOfWeekState.value.dirty) reminder.schedulingRules.daysOfWeek else DayOfWeek.values()
+                    .toSortedSet()
             reminder.copy(
                 schedulingRules = if (repeat) {
-                    // Repeats some amount, so check hasEndDate to retain endDate state
+                    // Adjust scheduling type to account for new repeating value
                     if (_hasEndDate.value) {
                         reminder.schedulingRules.copy(
                             type = SchedulingType.REPEATING,
+                            daysOfWeek = previousDaysOfWeek
                         )
                     } else {
                         reminder.schedulingRules.copy(
                             type = SchedulingType.REPEAT_FOREVER,
-                            daysOfWeek = DayOfWeek.values().toSortedSet()
+                            daysOfWeek = previousDaysOfWeek
                         )
                     }.also {
+                        _daysOfWeekState.value =
+                            _daysOfWeekState.value.copy(dirty = false, errorEnabled = false)
                         onDaysOfWeekChanged(it.daysOfWeek)
                     }
                 } else {
@@ -295,8 +298,14 @@ class ReminderEditorViewModel @Inject constructor(
         _reminder.value = _reminder.value.let {
             it.copy(schedulingRules = it.schedulingRules.copy(daysOfWeek = newValue))
         }
+        _daysOfWeekState.value = _daysOfWeekState.value.copy(dirty = true)
+        checkDaysOfWeekErrors()
+    }
+
+    private fun checkDaysOfWeekErrors() {
         _daysOfWeekState.value =
-            _daysOfWeekState.value.copy(dirty = true, errorEnabled = newValue.isEmpty())
+            _daysOfWeekState.value.copy(errorEnabled = _reminder.value.schedulingRules.daysOfWeek.isEmpty())
+        formHasErrors = _daysOfWeekState.value.errorEnabled
     }
 
     fun onTimeChanged(newTime: LocalTime) {
@@ -313,6 +322,7 @@ class ReminderEditorViewModel @Inject constructor(
             schedulingRules.type == SchedulingType.SINGLE && startDateTime < currentLocalDateTime()
         }
         _timeState.value = _timeState.value.copy(errorEnabled = errorEnabled)
+        formHasErrors = errorEnabled
     }
 
     fun onSnoozeRulesChanged(newRules: SnoozeRules) {
@@ -330,33 +340,39 @@ class ReminderEditorViewModel @Inject constructor(
         _reminder.value = _reminder.value.copy(notifSoundUri = newValue)
     }
 
-    private fun formHasErrors(): Boolean =
-        _daysOfWeekState.value.errorEnabled || _startDateState.value.errorEnabled ||
-                _endDateState.value.errorEnabled || _timeState.value.errorEnabled ||
-                _snoozeRulesState.value.errorEnabled || _soundState.value.errorEnabled
+    fun onDescriptionChanged(newValue: String) {
+        if (newValue == _reminder.value.description) {
+            return
+        }
+        _descriptionState.value = _descriptionState.value.copy(dirty = true)
+        _reminder.value = _reminder.value.copy(description = newValue)
+        checkDescriptionErrors()
+    }
+
+    private fun checkDescriptionErrors() {
+        _descriptionState.value =
+            _descriptionState.value.copy(errorEnabled = _reminder.value.description.isBlank())
+        formHasErrors = _descriptionState.value.errorEnabled
+    }
+
+    private fun validateForm() {
+        checkDateErrors()
+        checkTimeErrors()
+        checkDaysOfWeekErrors()
+        checkDescriptionErrors()
+    }
 
     fun saveReminder() {
         // Check for errors again before saving
-        checkDateErrors()
-        checkTimeErrors()
+        validateForm()
 
         // Do not save if there are errors
-        if (formHasErrors()) {
+        if (formHasErrors) {
             showToast(
                 getApplication(),
                 "Please fix any errors before saving",
             )
             return
-        }
-
-        // If description is empty, save a generic description for clarity
-        if (_reminder.value.description.isBlank()) {
-            _reminder.value =
-                _reminder.value.copy(
-                    description = "Reminder saved on ${
-                        LocalDate.now().getShortLocalDateDisplay()
-                    }"
-                )
         }
 
         applicationScope.launch {

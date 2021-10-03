@@ -40,6 +40,9 @@
                 android:id="@+id/textlayout_editor_description"
                 style="@style/Widget.App.TextInputLayout.OutlinedBox.Editor"
                 android:hint="@string/edit_reminder"
+                app:boxStrokeErrorColor="@color/error"
+                app:errorIconDrawable="@drawable/ic_baseline_error_outline_24"
+                app:errorIconTint="@color/error"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
@@ -52,7 +55,7 @@
                     android:layout_height="wrap_content"
                     android:imeOptions="actionDone"
                     android:inputType="text"
-                    android:text="@={reminder.description}" />
+                    android:text="@{reminder.description}" />
 
             </com.google.android.material.textfield.TextInputLayout>
 
