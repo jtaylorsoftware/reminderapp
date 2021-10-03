@@ -1,21 +1,28 @@
 <resources>
     <string name="app_name">Time to Remind</string>
-    <string name="toggle_theme_dark">Toggle dark theme</string>
-    <string name="toggle_theme_light">Toggle light theme</string>
+
     <string name="theme_setting_summary">Tap to set the app theme.</string>
     <string name="settings">Settings</string>
     <string name="preference_key_theme">THEME_SETTING</string>
-    <string name="action_alarm_skip_name">Skip</string>
-    <string name="action_alarm_snooze_name">Snooze</string>
-    <string name="action_alarm_complete_name">Complete</string>
+    <string name="preference_file_name">com.github.jeremyt135.PREFERENCES</string>
+
+    <string name="skip">Skip</string>
+    <string name="snooze">Snooze</string>
+    <string name="complete">Complete</string>
+    <string name="delete">Delete</string>
+    <string name="save">Save</string>
+
     <string name="alarm_notification_channel_name">Firing alarms</string>
     <string name="alarm_notification_channel_id">Alarms</string>
     <string name="alarm_notification_channel_description">Firing notifications and alarms for reminders. Highest priority, must be enabled or app will not work as expected.</string>
+
     <string name="scheduling_notification_channel_name">Alarm scheduling</string>
     <string name="scheduling_notification_channel_id">AlarmScheduling</string>
     <string name="scheduling_notification_channel_description">Scheduling notifications for reminders. Only displays infrequently.</string>
-    <string name="overview_fab_description">Add Reminder</string>
-    <string name="editor_descriptionEdit_hint">Edit reminder text</string>
+
+    <string name="add_reminder">Add Reminder</string>
+    <string name="edit_reminder">Edit reminder text</string>
+
     <string name="saturday_abbrev">S</string>
     <string name="sunday_abbrev">S</string>
     <string name="monday_abbrev">M</string>
@@ -23,35 +30,33 @@
     <string name="wednesday_abbrev">W</string>
     <string name="thursday_abbrev">T</string>
     <string name="friday_abbrev">F</string>
-    <string name="editor_switch_skip">Can skip</string>
-    <string name="editor_cancel">Cancel</string>
-    <string name="editor_delete">Delete</string>
-    <string name="editor_save">Save</string>
-    <string name="editor_scheduleLabel">Every %s</string>
-    <string name="editor_heading_add">Add Reminder</string>
-    <string name="editor_heading_edit">Edit Reminder</string>
-    <string name="editor_switch_vibrate">Vibrate</string>
-    <string name="alarm_heading">Reminder</string>
-    <string name="alarm_skip">Skip</string>
-    <string name="alarm_snooze">Snooze</string>
-    <string name="alarm_complete">Complete</string>
+
+    <string name="vibrate">Vibrate</string>
+    <string name="reminder">Reminder</string>
     <string name="every_day">Every day</string>
     <string name="today">Today</string>
+    <string name="reset">Reset</string>
+
     <string name="notification_icon_description">Reminder status icon</string>
-    <string name="editor_hint_snoozeMaxRepeats">Max snoozes</string>
-    <string name="editor_pick_sound">Pick Sound</string>
+
     <string name="reminders_empty_hint">You have no reminders. Click the + button or tap here to add a reminder.</string>
-    <string name="bottomnav_reminders">Reminders</string>
-    <string name="bottomnav_history">History</string>
-    <string name="menu_clear_history">Clear History</string>
+
+    <string name="alarms">Alarms</string>
+    <string name="calendar">Calendar</string>
+    <string name="reminders">Reminders</string>
+    <string name="history">History</string>
+    <string name="clear_history">Clear History</string>
+    <string name="apply">Apply</string>
+    <string name="cancel">Cancel</string>
+    <string name="edit">Edit</string>
+
     <string name="dialog_clearHistory_message">Pressing OK will delete all history entries. This action is irreversible.</string>
     <string name="dialog_clearHistory_title">Clear Entire History?</string>
     <string name="dialog_clearReminders_message">Pressing OK will delete all reminder entries. This action is irreversible.</string>
     <string name="dialog_clearReminders_title">Delete All Reminders?</string>
-    <string name="dialog_ok">OK</string>
-    <string name="dialog_apply">Apply</string>
-    <string name="dialog_cancel">Cancel</string>
+
     <string name="history_empty_hint">You haven\'t skipped or completed any reminders yet.</string>
+
     <string name="dialog_reminderSort_title">Sort Reminders</string>
     <string name="dialog_reminderSort_time_soonest">Soonest first</string>
     <string name="dialog_reminderSort_time_latest">Latest first</string>
@@ -61,7 +66,7 @@
     <string name="dialog_reminderSort_description_none">Do not sort</string>
     <string name="dialog_reminderSort_description_alpha">Alphabetical</string>
     <string name="dialog_reminderSort_description_revAlpha">Reverse alphabetical</string>
-    <string name="preference_file_name">com.github.jeremyt135.PREFERENCES</string>
+
     <string name="dialog_reminderFilter_title">Filter Reminders</string>
     <string name="dialog_reminderFilter_dayOfWeek_title">Days of Week</string>
     <string name="dialog_reminderFilter_completion_title">Reminder Status</string>
@@ -76,13 +81,17 @@
     <string name="dialog_reminderFilter_pending">Pending</string>
     <string name="dialog_reminderFilter_skipped">Skipped</string>
     <string name="dialog_reminderFilter_completed">Completed</string>
+
     <string name="dialog_soundPicker_title">Adjust sound and vibrate</string>
     <string name="dialog_dayOfWeek_title">Select days of week</string>
+
     <string name="menu_clear_reminders">Clear Reminders</string>
     <string name="menu_sort_options">Sort Options</string>
     <string name="menu_filter_options">Filter Options</string>
-    <string name="menu_reminders_delete">Delete</string>
-    <string name="menu_reset">Reset</string>
+
+    <string name="dialog_editorDelete_title">Delete Reminder?</string>
+    <string name="dialog_editorDelete_message">Pressing OK will delete the current reminder. This action is irreversible.</string>
+
     <string name="dialog_snooze_title">Adjust snooze options</string>
     <string name="dialogSnooze_label_maxSnoozeRepeats">Snooze repetitions:</string>
     <string name="dialogSnooze_label_snoozeDuration">Snooze duration:</string>
@@ -92,6 +101,7 @@
     <string name="dialogSnooze_option_number">Number of times</string>
     <string name="dialogSnooze_snoozeOptions_title">Snooze</string>
     <string name="dialogSnooze_duration_caption">Minimum 1 minutes, max 30 minutes</string>
+
     <string name="dialog_day_everyday">Every day</string>
     <string name="dialog_day_mondays">Mondays</string>
     <string name="dialog_day_tuesdays">Tuesdays</string>
@@ -100,6 +110,7 @@
     <string name="dialog_day_fridays">Fridays</string>
     <string name="dialog_day_saturdays">Saturdays</string>
     <string name="dialog_day_sundays">Sundays</string>
+
     <string name="editor_startDate_hint">Select date</string>
     <string name="editor_checkbox_repeats">Repeats</string>
     <string name="editor_checkbox_endDate">Has end date</string>
@@ -108,23 +119,18 @@
     <string name="editor_time_hint">Select time</string>
     <string name="editor_snooze_hint">Adjust snooze</string>
     <string name="editor_sound_hint">Select sounds and vibrate</string>
-    <string name="menu_reminders_complete">Complete</string>
-    <string name="menu_reminders_skip">Skip</string>
-    <string name="menu_reminders_edit">Edit</string>
+
     <string name="dialog_reminderFilter_date">Date</string>
     <string name="dialog_reminderFilter_startDate">Start:</string>
     <string name="dialog_reminderFilter_endDate">End:</string>
-    <string name="bottomnav_calendar">Calendar</string>
+
     <string name="calendar_reminder_heading">Reminders</string>
     <string name="calendar_reminder_empty_hint">No reminders for selected date.</string>
     <string name="calendar_reminder_select_hint">Select a date to view its reminders.</string>
-    <string name="alarm_list_empty_hint">There are no alarms scheduled currently.</string>
-    <string name="bottomnav_alams">Alarms</string>
     <string name="calendar_addReminder_content_description">Add reminder on current date</string>
+
+    <string name="alarm_list_empty_hint">There are no alarms scheduled currently.</string>
+
     <string name="button_next_month_description">Next month</string>
     <string name="button_previous_month_description">Previous month</string>
-    <string name="menu_editor_delete">Delete</string>
-    <string name="menu_editor_save">Save</string>
-    <string name="dialog_editorDelete_title">Delete Reminder?</string>
-    <string name="dialog_editorDelete_message">Pressing OK will delete the current reminder. This action is irreversible.</string>
 </resources>

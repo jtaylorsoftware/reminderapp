@@ -72,22 +72,22 @@ class MainActivity : SettingsActivity(), RemindersSortDialogFragment.DialogListe
             val navButtons = listOf(
                 BottomNavigationItem(
                     findViewById(R.id.bottomNav_item_calendar),
-                    getString(R.string.bottomnav_calendar),
+                    getString(R.string.calendar),
                     R.id.fragment_calendar
                 ),
                 BottomNavigationItem(
                     findViewById(R.id.bottomNav_item_reminders),
-                    getString(R.string.bottomnav_reminders),
+                    getString(R.string.reminders),
                     R.id.fragment_reminders
                 ),
                 BottomNavigationItem(
                     findViewById(R.id.bottomNav_item_alarms),
-                    getString(R.string.bottomnav_alams),
+                    getString(R.string.alarms),
                     R.id.fragment_alarm_list
                 ),
                 BottomNavigationItem(
                     findViewById(R.id.bottomNav_item_history),
-                    getString(R.string.bottomnav_history),
+                    getString(R.string.history),
                     R.id.fragment_history
                 )
             )

@@ -45,9 +45,9 @@ class ReminderEditorFragment : Fragment(R.layout.fragment_reminder_editor) {
         with(activity as? AppCompatActivity) {
             this?.supportActionBar?.title =
                 if ((this?.intent?.getStringExtra(EXTRA_REMINDER_ID) ?: "").isNotEmpty()) {
-                    getString(R.string.editor_heading_edit)
+                    getString(R.string.edit_reminder)
                 } else {
-                    getString(R.string.editor_heading_add)
+                    getString(R.string.add_reminder)
                 }
         }
 
@@ -186,10 +186,10 @@ class ReminderEditorFragment : Fragment(R.layout.fragment_reminder_editor) {
             AlertDialog.Builder(it).apply {
                 setMessage(R.string.dialog_editorDelete_message)
                 setTitle(R.string.dialog_editorDelete_title)
-                setPositiveButton(R.string.dialog_ok) { _, _ ->
+                setPositiveButton(R.string.ok) { _, _ ->
                     viewModel.deleteReminder()
                 }
-                setNegativeButton(R.string.dialog_cancel) { _, _ -> }
+                setNegativeButton(R.string.cancel) { _, _ -> }
             }.create()
         }
     }

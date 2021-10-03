@@ -54,10 +54,10 @@ class RemindersSortDialogFragment() : DialogFragment() {
         return builder.apply {
             setView(binding.root)
             setTitle(R.string.dialog_reminderSort_title)
-            setPositiveButton(R.string.dialog_apply) { _, _ ->
+            setPositiveButton(R.string.apply) { _, _ ->
                 listener.onSortRulesChange(viewModel.sortRules.value)
             }
-            setNegativeButton(R.string.dialog_cancel) { _, _ ->
+            setNegativeButton(R.string.cancel) { _, _ ->
                 Timber.d("User cancelled sorting")
             }
         }.create()

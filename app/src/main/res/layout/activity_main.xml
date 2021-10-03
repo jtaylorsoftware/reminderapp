@@ -132,7 +132,7 @@
         android:id="@+id/fab_reminders_add"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:contentDescription="@string/overview_fab_description"
+        android:contentDescription="@string/add_reminder"
         android:visibility="invisible"
         app:elevation="@dimen/fab_elevation"
         app:layout_anchor="@id/bottom_app_bar"

@@ -20,7 +20,7 @@
             android:layout_marginStart="32dp"
             android:layout_marginTop="16dp"
             android:checked="@{model.vibrate}"
-            android:text="@string/editor_switch_vibrate"
+            android:text="@string/vibrate"
             app:layout_constraintEnd_toEndOf="@+id/switch_soundPicker_sound"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />

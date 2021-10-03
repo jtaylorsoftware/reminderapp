@@ -92,7 +92,7 @@ class MainActivityTest {
             onView(withId(R.id.fab_reminders_add)).perform(click())
 
             val context = InstrumentationRegistry.getInstrumentation().targetContext
-            val hintString = context.getString(R.string.editor_descriptionEdit_hint)
+            val hintString = context.getString(R.string.edit_reminder)
             onView(withId(R.id.textinput_editor_description)).check(matches(withHint(hintString)))
         }
     }

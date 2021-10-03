@@ -147,7 +147,7 @@ class ReminderEditorFragmentTest {
         launchEditorFragmentWithReminder("")
 
         val context = InstrumentationRegistry.getInstrumentation().targetContext
-        val hintString = context.getString(R.string.editor_descriptionEdit_hint)
+        val hintString = context.getString(R.string.edit_reminder)
         onView(withId(R.id.textinput_editor_description)).check(matches(withHint(hintString)))
         onView(withId(R.id.textinput_editor_startDate)).check(matches(withHint(context.getString(R.string.editor_startDate_hint))))
 //        onView(withId(R.id.textinput_editor_endDate)).check(matches(withHint(context.getString(R.string.editor_endDate_hint))))

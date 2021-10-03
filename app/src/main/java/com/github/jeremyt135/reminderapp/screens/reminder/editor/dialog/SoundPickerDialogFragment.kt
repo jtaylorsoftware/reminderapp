@@ -74,11 +74,11 @@ class SoundPickerDialogFragment() :
         return builder.apply {
             setView(binding.root)
             setTitle(R.string.dialog_soundPicker_title)
-            setPositiveButton(R.string.dialog_apply) { _, _ ->
+            setPositiveButton(R.string.apply) { _, _ ->
                 listener.onVibrateOptionChanged(viewModel.vibrate.value!!)
                 listener.onSoundUriChanged(viewModel.soundUri.value)
             }
-            setNegativeButton(R.string.dialog_cancel) { _, _ ->
+            setNegativeButton(R.string.cancel) { _, _ ->
                 Timber.d("SoundPicker cancel pressed")
             }
         }.create()

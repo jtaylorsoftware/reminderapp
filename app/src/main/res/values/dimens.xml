@@ -25,9 +25,6 @@
     <dimen name="recycler_item_calendar_width">250dp</dimen>
     <dimen name="recycler_item_calendar_width_land">250</dimen>
 
-    <!-- Margin for the alarms (not separators) in fragment_alarm_list -->
-    <dimen name="recycler_alarm_item_margin_h">32dp</dimen>
-
     <!-- Height of Bottom app/navigation bar, using values according to material design page -->
     <dimen name="bottom_app_bar_height">56dp</dimen>
 

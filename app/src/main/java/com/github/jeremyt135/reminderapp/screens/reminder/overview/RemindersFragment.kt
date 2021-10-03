@@ -1,7 +1,6 @@
 package com.github.jeremyt135.reminderapp.screens.reminder.overview
 
 import android.app.AlertDialog
-import android.content.SharedPreferences
 import android.os.Bundle
 import android.view.*
 import androidx.fragment.app.Fragment
@@ -14,7 +13,6 @@ import com.github.jeremyt135.reminderapp.screens.reminder.overview.dialog.Remind
 import com.google.android.flexbox.*
 import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class RemindersFragment : Fragment() {
@@ -127,11 +125,11 @@ class RemindersFragment : Fragment() {
             AlertDialog.Builder(it).apply {
                 setMessage(R.string.dialog_clearReminders_message)
                 setTitle(R.string.dialog_clearReminders_title)
-                setPositiveButton(R.string.dialog_ok) { _, _ ->
+                setPositiveButton(R.string.ok) { _, _ ->
                     Timber.d("User confirmed clear reminders")
                     viewModel.deleteAllReminders()
                 }
-                setNegativeButton(R.string.dialog_cancel) { _, _ ->
+                setNegativeButton(R.string.cancel) { _, _ ->
                     Timber.d("User cancelled clear reminders")
                 }
             }.create()

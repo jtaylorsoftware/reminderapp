@@ -26,7 +26,6 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
-import java.util.*
 
 class RemindersFilterDialogFragment() : DialogFragment() {
     private lateinit var listener: DialogListener
@@ -65,10 +64,10 @@ class RemindersFilterDialogFragment() : DialogFragment() {
         return builder.apply {
             setView(binding.root)
             setTitle(R.string.dialog_reminderFilter_title)
-            setPositiveButton(R.string.dialog_apply) { _, _ ->
+            setPositiveButton(R.string.apply) { _, _ ->
                 listener.onFilterRulesChange(viewModel.filterRules.value)
             }
-            setNegativeButton(R.string.dialog_cancel) { _, _ ->
+            setNegativeButton(R.string.cancel) { _, _ ->
                 Timber.d("User cancelled sorting")
             }
         }.create()
@@ -95,7 +94,7 @@ class RemindersFilterDialogFragment() : DialogFragment() {
         menuInfo: ContextMenu.ContextMenuInfo?
     ) {
         super.onCreateContextMenu(menu, view, menuInfo)
-        menu.add(Menu.NONE, view.id, 0, getString(R.string.menu_reset)).apply {
+        menu.add(Menu.NONE, view.id, 0, getString(R.string.reset)).apply {
             setOnMenuItemClickListener {
                 resetDate(itemId)
                 true

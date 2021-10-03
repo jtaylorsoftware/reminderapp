@@ -56,10 +56,10 @@ class SnoozeOptionsDialogFragment() :
         return builder.apply {
             setView(binding.root)
             setTitle(R.string.dialog_snooze_title)
-            setPositiveButton(R.string.dialog_apply) { _, _ ->
+            setPositiveButton(R.string.apply) { _, _ ->
                 listener.onSnoozeRulesChanged(viewModel.snoozeRules.value)
             }
-            setNegativeButton(R.string.dialog_cancel) { _, _ ->
+            setNegativeButton(R.string.cancel) { _, _ ->
                 Timber.d("Snooze options cancel pressed")
             }
         }.create()

@@ -69,7 +69,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="32dp"
-                    android:text="@string/alarm_heading"
+                    android:text="@string/reminder"
                     app:layout_constraintBottom_toTopOf="@+id/linearLayout"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintHorizontal_bias="0.5"
@@ -97,7 +97,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="4dp"
                 android:onClick="@{() -> model.snooze(true)}"
-                android:text="@string/alarm_snooze" />
+                android:text="@string/snooze" />
 
             <Button
                 android:id="@+id/button_alarm_skip"
@@ -105,14 +105,14 @@
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="8dp"
                 android:onClick="@{() -> model.skip(true)}"
-                android:text="@string/alarm_skip" />
+                android:text="@string/skip" />
 
             <Button
                 android:id="@+id/buttom_alarm_complete"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:onClick="@{() -> model.complete(true)}"
-                android:text="@string/alarm_complete" />
+                android:text="@string/complete" />
 
         </LinearLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>

@@ -417,18 +417,18 @@ fun buildNotificationForAlarm(
         if (!reminder.snoozeRules.neverRepeats) {
             addAction(
                 R.drawable.ic_notification_snooze,
-                context.getString(R.string.action_alarm_snooze_name),
+                context.getString(R.string.snooze),
                 createIntentForAlarmAction(context, ACTION_ALARM_SNOOZE, reminder.id)
             )
         }
         addAction(
             R.drawable.ic_notification_skip,
-            context.getString(R.string.action_alarm_skip_name),
+            context.getString(R.string.skip),
             createIntentForAlarmAction(context, ACTION_ALARM_SKIP, reminder.id)
         )
         addAction(
             R.drawable.ic_notification_complete,
-            context.getString(R.string.action_alarm_complete_name),
+            context.getString(R.string.complete),
             createIntentForAlarmAction(context, ACTION_ALARM_COMPLETE, reminder.id)
         )
 

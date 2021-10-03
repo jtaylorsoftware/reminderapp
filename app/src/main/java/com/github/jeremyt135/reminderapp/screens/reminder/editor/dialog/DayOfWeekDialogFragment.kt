@@ -51,10 +51,10 @@ class DayOfWeekDialogFragment() :
         return builder.apply {
             setView(binding.root)
             setTitle(R.string.dialog_dayOfWeek_title)
-            setPositiveButton(R.string.dialog_apply) { _, _ ->
+            setPositiveButton(R.string.apply) { _, _ ->
                 listener.onDaysOfWeekChanged(viewModel.daysOfWeek.value)
             }
-            setNegativeButton(R.string.dialog_cancel) { _, _ ->
+            setNegativeButton(R.string.cancel) { _, _ ->
                 Timber.d("DayOfWeekDialog cancel pressed")
             }
         }.create()
