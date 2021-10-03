@@ -48,6 +48,7 @@
     <string name="clear_history">Clear History</string>
     <string name="apply">Apply</string>
     <string name="cancel">Cancel</string>
+    <string name="button_ok">OK</string>
     <string name="edit">Edit</string>
 
     <string name="dialog_clearHistory_message">Pressing OK will delete all history entries. This action is irreversible.</string>

@@ -64,7 +64,7 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
             AlertDialog.Builder(it).apply {
                 setMessage(R.string.dialog_clearHistory_message)
                 setTitle(R.string.dialog_clearHistory_title)
-                setPositiveButton(R.string.ok) { _, _ ->
+                setPositiveButton(R.string.button_ok) { _, _ ->
                     Timber.d("User confirmed clear history")
                     viewModel.clearHistory()
                 }

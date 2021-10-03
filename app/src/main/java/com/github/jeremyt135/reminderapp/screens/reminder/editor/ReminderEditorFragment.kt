@@ -186,7 +186,7 @@ class ReminderEditorFragment : Fragment(R.layout.fragment_reminder_editor) {
             AlertDialog.Builder(it).apply {
                 setMessage(R.string.dialog_editorDelete_message)
                 setTitle(R.string.dialog_editorDelete_title)
-                setPositiveButton(R.string.ok) { _, _ ->
+                setPositiveButton(R.string.button_ok) { _, _ ->
                     viewModel.deleteReminder()
                 }
                 setNegativeButton(R.string.cancel) { _, _ -> }

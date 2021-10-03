@@ -125,7 +125,7 @@ class RemindersFragment : Fragment() {
             AlertDialog.Builder(it).apply {
                 setMessage(R.string.dialog_clearReminders_message)
                 setTitle(R.string.dialog_clearReminders_title)
-                setPositiveButton(R.string.ok) { _, _ ->
+                setPositiveButton(R.string.button_ok) { _, _ ->
                     Timber.d("User confirmed clear reminders")
                     viewModel.deleteAllReminders()
                 }
