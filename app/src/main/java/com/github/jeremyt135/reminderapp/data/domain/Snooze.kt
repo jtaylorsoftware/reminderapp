@@ -16,7 +16,7 @@ data class SnoozeRules(
     val duration: Long = DEFAULT_SNOOZE_DURATION
 ) {
     val neverRepeats = maxRepeats == 0L
-    val alwaysRepeats = maxRepeats == Long.MAX_VALUE
+    val alwaysRepeats = maxRepeats == ALWAYS_REPEATS
 
     init {
         // Ensure a sane bounds on snoozeDuration
@@ -41,21 +41,15 @@ data class SnoozeRules(
      */
     fun getDisplayString(): String = when (maxRepeats) {
         0L -> "Never snooze"
-        Long.MAX_VALUE -> "Snooze for $duration minutes, forever"
+        ALWAYS_REPEATS -> "Snooze for $duration minutes, forever"
         else -> "Snooze for $duration minutes, $maxRepeats times"
     }
 
     companion object {
-        const val MAX_SNOOZE_DURATION = 30L
+        private const val ALWAYS_REPEATS = Long.MAX_VALUE
+        const val MAX_SNOOZE_DURATION = 60L
         const val MIN_SNOOZE_DURATION = 1L
         const val DEFAULT_SNOOZE_DURATION = 5L
-        const val DEFAULT_SNOOZE_REPEATS = 3L
+        const val DEFAULT_SNOOZE_REPEATS = ALWAYS_REPEATS
     }
-}
-
-/**
- * Options for how many times an alarm can snooze
- */
-enum class SnoozeRepetitionOption {
-    None, Infinite, Choose
 }

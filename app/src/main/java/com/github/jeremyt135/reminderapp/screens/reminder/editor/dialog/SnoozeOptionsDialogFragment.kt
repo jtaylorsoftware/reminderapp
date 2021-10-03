@@ -86,6 +86,12 @@ class SnoozeOptionsDialogFragment() :
             model = viewModel
             snoozeRules = viewModel.snoozeRules.asLiveData()
 
+            textDialogViewDurationCaption.text = getString(
+                R.string.dialogSnooze_duration_caption,
+                SnoozeRules.MIN_SNOOZE_DURATION,
+                SnoozeRules.MAX_SNOOZE_DURATION
+            )
+
             radioGroupDialogSnoozeSnoozeOptions.check(
                 when (viewModel.snoozeRules.value.maxRepeats) {
                     0L -> R.id.radioButton_dialogSnooze_never
