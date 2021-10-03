@@ -49,10 +49,11 @@ class AlarmActionHandler @AssistedInject constructor(
     private fun createForegroundInfo(): ForegroundInfo {
         val channel = applicationContext.getString(R.string.scheduling_notification_channel_id)
         val title = "Reminders scheduling"
+        val appName = applicationContext.getString(R.string.app_name)
         val notification = NotificationCompat.Builder(applicationContext, channel).apply {
             setContentTitle(title)
             setSmallIcon(R.drawable.ic_scheduling_notification)
-            setContentText("Reminders app is scheduling your reminder")
+            setContentText("\"$appName\" is scheduling your reminders.")
             setPriority(NotificationCompat.PRIORITY_LOW)
             setCategory(NotificationCompat.CATEGORY_SERVICE)
             setOngoing(true)
