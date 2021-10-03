@@ -399,9 +399,9 @@ fun buildNotificationForAlarm(
         setAutoCancel(true)
         setOngoing(true)
         setSmallIcon(R.drawable.ic_notification_alarm)
-        setContentTitle("Reminder Notification")
+        setContentTitle("Reminder Alarm")
 
-        val message = "Remember to do: ${reminder.description}"
+        val message = "Remember to do: \"${reminder.description}\""
         setContentText(message)
         setStyle(NotificationCompat.BigTextStyle().bigText(message))
 
@@ -448,7 +448,7 @@ fun buildSnoozeNotification(context: Context, reminder: Reminder, alarm: Alarm):
         setContentTitle("Reminder Snoozed")
 
         val message =
-            "Reminder for ${reminder.description} was snoozed until ${alarm.triggerAt.getShortLocalTimeDisplay()}"
+            "Reminder for \"${reminder.description}\" was snoozed until ${alarm.triggerAt.getShortLocalTimeDisplay()}"
         setContentText(message)
         setStyle(NotificationCompat.BigTextStyle().bigText(message))
         setPriority(NotificationCompat.PRIORITY_DEFAULT)
@@ -469,7 +469,7 @@ fun buildSkipNotification(context: Context, reminder: Reminder): Notification =
         setContentTitle("Reminder Skipped")
 
         val message =
-            "Reminder for ${reminder.description} has been skipped (missed too many snoozes)"
+            "Reminder for \"${reminder.description}\" has been skipped (missed too many snoozes)"
         setContentText(message)
         setStyle(NotificationCompat.BigTextStyle().bigText(message))
         setPriority(NotificationCompat.PRIORITY_DEFAULT)
