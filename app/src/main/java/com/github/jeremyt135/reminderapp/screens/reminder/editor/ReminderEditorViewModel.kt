@@ -9,10 +9,7 @@ import androidx.work.WorkManager
 import com.github.jeremyt135.reminderapp.broadcast.*
 import com.github.jeremyt135.reminderapp.data.AlarmRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
-import com.github.jeremyt135.reminderapp.data.domain.Alarm
-import com.github.jeremyt135.reminderapp.data.domain.Reminder
-import com.github.jeremyt135.reminderapp.data.domain.SchedulingType
-import com.github.jeremyt135.reminderapp.data.domain.SnoozeRules
+import com.github.jeremyt135.reminderapp.data.domain.*
 import com.github.jeremyt135.reminderapp.di.AppCoroutineScope
 import com.github.jeremyt135.reminderapp.service.AlarmService
 import com.github.jeremyt135.reminderapp.util.MutableEventFlow
@@ -374,7 +371,7 @@ class ReminderEditorViewModel @Inject constructor(
                 var nextAlarmId = AlarmActionHandler.NO_ALARM_ID
                 reminder.schedulingRules.getNextTimeForAlarm(
                     currentLocalDateTime(),
-                    allowSameDay = true
+                    nextTimeOptions = SchedulingRules.NextTimeOptions.ALLOW_ALL
                 )?.let { time ->
                     val nextAlarm = Alarm(
                         reminderId = reminder.id,

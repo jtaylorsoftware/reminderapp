@@ -85,6 +85,46 @@ class ReminderTest {
     }
 
     @Test
+    fun getNextTimeForAlarm_single_timeInPast_allowPast_returnsTime() {
+        val date = LocalDate.now().minusDays(1)
+        val time = LocalTime.now().minusHours(2)
+        val reminder = Reminder(
+            schedulingRules = SchedulingRules(
+                type = SchedulingType.SINGLE,
+                startDate = date,
+                time = time
+            )
+        )
+        assertThat(
+            reminder.schedulingRules.getNextTimeForAlarm(
+                currentLocalDateTime(),
+                nextTimeOptions = SchedulingRules.NextTimeOptions(allowTimeInPast = true)
+            )
+        ).isEqualTo(
+            date.atTime(time).truncatedTo(ChronoUnit.MINUTES)
+        )
+    }
+
+    @Test
+    fun getNextTimeForAlarm_single_timeInPast_DoNotAllowPast_returnsNull() {
+        val date = LocalDate.now().minusDays(1)
+        val time = LocalTime.now().minusHours(2)
+        val reminder = Reminder(
+            schedulingRules = SchedulingRules(
+                type = SchedulingType.SINGLE,
+                startDate = date,
+                time = time
+            )
+        )
+        assertThat(
+            reminder.schedulingRules.getNextTimeForAlarm(
+                currentLocalDateTime(),
+                nextTimeOptions = SchedulingRules.NextTimeOptions(allowTimeInPast = false)
+            )
+        ).isNull()
+    }
+
+    @Test
     fun getNextTimeForAlarm_repeating_pastEndDate_returnsNull() {
         // test value for "today's date"
         val today = currentLocalDateTime().plusDays(3)
@@ -132,7 +172,12 @@ class ReminderTest {
                 daysOfWeek = sortedSetOf(dayOfWeek)
             )
         )
-        assertThat(reminder.schedulingRules.getNextTimeForAlarm(currentLocalDateTime(), allowSameDay = true)).isEqualTo(
+        assertThat(
+            reminder.schedulingRules.getNextTimeForAlarm(
+                currentLocalDateTime(),
+                SchedulingRules.NextTimeOptions(allowSameDay = true)
+            )
+        ).isEqualTo(
             startDate.atTime(time)
         )
     }
@@ -150,7 +195,12 @@ class ReminderTest {
                 daysOfWeek = sortedSetOf(dayOfWeek)
             )
         )
-        assertThat(reminder.schedulingRules.getNextTimeForAlarm(currentLocalDateTime(), allowSameDay = false)).isEqualTo(
+        assertThat(
+            reminder.schedulingRules.getNextTimeForAlarm(
+                currentLocalDateTime(),
+                SchedulingRules.NextTimeOptions.ALLOW_NONE
+            )
+        ).isEqualTo(
             startDate.atTime(time).with(TemporalAdjusters.next(dayOfWeek))
         )
     }

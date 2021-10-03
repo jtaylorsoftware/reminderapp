@@ -173,6 +173,48 @@ class AlarmUtilTest {
         }
     }
 
+    @Test
+    fun rescheduleAlarms_savesExpiredSingleReminders() = runBlockingTest {
+        mockkStatic(::enqueueScheduleNext)
+        justRun { enqueueScheduleNext(any(), any()) }
+
+        // the base time for the test
+        val t0 = currentLocalTime()
+        val reminders = (1L..4).map {
+            Reminder(
+                schedulingRules = SchedulingRules(
+                    time = if (it % 2 == 0L) t0.plusMinutes(it * 10) else t0.minusMinutes(it * 10),
+                    type = SchedulingType.SINGLE,
+                )
+            )
+        }
+
+        reminderRepository.saveAll(reminders)
+
+        val numRescheduled = rescheduleReminders(context, reminderRepository, alarmRepo, historyRepository)
+
+        // Should save all the reminders
+        val alarms = alarmRepo.getAll().first()
+        assertThat(alarms).hasSize(reminders.size)
+        assertThat(numRescheduled).isEqualTo(reminders.size)
+
+        // Should only save in the future if the time was in the past
+        alarms.forEachIndexed { i, alarm ->
+            val reminderTime = reminders[i].schedulingRules.time
+            if (reminderTime.isAfter(t0)) {
+                // In future, should be the same time
+                assertThat(alarm.triggerAt).isEqualTo(LocalDate.now().atTime(reminderTime))
+            } else {
+                // In past, should be also in the future but not the same time
+                assertThat(alarm.triggerAt).isNotEqualTo(reminderTime)
+                assertThat(alarm.triggerAt.isAfter(LocalDate.now().atTime(t0))).isTrue()
+            }
+        }
+
+        verify {
+            enqueueScheduleNext(any(), any())
+        }
+    }
 
     @Test
     fun rescheduleAlarms_doesNotSaveRemindersWithHistoryOnSameDay() = runBlockingTest {

@@ -237,29 +237,28 @@ class SchedulingRules(
     /**
      * Determines the next LocalDateTime that a reminder with these rules could have an alarm scheduled.
      * @param currentDateTime The current date and time, to determine the relative offset for scheduling
-     * @param allowSameDay Escape hatch to allow or disallowed a repeating reminder that could be scheduled today
-     * to actually be scheduled for today, or if it should be scheduled on the next available day.
+     * @param nextTimeOptions Escape hatch options to allow different rules for getting next time.
      * @return The next LocalDateTime to schedule, or null if the reminder is "expired" (outside
      * the allowed end time).
      */
     fun getNextTimeForAlarm(
         currentDateTime: LocalDateTime,
-        allowSameDay: Boolean = false
+        nextTimeOptions: NextTimeOptions = NextTimeOptions.ALLOW_NONE
     ): LocalDateTime? {
         return when (type) {
             SchedulingType.SINGLE -> {
                 val startDateTime = startDate.atTime(time)
 
-                // Check if in future
-                if (startDateTime >= currentDateTime) {
+                // Return time if in future or allowing time in past
+                if (startDateTime >= currentDateTime || nextTimeOptions.allowTimeInPast) {
                     startDateTime
-                } else null // Was in past
+                } else null
             }
             SchedulingType.REPEATING, SchedulingType.REPEAT_FOREVER -> {
                 if (type == SchedulingType.REPEATING &&
                     currentDateTime > endDate.atTime(time).truncatedTo(ChronoUnit.MINUTES)
                 ) {
-                    null // expired
+                    null // expired (past end date)
                 } else if (currentDateTime.toLocalDate() < startDate) {
                     // in future
                     val nextDayOfWeek =
@@ -278,7 +277,7 @@ class SchedulingRules(
                         }
                     } else {
                         // time is in the future (t >= now), so it could be scheduled for today
-                        if (allowSameDay) {
+                        if (nextTimeOptions.allowSameDay) {
                             val nextDayOfWeek = firstDayOfWeek { it >= currentDateTime.dayOfWeek }
                             nextDayOfWeek?.let {
                                 currentDateTime.toLocalDate()
@@ -392,6 +391,27 @@ class SchedulingRules(
         daysOfWeek = daysOfWeek,
         time = time
     )
+
+    data class NextTimeOptions(
+        /**
+         * Escape hatch to allow or disallowed a repeating reminder that could be scheduled today
+         * to actually be scheduled for today, or if it should be scheduled on the next available day.
+         */
+        val allowSameDay: Boolean = false,
+
+        /**
+         * Escape hatch to allow SchedulingType.SINGLE reminders to calculate a next time even
+         * if they're in the past.
+         */
+        val allowTimeInPast: Boolean = false,
+    ) {
+        companion object {
+            val ALLOW_NONE
+                get() = NextTimeOptions(allowSameDay = false, allowTimeInPast = false)
+            val ALLOW_ALL
+                get() = NextTimeOptions(allowSameDay = true, allowTimeInPast = true)
+        }
+    }
 }
 
 data class ReminderAndAlarm(val reminder: Reminder, val alarm: Alarm?) :

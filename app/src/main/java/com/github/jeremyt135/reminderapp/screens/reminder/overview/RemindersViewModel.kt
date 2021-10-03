@@ -10,7 +10,6 @@ import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import androidx.work.WorkManager
 import com.github.jeremyt135.reminderapp.broadcast.ACTION_ALARM_COMPLETE
-import com.github.jeremyt135.reminderapp.broadcast.ACTION_ALARM_SCHEDULE_NEXT
 import com.github.jeremyt135.reminderapp.broadcast.ACTION_ALARM_SKIP
 import com.github.jeremyt135.reminderapp.broadcast.cancelAlarmIntentsForReminder
 import com.github.jeremyt135.reminderapp.data.AlarmRepository
@@ -18,6 +17,7 @@ import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.ReminderAndHistory
 import com.github.jeremyt135.reminderapp.data.domain.ReminderStatus
+import com.github.jeremyt135.reminderapp.data.domain.SchedulingRules
 import com.github.jeremyt135.reminderapp.di.AppCoroutineScope
 import com.github.jeremyt135.reminderapp.di.DefaultDispatcher
 import com.github.jeremyt135.reminderapp.di.IoDispatcher
@@ -331,7 +331,7 @@ class RemindersViewModel @Inject constructor(
     private fun calculateTimeOrder(reminder: Reminder): Long {
         return reminder.schedulingRules.getNextTimeForAlarm(
             currentLocalDateTime(),
-            allowSameDay = true
+            nextTimeOptions = SchedulingRules.NextTimeOptions.ALLOW_ALL
         )?.toEpochMilli()
             ?: 0
     }

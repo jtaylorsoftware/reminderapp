@@ -17,10 +17,7 @@ import com.github.jeremyt135.R
 import com.github.jeremyt135.reminderapp.data.AlarmRepository
 import com.github.jeremyt135.reminderapp.data.HistoryRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
-import com.github.jeremyt135.reminderapp.data.domain.Alarm
-import com.github.jeremyt135.reminderapp.data.domain.Reminder
-import com.github.jeremyt135.reminderapp.data.domain.ReminderStatus
-import com.github.jeremyt135.reminderapp.data.domain.SchedulingType
+import com.github.jeremyt135.reminderapp.data.domain.*
 import com.github.jeremyt135.reminderapp.screens.alarm.AlarmActivity
 import com.github.jeremyt135.reminderapp.screens.reminder.editor.ReminderEditorActivity
 import com.github.jeremyt135.reminderapp.util.currentLocalDateTime
@@ -180,7 +177,7 @@ suspend fun rescheduleReminders(
         val scheduledNextTimeForAlarm =
             reminder.schedulingRules.getNextTimeForAlarm(
                 currentLocalDateTime(),
-                allowSameDay = allowSameDay
+                nextTimeOptions = SchedulingRules.NextTimeOptions(allowSameDay = allowSameDay)
             )
 
         // If no history or pending history, SINGLE reminders can be rescheduled (they may exist
