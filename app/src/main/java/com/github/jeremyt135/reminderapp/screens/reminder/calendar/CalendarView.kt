@@ -95,42 +95,40 @@ class CalendarView : ConstraintLayout {
 
     private fun setupBindingViews() {
         Timber.d("setupBindingViews")
-        binding?.apply {
-            // Set calendar adapter and immediately begin observing calendarData for layout updates
-            calendarAdapter =
-                CalendarAdapter(viewModel.selectedDate.value, viewModel.indicatorColors) {
-                    viewModel.setSelectedDate(it)
-                }
-            // Use a GLM with Calendar's RecyclerView that has disabled scrolling in both directions
-            recyclerCalendar.layoutManager =
-                object : GridLayoutManager(context, CalendarAdapter.COLUMNS) {
-                    override fun canScrollVertically() = false
-                    override fun canScrollHorizontally() = false
-                }
-
-            recyclerCalendar.adapter = calendarAdapter
-
-            observeCalendarData()
-            observeSelectedDate()
-
-            recyclerCalendarReminders.adapter =
-                CalendarReminderListAdapter(
-                    CalendarReminderListAdapter.OnClickListener {
-                        onReminderSelectedListener?.invoke(it.reminder)
-                    })
-
-            buttonCalendarBackward.setOnClickListener {
-                viewModel.goToPreviousMonth()
-                calendarAdapter?.clearSelectedDate()
+        // Set calendar adapter and immediately begin observing calendarData for layout updates
+        calendarAdapter =
+            CalendarAdapter(viewModel.selectedDate.value, viewModel.indicatorColors) {
+                viewModel.setSelectedDate(it)
             }
-            buttonCalendarForward.setOnClickListener {
-                viewModel.goToNextMonth()
-                calendarAdapter?.clearSelectedDate()
+        // Use a GLM with Calendar's RecyclerView that has disabled scrolling in both directions
+        binding?.recyclerCalendar?.layoutManager =
+            object : GridLayoutManager(context, CalendarAdapter.COLUMNS) {
+                override fun canScrollVertically() = false
+                override fun canScrollHorizontally() = false
             }
 
-            buttonCalendarAdd.setOnClickListener {
-                onAddReminderListener?.invoke(calendarAdapter?.selectedDate)
-            }
+        binding?.recyclerCalendar?.adapter = calendarAdapter
+
+        observeCalendarData()
+        observeSelectedDate()
+
+        binding?.recyclerCalendarReminders?.adapter =
+            CalendarReminderListAdapter(
+                CalendarReminderListAdapter.OnClickListener {
+                    onReminderSelectedListener?.invoke(it.reminder)
+                })
+
+        binding?.buttonCalendarBackward?.setOnClickListener {
+            viewModel.goToPreviousMonth()
+            calendarAdapter?.clearSelectedDate()
+        }
+        binding?.buttonCalendarForward?.setOnClickListener {
+            viewModel.goToNextMonth()
+            calendarAdapter?.clearSelectedDate()
+        }
+
+        binding?.buttonCalendarAdd?.setOnClickListener {
+            onAddReminderListener?.invoke(calendarAdapter?.selectedDate)
         }
     }
 
@@ -213,8 +211,8 @@ class CalendarView : ConstraintLayout {
 
     private fun detachBinding() {
         Timber.d("detachBinding")
-        binding = null
         coroutineScope?.cancel()
         coroutineScope = null
+        binding = null
     }
 }
