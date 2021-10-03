@@ -466,7 +466,7 @@ fun buildSkipNotification(context: Context, reminder: Reminder): Notification =
         setAutoCancel(true)
         setSmallIcon(R.drawable.ic_notification_snooze)
         setContentIntent(getIntentForEditorActivity(context, reminder.id))
-        setContentTitle("Reminder Snoozed")
+        setContentTitle("Reminder Skipped")
 
         val message =
             "Reminder for ${reminder.description} has been skipped (missed too many snoozes)"
