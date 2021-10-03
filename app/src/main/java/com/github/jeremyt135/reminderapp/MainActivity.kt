@@ -9,6 +9,7 @@ import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
+import androidx.activity.addCallback
 import androidx.activity.viewModels
 import androidx.annotation.IdRes
 import androidx.appcompat.widget.Toolbar
@@ -50,6 +51,8 @@ class MainActivity : SettingsActivity(), RemindersSortDialogFragment.DialogListe
     private val toolbar: Toolbar by lazy {
         requireNotNull(findViewById(R.id.top_app_bar))
     }
+    private lateinit var bottomNavigationController: BottomNavigationController
+    private lateinit var navController: NavController
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -57,11 +60,27 @@ class MainActivity : SettingsActivity(), RemindersSortDialogFragment.DialogListe
 
         setSupportActionBar(toolbar)
 
-        val bottomNavigationController = createBottomNavigationController()
+        bottomNavigationController = createBottomNavigationController()
         val navController = setupNavController()
         bottomNavigationController.setUpWithNavController(navController)
 
         createNotificationChannels()
+
+        onBackPressedDispatcher.addCallback(owner = this) {
+            popToHome()
+        }
+    }
+
+    private fun popToHome() {
+        // Consider reminder list fragment as home
+        val home = R.id.fragment_reminders
+        // Pop up to home (reminders) fragment, popBackStack should return true
+        // only if the previous fragment was not home
+        val poppedToHome = navController.popBackStack(home, false)
+        if (!poppedToHome) {
+            // Returned false, meaning already on home, should finish activity
+            finish()
+        }
     }
 
     private fun createBottomNavigationController(): BottomNavigationController {
@@ -98,7 +117,7 @@ class MainActivity : SettingsActivity(), RemindersSortDialogFragment.DialogListe
     private fun setupNavController(): NavController {
         val navHostFragment =
             requireNotNull(supportFragmentManager.findFragmentById(R.id.nav_host_fragment_main)) as NavHostFragment
-        val navController = navHostFragment.navController
+        navController = navHostFragment.navController
         val appBarConfiguration =
             AppBarConfiguration(
                 setOf(
