@@ -268,7 +268,7 @@ class AlarmActionHandler @AssistedInject constructor(
 
     companion object {
         const val NO_ALARM_ID = 0L
-        private const val MAX_SCHEDULE_RETRIES = 5L
+        private const val MAX_SCHEDULE_RETRIES = 3L
 
         fun createForAction(action: String, reminderId: String): OneTimeWorkRequest {
             if (action == ACTION_ALARM_SCHEDULE_NEXT) {
