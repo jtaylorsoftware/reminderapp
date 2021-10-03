@@ -29,9 +29,9 @@ open class ThemeActivity: AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
         localTheme = sharedPreferences.getTheme(themeKey)
         setInitialTheme(localTheme)
-        super.onCreate(savedInstanceState)
     }
 
     override fun onResume() {
