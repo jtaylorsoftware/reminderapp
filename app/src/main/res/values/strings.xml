@@ -117,6 +117,7 @@
     <string name="bottomnav_calendar">Calendar</string>
     <string name="calendar_reminder_heading">Reminders</string>
     <string name="calendar_reminder_empty_hint">No reminders for selected date.</string>
+    <string name="calendar_reminder_select_hint">Select a date to view its reminders.</string>
     <string name="alarm_list_empty_hint">There are no alarms scheduled currently.</string>
     <string name="bottomnav_alams">Alarms</string>
     <string name="calendar_addReminder_content_description">Add reminder on current date</string>

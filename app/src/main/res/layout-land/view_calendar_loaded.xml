@@ -132,10 +132,9 @@
                     app:layout_constraintTop_toTopOf="parent" />
 
                 <TextView
-                    android:id="@+id/text_calendar_reminder_empty_hint"
+                    android:id="@+id/text_calendar_reminder_hint"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/calendar_reminder_empty_hint"
                     android:visibility="@{model.remindersOnSelectedDate.size() > 0 ? View.GONE : View.VISIBLE}"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"

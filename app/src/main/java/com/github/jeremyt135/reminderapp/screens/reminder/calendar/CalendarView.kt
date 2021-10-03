@@ -20,9 +20,6 @@ import androidx.transition.TransitionManager
 import com.github.jeremyt135.R
 import com.github.jeremyt135.databinding.ViewCalendarBinding
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
-import com.github.jeremyt135.reminderapp.screens.reminder.overview.ReminderListAdapter
-import com.github.jeremyt135.reminderapp.util.RandomColorCache
-import com.google.android.material.color.MaterialColors
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest
@@ -42,6 +39,7 @@ class CalendarView : ConstraintLayout {
     private var binding: ViewCalendarBinding? =
         ViewCalendarBinding.inflate(LayoutInflater.from(context), this, true)
     private var calendarAdapter: CalendarAdapter? = null
+    private var coroutineScope: CoroutineScope? = MainScope() + CoroutineName("CalendarView")
 
     var onReminderSelectedListener: OnReminderSelectedListener? = null
     var onAddReminderListener: OnAddReminderListener? = null
@@ -51,7 +49,6 @@ class CalendarView : ConstraintLayout {
     constructor(context: Context, attrs: AttributeSet?, @AttrRes defStyleAttr: Int)
             : super(context, attrs, defStyleAttr)
 
-    private var coroutineScope: CoroutineScope? = MainScope() + CoroutineName("CalendarView")
 
     init {
         Timber.d("Init")
@@ -84,21 +81,26 @@ class CalendarView : ConstraintLayout {
         attachBinding()
     }
 
+    private fun attachBinding() {
+        Timber.d("attachBinding")
+        val lifecycleOwner = requireNotNull(findViewTreeLifecycleOwner())
+
+        binding?.model = viewModel
+        binding?.lifecycleOwner = lifecycleOwner
+
+        setupBindingViews()
+
+        startCoroutines()
+    }
+
     private fun setupBindingViews() {
         Timber.d("setupBindingViews")
         binding?.apply {
             // Set calendar adapter and immediately begin observing calendarData for layout updates
-            calendarAdapter = CalendarAdapter(viewModel.selectedDate.value, viewModel.indicatorColors) {
-                viewModel.setSelectedDate(it)
-            }
-            observeCalendarData()
-
-            recyclerCalendarReminders.adapter =
-                CalendarReminderListAdapter(
-                    CalendarReminderListAdapter.OnClickListener {
-                        onReminderSelectedListener?.invoke(it.reminder)
-                    })
-
+            calendarAdapter =
+                CalendarAdapter(viewModel.selectedDate.value, viewModel.indicatorColors) {
+                    viewModel.setSelectedDate(it)
+                }
             // Use a GLM with Calendar's RecyclerView that has disabled scrolling in both directions
             recyclerCalendar.layoutManager =
                 object : GridLayoutManager(context, CalendarAdapter.COLUMNS) {
@@ -106,8 +108,16 @@ class CalendarView : ConstraintLayout {
                     override fun canScrollHorizontally() = false
                 }
 
-
             recyclerCalendar.adapter = calendarAdapter
+
+            observeCalendarData()
+            observeSelectedDate()
+
+            recyclerCalendarReminders.adapter =
+                CalendarReminderListAdapter(
+                    CalendarReminderListAdapter.OnClickListener {
+                        onReminderSelectedListener?.invoke(it.reminder)
+                    })
 
             buttonCalendarBackward.setOnClickListener {
                 viewModel.goToPreviousMonth()
@@ -122,8 +132,38 @@ class CalendarView : ConstraintLayout {
                 onAddReminderListener?.invoke(calendarAdapter?.selectedDate)
             }
         }
+    }
 
-        // Allow the tint to be set a little later by starting a coroutine without immediate mode
+    private fun startCoroutines() {
+        coroutineScope = (CoroutineScope(Dispatchers.Main) + CoroutineName("CalendarView"))
+        collectLatestMonth()
+        setForwardButtonTint()
+    }
+
+    private fun collectLatestMonth() {
+        coroutineScope?.launch {
+            viewModel.selectedYearMonth.collectLatest { yearMonth ->
+                // Disable button if current month is selected, so user cannot go into past
+                val enabled = yearMonth != null && yearMonth > YearMonth.now()
+                Timber.d("buttonCalendarBackward enabled = $enabled")
+
+                binding?.buttonCalendarBackward?.isEnabled = enabled
+
+                // Tint the button lighter to indicate disabled status
+                val tintColor =
+                    if (enabled) R.color.icon_button_tint_enable else R.color.icon_button_tint_disable
+                binding?.buttonCalendarBackward?.let {
+                    ImageViewCompat.setImageTintList(
+                        it,
+                        ColorStateList.valueOf(ContextCompat.getColor(context, tintColor))
+                    )
+                    ImageViewCompat.setImageTintMode(it, PorterDuff.Mode.SRC_ATOP)
+                }
+            }
+        }
+    }
+
+    private fun setForwardButtonTint() {
         coroutineScope?.launch {
             binding?.buttonCalendarForward?.let {
                 ImageViewCompat.setImageTintList(
@@ -158,36 +198,16 @@ class CalendarView : ConstraintLayout {
             })
     }
 
-    private fun attachBinding() {
-        Timber.d("attachBinding")
-        val lifecycleOwner = requireNotNull(findViewTreeLifecycleOwner())
-
-        binding?.model = viewModel
-        binding?.lifecycleOwner = lifecycleOwner
-
-        setupBindingViews()
-
-        coroutineScope = (CoroutineScope(Dispatchers.Main) + CoroutineName("CalendarView")).apply {
-            launch {
-                viewModel.selectedYearMonth.collectLatest { yearMonth ->
-                    // Disable button if current month is selected, so user cannot go into past
-                    val enabled = yearMonth != null && yearMonth > YearMonth.now()
-                    Timber.d("buttonCalendarBackward enabled = $enabled")
-
-                    binding?.buttonCalendarBackward?.isEnabled = enabled
-
-                    // Tint the button lighter to indicate disabled status
-                    val tintColor =
-                        if (enabled) R.color.icon_button_tint_enable else R.color.icon_button_tint_disable
-                    binding?.buttonCalendarBackward?.let {
-                        ImageViewCompat.setImageTintList(
-                            it,
-                            ColorStateList.valueOf(ContextCompat.getColor(context, tintColor))
-                        )
-                        ImageViewCompat.setImageTintMode(it, PorterDuff.Mode.SRC_ATOP)
-                    }
-                }
+    private fun observeSelectedDate() {
+        viewModel.selectedDate.observe(
+            requireNotNull(findViewTreeLifecycleOwner())
+        ) { selectedDate ->
+            val hint = if (selectedDate == null) {
+                context.getString(R.string.calendar_reminder_select_hint)
+            } else {
+                context.getString(R.string.calendar_reminder_empty_hint)
             }
+            binding?.textCalendarReminderHint?.text = hint
         }
     }
 
