@@ -159,7 +159,14 @@ class ReminderEditorFragmentTest {
 
     @Test
     fun withReminderId_displaysAssociatedReminder() {
-        val reminder = reminders[1]
+        val reminder = reminders[1].copy(
+            schedulingRules = SchedulingRules(
+                daysOfWeek = sortedSetOf(
+                    DayOfWeek.MONDAY,
+                    DayOfWeek.TUESDAY
+                ), time = LocalTime.now()
+            ),
+        )
         val id = reminder.id
 
         launchEditorFragmentWithReminder(id)
