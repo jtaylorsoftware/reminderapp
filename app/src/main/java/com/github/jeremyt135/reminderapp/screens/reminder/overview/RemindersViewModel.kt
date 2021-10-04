@@ -180,8 +180,10 @@ class RemindersViewModel @Inject constructor(
      */
     fun deleteReminder(reminder: Reminder) {
         viewModelScope.launch {
-            rescheduleAlarms(reminder)
-            reminderRepository.delete(reminder)
+            withContext(NonCancellable) {
+                rescheduleAlarmForReminder(reminder)
+                reminderRepository.delete(reminder)
+            }
         }
     }
 
@@ -190,9 +192,11 @@ class RemindersViewModel @Inject constructor(
      */
     fun deleteAllReminders() {
         viewModelScope.launch {
-            AlarmService.requestStop(getApplication())
-            clearAllAlarmIntents()
-            reminderRepository.deleteAll()
+            withContext(NonCancellable) {
+                AlarmService.requestStop(getApplication())
+                clearAllAlarmIntents()
+                reminderRepository.deleteAll()
+            }
         }
     }
 
@@ -225,7 +229,7 @@ class RemindersViewModel @Inject constructor(
     /**
      * Cancels alarms for `reminder` and reschedules next alarm.
      */
-    private suspend fun rescheduleAlarms(reminder: Reminder) {
+    private suspend fun rescheduleAlarmForReminder(reminder: Reminder) {
         if (stopAlarmsForReminder(getApplication(), reminder)) {
             AlarmService.requestStop(getApplication())
             scheduleNextAlarm()
@@ -252,7 +256,7 @@ class RemindersViewModel @Inject constructor(
         }
     }
 
-    private suspend fun clearAllAlarmIntents() {
+    private suspend fun clearAllAlarmIntents() = withContext(NonCancellable) {
         reminderRepository.getAll().first().map {
             Timber.d("Cancelling reminder alarms for $it")
             cancelAlarmIntentsForReminder(getApplication(), it)

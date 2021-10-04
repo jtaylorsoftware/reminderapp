@@ -84,7 +84,6 @@ class AlarmViewModelTest {
         every { mockTimerManager.timer } returns mockTimer
         every { mockTimer.stop() } returns true
         every { mockTimer.timerFinished } returns EventFlow()
-        every { mockTimerManager.startTimer(any(), any(), any()) } returns true
         coEvery { mockReminderRepo.getReminderAndAlarm(reminder.id) } returns reminderAndAlarm
         every { mockApplication.applicationContext } returns mockContext
 
@@ -116,6 +115,8 @@ class AlarmViewModelTest {
     @Test
     fun loadReminderData_loadsReminderAndAlarm() = mainCoroutineRule.runBlockingTest {
         every { mockSavedStateHandle.get<String>(EXTRA_REMINDER_ID) } returns reminder.id
+        coEvery { mockTimerManager.startTimer(any(), any(), any()) } returns true
+
         viewModel =
             AlarmViewModel(mockApplication, mockReminderRepo, mockSavedStateHandle, timerManager)
 
@@ -127,6 +128,8 @@ class AlarmViewModelTest {
     @Test
     fun liveData_matchesLoadedReminderData() = mainCoroutineRule.runBlockingTest {
         every { mockSavedStateHandle.get<String>(EXTRA_REMINDER_ID) } returns reminder.id
+        coEvery { mockTimerManager.startTimer(any(), any(), any()) } returns true
+
         viewModel =
             AlarmViewModel(mockApplication, mockReminderRepo, mockSavedStateHandle, timerManager)
 

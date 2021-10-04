@@ -4,15 +4,19 @@ import com.github.jeremyt135.reminderapp.util.EventFlow
 import com.github.jeremyt135.reminderapp.util.MutableEventFlow
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import timber.log.Timber
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.math.max
 
 /**
  * Manages creating an AlarmTimer instance that could be shared
  * between objects.
  */
 class AlarmTimerManager {
+    private val mutex = Mutex()
     private var _timer = AtomicReference<AlarmTimer?>(null)
     private var currentTimerJob: Job? = null
 
@@ -30,11 +34,11 @@ class AlarmTimerManager {
      * method will not replace it.
      * @return True if created a new timer and started it.
      */
-    fun startTimer(
+    suspend fun startTimer(
         coroutineScope: CoroutineScope,
         delay: Long = AlarmTimer.DEFAULT_TIMER_DELAY_MILLI,
         onFinish: suspend () -> Unit
-    ): Boolean {
+    ): Boolean = mutex.withLock {
         if (timer != null && !timer!!.isFinished) {
             Timber.w("Client attempted to call startTimer when timer already started")
             return false
@@ -44,9 +48,11 @@ class AlarmTimerManager {
         currentTimerJob = coroutineScope.launch {
             newTimer.timerFinished.flow.collect { finished ->
                 finished.value?.let {
-                    Timber.d("AlarmTimerManager clearing AlarmTimer instance")
-                    _timer.set(null)
-                    currentTimerJob?.cancel()
+                    mutex.withLock {
+                        Timber.d("AlarmTimerManager clearing AlarmTimer instance")
+                        _timer.set(null)
+                        currentTimerJob?.cancel()
+                    }
                 }
             }
         }
@@ -63,7 +69,7 @@ class AlarmTimerManager {
      * the timer to end naturally.
      * @return True if there was a timer that was stopped
      */
-    fun unsafeReset(): Boolean {
+    suspend fun unsafeReset(): Boolean = mutex.withLock {
         val stopped = timer?.stop() ?: false
         _timer.set(null)
         currentTimerJob?.cancel()
@@ -105,15 +111,19 @@ class AlarmTimer(
         timeUntilSnoozeMilli: Long = DEFAULT_TIMER_DELAY_MILLI,
     ): Boolean {
         if (_isStarted.compareAndSet(false, true) && !isFinished) {
+            Timber.d("AlarmTimer started")
             job = coroutineScope.launch {
-                Timber.d("AlarmTimer started")
-                delay(timeUntilSnoozeMilli)
-                if (isActive && _isFinished.compareAndSet(false, true)) {
-                    _timerFinished.value = Unit
-
-                    Timber.d("AlarmTimer finishing")
+                try {
+                    delay(max(MIN_TIMER_DELAY_MILLI, timeUntilSnoozeMilli))
+                } finally {
+                    // Even if delay is stopped, always try to call onFinish
                     withContext(NonCancellable) {
-                        onFinish()
+                        if (_isFinished.compareAndSet(false, true)) {
+                            onFinish()
+
+                            _timerFinished.value = Unit
+                            Timber.d("AlarmTimer finishing")
+                        }
                     }
                 }
             }
@@ -138,8 +148,13 @@ class AlarmTimer(
 
     companion object {
         /**
+         * Minimum value for how long it should wait
+         */
+        const val MIN_TIMER_DELAY_MILLI = 30L * 1000 // 30 seconds
+
+        /**
          * Default value for how long an Alarm should wait until auto-snoozing in milliseconds.
          */
-        const val DEFAULT_TIMER_DELAY_MILLI: Long = 30L * 1000
+        const val DEFAULT_TIMER_DELAY_MILLI: Long = MIN_TIMER_DELAY_MILLI
     }
 }

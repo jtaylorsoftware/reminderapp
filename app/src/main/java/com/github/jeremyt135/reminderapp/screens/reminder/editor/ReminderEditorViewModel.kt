@@ -22,10 +22,12 @@ import com.github.jeremyt135.reminderapp.util.getShortLocalDateDisplay
 import com.github.jeremyt135.reminderapp.work.AlarmActionHandler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -42,9 +44,6 @@ class ReminderEditorViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     @AppCoroutineScope private val applicationScope: CoroutineScope
 ) : AndroidViewModel(application) {
-    var todayString: String = ""
-    var tomorrowString: String = ""
-
     private val _reminder =
         MutableStateFlow(Reminder())
 
@@ -230,7 +229,8 @@ class ReminderEditorViewModel @Inject constructor(
                         errorEnabled = endDate <= _reminder.value.schedulingRules.startDate
                     )
             }
-            formHasErrors = formHasErrors || _startDateState.value.errorEnabled || _endDateState.value.errorEnabled
+            formHasErrors =
+                formHasErrors || _startDateState.value.errorEnabled || _endDateState.value.errorEnabled
         }
 
     }
@@ -307,7 +307,14 @@ class ReminderEditorViewModel @Inject constructor(
 
     private fun checkDaysOfWeekErrors() {
         _daysOfWeekState.value =
-            _daysOfWeekState.value.copy(errorEnabled = _reminder.value.schedulingRules.daysOfWeek.isEmpty())
+            _daysOfWeekState.value.copy(
+                errorEnabled =
+                if (_reminder.value.schedulingRules.type == SchedulingType.SINGLE) {
+                    false
+                } else {
+                    _reminder.value.schedulingRules.daysOfWeek.isEmpty()
+                }
+            )
         formHasErrors = formHasErrors || _daysOfWeekState.value.errorEnabled
     }
 
@@ -380,35 +387,37 @@ class ReminderEditorViewModel @Inject constructor(
         }
 
         applicationScope.launch {
-            _reminder.value.copy().let {
-                // get the "sanitized" reminder
-                getReminderToSave(it)
-            }.let { reminder ->
-                reminderRepository.save(reminder)
+            withContext(NonCancellable) {
+                _reminder.value.copy().let {
+                    // get the "sanitized" reminder
+                    getReminderToSave(it)
+                }.let { reminder ->
+                    reminderRepository.save(reminder)
 
-                val wasScheduled = stopAlarmsForReminder(getApplication(), reminder)
+                    val wasScheduled = stopAlarmsForReminder(getApplication(), reminder)
 
-                var nextAlarmId = AlarmActionHandler.NO_ALARM_ID
-                reminder.schedulingRules.getNextTimeForAlarm(
-                    currentLocalDateTime(),
-                    nextTimeOptions = SchedulingRules.NextTimeOptions.ALLOW_ALL
-                )?.let { time ->
-                    val nextAlarm = Alarm(
-                        reminderId = reminder.id,
-                        triggerAt = time,
-                        maxSnoozeRepeats = reminder.maxSnoozeRepeats,
-                        snoozeDuration = reminder.snoozeDuration
-                    )
-                    nextAlarm.id = alarmRepository.save(nextAlarm)
-                    nextAlarmId = nextAlarm.id
+                    var nextAlarmId = AlarmActionHandler.NO_ALARM_ID
+                    reminder.schedulingRules.getNextTimeForAlarm(
+                        currentLocalDateTime(),
+                        nextTimeOptions = SchedulingRules.NextTimeOptions.ALLOW_ALL
+                    )?.let { time ->
+                        val nextAlarm = Alarm(
+                            reminderId = reminder.id,
+                            triggerAt = time,
+                            maxSnoozeRepeats = reminder.maxSnoozeRepeats,
+                            snoozeDuration = reminder.snoozeDuration
+                        )
+                        nextAlarm.id = alarmRepository.save(nextAlarm)
+                        nextAlarmId = nextAlarm.id
+                    }
+
+                    // stop currently running AlarmService if saved reminder is the one scheduled
+                    if (wasScheduled) {
+                        AlarmService.requestStop(getApplication())
+                    }
+
+                    scheduleNextAlarm(nextAlarmId)
                 }
-
-                // stop currently running AlarmService if saved reminder is the one scheduled
-                if (wasScheduled) {
-                    AlarmService.requestStop(getApplication())
-                }
-
-                scheduleNextAlarm(nextAlarmId)
             }
         }
 
@@ -441,16 +450,18 @@ class ReminderEditorViewModel @Inject constructor(
         }
 
         applicationScope.launch {
-            _reminder.value.copy().let { reminder ->
-                with(getApplication<Application>()) {
-                    if (stopAlarmsForReminder(this, reminder)) {
-                        // Was currently scheduled, so try to schedule next
-                        AlarmService.requestStop(this)
-                        scheduleNextAlarm(AlarmActionHandler.NO_ALARM_ID)
+            withContext(NonCancellable) {
+                _reminder.value.copy().let { reminder ->
+                    with(getApplication<Application>()) {
+                        if (stopAlarmsForReminder(this, reminder)) {
+                            // Was currently scheduled, so try to schedule next
+                            AlarmService.requestStop(this)
+                            scheduleNextAlarm(AlarmActionHandler.NO_ALARM_ID)
+                        }
                     }
-                }
 
-                reminderRepository.delete(reminder)
+                    reminderRepository.delete(reminder)
+                }
             }
         }
 

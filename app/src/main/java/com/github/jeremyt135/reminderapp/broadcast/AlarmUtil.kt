@@ -25,7 +25,9 @@ import com.github.jeremyt135.reminderapp.util.getShortLocalDateDisplay
 import com.github.jeremyt135.reminderapp.util.getShortLocalTimeDisplay
 import com.github.jeremyt135.reminderapp.util.toEpochMilli
 import com.github.jeremyt135.reminderapp.work.AlarmActionHandler
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 /**
@@ -118,10 +120,10 @@ suspend fun scheduleNextAlarm(
     context: Context,
     alarmRepository: AlarmRepository,
     reminderRepository: ReminderRepository,
-): Boolean {
+): Boolean = withContext(NonCancellable) {
     Timber.d("Scheduling next alarm...")
 
-    val alarm = alarmRepository.getFirstByTimeAscending() ?: return false
+    val alarm = alarmRepository.getFirstByTimeAscending() ?: return@withContext false
 
     val previousScheduled = alarmRepository.getFirstScheduledAlarm()
     if (previousScheduled != alarm) {
@@ -138,7 +140,8 @@ suspend fun scheduleNextAlarm(
             scheduleAlarmForReminder(context, alarm.copy(scheduled = true), reminder)
         }
     } // Else the Alarm was the one already scheduled
-    return true
+
+    true
 }
 
 /**
@@ -156,7 +159,7 @@ suspend fun rescheduleReminders(
     reminderRepository: ReminderRepository,
     alarmRepository: AlarmRepository,
     historyRepository: HistoryRepository
-): Int {
+): Int = withContext(NonCancellable) {
     Timber.d("Rescheduling all reminders and their alarms...")
 
     // Clear the past alarms
@@ -210,7 +213,7 @@ suspend fun rescheduleReminders(
 
     enqueueScheduleNext(context, nextAlarmId)
 
-    return numRescheduled
+    numRescheduled
 }
 
 @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
@@ -234,8 +237,13 @@ fun scheduleAlarmForReminder(
     val intent = createIntentForAlarmAction(context, ACTION_ALARM_START, reminder.id)
     val showIntent = getIntentForEditorActivity(context, reminder.id)
 
+    // Sanity check the time in case the system doesn't "Fire immediately" when it's in the past
+    val time = if (alarm.triggerAt < currentLocalDateTime()) {
+        currentLocalDateTime().plusMinutes(1)
+    } else alarm.triggerAt
+
     AlarmManagerCompat.setAlarmClock(
-        alarmManager, alarm.triggerAt.toEpochMilli(),
+        alarmManager, time.toEpochMilli(),
         showIntent,
         intent
     )

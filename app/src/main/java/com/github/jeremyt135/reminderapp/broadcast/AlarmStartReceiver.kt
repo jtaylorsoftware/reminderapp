@@ -4,9 +4,11 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import androidx.work.WorkManager
+import com.github.jeremyt135.R
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.di.AppCoroutineScope
 import com.github.jeremyt135.reminderapp.service.AlarmService
+import com.github.jeremyt135.reminderapp.service.AlarmTimer
 import com.github.jeremyt135.reminderapp.service.AlarmTimerManager
 import com.github.jeremyt135.reminderapp.work.AlarmActionHandler
 import dagger.hilt.android.AndroidEntryPoint
@@ -40,37 +42,47 @@ class AlarmStartReceiver : BroadcastReceiver() {
 
         val pendingResult = goAsync()
         applicationScope.launch {
-            reminderRepository.getReminderAndAlarm(reminderId)?.let { (reminder, alarm) ->
-                alarm?.let {
-                    // if the reminder has an alarm, start the timer and service
-
-                    // Start timer
-                    val started = timerManager.startTimer(applicationScope) {
-                        // Snooze when timer ends uninterrupted
-                        snoozeAlarm(context, reminder.id)
-                    }
-                    // Ensure that it started
-                    if (!started) {
-                        // the previous timer wasn't cleared, or there's other problems making timers
-                        Timber.e("Could not create AlarmTimer for reminder ${reminder.id}")
-                        scheduleNext(context, alarm.id)
-                    } else {
-                        // started, so create service
-                        Timber.d("AlarmStartReceiver starting service")
-                        AlarmService.start(context, reminder)
-                    }
-                } ?: run {
-                    // alarm?.let was null
-                    // schedule next because current reminder/alarm can't be displayed
-                    Timber.e("Reminder had no alarm")
-                    scheduleNext(context, 0)
-                }
-            } ?: run {
-                // getReminderAndAlarm?.let was null
+            val reminderAndAlarm = reminderRepository.getReminderAndAlarm(reminderId)
+            if (reminderAndAlarm?.alarm == null) {
                 // had no data to work with, try to schedule next
                 Timber.e("Could not get ReminderAndAlarm")
                 scheduleNext(context, 0)
+                pendingResult.finish()
+                return@launch
             }
+            // Have alarm, start service
+
+            // get preference for how long to delay until the alarm auto stops
+            val millisPerSec = 1000
+            val alarmDelay =
+                context.getSharedPreferences(
+                    context.getString(R.string.preference_file_name),
+                    Context.MODE_PRIVATE
+                )
+                    .getInt(
+                        context.getString(R.string.preference_key_alarm_delay),
+                        AlarmTimer.DEFAULT_TIMER_DELAY_MILLI.toInt() / millisPerSec
+                    ) * millisPerSec
+            Timber.d("Read AlarmDelay as $alarmDelay ms")
+
+            val (reminder, alarm) = reminderAndAlarm
+
+            // Start timer
+            val started = timerManager.startTimer(applicationScope, alarmDelay.toLong()) {
+                // Snooze when timer ends uninterrupted
+                snoozeAlarm(context, reminder.id)
+            }
+            // Ensure that it started
+            if (!started) {
+                // the previous timer wasn't cleared, or there's other problems making timers
+                Timber.e("Could not create AlarmTimer for reminder ${reminder.id}")
+                scheduleNext(context, alarm!!.id)
+            } else {
+                // started, so create service
+                Timber.d("AlarmStartReceiver starting service")
+                AlarmService.start(context, reminder)
+            }
+
             pendingResult.finish()
         }
     }

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:title="Settings"
@@ -15,5 +16,23 @@
         android:entries="@array/themeOptions"
         android:entryValues="@array/themeOptionsValues"
         />
+
+    <PreferenceCategory
+        app:key="alarm_category"
+        app:title="@string/preference_category_alarms">
+
+        <SeekBarPreference
+            android:key="@string/preference_key_alarm_delay"
+            android:title="@string/preference_title_alarm_snooze"
+            android:summary="@string/alarm_snooze_delay_summary"
+            app:showSeekBarValue="true"
+            android:defaultValue="30"
+            app:min="30"
+            android:max="120"
+            >
+
+        </SeekBarPreference>
+
+    </PreferenceCategory>
 
 </PreferenceScreen>

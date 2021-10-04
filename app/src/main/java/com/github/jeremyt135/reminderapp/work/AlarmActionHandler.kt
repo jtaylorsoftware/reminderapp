@@ -17,7 +17,9 @@ import com.github.jeremyt135.reminderapp.util.NotificationId
 import com.github.jeremyt135.reminderapp.util.currentLocalDateTime
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.time.Instant
 import java.time.ZoneId
@@ -34,7 +36,7 @@ class AlarmActionHandler @AssistedInject constructor(
     @Assisted workerParameters: WorkerParameters,
     private val alarmRepository: AlarmRepository,
     private val reminderRepository: ReminderRepository,
-    private val historyRepository: HistoryRepository
+    private val historyRepository: HistoryRepository,
 ) : CoroutineWorker(context, workerParameters) {
 
     private lateinit var action: String
@@ -43,7 +45,9 @@ class AlarmActionHandler @AssistedInject constructor(
 
     override suspend fun doWork(): Result {
         setForeground(createForegroundInfo())
-        return doWorkImpl()
+        // Make work noncancellable because losing it would break functionality of the app.
+        // (This isn't some optional repeatable work)
+        return withContext(NonCancellable) { doWorkImpl() }
     }
 
     private fun createForegroundInfo(): ForegroundInfo {

@@ -141,7 +141,7 @@ class ReminderEditorViewModelTest {
         val reminder =
             Reminder(
                 description = "Test",
-                schedulingRules = SchedulingRules(time = LocalTime.now().plusMinutes(1))
+                schedulingRules = SchedulingRules(time = LocalTime.now().plusMinutes(30))
             )
         val savedReminder = slot<Reminder>()
 
@@ -195,7 +195,7 @@ class ReminderEditorViewModelTest {
         val reminder =
             Reminder(
                 description = "Test",
-                schedulingRules = SchedulingRules(time = LocalTime.now().plusMinutes(10))
+                schedulingRules = SchedulingRules(time = LocalTime.now().plusMinutes(30))
             )
 
         every { mockSavedState.get<String>(EXTRA_REMINDER_ID) } returns reminder.id
