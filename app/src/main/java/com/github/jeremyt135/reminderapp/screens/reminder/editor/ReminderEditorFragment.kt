@@ -123,9 +123,7 @@ class ReminderEditorFragment : Fragment(R.layout.fragment_reminder_editor) {
                 }
                 viewModel.timeState.observe(viewLifecycleOwner) {
                     if (it.errorEnabled) {
-                        if (viewModel.timeState.value?.dirty == true) {
-                            textlayoutEditorTime.error = "Time cannot be in the past"
-                        }
+                        textlayoutEditorTime.error = "Time cannot be in the past"
                     } else {
                         textlayoutEditorTime.error = ""
                     }

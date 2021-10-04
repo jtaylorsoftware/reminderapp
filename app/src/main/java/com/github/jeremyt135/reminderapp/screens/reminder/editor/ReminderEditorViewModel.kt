@@ -6,8 +6,10 @@ import android.media.RingtoneManager
 import android.net.Uri
 import androidx.lifecycle.*
 import androidx.work.WorkManager
-import com.github.jeremyt135.R
-import com.github.jeremyt135.reminderapp.broadcast.*
+import com.github.jeremyt135.reminderapp.broadcast.EXTRA_REMINDER_ID
+import com.github.jeremyt135.reminderapp.broadcast.EXTRA_REMINDER_START_DATE
+import com.github.jeremyt135.reminderapp.broadcast.cancelAlarmIntentsForReminder
+import com.github.jeremyt135.reminderapp.broadcast.showToast
 import com.github.jeremyt135.reminderapp.data.AlarmRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.*
@@ -24,6 +26,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
@@ -227,7 +230,7 @@ class ReminderEditorViewModel @Inject constructor(
                         errorEnabled = endDate <= _reminder.value.schedulingRules.startDate
                     )
             }
-            formHasErrors = _startDateState.value.errorEnabled || _endDateState.value.errorEnabled
+            formHasErrors = formHasErrors || _startDateState.value.errorEnabled || _endDateState.value.errorEnabled
         }
 
     }
@@ -305,7 +308,7 @@ class ReminderEditorViewModel @Inject constructor(
     private fun checkDaysOfWeekErrors() {
         _daysOfWeekState.value =
             _daysOfWeekState.value.copy(errorEnabled = _reminder.value.schedulingRules.daysOfWeek.isEmpty())
-        formHasErrors = _daysOfWeekState.value.errorEnabled
+        formHasErrors = formHasErrors || _daysOfWeekState.value.errorEnabled
     }
 
     fun onTimeChanged(newTime: LocalTime) {
@@ -322,7 +325,8 @@ class ReminderEditorViewModel @Inject constructor(
             schedulingRules.type == SchedulingType.SINGLE && startDateTime < currentLocalDateTime()
         }
         _timeState.value = _timeState.value.copy(errorEnabled = errorEnabled)
-        formHasErrors = errorEnabled
+        formHasErrors = formHasErrors || errorEnabled
+        Timber.d("CheckTimeErrors errorenabled: $formHasErrors")
     }
 
     fun onSnoozeRulesChanged(newRules: SnoozeRules) {
@@ -352,7 +356,7 @@ class ReminderEditorViewModel @Inject constructor(
     private fun checkDescriptionErrors() {
         _descriptionState.value =
             _descriptionState.value.copy(errorEnabled = _reminder.value.description.isBlank())
-        formHasErrors = _descriptionState.value.errorEnabled
+        formHasErrors = formHasErrors || _descriptionState.value.errorEnabled
     }
 
     private fun validateForm() {
