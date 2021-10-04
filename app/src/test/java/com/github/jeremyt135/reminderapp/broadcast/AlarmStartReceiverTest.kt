@@ -130,7 +130,7 @@ class AlarmStartReceiverTest {
         receiver.onReceive(context, intent)
 
         verify {
-            AlarmActionHandler.createForScheduleNext("",0)
+            AlarmActionHandler.createForScheduleNext(0)
         }
     }
 

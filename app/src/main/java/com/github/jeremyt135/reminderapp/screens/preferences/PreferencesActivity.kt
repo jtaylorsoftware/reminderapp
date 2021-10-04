@@ -6,11 +6,16 @@ import android.view.MenuItem
 import com.github.jeremyt135.R
 import com.github.jeremyt135.reminderapp.theme.ThemeActivity
 import com.github.jeremyt135.reminderapp.theme.ThemeSetting
+import com.github.jeremyt135.reminderapp.work.AlarmSchedulingWorker
+import timber.log.Timber
 
 class PreferencesActivity : ThemeActivity(),
     SharedPreferences.OnSharedPreferenceChangeListener {
     private val themeKey: String by lazy {
         getString(R.string.preference_key_theme)
+    }
+    private val scheduleIntervalKey: String by lazy {
+        getString(R.string.preference_key_schedule_interval)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -46,8 +51,21 @@ class PreferencesActivity : ThemeActivity(),
         }
 
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String) {
-        if (key == themeKey) {
-            super.handleThemeChange(ThemeSetting.valueOf(sharedPreferences.getString(themeKey, "")!!))
+        when (key) {
+            themeKey -> {
+                super.handleThemeChange(
+                    ThemeSetting.valueOf(sharedPreferences.getString(themeKey, "")!!)
+                )
+            }
+            scheduleIntervalKey -> {
+                AlarmSchedulingWorker.cancelWork(this)
+                val interval = sharedPreferences.getInt(
+                    scheduleIntervalKey,
+                    AlarmSchedulingWorker.DEFAULT_INTERVAL_MINUTES
+                ).toLong()
+                AlarmSchedulingWorker.enqueue(this, interval)
+                Timber.d("Updated interval to $interval minutes")
+            }
         }
     }
 }

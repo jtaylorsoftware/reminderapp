@@ -2,12 +2,17 @@
     <string name="app_name">Time to Remind</string>
 
     <string name="settings">Settings</string>
-    <string name="preference_file_name">com.github.jeremyt135.PREFERENCES</string>
 
-    <!-- Key for preference of theme to use for app -->
+    <!-- Key indicating app has run before (bool) -->
+    <string name="preference_key_first_startup">FIRST_STARTUP</string>
+
+    <!-- Key for background rescheduling interval in minutes (int) -->
+    <string name="preference_key_schedule_interval">SCHEDULE_INTERVAL</string>
+
+    <!-- Key for preference of theme to use for app (stringified ThemeSetting) -->
     <string name="preference_key_theme">THEME_SETTING</string>
 
-    <!-- Key for preference of how long alarms wait until they snooze in seconds -->
+    <!-- Key for preference of how long alarms wait until they snooze in seconds (int) -->
     <string name="preference_key_alarm_delay">ALARM_DELAY</string>
 
     <string name="preference_category_alarms">Alarm Settings</string>
@@ -16,6 +21,10 @@
     <string name="preference_title_theme">Theme</string>
     <string name="preference_title_alarm_snooze">Alarm snooze delay</string>
     <string name="alarm_snooze_delay_summary">How long alarms should wait before automatically snoozing, measured in seconds.</string>
+    <string name="preference_title_reschedule">Background rescheduling</string>
+    <string name="reschedule_interval_summary">How long to wait between background rescheduling attempts, measured in minutes.
+        Lower values may reduce the possibility of missed alarms at the expense of extra battery use.
+        Recommended to leave at the default value unless you notice alarms not firing at the right time.</string>
 
     <string name="skip">Skip</string>
     <string name="snooze">Snooze</string>

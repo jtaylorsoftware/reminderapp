@@ -29,9 +29,17 @@
             android:defaultValue="30"
             app:min="30"
             android:max="120"
-            >
+            />
 
-        </SeekBarPreference>
+        <SeekBarPreference
+            android:key="@string/preference_key_schedule_interval"
+            android:title="@string/preference_title_reschedule"
+            android:summary="@string/reschedule_interval_summary"
+            app:showSeekBarValue="true"
+            android:defaultValue="30"
+            app:min="15"
+            android:max="60"
+            />
 
     </PreferenceCategory>
 

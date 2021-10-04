@@ -12,7 +12,6 @@ class PreferencesFragment : PreferenceFragmentCompat() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Timber.d("onCreate")
-        preferenceManager.sharedPreferencesName = getString(R.string.preference_file_name)
     }
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {

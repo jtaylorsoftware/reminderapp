@@ -4,9 +4,9 @@ import android.content.SharedPreferences
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.preference.PreferenceManager
 import com.github.jeremyt135.R
 import com.github.jeremyt135.reminderapp.ReminderApplication
-import com.github.jeremyt135.reminderapp.settings.getBaseSharedPreferences
 import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
 
@@ -18,7 +18,7 @@ import timber.log.Timber
 open class ThemeActivity: AppCompatActivity() {
 
     protected val sharedPreferences: SharedPreferences by lazy {
-        getBaseSharedPreferences()
+        PreferenceManager.getDefaultSharedPreferences(this)
     }
 
     // Theme set at time Activity was created or last resumed

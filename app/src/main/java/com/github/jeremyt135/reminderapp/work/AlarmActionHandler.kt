@@ -110,7 +110,7 @@ class AlarmActionHandler @AssistedInject constructor(
         if (alarmRepository.getAll().first().isNotEmpty()) {
             if (scheduleNextAlarm(applicationContext, alarmRepository, reminderRepository)) {
                 Result.success()
-            } else Result.retry()
+            } else Result.failure()
         } else when (nextAlarmId) {
             // Do not expect anything to be in the alarm, very well might not be and that's ok
             NO_ALARM_ID -> if (runAttemptCount < MAX_SCHEDULE_RETRIES) {
@@ -133,12 +133,6 @@ class AlarmActionHandler @AssistedInject constructor(
 
     private suspend fun handleCompleted(reminderId: String): Result =
         saveHistoryForReminder(reminderId, ReminderStatus.COMPLETED)
-
-    private fun enqueueScheduleNext(nextAlarmId: Long) {
-        createForScheduleNext("", nextAlarmId).let {
-            WorkManager.getInstance(applicationContext).enqueue(it)
-        }
-    }
 
     private fun enqueueSkip(reminderId: String) {
         createForAction(ACTION_ALARM_SKIP, reminderId).let {
@@ -191,7 +185,7 @@ class AlarmActionHandler @AssistedInject constructor(
         }
 
         // Schedule the next alarm, whatever it ends up being
-        enqueueScheduleNext(nextAlarmId)
+        enqueueScheduleNext(applicationContext, nextAlarmId)
 
         return Result.success()
     }
@@ -265,7 +259,7 @@ class AlarmActionHandler @AssistedInject constructor(
         }
 
         alarmRepository.delete(alarm)
-        enqueueScheduleNext(nextAlarmId)
+        enqueueScheduleNext(applicationContext, nextAlarmId)
 
         return result
     }
@@ -296,12 +290,12 @@ class AlarmActionHandler @AssistedInject constructor(
                 .build()
         }
 
-        fun createForScheduleNext(reminderId: String, alarmId: Long) =
+        fun createForScheduleNext(alarmId: Long) =
             OneTimeWorkRequestBuilder<AlarmActionHandler>()
                 .setInputData(
                     workDataOf(
                         EXTRA_ALARM_ACTION_NAME to ACTION_ALARM_SCHEDULE_NEXT,
-                        EXTRA_REMINDER_ID to reminderId,
+                        EXTRA_REMINDER_ID to "",
                         EXTRA_ALARM_ID to alarmId
                     )
                 )
@@ -311,7 +305,6 @@ class AlarmActionHandler @AssistedInject constructor(
                     TimeUnit.MILLISECONDS
                 )
                 .addTag(ACTION_ALARM_SCHEDULE_NEXT)
-                .addTag("Reminder $reminderId")
                 .addTag("Alarm $alarmId")
                 .build()
 

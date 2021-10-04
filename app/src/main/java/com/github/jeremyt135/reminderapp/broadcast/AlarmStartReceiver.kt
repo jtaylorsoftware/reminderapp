@@ -3,6 +3,8 @@ package com.github.jeremyt135.reminderapp.broadcast
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import androidx.preference.PreferenceManager
+import androidx.work.ExistingWorkPolicy
 import androidx.work.WorkManager
 import com.github.jeremyt135.R
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
@@ -38,7 +40,7 @@ class AlarmStartReceiver : BroadcastReceiver() {
             return
         }
 
-        val reminderId = intent.getStringExtra(EXTRA_REMINDER_ID) ?: return scheduleNext(context, 0)
+        val reminderId = intent.getStringExtra(EXTRA_REMINDER_ID) ?: return enqueueScheduleNext(context, 0)
 
         val pendingResult = goAsync()
         applicationScope.launch {
@@ -46,7 +48,7 @@ class AlarmStartReceiver : BroadcastReceiver() {
             if (reminderAndAlarm?.alarm == null) {
                 // had no data to work with, try to schedule next
                 Timber.e("Could not get ReminderAndAlarm")
-                scheduleNext(context, 0)
+                enqueueScheduleNext(context, 0)
                 pendingResult.finish()
                 return@launch
             }
@@ -55,10 +57,7 @@ class AlarmStartReceiver : BroadcastReceiver() {
             // get preference for how long to delay until the alarm auto stops
             val millisPerSec = 1000
             val alarmDelay =
-                context.getSharedPreferences(
-                    context.getString(R.string.preference_file_name),
-                    Context.MODE_PRIVATE
-                )
+                PreferenceManager.getDefaultSharedPreferences(context)
                     .getInt(
                         context.getString(R.string.preference_key_alarm_delay),
                         AlarmTimer.DEFAULT_TIMER_DELAY_MILLI.toInt() / millisPerSec
@@ -76,7 +75,7 @@ class AlarmStartReceiver : BroadcastReceiver() {
             if (!started) {
                 // the previous timer wasn't cleared, or there's other problems making timers
                 Timber.e("Could not create AlarmTimer for reminder ${reminder.id}")
-                scheduleNext(context, alarm!!.id)
+                enqueueScheduleNext(context, alarm!!.id)
             } else {
                 // started, so create service
                 Timber.d("AlarmStartReceiver starting service")
@@ -84,12 +83,6 @@ class AlarmStartReceiver : BroadcastReceiver() {
             }
 
             pendingResult.finish()
-        }
-    }
-
-    private fun scheduleNext(context: Context, nextAlarmId: Long) {
-        AlarmActionHandler.createForScheduleNext("", nextAlarmId).let {
-            WorkManager.getInstance(context).enqueue(it)
         }
     }
 

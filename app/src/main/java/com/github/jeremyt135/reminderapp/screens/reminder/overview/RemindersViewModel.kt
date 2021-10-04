@@ -8,10 +8,10 @@ import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
+import androidx.preference.PreferenceManager
+import androidx.work.ExistingWorkPolicy
 import androidx.work.WorkManager
-import com.github.jeremyt135.reminderapp.broadcast.ACTION_ALARM_COMPLETE
-import com.github.jeremyt135.reminderapp.broadcast.ACTION_ALARM_SKIP
-import com.github.jeremyt135.reminderapp.broadcast.cancelAlarmIntentsForReminder
+import com.github.jeremyt135.reminderapp.broadcast.*
 import com.github.jeremyt135.reminderapp.data.AlarmRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
@@ -22,7 +22,6 @@ import com.github.jeremyt135.reminderapp.di.AppCoroutineScope
 import com.github.jeremyt135.reminderapp.di.DefaultDispatcher
 import com.github.jeremyt135.reminderapp.di.IoDispatcher
 import com.github.jeremyt135.reminderapp.service.AlarmService
-import com.github.jeremyt135.reminderapp.settings.getBaseSharedPreferences
 import com.github.jeremyt135.reminderapp.util.MutableEventFlow
 import com.github.jeremyt135.reminderapp.util.asEventFlow
 import com.github.jeremyt135.reminderapp.util.currentLocalDateTime
@@ -46,7 +45,7 @@ class RemindersViewModel @Inject constructor(
     @AppCoroutineScope private val appCoroutineScope: CoroutineScope = MainScope(),
 ) : AndroidViewModel(application) {
     private val sharedPreferences: SharedPreferences by lazy {
-        application.applicationContext.getBaseSharedPreferences()
+        PreferenceManager.getDefaultSharedPreferences(application)
     }
 
     private val _sortAndFilterRules = MutableStateFlow(SortAndFilterRules())
@@ -70,9 +69,9 @@ class RemindersViewModel @Inject constructor(
         _sortAndFilterRules,
         reminderRepository.getAllWithTodayHistory()
     ) { sortAndFilterRules, reminderAndHistory ->
-        val filtered = filterReminders(reminderAndHistory,sortAndFilterRules.filterRules)
+        val filtered = filterReminders(reminderAndHistory, sortAndFilterRules.filterRules)
         yield()
-        sortReminders(filtered,sortAndFilterRules.sortRules)
+        sortReminders(filtered, sortAndFilterRules.sortRules)
     }.flowOn(dispatcher).stateIn(
         viewModelScope,
         started = SharingStarted.Lazily,
@@ -232,7 +231,7 @@ class RemindersViewModel @Inject constructor(
     private suspend fun rescheduleAlarmForReminder(reminder: Reminder) {
         if (stopAlarmsForReminder(getApplication(), reminder)) {
             AlarmService.requestStop(getApplication())
-            scheduleNextAlarm()
+            enqueueScheduleNext(getApplication(), 0)
         }
     }
 
@@ -249,12 +248,6 @@ class RemindersViewModel @Inject constructor(
 
     private suspend fun reminderAlarmIsScheduled(reminder: Reminder): Boolean =
         alarmRepository.findByReminderId(reminder.id)?.scheduled == true
-
-    private fun scheduleNextAlarm() {
-        AlarmActionHandler.createForScheduleNext( "", 0).let {
-            WorkManager.getInstance(getApplication()).enqueue(it)
-        }
-    }
 
     private suspend fun clearAllAlarmIntents() = withContext(NonCancellable) {
         reminderRepository.getAll().first().map {

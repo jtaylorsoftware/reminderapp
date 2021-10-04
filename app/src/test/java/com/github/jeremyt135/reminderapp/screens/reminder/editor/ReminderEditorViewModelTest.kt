@@ -3,15 +3,13 @@ package com.github.jeremyt135.reminderapp.screens.reminder.editor
 import android.content.Context
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.lifecycle.SavedStateHandle
-import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.Operation
-import androidx.work.WorkManager
-import androidx.work.WorkRequest
+import androidx.work.*
 import com.github.jeremyt135.reminderapp.MainCoroutineRule
 import com.github.jeremyt135.reminderapp.ReminderApplication
 import com.github.jeremyt135.reminderapp.broadcast.EXTRA_REMINDER_ID
 import com.github.jeremyt135.reminderapp.broadcast.EXTRA_REMINDER_START_DATE
 import com.github.jeremyt135.reminderapp.broadcast.cancelAlarmIntentsForReminder
+import com.github.jeremyt135.reminderapp.broadcast.enqueueScheduleNext
 import com.github.jeremyt135.reminderapp.data.AlarmRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.Alarm
@@ -71,7 +69,7 @@ class ReminderEditorViewModelTest {
         MockKAnnotations.init(this)
 
         val mockWorkManager = mockkClass(WorkManager::class)
-        every { mockWorkManager.enqueue(any<WorkRequest>()) } returns mockkClass(Operation::class)
+        every { mockWorkManager.enqueueUniqueWork(any(), any(), any<OneTimeWorkRequest>()) } returns mockkClass(Operation::class)
         mockkStatic(WorkManager::class)
         every { WorkManager.getInstance(any()) } returns mockWorkManager
 
@@ -82,6 +80,8 @@ class ReminderEditorViewModelTest {
         every {
             AlarmActionHandler.createForAction(any(), any())
         } returns OneTimeWorkRequestBuilder<AlarmActionHandler>().build()
+        mockkStatic(::enqueueScheduleNext)
+        justRun { enqueueScheduleNext(any(), any()) }
 
         every { mockSavedState.get<String>(EXTRA_REMINDER_START_DATE) } returns ""
     }
@@ -177,7 +177,7 @@ class ReminderEditorViewModelTest {
             // Should save and schedule the next available alarm
             mockAlarmRepo.save(any())
             AlarmService.requestStop(mockApplication)
-            AlarmActionHandler.createForScheduleNext( "", alarm.id + 1)
+            enqueueScheduleNext(any(), alarm.id + 1)
         }
 
         assertThat(savedReminder.captured.id).isEqualTo(reminder.id)
@@ -257,7 +257,7 @@ class ReminderEditorViewModelTest {
                 mockAlarmRepo.delete(alarm)
                 AlarmService.requestStop(mockApplication)
                 mockReminderRepo.delete(reminder)
-                AlarmActionHandler.createForScheduleNext("", 0)
+                enqueueScheduleNext(any(), 0)
             }
         }
 }

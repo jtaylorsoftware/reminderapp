@@ -12,6 +12,7 @@ import androidx.annotation.VisibleForTesting
 import androidx.core.app.AlarmManagerCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.work.ExistingWorkPolicy
 import androidx.work.WorkManager
 import com.github.jeremyt135.R
 import com.github.jeremyt135.reminderapp.data.AlarmRepository
@@ -20,6 +21,7 @@ import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.*
 import com.github.jeremyt135.reminderapp.screens.alarm.AlarmActivity
 import com.github.jeremyt135.reminderapp.screens.reminder.editor.ReminderEditorActivity
+import com.github.jeremyt135.reminderapp.service.AlarmService
 import com.github.jeremyt135.reminderapp.util.currentLocalDateTime
 import com.github.jeremyt135.reminderapp.util.getShortLocalDateDisplay
 import com.github.jeremyt135.reminderapp.util.getShortLocalTimeDisplay
@@ -216,10 +218,10 @@ suspend fun rescheduleReminders(
     numRescheduled
 }
 
-@VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
 fun enqueueScheduleNext(context: Context, nextAlarmId: Long) {
-    val worker = AlarmActionHandler.createForScheduleNext("", nextAlarmId)
-    WorkManager.getInstance(context).enqueue(worker)
+    val worker = AlarmActionHandler.createForScheduleNext(nextAlarmId)
+    WorkManager.getInstance(context)
+        .enqueueUniqueWork(ACTION_ALARM_SCHEDULE_NEXT, ExistingWorkPolicy.KEEP, worker)
 }
 
 /**

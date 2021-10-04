@@ -5,11 +5,7 @@ import android.content.Context
 import android.media.RingtoneManager
 import android.net.Uri
 import androidx.lifecycle.*
-import androidx.work.WorkManager
-import com.github.jeremyt135.reminderapp.broadcast.EXTRA_REMINDER_ID
-import com.github.jeremyt135.reminderapp.broadcast.EXTRA_REMINDER_START_DATE
-import com.github.jeremyt135.reminderapp.broadcast.cancelAlarmIntentsForReminder
-import com.github.jeremyt135.reminderapp.broadcast.showToast
+import com.github.jeremyt135.reminderapp.broadcast.*
 import com.github.jeremyt135.reminderapp.data.AlarmRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.*
@@ -149,7 +145,13 @@ class ReminderEditorViewModel @Inject constructor(
     private val _descriptionState = MutableStateFlow(TextFieldState())
     val descriptionState = _descriptionState.asLiveData(viewModelScope.coroutineContext)
 
-    private var formHasErrors = false
+    private val formHasErrors: Boolean
+        get() = _daysOfWeekState.value.errorEnabled ||
+                _startDateState.value.errorEnabled ||
+                _endDateState.value.errorEnabled ||
+                _timeState.value.errorEnabled ||
+                _snoozeRulesState.value.errorEnabled ||
+                _soundState.value.errorEnabled
 
     /**
      * "Repeats" Checkbox state
@@ -229,8 +231,6 @@ class ReminderEditorViewModel @Inject constructor(
                         errorEnabled = endDate <= _reminder.value.schedulingRules.startDate
                     )
             }
-            formHasErrors =
-                formHasErrors || _startDateState.value.errorEnabled || _endDateState.value.errorEnabled
         }
 
     }
@@ -315,7 +315,6 @@ class ReminderEditorViewModel @Inject constructor(
                     _reminder.value.schedulingRules.daysOfWeek.isEmpty()
                 }
             )
-        formHasErrors = formHasErrors || _daysOfWeekState.value.errorEnabled
     }
 
     fun onTimeChanged(newTime: LocalTime) {
@@ -332,7 +331,6 @@ class ReminderEditorViewModel @Inject constructor(
             schedulingRules.type == SchedulingType.SINGLE && startDateTime < currentLocalDateTime()
         }
         _timeState.value = _timeState.value.copy(errorEnabled = errorEnabled)
-        formHasErrors = formHasErrors || errorEnabled
         Timber.d("CheckTimeErrors errorenabled: $formHasErrors")
     }
 
@@ -363,7 +361,6 @@ class ReminderEditorViewModel @Inject constructor(
     private fun checkDescriptionErrors() {
         _descriptionState.value =
             _descriptionState.value.copy(errorEnabled = _reminder.value.description.isBlank())
-        formHasErrors = formHasErrors || _descriptionState.value.errorEnabled
     }
 
     private fun validateForm() {
@@ -416,7 +413,7 @@ class ReminderEditorViewModel @Inject constructor(
                         AlarmService.requestStop(getApplication())
                     }
 
-                    scheduleNextAlarm(nextAlarmId)
+                    enqueueScheduleNext(getApplication(), nextAlarmId)
                 }
             }
         }
@@ -456,7 +453,7 @@ class ReminderEditorViewModel @Inject constructor(
                         if (stopAlarmsForReminder(this, reminder)) {
                             // Was currently scheduled, so try to schedule next
                             AlarmService.requestStop(this)
-                            scheduleNextAlarm(AlarmActionHandler.NO_ALARM_ID)
+                            enqueueScheduleNext(getApplication(), AlarmActionHandler.NO_ALARM_ID)
                         }
                     }
 
@@ -471,13 +468,6 @@ class ReminderEditorViewModel @Inject constructor(
     private fun getSoundTitle(soundUri: String) = if (soundUri.isEmpty()) "No sound" else
         RingtoneManager.getRingtone(getApplication(), Uri.parse(soundUri))
             .getTitle(getApplication())
-
-
-    private fun scheduleNextAlarm(nextAlarmId: Long) {
-        AlarmActionHandler.createForScheduleNext("", nextAlarmId).let {
-            WorkManager.getInstance(getApplication()).enqueue(it)
-        }
-    }
 
     // Cancels & deletes Reminder, returning value of alarm.scheduled
     private suspend fun stopAlarmsForReminder(context: Context, reminder: Reminder): Boolean =

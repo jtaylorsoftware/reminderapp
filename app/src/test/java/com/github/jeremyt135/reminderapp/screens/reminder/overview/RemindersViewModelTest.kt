@@ -3,6 +3,7 @@ package com.github.jeremyt135.reminderapp.screens.reminder.overview
 import android.app.Application
 import android.content.Context
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
+import androidx.preference.PreferenceManager
 import androidx.test.core.app.ApplicationProvider
 import androidx.work.WorkManager
 import com.github.jeremyt135.reminderapp.MainCoroutineRule
@@ -11,7 +12,6 @@ import com.github.jeremyt135.reminderapp.data.*
 import com.github.jeremyt135.reminderapp.data.domain.*
 import com.github.jeremyt135.reminderapp.data.local.FakeHistoryLocalDataSource
 import com.github.jeremyt135.reminderapp.service.AlarmService
-import com.github.jeremyt135.reminderapp.settings.getBaseSharedPreferences
 import com.github.jeremyt135.reminderapp.util.currentEpochMilli
 import com.github.jeremyt135.reminderapp.util.uuid
 import com.github.jeremyt135.reminderapp.work.AlarmActionHandler
@@ -96,7 +96,7 @@ class RemindersViewModelTest {
         assertThat(fakeAlarmRepository.findById(1)).isNull()
         verify {
             AlarmService.requestStop(any())
-            AlarmActionHandler.createForScheduleNext(any(), any())
+            AlarmActionHandler.createForScheduleNext(any())
             cancelAlarmIntentsForReminder(any(), reminder)
         }
     }
@@ -293,7 +293,7 @@ class RemindersViewModelTest {
         return try {
             job.join()
             remindersData
-        } catch(e: CancellationException) {
+        } catch (e: CancellationException) {
             // cancelled
             listOf(ReminderAndHistory(Reminder(), null))
         }
@@ -380,10 +380,10 @@ class RemindersViewModelTest {
         mockkStatic(::cancelAlarmIntentsForReminder)
         justRun { cancelAlarmIntentsForReminder(any(), any()) }
 
-        mockkStatic(Context::getBaseSharedPreferences)
         val context = ApplicationProvider.getApplicationContext<Application>()
         val testSharedPreferences = context.getSharedPreferences(uuid(), Context.MODE_PRIVATE)
-        every { RuntimeEnvironment.getApplication().applicationContext.getBaseSharedPreferences() } returns testSharedPreferences
+        mockkStatic(PreferenceManager::class)
+        every { PreferenceManager.getDefaultSharedPreferences(RuntimeEnvironment.getApplication().applicationContext) } returns testSharedPreferences
 
         viewModel = RemindersViewModel(
             RuntimeEnvironment.getApplication(),
