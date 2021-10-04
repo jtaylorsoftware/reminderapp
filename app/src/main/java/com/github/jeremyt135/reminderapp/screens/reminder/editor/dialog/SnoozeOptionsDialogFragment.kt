@@ -108,7 +108,7 @@ class SnoozeOptionsDialogFragment() :
                         viewModel.setMaxRepeats(Long.MAX_VALUE)
                     }
                     R.id.radioButton_dialogSnooze_number -> {
-                        viewModel.setMaxRepeats(SnoozeRules.DEFAULT_SNOOZE_REPEATS)
+                        viewModel.setMaxRepeats(3)
                         viewModel.setSnoozeDuration(SnoozeRules.DEFAULT_SNOOZE_DURATION)
                     }
                 }
