@@ -182,6 +182,10 @@ class MainActivity : SettingsActivity(), RemindersSortDialogFragment.DialogListe
                 NotificationManager.IMPORTANCE_LOW
             ).apply {
                 description = getString(R.string.scheduling_notification_channel_description)
+                vibrationPattern = null
+                enableVibration(false)
+                setSound(null, null)
+                enableLights(false)
             }
             with((getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager)) {
                 createNotificationChannel(alarmChannel)
