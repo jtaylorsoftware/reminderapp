@@ -7,7 +7,6 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.IBinder
-import androidx.annotation.VisibleForTesting
 import androidx.core.app.AlarmManagerCompat
 import androidx.core.app.NotificationCompat
 import com.github.jeremyt135.R
@@ -16,6 +15,7 @@ import com.github.jeremyt135.reminderapp.data.AlarmRepository
 import com.github.jeremyt135.reminderapp.data.HistoryRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.*
+import com.github.jeremyt135.reminderapp.data.domain.parcel.ReminderParcel
 import com.github.jeremyt135.reminderapp.di.AppCoroutineScope
 import com.github.jeremyt135.reminderapp.di.DefaultDispatcher
 import com.github.jeremyt135.reminderapp.util.*
@@ -81,12 +81,12 @@ class AlarmSchedulingService : Service() {
                 doRescheduleAlarms(startId)
             }
             ACTION_ALARM_SAVE_NEW -> {
-                val reminderId = intent.getStringExtra(EXTRA_REMINDER_ID) ?: ""
-                if (reminderId.isNotEmpty()) {
-                    // Non-empty reminderId indicates a request to save a new alarm
-                    saveNewAlarm(startId, reminderId)
-                } else {
+                val reminder = intent.getParcelableExtra<ReminderParcel>(EXTRA_REMINDER)
+                if (reminder == null){
                     tryStopSelf(startId)
+                } else {
+                    // Non-empty reminderId indicates a request to save a new alarm
+                    saveNewAlarm(startId, reminder.data)
                 }
             }
             else -> {
@@ -126,17 +126,10 @@ class AlarmSchedulingService : Service() {
      * Thus, this startId won't be considered done until it has both saved a new alarm and its
      * gone through the scheduleNext queue.
      */
-    private fun saveNewAlarm(startId: Int, reminderId: String) {
+    private fun saveNewAlarm(startId: Int, reminder: Reminder) {
         applicationScope.launch(dispatcher) {
             mutex.withLock { startCommands.addFirst(startId) }
             try {
-                val reminder = reminderRepository.findById(reminderId)
-                    ?: throw IllegalArgumentException("Could not find reminder with id $reminderId")
-
-                alarmRepository.findByReminderId(reminder.id)?.let {
-                    alarmRepository.delete(it)
-                }
-
                 val allowSameDay = historyRepository.getLatestForReminder(reminder.id) != null
 
                 reminder.schedulingRules.getNextTimeForAlarm(
@@ -152,7 +145,13 @@ class AlarmSchedulingService : Service() {
                         maxSnoozeRepeats = reminder.maxSnoozeRepeats,
                         snoozeDuration = reminder.snoozeDuration
                     )
-                    alarmRepository.save(nextAlarm)
+                    // Delete old and save new
+                    withContext(NonCancellable) {
+                        alarmRepository.findByReminderId(reminder.id)?.let {
+                            alarmRepository.delete(it)
+                        }
+                        alarmRepository.save(nextAlarm)
+                    }
                 }
             } catch (e: Exception) {
                 Timber.e(e)
@@ -337,7 +336,7 @@ class AlarmSchedulingService : Service() {
         fun startScheduleNewAlarm(context: Context, reminder: Reminder) {
             Intent(context, AlarmSchedulingService::class.java).apply {
                 action = ACTION_ALARM_SAVE_NEW
-                putExtra(EXTRA_REMINDER_ID, reminder.id)
+                putExtra(EXTRA_REMINDER, ReminderParcel(reminder))
             }.also {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     context.startForegroundService(it)
