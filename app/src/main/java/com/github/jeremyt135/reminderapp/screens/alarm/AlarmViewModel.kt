@@ -53,29 +53,31 @@ class AlarmViewModel @Inject constructor(
 
     init {
         // Load the reminder so it can be displayed
-        savedStateHandle.get<String>(EXTRA_REMINDER_ID)?.let { id ->
+        val reminderId = savedStateHandle.get<String>(EXTRA_REMINDER_ID)
+        if (reminderId != null) {
             viewModelScope.launch {
-                loadReminderData(id) ?: run {
-                    Timber.e("Couldn't load reminder $id")
+                if (!loadReminderData(reminderId)) {
+                    Timber.e("Couldn't load reminder $reminderId")
                     finish()
                 }
             }
-        } ?: run {
+        } else {
             Timber.e("savedStateHandle had no value for $EXTRA_REMINDER_ID")
             finish()
         }
 
-        // Finish the activity when the timer ends
-        timerManager.timer?.let { timer ->
+        if (timerManager.timer != null) {
+            // Finish the activity when the timer ends
             timerJob = viewModelScope.launch {
-                timer.timerFinished.flow.collect { finished ->
+                timerManager.timer?.timerFinished?.flow?.collect { finished ->
                     finished.peek()?.let {
                         finish()
                     }
                 }
             }
-        } ?: run {
-            Timber.w("AlarmTimerManager.timer was null when creating AlarmViewModel")
+        } else {
+            Timber.e("AlarmTimerManager.timer was null when creating AlarmViewModel")
+            finish()
         }
     }
 
@@ -89,17 +91,18 @@ class AlarmViewModel @Inject constructor(
     }
 
     // Loads the reminder and alarm data for the associated reminder
-    private suspend fun loadReminderData(id: String): Pair<Reminder, Alarm>? =
-        reminderRepository.getReminderAndAlarm(id)?.let { (reminder, alarm) ->
-            _reminder.value = reminder
-            alarm?.let {
-                _alarm.value = alarm
-                _time.value = alarm.triggerAt.getShortLocalTimeDisplay()
-            } ?: run {
-                return@let null
-            }
-            reminder to alarm
+    private suspend fun loadReminderData(id: String): Boolean {
+        val reminderAndAlarm = reminderRepository.getReminderAndAlarm(id) ?: return false
+        val (reminder, alarm) = reminderAndAlarm
+        if (alarm == null) {
+            return false
         }
+        _reminder.value = reminder
+        _alarm.value = alarm
+        _time.value = alarm.triggerAt.getShortLocalTimeDisplay()
+        return true
+    }
+
 
     /**
      * Snoozes the alarm
