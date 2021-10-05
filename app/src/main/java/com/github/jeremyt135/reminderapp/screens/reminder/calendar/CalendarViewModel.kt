@@ -2,10 +2,7 @@ package com.github.jeremyt135.reminderapp.screens.reminder.calendar
 
 import android.app.Application
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.asLiveData
-import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.*
 import com.github.jeremyt135.R
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
@@ -91,13 +88,13 @@ class CalendarViewModel @Inject constructor(
      * date views for the current month.
      */
     @ExperimentalCoroutinesApi
-    val calendarData = refresh.flatMapLatest {
+    val calendarData: LiveData<List<Any>?> = refresh.flatMapLatest {
         _selectedYearMonth.flatMapLatest { yearMonth ->
             reminderRepository.getAllInMonth(
                 yearMonth.month.value.toString().padStart(2, '0')
             )
         }
-    }.mapLatest { reminders ->
+    }.flatMapLatest { reminders ->
         getCalendarData(_selectedYearMonth.value, reminders)
     }.flowOn(dispatcher).stateIn(
         viewModelScope,
@@ -194,29 +191,28 @@ class CalendarViewModel @Inject constructor(
     private suspend fun getCalendarData(
         yearMonth: YearMonth,
         remindersInSelectedMonth: List<Reminder>
-    ) = coroutineScope {
+    ): Flow<List<Any>?> = flow {
         try {
             val monthData = CalculatedMonthData(
                 yearMonth,
                 getDaysWithReminders(yearMonth, remindersInSelectedMonth)
             )
-            val items = (0 until CalendarAdapter.ITEM_COUNT).map { position ->
-                async {
-                    if (position < CalendarAdapter.HEADING_SLOTS) {
-                        getHeadingItem(position)
-                    } else {
-                        getDateItem(position, monthData)
-                    }
+            val items = mutableListOf<Any>()
+            (0 until CalendarAdapter.ITEM_COUNT).asFlow().map { position ->
+                if (position < CalendarAdapter.HEADING_SLOTS) {
+                    getHeadingItem(position)
+                } else {
+                    getDateItem(position, monthData)
                 }
-            }
+            }.toList(items)
             Timber.d("getCalendarData finished")
-            items.awaitAll()
+            emit(items)
         } catch (e: Exception) {
             Timber.e(e)
             if (e is CancellationException) {
                 throw e
             }
-            null
+            emit(null)
         }
     }
 
@@ -226,14 +222,14 @@ class CalendarViewModel @Inject constructor(
         position: Int,
         monthData: CalculatedMonthData
     ): CalendarDateItem {
-
         return with(monthData) {
             val date = calculateDateFromPosition(position, monthData)
             val isCurrentMonth = date.month == monthData.yearMonthDate.month
             val reminders =
                 daysWithReminders.elementAtOrNull(position - firstPositionOfMonth) ?: emptyList()
 
-            CalendarDateItem(date, isCurrentMonth, reminders)
+            val isInPast = date < LocalDate.now()
+            CalendarDateItem(date, isCurrentMonth, reminders, isInPast = isInPast)
         }
     }
 

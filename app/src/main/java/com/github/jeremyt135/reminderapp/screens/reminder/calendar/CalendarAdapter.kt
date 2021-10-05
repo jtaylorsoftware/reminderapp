@@ -67,6 +67,8 @@ class CalendarAdapter(
                         daySelectedListener(holder.date)
                         holder.select()
                     }
+                } else {
+                    holder.itemView.setOnClickListener(null)
                 }
             }
         }
@@ -301,9 +303,8 @@ class CalendarAdapter(
 
             return when (oldItem) {
                 is CalendarDateItem -> {
-                    // return valid comparison even though areItemsTheSame currently always returns false
                     newItem as CalendarDateItem
-                    oldItem.date == newItem.date && oldItem.reminders.size == newItem.reminders.size
+                    oldItem == newItem
                 }
                 is DayOfWeek -> {
                     newItem as DayOfWeek
@@ -332,10 +333,13 @@ open class CalendarDateItem(
     /**
      * Reminders on the selected date
      */
-    val reminders: List<Reminder>
-) {
-    val isInPast = date?.let { date < LocalDate.now() } ?: true
+    val reminders: List<Reminder>,
 
+    val isInPast: Boolean,
+) {
+    /**
+     * "Shallow" equality check - does not use list.equals for reminders, instead compares size.
+     */
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -344,7 +348,8 @@ open class CalendarDateItem(
 
         if (date != other.date) return false
         if (isCurrentMonth != other.isCurrentMonth) return false
-        if (reminders != other.reminders) return false
+        if (reminders.size != other.reminders.size) return false
+        if (isInPast != other.isInPast) return false
 
         return true
     }
@@ -352,7 +357,8 @@ open class CalendarDateItem(
     override fun hashCode(): Int {
         var result = date?.hashCode() ?: 0
         result = 31 * result + isCurrentMonth.hashCode()
-        result = 31 * result + reminders.hashCode()
+        result = 31 * result + reminders.size.hashCode()
+        result = 31 * result + isInPast.hashCode()
         return result
     }
 }
