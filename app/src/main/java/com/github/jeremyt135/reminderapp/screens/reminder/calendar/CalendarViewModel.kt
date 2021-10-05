@@ -69,7 +69,7 @@ class CalendarViewModel @Inject constructor(
                     startDate = selectedDate,
                     endDate = selectedDate,
                     historyDate = selectedDate
-                ).mapLatest { reminders ->
+                ).flatMapLatest { reminders ->
                     filterReminders(selectedDate, reminders)
                 }.mapLatest { reminders ->
                     sortReminders(reminders)
@@ -161,15 +161,21 @@ class CalendarViewModel @Inject constructor(
         _selectedYearMonth.value = yearMonth
     }
 
-    private fun filterReminders(
+    private suspend fun filterReminders(
         selectedDate: LocalDate,
         reminders: List<ReminderAndHistory>
-    ) = reminders.filter {
-        with(it.reminder.schedulingRules) {
-            when (type) {
-                SchedulingType.SINGLE -> startDate == selectedDate
-                else -> daysOfWeek.contains(selectedDate.dayOfWeek)
+    ): Flow<List<ReminderAndHistory>> {
+        val filtered = mutableListOf<ReminderAndHistory>()
+        reminders.asFlow().filter {
+            with(it.reminder.schedulingRules) {
+                when (type) {
+                    SchedulingType.SINGLE -> startDate == selectedDate
+                    else -> daysOfWeek.contains(selectedDate.dayOfWeek)
+                }
             }
+        }.toList(filtered)
+        return flow {
+            emit(filtered)
         }
     }
 
@@ -190,7 +196,10 @@ class CalendarViewModel @Inject constructor(
         remindersInSelectedMonth: List<Reminder>
     ) = coroutineScope {
         try {
-            val monthData = CalculatedMonthData(yearMonth, remindersInSelectedMonth)
+            val monthData = CalculatedMonthData(
+                yearMonth,
+                getDaysWithReminders(yearMonth, remindersInSelectedMonth)
+            )
             val items = (0 until CalendarAdapter.ITEM_COUNT).map { position ->
                 async {
                     if (position < CalendarAdapter.HEADING_SLOTS) {
@@ -202,8 +211,11 @@ class CalendarViewModel @Inject constructor(
             }
             Timber.d("getCalendarData finished")
             items.awaitAll()
-        } catch (e: CancellationException) {
-            Timber.d("getCalendarData: cancelled")
+        } catch (e: Exception) {
+            Timber.e(e)
+            if (e is CancellationException) {
+                throw e
+            }
             null
         }
     }
@@ -229,14 +241,22 @@ class CalendarViewModel @Inject constructor(
      * Transforms the list of all reminders in the month into a list of sublists, where each sublist
      * is a list of reminders on a day of the month.
      */
-    private fun getDaysWithReminders(
+    private suspend fun getDaysWithReminders(
         yearMonth: YearMonth,
         reminders: List<Reminder>
-    ) = (1..yearMonth.lengthOfMonth()).map { dayOfMonth ->
-        // Transform each array index representing a dayOfMonth into a true/false
-        // value for presence of reminders
-        val date = LocalDate.of(yearMonth.year, yearMonth.monthValue, dayOfMonth)
-        reminders.filter { it.schedulingRules.containsDate(date) }
+    ): List<List<Reminder>> = coroutineScope {
+        (1..yearMonth.lengthOfMonth()).map { dayOfMonth ->
+            yield()
+            viewModelScope.async {
+                // Transform each array index representing a dayOfMonth into a true/false
+                // value for presence of reminders
+                val date = LocalDate.of(yearMonth.year, yearMonth.monthValue, dayOfMonth)
+                val filteredList = mutableListOf<Reminder>()
+                reminders.asFlow().filter {
+                    it.schedulingRules.containsDate(date)
+                }.toList(filteredList)
+            }
+        }.awaitAll()
     }
 
     private fun calculateDateFromPosition(position: Int, monthData: CalculatedMonthData) =
@@ -253,7 +273,13 @@ class CalendarViewModel @Inject constructor(
             }
         }
 
-    private inner class CalculatedMonthData(yearMonth: YearMonth, reminders: List<Reminder>) {
+    private inner class CalculatedMonthData(
+        yearMonth: YearMonth,
+        /**
+         * List of sublists of reminders on the given date, for the entire month
+         */
+        val daysWithReminders: List<List<Reminder>>
+    ) {
         // Date adjusted for yearMonth
         val yearMonthDate: LocalDate = LocalDate.of(yearMonth.year, yearMonth.month, 1)
 
@@ -271,9 +297,6 @@ class CalendarViewModel @Inject constructor(
 
         // Last calendar day (not position) of previous month
         val lastDayOfPreviousMonth: Int = yearMonth.minusMonths(1).lengthOfMonth()
-
-        // List of sublists of reminders on the given date, for the entire month
-        val daysWithReminders = getDaysWithReminders(yearMonth, reminders)
     }
 }
 

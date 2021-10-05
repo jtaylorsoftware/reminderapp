@@ -64,14 +64,16 @@ class RemindersViewModel @Inject constructor(
 
 
     @ExperimentalCoroutinesApi
-    @VisibleForTesting(otherwise = VisibleForTesting.NONE)
+    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
     val _reminders: StateFlow<List<ReminderAndHistory>?> = combine(
         _sortAndFilterRules,
         reminderRepository.getAllWithTodayHistory()
     ) { sortAndFilterRules, reminderAndHistory ->
-        val filtered = filterReminders(reminderAndHistory, sortAndFilterRules.filterRules)
-        yield()
-        sortReminders(filtered, sortAndFilterRules.sortRules)
+        sortAndFilterRules to filterReminders(reminderAndHistory, sortAndFilterRules.filterRules)
+    }.flatMapLatest { (sortAndFilterRules, reminderAndHistory) ->
+        reminderAndHistory.map {
+            sortReminders(it, sortAndFilterRules.sortRules)
+        }
     }.flowOn(dispatcher).stateIn(
         viewModelScope,
         started = SharingStarted.Lazily,
@@ -334,31 +336,35 @@ class RemindersViewModel @Inject constructor(
     private suspend fun filterReminders(
         list: List<ReminderAndHistory>,
         filterRules: ReminderFilterRules
-    ): List<ReminderAndHistory> = list.filter {
-        yield()
-        // is the reminder within the filter's start and end date
-        val withinDateRange =
-            filterRules.checkWithinDateRange(it.reminder.schedulingRules)
-        if (!withinDateRange) {
-            return@filter false
+    ): Flow<List<ReminderAndHistory>> {
+        val filtered = mutableListOf<ReminderAndHistory>()
+        list.asFlow().filter {
+            // is the reminder within the filter's start and end date
+            val withinDateRange =
+                filterRules.checkWithinDateRange(it.reminder.schedulingRules)
+            if (!withinDateRange) {
+                return@filter false
+            }
+
+            // does the filter include at least one of the reminder's DayOfWeeks?
+            val withinDayOfWeek =
+                filterRules.checkWithinDaysOfWeek(it.reminder.schedulingRules)
+            // does the filter include the reminder's status?
+            val status =
+                it.history?.completionStatus ?: ReminderStatus.PENDING in filterRules.reminderStatuses
+
+            // include reminder if the date or time is included and its status is included
+            withinDateRange && withinDayOfWeek && status
+        }.toList(filtered)
+        return flow {
+            emit(filtered)
         }
-
-        // does the filter include at least one of the reminder's DayOfWeeks?
-        val withinDayOfWeek =
-            filterRules.checkWithinDaysOfWeek(it.reminder.schedulingRules)
-        // does the filter include the reminder's status?
-        val status =
-            it.history?.completionStatus ?: ReminderStatus.PENDING in filterRules.reminderStatuses
-
-        // include reminder if the date or time is included and its status is included
-        withinDateRange && withinDayOfWeek && status
     }
 
-    private suspend fun sortReminders(
+    private fun sortReminders(
         list: List<ReminderAndHistory>,
         sortRules: ReminderSortRules
     ): List<ReminderAndHistory> {
-        yield()
         // sort by time first
         var comparator = compareBy<ReminderAndHistory> {
             when (sortRules.time) {

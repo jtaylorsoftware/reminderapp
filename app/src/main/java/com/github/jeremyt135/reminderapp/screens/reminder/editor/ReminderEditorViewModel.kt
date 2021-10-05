@@ -18,13 +18,10 @@ import com.github.jeremyt135.reminderapp.util.asEventFlow
 import com.github.jeremyt135.reminderapp.util.currentLocalDateTime
 import com.github.jeremyt135.reminderapp.util.getShortLocalDateDisplay
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -401,6 +398,9 @@ class ReminderEditorViewModel @Inject constructor(
             } catch (e: Exception) {
                 Timber.e(e)
                 showToast(getApplication(), "Could not save your reminder right now", Toast.LENGTH_LONG)
+                if (e is CancellationException) {
+                    throw e
+                }
             }
         }
     }

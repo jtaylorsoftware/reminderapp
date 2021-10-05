@@ -82,7 +82,7 @@ class AlarmSchedulingService : Service() {
             }
             ACTION_ALARM_SAVE_NEW -> {
                 val reminder = intent.getParcelableExtra<ReminderParcel>(EXTRA_REMINDER)
-                if (reminder == null){
+                if (reminder == null) {
                     tryStopSelf(startId)
                 } else {
                     // Non-empty reminderId indicates a request to save a new alarm
@@ -153,13 +153,22 @@ class AlarmSchedulingService : Service() {
                         alarmRepository.save(nextAlarm)
                     }
                 }
-            } catch (e: Exception) {
-                Timber.e(e)
-            } finally {
+
                 mutex.withLock {
                     startCommands.remove(startId)
                 }
                 startScheduleNext(this@AlarmSchedulingService)
+            } catch (e: Exception) {
+                Timber.e(e)
+                withContext(NonCancellable) {
+                    mutex.withLock {
+                        startCommands.remove(startId)
+                    }
+                    startScheduleNext(this@AlarmSchedulingService)
+                }
+                if (e is CancellationException) {
+                    throw e
+                }
             }
         }
     }
@@ -176,30 +185,37 @@ class AlarmSchedulingService : Service() {
             scheduleNextJob = launch {
                 try {
                     scheduleNextAlarm(startId)
+                    cleanupScheduleNextCommand(startId)
                 } catch (e: Exception) {
                     Timber.e(e)
-                } finally {
-                    withContext(NonCancellable) {
-                        // ID of the next scheduleNext to begin
-                        val nextId = mutex.withLock {
-                            // This one is finished, so remove it
-                            pendingScheduleNextCommands.remove(startId)
-                            // Get the next
-                            pendingScheduleNextCommands.removeLastOrNull()
-                        }
-
-                        // Start the next one if available
-                        if (nextId != null) {
-                            doScheduleNextAlarm(nextId)
-                        }
-
-                        // Notify this one finished
-                        stopSelfIfLast(startId)
+                    cleanupScheduleNextCommand(startId)
+                    if (e is CancellationException) {
+                        throw e
                     }
                 }
             }
         }
     }
+
+    private suspend fun cleanupScheduleNextCommand(startId: Int) =
+        withContext(NonCancellable) {
+            // ID of the next scheduleNext to begin
+            val nextId = mutex.withLock {
+                // This one is finished, so remove it
+                pendingScheduleNextCommands.remove(startId)
+                // Get the next
+                pendingScheduleNextCommands.removeLastOrNull()
+            }
+
+            // Start the next one if available
+            if (nextId != null) {
+                doScheduleNextAlarm(nextId)
+            }
+
+            // Notify this one finished
+            stopSelfIfLast(startId)
+        }
+
 
     private suspend fun scheduleNextAlarm(startId: Int) = withContext(dispatcher) {
         val pendingCommands = mutex.withLock {
@@ -239,7 +255,11 @@ class AlarmSchedulingService : Service() {
             }
             alarmRepository.setScheduled(alarm)
             reminderRepository.findById(alarm.reminderId)?.let { reminder ->
-                scheduleAlarmForReminder(this@AlarmSchedulingService, alarm.copy(scheduled = true), reminder)
+                scheduleAlarmForReminder(
+                    this@AlarmSchedulingService,
+                    alarm.copy(scheduled = true),
+                    reminder
+                )
             }
         } // Else the Alarm was the one already scheduled
 
@@ -287,14 +307,14 @@ class AlarmSchedulingService : Service() {
         }
     }
 
-    private suspend fun rescheduleReminders() {
+    private suspend fun rescheduleReminders(): Result<Int> =
         rescheduleReminders(
             this,
             reminderRepository,
             alarmRepository,
             historyRepository
         )
-    }
+
 
     /**
      * Non suspending way to both add a new startId to the queue and also try to stop it immediately.

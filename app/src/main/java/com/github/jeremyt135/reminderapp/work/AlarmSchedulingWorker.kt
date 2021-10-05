@@ -27,13 +27,17 @@ class AlarmSchedulingWorker @AssistedInject constructor(
 
     override suspend fun doWork(): Result {
         setForeground(createForegroundInfo())
-        rescheduleReminders(
+        val result = rescheduleReminders(
             applicationContext,
             reminderRepository,
             alarmRepository,
             historyRepository
         )
-        return Result.success()
+        return if (result.isSuccess) {
+            Result.success()
+        } else {
+            Result.retry()
+        }
     }
 
     private fun createForegroundInfo(): ForegroundInfo {

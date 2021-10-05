@@ -104,10 +104,15 @@ class AlarmHistoryService : Service() {
                         )
                         historyRepository.save(history)
                     }
+                    stopSelfIfLast(startId)
                 } catch (e: Exception) {
                     Timber.e(e)
-                } finally {
-                    stopSelfIfLast(startId)
+                    withContext(NonCancellable){
+                        stopSelfIfLast(startId)
+                    }
+                    if (e is CancellationException){
+                        throw e
+                    }
                 }
             }
         }

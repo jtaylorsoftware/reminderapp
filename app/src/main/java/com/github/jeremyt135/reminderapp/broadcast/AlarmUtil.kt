@@ -86,11 +86,6 @@ const val EXTRA_REMINDER = "com.github.jeremyt135.reminderapp.EXTRA_REMINDER"
 const val EXTRA_REMINDER_ID = "com.github.jeremyt135.reminderapp.EXTRA_REMINDER_ID"
 
 /**
- * Long: The ID of the Alarm
- */
-const val EXTRA_ALARM_ID = "com.github.jeremyt135.reminderapp.EXTRA_ALARM_ID"
-
-/**
  * String: The selected start date from the Calendar.
  */
 const val EXTRA_REMINDER_START_DATE = "com.github.jeremyt135.reminderapp.EXTRA_REMINDER_START_DATE"
@@ -126,10 +121,9 @@ suspend fun rescheduleReminders(
     reminderRepository: ReminderRepository,
     alarmRepository: AlarmRepository,
     historyRepository: HistoryRepository
-): Int {
-    var numRescheduled = 0
-    try {
-        numRescheduled = supervisorScope {
+): Result<Int> {
+    val result = try {
+        supervisorScope {
             Timber.d("Rescheduling all reminders and their alarms...")
 
             val alarms = reminderRepository.getAllWithAlarms().map { reminderAndAlarm ->
@@ -154,21 +148,27 @@ suspend fun rescheduleReminders(
                         return@async newAlarm ?: alarm
                     } catch (e: Exception) {
                         Timber.e("rescheduleReminders: child exception thrown:\n${e.stackTraceToString()}")
+                        if (e is CancellationException) {
+                            throw e
+                        }
                     }
                     return@async null
                 }
             }.awaitAll()
 
-            alarms.count { it?.id != 0L }
+            Result.success(alarms.count { it?.id != 0L })
         }
     } catch (e: Exception) {
-        Timber.e(e)
-    } finally {
-        Timber.d("Saved $numRescheduled new alarms, starting action for SCHEDULE_NEXT...")
-
-        AlarmSchedulingService.startScheduleNext(context)
+        Timber.e("rescheduleReminders: parent exception thrown:\n${e.stackTraceToString()}")
+        if (e is CancellationException) {
+            throw e
+        }
+        Result.failure(e)
     }
-    return numRescheduled
+    Timber.d("Saved new alarms, starting action for SCHEDULE_NEXT...")
+
+    AlarmSchedulingService.startScheduleNext(context)
+    return result
 }
 
 /**

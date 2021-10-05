@@ -10,6 +10,7 @@ import com.github.jeremyt135.reminderapp.di.AppCoroutineScope
 import com.github.jeremyt135.reminderapp.di.DefaultDispatcher
 import com.github.jeremyt135.reminderapp.service.*
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -109,8 +110,11 @@ class AlarmActionReceiver : BroadcastReceiver() {
                 }
             } catch (e: Exception) {
                 Timber.e(e)
-            } finally {
                 AlarmSchedulingService.startScheduleNext(context)
+                if (e is CancellationException) {
+                    throw e
+                }
+            } finally {
                 pendingResult.finish()
             }
         }

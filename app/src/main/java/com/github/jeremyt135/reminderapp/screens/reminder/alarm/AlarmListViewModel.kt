@@ -10,8 +10,7 @@ import com.github.jeremyt135.reminderapp.di.DefaultDispatcher
 import com.github.jeremyt135.reminderapp.util.currentLocalDateTime
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.*
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 import javax.inject.Inject
@@ -40,18 +39,18 @@ class AlarmListViewModel @Inject constructor(
         labeledAlarms.add(list[0])
 
         // Store other alarms in time categories
-        var today: List<Any> = emptyList()
-        var thisWeek: List<Any> = emptyList()
-        var future: List<Any> = emptyList()
+        var today: MutableList<Any> = mutableListOf()
+        var thisWeek: MutableList<Any> = mutableListOf()
+        var future: MutableList<Any> = mutableListOf()
         coroutineScope {
             launch {
-                today = getTodayAlarms(list.subList(1, list.size))
+                getTodayAlarms(list.subList(1, list.size)).toList(today)
             }
             launch {
-                thisWeek = getThisWeekAlarms(list)
+                getThisWeekAlarms(list).toList(today)
             }
             launch {
-                future = getFutureAlarms(list)
+                getFutureAlarms(list).toList(future)
             }
         }
 
@@ -75,19 +74,19 @@ class AlarmListViewModel @Inject constructor(
         labeledAlarms
     }
 
-    private fun getTodayAlarms(list: List<ReminderAndAlarm>): List<ReminderAndAlarm> = list.filter {
+    private fun getTodayAlarms(list: List<ReminderAndAlarm>) = list.asFlow().filter {
         val daysUntil = it.daysUntil()
         daysUntil == 0L
     }
 
-    private fun getThisWeekAlarms(list: List<ReminderAndAlarm>): List<ReminderAndAlarm> =
-        list.filter {
+    private fun getThisWeekAlarms(list: List<ReminderAndAlarm>) =
+        list.asFlow().filter {
             val daysUntil = it.daysUntil()
             daysUntil in (1L..7L)
         }
 
-    private fun getFutureAlarms(list: List<ReminderAndAlarm>): List<ReminderAndAlarm> =
-        list.filter {
+    private fun getFutureAlarms(list: List<ReminderAndAlarm>) =
+        list.asFlow().filter {
             val daysUntil = it.daysUntil()
             daysUntil > 7L
         }
