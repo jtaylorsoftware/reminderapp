@@ -12,6 +12,7 @@ import com.github.jeremyt135.reminderapp.broadcast.*
 import com.github.jeremyt135.reminderapp.data.AlarmRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
+import com.github.jeremyt135.reminderapp.data.domain.parcel.ReminderParcel
 import com.github.jeremyt135.reminderapp.di.AppCoroutineScope
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
@@ -52,17 +53,17 @@ class AlarmMediaService : Service(), MediaPlayer.OnPreparedListener, MediaPlayer
         Timber.d("Created service")
 
         // Stop the service & its notification when timer ends
-        timerManager.timer?.let { timer ->
+        if (timerManager.timer != null){
             timerJob = applicationScope.launch {
-                timer.timerFinished.flow.collect { finished ->
+                timerManager.timer?.timerFinished?.flow?.collect { finished ->
                     finished.peek()?.let {
                         Timber.d("AlarmService received AlarmTimer finished event")
                         stopSelf()
                     }
                 }
             }
-        } ?: run {
-            Timber.w("AlarmTimerManager.timer was null when creating AlarmService")
+        } else {
+            Timber.e("AlarmTimerManager.timer was null when creating AlarmService")
         }
     }
 
@@ -102,23 +103,20 @@ class AlarmMediaService : Service(), MediaPlayer.OnPreparedListener, MediaPlayer
             return
         }
 
-        val reminderId = intent.getStringExtra(EXTRA_REMINDER_ID) ?: ""
-        val description = intent.getStringExtra(EXTRA_REMINDER_DESCRIPTION) ?: ""
-        val vibrate = intent.getBooleanExtra(EXTRA_REMINDER_VIBRATE, false)
-        val sound = intent.getStringExtra(EXTRA_REMINDER_SOUND_URI) ?: ""
-        startForeground(
-            reminderId.hashCode(),
-            createNotificationForAlarm(
-                this,
-                Reminder(
-                    id = reminderId,
-                    description = description,
-                    vibrate = vibrate,
+        val reminder = intent.getParcelableExtra<ReminderParcel>(EXTRA_REMINDER)
+        if (reminder == null){
+            stopSelf()
+        } else {
+            startForeground(
+                reminder.data.id.hashCode(),
+                createNotificationForAlarm(
+                    this,
+                    reminder.data
                 )
             )
-        )
 
-        startVibrateAndPlayback(vibrate, sound)
+            startVibrateAndPlayback(reminder.data.vibrate, reminder.data.notifSoundUri)
+        }
     }
 
     private fun createNotificationForAlarm(context: Context, reminder: Reminder) =
@@ -239,10 +237,7 @@ class AlarmMediaService : Service(), MediaPlayer.OnPreparedListener, MediaPlayer
         fun start(context: Context, reminder: Reminder) {
             Intent(context, AlarmMediaService::class.java).apply {
                 action = ACTION_ALARM_START
-                putExtra(EXTRA_REMINDER_ID, reminder.id)
-                putExtra(EXTRA_REMINDER_DESCRIPTION, reminder.description)
-                putExtra(EXTRA_REMINDER_VIBRATE, reminder.vibrate)
-                putExtra(EXTRA_REMINDER_SOUND_URI, reminder.notifSoundUri)
+                putExtra(EXTRA_REMINDER, ReminderParcel(reminder))
             }.also {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     context.startForegroundService(it)
