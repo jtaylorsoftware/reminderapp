@@ -241,9 +241,14 @@ class AlarmSchedulingService : Service() {
     private suspend fun scheduleNextAlarmImpl(): Boolean = withContext(NonCancellable) {
         Timber.d("Scheduling next alarm...")
 
+        // The "next" alarm according to chronological order
         val alarm = alarmRepository.getFirstByTimeAscending() ?: return@withContext false
 
+        // The alarm that is already saved with scheduled flag set
         val previousScheduled = alarmRepository.getFirstScheduledAlarm()
+
+        // See if there's any obvious work to do by comparing the two instances (normally
+        // the "scheduled" is also the first chronologically)
         if (previousScheduled != alarm) {
             // Alarm is not the one already scheduled - clear previous & set new
             previousScheduled?.let { prevAlarm ->
@@ -261,7 +266,25 @@ class AlarmSchedulingService : Service() {
                     reminder
                 )
             }
-        } // Else the Alarm was the one already scheduled
+        } else {
+            // Else the Alarm was the one already scheduled
+
+            // Check that the triggerAt is not in the past for some reason
+            if (previousScheduled.triggerAt <= currentLocalDateTime()) {
+                // Is in the past, this has to be fixed by bumping it up, going to also
+                // assume that because it's still saved that it is still valid but dead
+                val updatedPreviousScheduled =
+                    previousScheduled.copy(triggerAt = currentLocalDateTime().plusMinutes(1))
+                alarmRepository.save(updatedPreviousScheduled)
+                reminderRepository.findById(alarm.reminderId)?.let { reminder ->
+                    scheduleAlarmForReminder(
+                        this@AlarmSchedulingService,
+                        alarm.copy(scheduled = true),
+                        reminder
+                    )
+                }
+            } // else nothing to do
+        }
 
         true
     }
@@ -280,9 +303,10 @@ class AlarmSchedulingService : Service() {
         val intent = createAlarmActionIntent(context, ACTION_ALARM_START, reminder.id)
         val showIntent = getIntentForEditorActivity(context, reminder.id)
 
-        // Sanity check the time in case the system doesn't "Fire immediately" when it's in the past
+        // Sanity check the time in case it was saved in the past (system might also not
+        // "Fire immediately" if it's in the past)
         val time = if (alarm.triggerAt < currentLocalDateTime()) {
-            currentLocalDateTime().plusMinutes(1)
+            currentLocalDateTime().plusSeconds(10)
         } else alarm.triggerAt
 
         AlarmManagerCompat.setAlarmClock(
@@ -298,11 +322,13 @@ class AlarmSchedulingService : Service() {
             mutex.withLock { startCommands.addFirst(startId) }
             try {
                 rescheduleReminders()
+                stopSelfIfLast(startId)
             } catch (e: Exception) {
                 Timber.e(e)
-            } finally {
-                // Notify this one finished
                 stopSelfIfLast(startId)
+                if (e is CancellationException) {
+                    throw e
+                }
             }
         }
     }
