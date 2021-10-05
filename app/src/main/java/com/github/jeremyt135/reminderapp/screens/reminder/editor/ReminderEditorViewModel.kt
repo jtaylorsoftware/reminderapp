@@ -147,6 +147,7 @@ class ReminderEditorViewModel @Inject constructor(
 
     private val formHasErrors: Boolean
         get() = _daysOfWeekState.value.errorEnabled ||
+                _descriptionState.value.errorEnabled ||
                 _startDateState.value.errorEnabled ||
                 _endDateState.value.errorEnabled ||
                 _timeState.value.errorEnabled ||
