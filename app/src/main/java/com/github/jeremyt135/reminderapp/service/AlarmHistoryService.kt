@@ -86,9 +86,9 @@ class AlarmHistoryService : Service() {
         reminder: Reminder,
         status: ReminderStatus
     ) {
-        applicationScope.launch {
+        applicationScope.launch(dispatcher) {
             mutex.withLock { startCommands.addFirst(startId) }
-            launch(dispatcher) {
+            launch {
                 try {
                     val historyToday = historyRepository.getLatestForReminder(reminder.id)
                     if (historyToday == null) {
@@ -119,7 +119,7 @@ class AlarmHistoryService : Service() {
      * be rejected.
      */
     private fun tryStopSelf(startId: Int) {
-        applicationScope.launch {
+        applicationScope.launch(dispatcher) {
             withContext(NonCancellable) {
                 mutex.withLock { startCommands.addFirst(startId) }
                 mutex.withLock {
