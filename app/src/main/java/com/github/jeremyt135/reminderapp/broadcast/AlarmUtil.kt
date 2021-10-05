@@ -96,22 +96,6 @@ const val EXTRA_ALARM_ID = "com.github.jeremyt135.reminderapp.EXTRA_ALARM_ID"
 const val EXTRA_REMINDER_START_DATE = "com.github.jeremyt135.reminderapp.EXTRA_REMINDER_START_DATE"
 
 /**
- * Bool: The on-off should-vibrate setting from the Reminder as entered into the editor.
- */
-const val EXTRA_REMINDER_VIBRATE = "com.github.jeremyt135.reminderapp.EXTRA_REMINDER_VIBRATE"
-
-/**
- * String: The description of the Reminder as entered into the editor.
- */
-const val EXTRA_REMINDER_DESCRIPTION =
-    "com.github.jeremyt135.reminderapp.EXTRA_REMINDER_DESCRIPTION"
-
-/**
- * String: The sound played by the Reminder
- */
-const val EXTRA_REMINDER_SOUND_URI = "com.github.jeremyt135.reminderapp.EXTRA_REMINDER_SOUND"
-
-/**
  * A 30 seconds long vibration pattern
  */
 val VIBRATION_PATTERN: LongArray by lazy {
@@ -142,35 +126,49 @@ suspend fun rescheduleReminders(
     reminderRepository: ReminderRepository,
     alarmRepository: AlarmRepository,
     historyRepository: HistoryRepository
-): Int = withContext(NonCancellable) {
-    Timber.d("Rescheduling all reminders and their alarms...")
+): Int {
+    var numRescheduled = 0
+    try {
+        numRescheduled = supervisorScope {
+            Timber.d("Rescheduling all reminders and their alarms...")
 
-    val alarms = reminderRepository.getAllWithAlarms().map { reminderAndAlarm ->
-        async {
-            val (reminder, alarm) = reminderAndAlarm
-            val history = historyRepository.getLatestForReminder(reminder.id)
-            val newAlarm = refreshAlarm(reminder, alarm, history)
+            val alarms = reminderRepository.getAllWithAlarms().map { reminderAndAlarm ->
+                async {
+                    try {
+                        val (reminder, alarm) = reminderAndAlarm
+                        val history = historyRepository.getLatestForReminder(reminder.id)
+                        val newAlarm = refreshAlarm(reminder, alarm, history)
 
-            val alarmsAreSame = alarm == newAlarm
-            if (alarm != null && newAlarm != null && !alarmsAreSame) {
-                alarmRepository.delete(alarm)
-            }
+                        val alarmsAreSame = alarm == newAlarm
 
-            if (newAlarm != null && !alarmsAreSame) {
-                newAlarm.id = alarmRepository.save(newAlarm)
-            }
+                        withContext(NonCancellable) {
+                            if (newAlarm != null && !alarmsAreSame) {
+                                newAlarm.id = alarmRepository.save(newAlarm)
+                            }
 
-            newAlarm ?: alarm
+                            if (alarm != null && newAlarm != null && !alarmsAreSame) {
+                                alarmRepository.delete(alarm)
+                            }
+                        }
+
+                        return@async newAlarm ?: alarm
+                    } catch (e: Exception) {
+                        Timber.e("rescheduleReminders: child exception thrown:\n${e.stackTraceToString()}")
+                    }
+                    return@async null
+                }
+            }.awaitAll()
+
+            alarms.count { it?.id != 0L }
         }
-    }.awaitAll()
+    } catch (e: Exception) {
+        Timber.e(e)
+    } finally {
+        Timber.d("Saved $numRescheduled new alarms, starting action for SCHEDULE_NEXT...")
 
-    val numRescheduled = alarms.count { it?.id != 0L }
-
-    Timber.d("Saved $numRescheduled new alarms, starting action for SCHEDULE_NEXT...")
-
-    AlarmSchedulingService.startScheduleNext(context)
-
-    numRescheduled
+        AlarmSchedulingService.startScheduleNext(context)
+    }
+    return numRescheduled
 }
 
 /**
