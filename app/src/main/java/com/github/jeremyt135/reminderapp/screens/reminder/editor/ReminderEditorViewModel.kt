@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import android.media.RingtoneManager
 import android.net.Uri
+import android.widget.Toast
 import androidx.lifecycle.*
 import com.github.jeremyt135.reminderapp.broadcast.*
 import com.github.jeremyt135.reminderapp.data.AlarmRepository
@@ -380,39 +381,28 @@ class ReminderEditorViewModel @Inject constructor(
             showToast(
                 getApplication(),
                 "Please fix any errors before saving",
+                Toast.LENGTH_LONG
             )
             return
         }
 
         applicationScope.launch {
             try {
-                val reminder = getReminderToSave(_reminder.value.copy())
-                withContext(NonCancellable) {
-                    AlarmSchedulingService.startScheduleNewAlarm(getApplication(), reminder)
-                    reminderRepository.save(reminder)
-                }
-            } catch(e: Exception) {
-                Timber.e(e)
-                AlarmSchedulingService.startScheduleNext(getApplication())
-            }
-
-            _reminder.value.copy().let {
-                // get the "sanitized" reminder
-                getReminderToSave(it)
-            }.let { reminder ->
-                withContext(NonCancellable) {
-                }
-
                 // stop currently running AlarmService if saved reminder is the one scheduled
-                if (stopAlarmsForReminder(getApplication(), reminder)) {
+                if (stopAlarmsForReminder(getApplication(), _reminder.value)) {
                     AlarmMediaService.requestStop(getApplication())
                 }
-
-
+                val reminder = getReminderToSave(_reminder.value.copy())
+                withContext(NonCancellable) {
+                    reminderRepository.save(reminder)
+                    AlarmSchedulingService.startScheduleNewAlarm(getApplication(), reminder)
+                    _navigateToReminders.value = Unit
+                }
+            } catch (e: Exception) {
+                Timber.e(e)
+                showToast(getApplication(), "Could not save your reminder right now", Toast.LENGTH_LONG)
             }
         }
-
-        _navigateToReminders.value = Unit
     }
 
     // Get a reminder with "initial" values for its type to save, so old data won't show up later
