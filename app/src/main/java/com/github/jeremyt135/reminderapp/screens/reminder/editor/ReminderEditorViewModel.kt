@@ -385,20 +385,30 @@ class ReminderEditorViewModel @Inject constructor(
         }
 
         applicationScope.launch {
-            withContext(NonCancellable) {
-                _reminder.value.copy().let {
-                    // get the "sanitized" reminder
-                    getReminderToSave(it)
-                }.let { reminder ->
-                    reminderRepository.save(reminder)
-
-                    // stop currently running AlarmService if saved reminder is the one scheduled
-                    if (stopAlarmsForReminder(getApplication(), reminder)) {
-                        AlarmMediaService.requestStop(getApplication())
-                    }
-
+            try {
+                val reminder = getReminderToSave(_reminder.value.copy())
+                withContext(NonCancellable) {
                     AlarmSchedulingService.startScheduleNewAlarm(getApplication(), reminder)
+                    reminderRepository.save(reminder)
                 }
+            } catch(e: Exception) {
+                Timber.e(e)
+                AlarmSchedulingService.startScheduleNext(getApplication())
+            }
+
+            _reminder.value.copy().let {
+                // get the "sanitized" reminder
+                getReminderToSave(it)
+            }.let { reminder ->
+                withContext(NonCancellable) {
+                }
+
+                // stop currently running AlarmService if saved reminder is the one scheduled
+                if (stopAlarmsForReminder(getApplication(), reminder)) {
+                    AlarmMediaService.requestStop(getApplication())
+                }
+
+
             }
         }
 
