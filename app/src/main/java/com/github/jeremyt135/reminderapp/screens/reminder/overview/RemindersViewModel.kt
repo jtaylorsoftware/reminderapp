@@ -9,7 +9,6 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import androidx.preference.PreferenceManager
-import androidx.work.ExistingWorkPolicy
 import androidx.work.WorkManager
 import com.github.jeremyt135.reminderapp.broadcast.*
 import com.github.jeremyt135.reminderapp.data.AlarmRepository
@@ -21,12 +20,13 @@ import com.github.jeremyt135.reminderapp.data.domain.SchedulingRules
 import com.github.jeremyt135.reminderapp.di.AppCoroutineScope
 import com.github.jeremyt135.reminderapp.di.DefaultDispatcher
 import com.github.jeremyt135.reminderapp.di.IoDispatcher
-import com.github.jeremyt135.reminderapp.service.AlarmService
+import com.github.jeremyt135.reminderapp.service.AlarmHistoryService
+import com.github.jeremyt135.reminderapp.service.AlarmMediaService
+import com.github.jeremyt135.reminderapp.service.AlarmSchedulingService
 import com.github.jeremyt135.reminderapp.util.MutableEventFlow
 import com.github.jeremyt135.reminderapp.util.asEventFlow
 import com.github.jeremyt135.reminderapp.util.currentLocalDateTime
 import com.github.jeremyt135.reminderapp.util.toEpochMilli
-import com.github.jeremyt135.reminderapp.work.AlarmActionHandler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -180,8 +180,11 @@ class RemindersViewModel @Inject constructor(
     fun deleteReminder(reminder: Reminder) {
         viewModelScope.launch {
             withContext(NonCancellable) {
-                rescheduleAlarmForReminder(reminder)
+                if (stopAlarmsForReminder(getApplication(), reminder)) {
+                    AlarmMediaService.requestStop(getApplication())
+                }
                 reminderRepository.delete(reminder)
+                AlarmSchedulingService.startScheduleNext(getApplication())
             }
         }
     }
@@ -192,7 +195,7 @@ class RemindersViewModel @Inject constructor(
     fun deleteAllReminders() {
         viewModelScope.launch {
             withContext(NonCancellable) {
-                AlarmService.requestStop(getApplication())
+                AlarmMediaService.requestStop(getApplication())
                 clearAllAlarmIntents()
                 reminderRepository.deleteAll()
             }
@@ -205,8 +208,8 @@ class RemindersViewModel @Inject constructor(
      */
     fun completeReminder(reminder: Reminder) {
         viewModelScope.launch {
-            if (reminderAlarmIsScheduled(reminder)) {
-                AlarmService.requestStop(getApplication())
+            if (stopAlarmsForReminder(getApplication(), reminder)) {
+                AlarmMediaService.requestStop(getApplication())
             }
             changeReminderStatus(reminder, ReminderStatus.COMPLETED)
         }
@@ -218,20 +221,10 @@ class RemindersViewModel @Inject constructor(
      */
     fun skipReminder(reminder: Reminder) {
         viewModelScope.launch {
-            if (reminderAlarmIsScheduled(reminder)) {
-                AlarmService.requestStop(getApplication())
+            if (stopAlarmsForReminder(getApplication(), reminder)) {
+                AlarmMediaService.requestStop(getApplication())
             }
             changeReminderStatus(reminder, ReminderStatus.SKIPPED)
-        }
-    }
-
-    /**
-     * Cancels alarms for `reminder` and reschedules next alarm.
-     */
-    private suspend fun rescheduleAlarmForReminder(reminder: Reminder) {
-        if (stopAlarmsForReminder(getApplication(), reminder)) {
-            AlarmService.requestStop(getApplication())
-            enqueueScheduleNext(getApplication(), 0)
         }
     }
 
@@ -246,9 +239,6 @@ class RemindersViewModel @Inject constructor(
             it.scheduled // nullable bool
         } == true // force to nonnull bool
 
-    private suspend fun reminderAlarmIsScheduled(reminder: Reminder): Boolean =
-        alarmRepository.findByReminderId(reminder.id)?.scheduled == true
-
     private suspend fun clearAllAlarmIntents() = withContext(NonCancellable) {
         reminderRepository.getAll().first().map {
             Timber.d("Cancelling reminder alarms for $it")
@@ -257,14 +247,17 @@ class RemindersViewModel @Inject constructor(
     }
 
     private fun changeReminderStatus(reminder: Reminder, status: ReminderStatus) {
-        val action = when (status) {
-            ReminderStatus.COMPLETED -> ACTION_ALARM_COMPLETE
-            ReminderStatus.SKIPPED -> ACTION_ALARM_SKIP
+        when (status) {
+            ReminderStatus.SKIPPED -> {
+                AlarmHistoryService.start(getApplication(), reminder, ReminderStatus.SKIPPED)
+            }
+            ReminderStatus.COMPLETED -> {
+                AlarmHistoryService.start(getApplication(), reminder, ReminderStatus.COMPLETED)
+            }
             else -> throw IllegalArgumentException("Cannot change status to PENDING")
         }
-        AlarmActionHandler.createForAction(action, reminder.id).let {
-            WorkManager.getInstance(getApplication()).enqueue(it)
-        }
+        AlarmSchedulingService.startScheduleNext(getApplication())
+        AlarmSchedulingService.startScheduleNewAlarm(getApplication(), reminder)
     }
 
     /**

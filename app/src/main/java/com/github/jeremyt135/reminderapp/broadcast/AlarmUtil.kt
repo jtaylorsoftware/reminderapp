@@ -12,8 +12,6 @@ import androidx.annotation.VisibleForTesting
 import androidx.core.app.AlarmManagerCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import androidx.work.ExistingWorkPolicy
-import androidx.work.WorkManager
 import com.github.jeremyt135.R
 import com.github.jeremyt135.reminderapp.data.AlarmRepository
 import com.github.jeremyt135.reminderapp.data.HistoryRepository
@@ -21,15 +19,12 @@ import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.*
 import com.github.jeremyt135.reminderapp.screens.alarm.AlarmActivity
 import com.github.jeremyt135.reminderapp.screens.reminder.editor.ReminderEditorActivity
-import com.github.jeremyt135.reminderapp.service.AlarmService
+import com.github.jeremyt135.reminderapp.service.AlarmSchedulingService
 import com.github.jeremyt135.reminderapp.util.currentLocalDateTime
 import com.github.jeremyt135.reminderapp.util.getShortLocalDateDisplay
 import com.github.jeremyt135.reminderapp.util.getShortLocalTimeDisplay
 import com.github.jeremyt135.reminderapp.util.toEpochMilli
-import com.github.jeremyt135.reminderapp.work.AlarmActionHandler
-import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import timber.log.Timber
 
 /**
@@ -37,6 +32,18 @@ import timber.log.Timber
  */
 const val ACTION_ALARM_SCHEDULE_NEXT =
     "com.github.jeremyt135.reminderapp.ACTION_ALARM_SCHEDULE_NEXT"
+
+/**
+ * Action to reschedule all Alarms
+ */
+const val ACTION_ALARM_RESCHEDULE_ALL =
+    "com.github.jeremyt135.reminderapp.ACTION_ALARM_RESCHEDULE_ALL"
+
+/**
+ * Action to save a new alarm
+ */
+const val ACTION_ALARM_SAVE_NEW =
+    "com.github.jeremyt135.reminderapp.ACTION_ALARM_SAVE_NEW"
 
 /**
  * Action to start AlarmService
@@ -79,7 +86,7 @@ const val EXTRA_REMINDER_ID = "com.github.jeremyt135.reminderapp.EXTRA_REMINDER_
 const val EXTRA_ALARM_ID = "com.github.jeremyt135.reminderapp.EXTRA_ALARM_ID"
 
 /**
- *
+ * String: The selected start date from the Calendar.
  */
 const val EXTRA_REMINDER_START_DATE = "com.github.jeremyt135.reminderapp.EXTRA_REMINDER_START_DATE"
 
@@ -116,37 +123,6 @@ const val NOTIFICATION_LED_ONMS: Int = 1
 const val NOTIFICATION_LED_OFFMS: Int = 0
 
 /**
- * Schedules the Alarm that is chronologically next to trigger today, if one exists.
- */
-suspend fun scheduleNextAlarm(
-    context: Context,
-    alarmRepository: AlarmRepository,
-    reminderRepository: ReminderRepository,
-): Boolean = withContext(NonCancellable) {
-    Timber.d("Scheduling next alarm...")
-
-    val alarm = alarmRepository.getFirstByTimeAscending() ?: return@withContext false
-
-    val previousScheduled = alarmRepository.getFirstScheduledAlarm()
-    if (previousScheduled != alarm) {
-        // Alarm is not the one already scheduled - clear previous & set new
-        previousScheduled?.let { prevAlarm ->
-            alarmRepository.clearScheduled(prevAlarm)
-            reminderRepository.findById(prevAlarm.reminderId)?.let { prevReminder ->
-                // Clear the pending intents
-                cancelAlarmIntentsForReminder(context, prevReminder)
-            }
-        }
-        alarmRepository.setScheduled(alarm)
-        reminderRepository.findById(alarm.reminderId)?.let { reminder ->
-            scheduleAlarmForReminder(context, alarm.copy(scheduled = true), reminder)
-        }
-    } // Else the Alarm was the one already scheduled
-
-    true
-}
-
-/**
  * Deletes all alarms, clears the scheduled flag for all alarms, saves new alarms
  * for all reminders, and then creates an action to schedule next alarm. Reminders that have
  * been completed on the current date will not be schedule on the same day, instead they
@@ -164,91 +140,116 @@ suspend fun rescheduleReminders(
 ): Int = withContext(NonCancellable) {
     Timber.d("Rescheduling all reminders and their alarms...")
 
-    // Clear the past alarms
-    alarmRepository.deleteAll()
+    val alarms = reminderRepository.getAllWithAlarms().map { reminderAndAlarm ->
+        async {
+            val (reminder, alarm) = reminderAndAlarm
+            val history = historyRepository.getLatestForReminder(reminder.id)
+            val newAlarm = refreshAlarm(reminder, alarm, history)
 
-    Timber.d("Cleared all past alarms, saving new ones...")
+            val alarmsAreSame = alarm == newAlarm
+            if (alarm != null && newAlarm != null && !alarmsAreSame) {
+                alarmRepository.delete(alarm)
+            }
 
-    // Get all reminders and re-save their alarms
-    val reminders = reminderRepository.getAllWithTodayHistory().first()
-    val rescheduledAlarmIds: List<Long> = reminders.map { (reminder, historyToday) ->
-        // Allow same day alarm if either a) no history or b) history.status is PENDING
-        val allowSameDay =
-            historyToday?.let { it.completionStatus == ReminderStatus.PENDING }
-                ?: true
+            if (newAlarm != null && !alarmsAreSame) {
+                newAlarm.id = alarmRepository.save(newAlarm)
+            }
 
-
-        // The actual time that's scheduled next
-        val scheduledNextTimeForAlarm =
-            reminder.schedulingRules.getNextTimeForAlarm(
-                currentLocalDateTime(),
-                nextTimeOptions = SchedulingRules.NextTimeOptions(allowSameDay = allowSameDay)
-            )
-
-        // If no history or pending history, SINGLE reminders can be rescheduled (they may exist
-        // on restart depending on several factors including how the app crashed and when it next
-        // started)
-        val recoveredNextTimeForAlarm = scheduledNextTimeForAlarm
-            ?: if (reminder.schedulingRules.type == SchedulingType.SINGLE) {
-                // Check if there's any history for it
-                val latestHistory = historyRepository.getLatestForReminder(reminder.id)
-                if (latestHistory == null) currentLocalDateTime().plusMinutes(5) else null
-            } else null
-
-        with(reminder) {
-            recoveredNextTimeForAlarm?.let { time ->
-                val nextAlarm = Alarm(
-                    reminderId = id,
-                    triggerAt = time,
-                    maxSnoozeRepeats = maxSnoozeRepeats,
-                    snoozeDuration = snoozeDuration
-                )
-                alarmRepository.save(nextAlarm)
-            } ?: 0L
+            newAlarm ?: alarm
         }
-    }
+    }.awaitAll()
 
-    val numRescheduled = rescheduledAlarmIds.count { it != 0L }
-    val nextAlarmId = rescheduledAlarmIds.firstOrNull() ?: 0L
+    val numRescheduled = alarms.count { it?.id != 0L }
 
     Timber.d("Saved $numRescheduled new alarms, starting action for SCHEDULE_NEXT...")
 
-    enqueueScheduleNext(context, nextAlarmId)
+    AlarmSchedulingService.startScheduleNext(context)
 
     numRescheduled
 }
 
-fun enqueueScheduleNext(context: Context, nextAlarmId: Long) {
-    val worker = AlarmActionHandler.createForScheduleNext(nextAlarmId)
-    WorkManager.getInstance(context)
-        .enqueueUniqueWork(ACTION_ALARM_SCHEDULE_NEXT, ExistingWorkPolicy.KEEP, worker)
-}
-
 /**
- * Schedules a system AlarmClock for the Alarm and Reminder, using the Alarm.triggerAt value
- * for the AlarmClock triggerAt value.
+ * "Refreshes" an alarm based on its reminder and today's history entry.
+ * @param reminder The reminder associated with the alarm, not null
+ * @param alarm The current alarm associated with the reminder
+ * @param history The latest history entry today with the reminder
+ * @return A new Alarm instance if the alarm no longer satisfies its constraints,
+ * and a new one could be created. If a new alarm could not be created, null is returned.
+ * If the current alarm still satisfies its constraints, returns the parameter alarm.
+ * If the parameter alarm is not null and null is returned, it is assumed that somewhere else
+ * a new alarm is being saved, or the reminder is a one-off that should not be saved again.
  */
-@VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-fun scheduleAlarmForReminder(
-    context: Context,
-    alarm: Alarm,
-    reminder: Reminder
-) {
-    Timber.d("Scheduling $alarm for ${alarm.triggerAt.getShortLocalDateDisplay()} at ${alarm.triggerAt.getShortLocalTimeDisplay()}")
-    val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-    val intent = createIntentForAlarmAction(context, ACTION_ALARM_START, reminder.id)
-    val showIntent = getIntentForEditorActivity(context, reminder.id)
-
-    // Sanity check the time in case the system doesn't "Fire immediately" when it's in the past
-    val time = if (alarm.triggerAt < currentLocalDateTime()) {
-        currentLocalDateTime().plusMinutes(1)
-    } else alarm.triggerAt
-
-    AlarmManagerCompat.setAlarmClock(
-        alarmManager, time.toEpochMilli(),
-        showIntent,
-        intent
-    )
+fun refreshAlarm(reminder: Reminder, alarm: Alarm?, history: History?): Alarm? {
+    return if (alarm != null) {
+        // Have an alarm for it already
+        val timeNow = currentLocalDateTime()
+        if (alarm.triggerAt < timeNow) {
+            // In past or same time
+            if (history != null) {
+                // Has history for today, so it's been completed and new alarm must be
+                // in progress of saving otherwise triggerAt should be in the future
+                null
+            } else {
+                // No history today & in past, save new time but don't touch snooze settings
+                val newTime = currentLocalDateTime().plusMinutes(1)
+                alarm.copy(triggerAt = newTime, scheduled = null)
+            }
+        } else if (alarm.triggerAt > timeNow) {
+            // In future, don't need to do anything
+            alarm
+        } else {
+            // TriggerAt is right now
+            when {
+                alarm.scheduled == true -> {
+                    // Alarm might be firing, don't touch anything
+                    alarm
+                }
+                history == null -> {
+                    // Bump up to next minute so it doesn't go into the past
+                    val newTime = currentLocalDateTime().plusMinutes(1)
+                    alarm.copy(triggerAt = newTime, scheduled = null)
+                }
+                else -> {
+                    null
+                }
+            }
+        }
+    } else {
+        // No alarm exists (should not be the usual case), make new one
+        if (history != null) {
+            // Already completed today
+            if (reminder.schedulingRules.type == SchedulingType.SINGLE) {
+                // can't do a one-off more than once
+                null
+            } else {
+                // repeating can go off again but on a different date
+                reminder.schedulingRules.getNextTimeForAlarm(
+                    currentLocalDateTime(),
+                    nextTimeOptions = SchedulingRules.NextTimeOptions(allowSameDay = false)
+                )?.let { nextTime ->
+                    Alarm(
+                        reminderId = reminder.id,
+                        triggerAt = nextTime,
+                        maxSnoozeRepeats = reminder.maxSnoozeRepeats,
+                        snoozeDuration = reminder.snoozeDuration
+                    )
+                }
+            }
+        } else {
+            // Did not complete today yet
+            reminder.schedulingRules.getNextTimeForAlarm(
+                currentLocalDateTime(),
+                nextTimeOptions = SchedulingRules.NextTimeOptions(allowSameDay = true)
+            )?.let { nextTime ->
+                Alarm(
+                    reminderId = reminder.id,
+                    triggerAt = nextTime,
+                    maxSnoozeRepeats = reminder.maxSnoozeRepeats,
+                    snoozeDuration = reminder.snoozeDuration
+                )
+            }
+        }
+    }
 }
 
 /**
@@ -262,12 +263,12 @@ fun cancelAlarmIntentsForReminder(context: Context, reminder: Reminder) {
     val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
     // Cancel the alarm notification intent
-    getCreatedIntentForAlarmAction(context, ACTION_ALARM_START, reminder.id)?.let {
+    getCreatedAlarmStartIntent(context, ACTION_ALARM_START, reminder.id)?.let {
         alarmManager.cancel(it)
     }
 
     // Cancel the snooze intent
-    getCreatedIntentForAlarmAction(context, ACTION_ALARM_SNOOZE, reminder.id)?.let {
+    getCreatedAlarmStartIntent(context, ACTION_ALARM_SNOOZE, reminder.id)?.let {
         alarmManager.cancel(it)
     }
 }
@@ -304,7 +305,6 @@ fun triggerNotification(context: Context, reminder: Reminder, alarm: Alarm) {
     }
 }
 
-@VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
 fun getIntentForEditorActivity(context: Context, reminderId: String): PendingIntent =
     Intent(context, ReminderEditorActivity::class.java).run {
 //        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
@@ -314,7 +314,11 @@ fun getIntentForEditorActivity(context: Context, reminderId: String): PendingInt
             context,
             reminderId.hashCode(),
             this,
-            PendingIntent.FLAG_UPDATE_CURRENT
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            } else {
+                PendingIntent.FLAG_UPDATE_CURRENT
+            }
         )
     }
 
@@ -328,7 +332,11 @@ fun getCreatedIntentForEditorActivity(context: Context, reminderId: String): Pen
             context,
             reminderId.hashCode(),
             this,
-            PendingIntent.FLAG_NO_CREATE
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_NO_CREATE
+            } else {
+                PendingIntent.FLAG_NO_CREATE
+            }
         )
     }
 
@@ -358,16 +366,14 @@ private fun createAlarmActivityIntent(
     }
 
 
-@VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-fun createIntentForAlarmAction(
+fun createAlarmActionIntent(
     context: Context,
     action: String,
     reminderId: String
-): PendingIntent =
-    createAlarmActionIntent(context, action, reminderId, 0)!!
+): PendingIntent = createAlarmActionIntent(context, action, reminderId, 0)!!
 
 @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-fun getCreatedIntentForAlarmAction(
+fun getCreatedAlarmStartIntent(
     context: Context,
     action: String,
     reminderId: String
@@ -379,20 +385,35 @@ private fun createAlarmActionIntent(
     action: String,
     reminderId: String,
     pendingIntentFlags: Int
-): PendingIntent? =
-    when (action) {
+): PendingIntent? {
+    val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        PendingIntent.FLAG_IMMUTABLE or pendingIntentFlags
+    } else {
+        pendingIntentFlags
+    }
+    return when (action) {
         ACTION_ALARM_START -> Intent(context, AlarmStartReceiver::class.java).run {
             this.action = action
             putExtra(EXTRA_REMINDER_ID, reminderId)
-            PendingIntent.getBroadcast(context, reminderId.hashCode(), this, pendingIntentFlags)
+            PendingIntent.getBroadcast(
+                context,
+                reminderId.hashCode(),
+                this,
+                flags
+            )
         }
         else -> Intent(context, AlarmActionReceiver::class.java).run {
             this.action = action
             putExtra(EXTRA_REMINDER_ID, reminderId)
-            PendingIntent.getBroadcast(context, reminderId.hashCode(), this, pendingIntentFlags)
+            PendingIntent.getBroadcast(
+                context,
+                reminderId.hashCode(),
+                this,
+                flags
+            )
         }
     }
-
+}
 
 fun buildNotificationForAlarm(
     context: Context,
@@ -425,18 +446,18 @@ fun buildNotificationForAlarm(
             addAction(
                 R.drawable.ic_notification_snooze,
                 context.getString(R.string.snooze),
-                createIntentForAlarmAction(context, ACTION_ALARM_SNOOZE, reminder.id)
+                createAlarmActionIntent(context, ACTION_ALARM_SNOOZE, reminder.id)
             )
         }
         addAction(
             R.drawable.ic_notification_skip,
             context.getString(R.string.skip),
-            createIntentForAlarmAction(context, ACTION_ALARM_SKIP, reminder.id)
+            createAlarmActionIntent(context, ACTION_ALARM_SKIP, reminder.id)
         )
         addAction(
             R.drawable.ic_notification_complete,
             context.getString(R.string.complete),
-            createIntentForAlarmAction(context, ACTION_ALARM_COMPLETE, reminder.id)
+            createAlarmActionIntent(context, ACTION_ALARM_COMPLETE, reminder.id)
         )
 
         build()

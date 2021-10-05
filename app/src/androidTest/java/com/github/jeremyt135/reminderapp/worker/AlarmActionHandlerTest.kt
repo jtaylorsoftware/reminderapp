@@ -1,20 +1,11 @@
 package com.github.jeremyt135.reminderapp.worker
 
-import android.content.ComponentName
-import android.content.Context
-import android.content.Intent
 import android.os.Build
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
-import androidx.hilt.work.HiltWorkerFactory
-import androidx.test.core.app.ActivityScenario
-import androidx.test.core.app.ApplicationProvider
 import androidx.test.filters.MediumTest
 import androidx.test.filters.SdkSuppress
 import androidx.work.*
 import androidx.work.ListenableWorker.Result
-import androidx.work.testing.TestListenableWorkerBuilder
-import com.github.jeremyt135.R
-import com.github.jeremyt135.reminderapp.HiltTestActivity
 import com.github.jeremyt135.reminderapp.broadcast.*
 import com.github.jeremyt135.reminderapp.data.*
 import com.github.jeremyt135.reminderapp.data.domain.*
@@ -22,12 +13,9 @@ import com.github.jeremyt135.reminderapp.data.local.AppDatabase
 import com.github.jeremyt135.reminderapp.data.local.HistoryLocalDataSource
 import com.github.jeremyt135.reminderapp.data.local.ReminderLocalDataSource
 import com.github.jeremyt135.reminderapp.di.DatabaseModule
-import com.github.jeremyt135.reminderapp.di.LocalDataSourceModule
 import com.github.jeremyt135.reminderapp.di.RepositoryModule
-import com.github.jeremyt135.reminderapp.util.CustomTestAppBase
 import com.github.jeremyt135.reminderapp.util.InMemoryDatabaseRule
 import com.github.jeremyt135.reminderapp.util.currentLocalDateTime
-import com.github.jeremyt135.reminderapp.work.AlarmActionHandler
 import com.google.common.truth.Truth.assertThat
 import dagger.Module
 import dagger.Provides
@@ -38,7 +26,6 @@ import dagger.hilt.android.testing.UninstallModules
 import dagger.hilt.components.SingletonComponent
 import io.mockk.coVerify
 import io.mockk.mockkStatic
-import io.mockk.slot
 import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first

@@ -9,9 +9,8 @@ import androidx.work.WorkManager
 import androidx.work.WorkRequest
 import com.github.jeremyt135.reminderapp.MainCoroutineRule
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
-import com.github.jeremyt135.reminderapp.service.AlarmService
+import com.github.jeremyt135.reminderapp.service.AlarmMediaService
 import com.github.jeremyt135.reminderapp.service.AlarmTimerManager
-import com.github.jeremyt135.reminderapp.work.AlarmActionHandler
 import com.google.common.truth.Truth.assertThat
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -54,9 +53,9 @@ class AlarmActionReceiverTest {
         mockkStatic(WorkManager::class)
         every { WorkManager.getInstance(any()) } returns mockWorkManager
 
-        mockkObject(AlarmService.Companion)
-        justRun { AlarmService.requestStop(any()) }
-        justRun { AlarmService.start(any(), any()) }
+        mockkObject(AlarmMediaService.Companion)
+        justRun { AlarmMediaService.requestStop(any()) }
+        justRun { AlarmMediaService.start(any(), any()) }
 
         mockkObject(AlarmActionHandler.Companion)
         every { AlarmActionHandler.createForAction(any(), any()) } returns
@@ -102,7 +101,7 @@ class AlarmActionReceiverTest {
         receiver.onReceive(context, intent)
 
         verify {
-            AlarmService.requestStop(context)
+            AlarmMediaService.requestStop(context)
             AlarmActionHandler.createForAction(action, reminder.id)
         }
     }
@@ -120,7 +119,7 @@ class AlarmActionReceiverTest {
         receiver.onReceive(context, intent)
 
         verify {
-            AlarmService.requestStop(context)
+            AlarmMediaService.requestStop(context)
             AlarmActionHandler.createForAction(action, "")
         }
 

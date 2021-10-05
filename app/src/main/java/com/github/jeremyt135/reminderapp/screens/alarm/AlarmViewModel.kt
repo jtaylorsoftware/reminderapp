@@ -10,12 +10,11 @@ import com.github.jeremyt135.reminderapp.broadcast.*
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.Alarm
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
-import com.github.jeremyt135.reminderapp.service.AlarmService
-import com.github.jeremyt135.reminderapp.service.AlarmTimerManager
+import com.github.jeremyt135.reminderapp.data.domain.ReminderStatus
+import com.github.jeremyt135.reminderapp.service.*
 import com.github.jeremyt135.reminderapp.util.MutableEventFlow
 import com.github.jeremyt135.reminderapp.util.asEventFlow
 import com.github.jeremyt135.reminderapp.util.getShortLocalTimeDisplay
-import com.github.jeremyt135.reminderapp.work.AlarmActionHandler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -84,7 +83,7 @@ class AlarmViewModel @Inject constructor(
         super.onCleared()
         Timber.d("AlarmViewModel cleared")
         // stop AlarmService (sounds and notif)
-        AlarmService.requestStop(getApplication())
+        AlarmMediaService.requestStop(getApplication())
         // try to snooze
         snooze(showToast = false)
     }
@@ -110,7 +109,7 @@ class AlarmViewModel @Inject constructor(
             showToast(getApplication(), "Snoozed Reminder")
         }
 
-        tryStartWorkerForAction(ACTION_ALARM_SNOOZE)
+        tryStartWorkerForAction(ACTION_ALARM_SNOOZE, _reminder.value)
     }
 
     /**
@@ -121,7 +120,7 @@ class AlarmViewModel @Inject constructor(
             showToast(getApplication(), "Skipped Reminder")
         }
 
-        tryStartWorkerForAction(ACTION_ALARM_SKIP)
+        tryStartWorkerForAction(ACTION_ALARM_SKIP, _reminder.value)
     }
 
     /**
@@ -132,16 +131,16 @@ class AlarmViewModel @Inject constructor(
             showToast(getApplication(), "Completed Reminder")
         }
 
-        tryStartWorkerForAction(ACTION_ALARM_COMPLETE)
+        tryStartWorkerForAction(ACTION_ALARM_COMPLETE, _reminder.value)
     }
 
     /**
      * Starts a worker for action if the Alarm is currently unhandled
      */
-    private fun tryStartWorkerForAction(action: String) {
+    private fun tryStartWorkerForAction(action: String, reminder: Reminder) {
         tryHandleAlarm {
             if (timerManager.timer?.stop() == true) {
-                startWorkerForAction(action)
+                startWorkerForAction(action, reminder)
             } else {
                 Timber.d("AutoSnoozeHandler already snoozed Alarm")
             }
@@ -165,10 +164,21 @@ class AlarmViewModel @Inject constructor(
         finish()
     }
 
-    private fun startWorkerForAction(action: String) {
+    private fun startWorkerForAction(action: String, reminder: Reminder) {
         Timber.d("AlarmViewModel starting worker")
-        AlarmActionHandler.createForAction(action, _reminder.value.id).let {
-            WorkManager.getInstance(getApplication()).enqueue(it)
+        when (action) {
+            ACTION_ALARM_SKIP -> {
+                AlarmHistoryService.start(getApplication(), reminder, ReminderStatus.SKIPPED)
+                AlarmSchedulingService.startScheduleNewAlarm(getApplication(), reminder)
+            }
+            ACTION_ALARM_COMPLETE -> {
+                AlarmHistoryService.start(getApplication(), reminder, ReminderStatus.COMPLETED)
+                AlarmSchedulingService.startScheduleNewAlarm(getApplication(), reminder)
+            }
+            ACTION_ALARM_SNOOZE -> {
+                AlarmSnoozeService.start(getApplication(), reminder)
+            }
+            else -> throw IllegalArgumentException("Unsupported action $action")
         }
     }
 

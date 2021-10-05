@@ -1,0 +1,165 @@
+package com.github.jeremyt135.reminderapp.service
+
+import android.app.Service
+import android.content.Context
+import android.content.Intent
+import android.os.Build
+import android.os.IBinder
+import com.github.jeremyt135.reminderapp.broadcast.ACTION_ALARM_COMPLETE
+import com.github.jeremyt135.reminderapp.broadcast.ACTION_ALARM_SKIP
+import com.github.jeremyt135.reminderapp.broadcast.EXTRA_REMINDER_ID
+import com.github.jeremyt135.reminderapp.data.HistoryRepository
+import com.github.jeremyt135.reminderapp.data.ReminderRepository
+import com.github.jeremyt135.reminderapp.data.domain.History
+import com.github.jeremyt135.reminderapp.data.domain.Reminder
+import com.github.jeremyt135.reminderapp.data.domain.ReminderStatus
+import com.github.jeremyt135.reminderapp.di.AppCoroutineScope
+import com.github.jeremyt135.reminderapp.di.DefaultDispatcher
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.*
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import timber.log.Timber
+import java.time.Instant
+import java.time.ZoneId
+import javax.inject.Inject
+
+/**
+ * Service for saving history entries for reminders.
+ */
+@AndroidEntryPoint
+class AlarmHistoryService : Service() {
+    @AppCoroutineScope
+    @Inject
+    lateinit var applicationScope: CoroutineScope
+
+    @DefaultDispatcher
+    @Inject
+    lateinit var dispatcher: CoroutineDispatcher
+
+    @Inject
+    lateinit var reminderRepository: ReminderRepository
+
+    @Inject
+    lateinit var historyRepository: HistoryRepository
+
+    private val mutex = Mutex()
+    private val startCommands = ArrayDeque<Int>()
+
+    override fun onBind(intent: Intent?): IBinder? = null
+
+    override fun onCreate() {
+        super.onCreate()
+        Timber.d("Created AlarmHistoryService")
+    }
+
+    override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
+        Timber.d("Started for ${intent.action}")
+        val reminderId = intent.getStringExtra(EXTRA_REMINDER_ID) ?: ""
+        when (intent.action) {
+            ACTION_ALARM_SKIP -> createHistoryEntryForReminder(
+                startId,
+                reminderId,
+                ReminderStatus.SKIPPED
+            )
+            ACTION_ALARM_COMPLETE -> createHistoryEntryForReminder(
+                startId,
+                reminderId,
+                ReminderStatus.COMPLETED
+            )
+            else -> tryStopSelf(startId)
+        }
+        return START_REDELIVER_INTENT
+    }
+
+    /**
+     * Saves a history entry with a completion status if one does not exist for today.
+     */
+    private fun createHistoryEntryForReminder(
+        startId: Int,
+        reminderId: String,
+        status: ReminderStatus
+    ) {
+        applicationScope.launch {
+            mutex.withLock { startCommands.addFirst(startId) }
+            launch(dispatcher) {
+                try {
+                    val reminder = reminderRepository.findById(reminderId)
+                        ?: throw IllegalArgumentException("AlarmActionHandler failing: no reminder found saving history")
+                    val historyToday = historyRepository.getLatestForReminder(reminderId)
+                    if (historyToday == null) {
+                        // Don't allow saving multiple history on the same day
+                        val history = History(
+                            reminderId = reminder.id,
+                            description = reminder.description,
+                            completionStatus = status,
+                            // Save history with time to highest resolution to allow distinguishing between multiple
+                            // history on same day, possibly within same minute
+                            completedAt = Instant.now().atZone(ZoneId.systemDefault()).toInstant()
+                                .toEpochMilli()
+                        )
+                        historyRepository.save(history)
+                    }
+                } catch (e: Exception) {
+                    Timber.e(e)
+                } finally {
+                    stopSelfIfLast(startId)
+                }
+            }
+        }
+    }
+
+    /**
+     * Non suspending way to both add a new startId to the queue and also try to stop it immediately.
+     * Use in replacement of stopSelf() in onStartCommand when the start intent should not
+     * be rejected.
+     */
+    private fun tryStopSelf(startId: Int) {
+        applicationScope.launch {
+            withContext(NonCancellable) {
+                mutex.withLock { startCommands.addFirst(startId) }
+                mutex.withLock {
+                    startCommands.remove(startId)
+                    if (startCommands.lastOrNull() == null) {
+                        stopSelf()
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Normal alternative to stopSelf() for startCommands that have finished.
+     */
+    private suspend fun stopSelfIfLast(startId: Int) = withContext(NonCancellable) {
+        mutex.withLock {
+            startCommands.remove(startId)
+            if (startCommands.lastOrNull() == null) {
+                stopSelf()
+            }
+        }
+    }
+
+    companion object {
+        /**
+         * Starts the service to save a history entry for a reminder with the given status.
+         */
+        fun start(context: Context, reminder: Reminder, status: ReminderStatus) {
+            val statusAction = when (status) {
+                ReminderStatus.SKIPPED -> ACTION_ALARM_SKIP
+                ReminderStatus.COMPLETED -> ACTION_ALARM_COMPLETE
+                else -> throw IllegalArgumentException("Status must be SKIPPED or COMPLETED")
+            }
+            Intent(context, AlarmSnoozeService::class.java).apply {
+                action = statusAction
+                putExtra(EXTRA_REMINDER_ID, reminder.id)
+            }.also {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    context.startForegroundService(it)
+                } else {
+                    context.startService(it)
+                }
+            }
+        }
+    }
+}

@@ -16,9 +16,8 @@ import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.local.FakeHistoryLocalDataSource
 import com.github.jeremyt135.reminderapp.di.DatabaseModule
 import com.github.jeremyt135.reminderapp.di.RepositoryModule
-import com.github.jeremyt135.reminderapp.service.AlarmService
+import com.github.jeremyt135.reminderapp.service.AlarmMediaService
 import com.github.jeremyt135.reminderapp.util.currentLocalDateTime
-import com.github.jeremyt135.reminderapp.work.AlarmActionHandler
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -94,8 +93,8 @@ class AlarmStartReceiverTest {
         mockkStatic(WorkManager::class)
         every { WorkManager.getInstance(any()) } returns mockWorkManager
 
-        mockkObject(AlarmService.Companion)
-        justRun { AlarmService.start(any(), any()) }
+        mockkObject(AlarmMediaService.Companion)
+        justRun { AlarmMediaService.start(any(), any()) }
 
         mockkObject(AlarmActionHandler.Companion)
         every { AlarmActionHandler.createForAction(any(), any()) } returns
@@ -150,7 +149,7 @@ class AlarmStartReceiverTest {
         val savedData = reminderRepository.getReminderAndAlarm(reminder.id)!!
 
         verify {
-            AlarmService.start(context, savedData.reminder)
+            AlarmMediaService.start(context, savedData.reminder)
         }
     }
 }

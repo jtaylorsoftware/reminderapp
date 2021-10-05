@@ -6,11 +6,8 @@ import androidx.hilt.work.HiltWorkerFactory
 import androidx.preference.PreferenceManager
 import com.github.jeremyt135.BuildConfig
 import com.github.jeremyt135.R
-import com.github.jeremyt135.reminderapp.broadcast.rescheduleReminders
-import com.github.jeremyt135.reminderapp.data.AlarmRepository
-import com.github.jeremyt135.reminderapp.data.HistoryRepository
-import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.di.AppCoroutineScope
+import com.github.jeremyt135.reminderapp.service.AlarmSchedulingService
 import com.github.jeremyt135.reminderapp.work.AlarmSchedulingWorker
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
@@ -25,15 +22,6 @@ class ReminderApplication : Application(), androidx.work.Configuration.Provider 
     lateinit var applicationScope: CoroutineScope
 
     @Inject
-    lateinit var alarmRepository: AlarmRepository
-
-    @Inject
-    lateinit var reminderRepository: ReminderRepository
-
-    @Inject
-    lateinit var historyRepository: HistoryRepository
-
-    @Inject
     lateinit var workerFactory: HiltWorkerFactory
 
     override fun onCreate() {
@@ -42,7 +30,7 @@ class ReminderApplication : Application(), androidx.work.Configuration.Provider 
         applicationScope.launch { delayedInit() }
     }
 
-    private suspend fun delayedInit() {
+    private fun delayedInit() {
         if (BuildConfig.DEBUG) {
             Timber.plant(Timber.DebugTree())
         }
@@ -62,7 +50,7 @@ class ReminderApplication : Application(), androidx.work.Configuration.Provider 
         AppCompatDelegate.setDefaultNightMode(mode)
     }
 
-    private suspend fun doFirstTimeSetup() {
+    private fun doFirstTimeSetup() {
         val preferences = PreferenceManager.getDefaultSharedPreferences(this)
         val key = getString(R.string.preference_key_first_startup)
         val isFirstStartup = preferences.getBoolean(key, true)
@@ -84,7 +72,7 @@ class ReminderApplication : Application(), androidx.work.Configuration.Provider 
             AlarmSchedulingWorker.enqueue(this, scheduleInterval)
         } else {
             // On next startups, try to reschedule each reminder which may be necessary due to a force stop
-            rescheduleReminders(this, reminderRepository, alarmRepository, historyRepository)
+            AlarmSchedulingService.startRescheduleAll(applicationContext)
         }
     }
 

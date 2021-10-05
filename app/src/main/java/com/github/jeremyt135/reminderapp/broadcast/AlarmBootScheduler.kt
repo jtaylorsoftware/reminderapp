@@ -7,6 +7,7 @@ import com.github.jeremyt135.reminderapp.data.AlarmRepository
 import com.github.jeremyt135.reminderapp.data.HistoryRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.di.AppCoroutineScope
+import com.github.jeremyt135.reminderapp.service.AlarmSchedulingService
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -44,15 +45,10 @@ class AlarmBootScheduler : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action == null || intent.action !in actions) {
-            Timber.w("AlarmActionReceiver called with incorrect action: ${intent.action}")
+            Timber.w("AlarmBootScheduler called with incorrect action: ${intent.action}")
             return
         }
 
-        val pendingResult = goAsync()
-        applicationScope.launch {
-            // Try to reschedule each reminder
-            rescheduleReminders(context, reminderRepository, alarmRepository, historyRepository)
-            pendingResult.finish()
-        }
+        AlarmSchedulingService.startRescheduleAll(context)
     }
 }

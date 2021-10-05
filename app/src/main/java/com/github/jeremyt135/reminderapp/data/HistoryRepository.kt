@@ -3,6 +3,7 @@ package com.github.jeremyt135.reminderapp.data
 import com.github.jeremyt135.reminderapp.data.domain.History
 import com.github.jeremyt135.reminderapp.di.HistoryDatabaseSource
 import kotlinx.coroutines.flow.Flow
+import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -11,7 +12,10 @@ interface HistoryRepository {
 
     fun findByReminderId(reminderId: String): Flow<List<History>>
 
-    suspend fun getLatestForReminder(reminderId: String): History?
+    suspend fun getLatestForReminder(
+        reminderId: String,
+        onDate: LocalDate = LocalDate.now()
+    ): History?
 
     suspend fun findById(id: String): History?
 
@@ -31,9 +35,8 @@ class HistoryRepositoryImpl @Inject constructor(
     override fun findByReminderId(reminderId: String) =
         historyLocalDataSource.findByReminderId(reminderId)
 
-    override suspend fun getLatestForReminder(reminderId: String): History? =
+    override suspend fun getLatestForReminder(reminderId: String, onDate: LocalDate): History? =
         historyLocalDataSource.getLatestForReminder(reminderId)
-
 
     override suspend fun findById(id: String): History? = historyLocalDataSource.findById(id)
 

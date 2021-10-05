@@ -10,12 +10,12 @@ import com.github.jeremyt135.reminderapp.data.AlarmRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.*
 import com.github.jeremyt135.reminderapp.di.AppCoroutineScope
-import com.github.jeremyt135.reminderapp.service.AlarmService
+import com.github.jeremyt135.reminderapp.service.AlarmMediaService
+import com.github.jeremyt135.reminderapp.service.AlarmSchedulingService
 import com.github.jeremyt135.reminderapp.util.MutableEventFlow
 import com.github.jeremyt135.reminderapp.util.asEventFlow
 import com.github.jeremyt135.reminderapp.util.currentLocalDateTime
 import com.github.jeremyt135.reminderapp.util.getShortLocalDateDisplay
-import com.github.jeremyt135.reminderapp.work.AlarmActionHandler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.NonCancellable
@@ -58,7 +58,7 @@ class ReminderEditorViewModel @Inject constructor(
      * Comma-separated of selected days of week
      */
     val reminderDaysDisplayString: LiveData<String> =
-        _daysOfWeekState.combine(reminder) { state, reminder ->
+        _daysOfWeekState.combine(reminder) { _, reminder ->
             reminder.getDaysDisplayString()
         }.asLiveData(viewModelScope.coroutineContext)
 
@@ -72,7 +72,7 @@ class ReminderEditorViewModel @Inject constructor(
      * String containing the selected start date
      */
     val startDateString: LiveData<String> =
-        _startDateState.combine(_reminder) { state, reminder ->
+        _startDateState.combine(_reminder) { _, reminder ->
             reminder.schedulingRules.startDate.getShortLocalDateDisplay()
         }.asLiveData(viewModelScope.coroutineContext)
 
@@ -86,7 +86,7 @@ class ReminderEditorViewModel @Inject constructor(
      * String containing the selected end date
      */
     val endDateString: LiveData<String> =
-        _endDateState.combine(_reminder) { state, reminder ->
+        _endDateState.combine(_reminder) { _, reminder ->
             reminder.schedulingRules.endDate.getShortLocalDateDisplay()
         }.asLiveData(viewModelScope.coroutineContext)
 
@@ -100,7 +100,7 @@ class ReminderEditorViewModel @Inject constructor(
      * Display string for selected time
      */
     val timeDisplayString: LiveData<String> =
-        _timeState.combine(_reminder) { state, reminder ->
+        _timeState.combine(_reminder) { _, reminder ->
             reminder.getTimeDisplayString()
         }.asLiveData(viewModelScope.coroutineContext)
 
@@ -115,7 +115,7 @@ class ReminderEditorViewModel @Inject constructor(
      * Display string for selected snooze options
      */
     val snoozeDisplayString: LiveData<String> =
-        _snoozeRulesState.combine(_reminder) { state, reminder ->
+        _snoozeRulesState.combine(_reminder) { _, reminder ->
             reminder.snoozeRules.getDisplayString()
         }.asLiveData(viewModelScope.coroutineContext)
 
@@ -130,7 +130,7 @@ class ReminderEditorViewModel @Inject constructor(
      * String containing current selected vibrate and sound options
      */
     val vibrateAndSoundDisplayString: LiveData<String> =
-        _soundState.combine(_reminder) { state, reminder ->
+        _soundState.combine(_reminder) { _, reminder ->
             (if (_reminder.value.vibrate) "Vibrate" else "No vibrate") + ", ${
                 getSoundTitle(
                     reminder.notifSoundUri
@@ -391,29 +391,12 @@ class ReminderEditorViewModel @Inject constructor(
                 }.let { reminder ->
                     reminderRepository.save(reminder)
 
-                    val wasScheduled = stopAlarmsForReminder(getApplication(), reminder)
-
-                    var nextAlarmId = AlarmActionHandler.NO_ALARM_ID
-                    reminder.schedulingRules.getNextTimeForAlarm(
-                        currentLocalDateTime(),
-                        nextTimeOptions = SchedulingRules.NextTimeOptions.ALLOW_ALL
-                    )?.let { time ->
-                        val nextAlarm = Alarm(
-                            reminderId = reminder.id,
-                            triggerAt = time,
-                            maxSnoozeRepeats = reminder.maxSnoozeRepeats,
-                            snoozeDuration = reminder.snoozeDuration
-                        )
-                        nextAlarm.id = alarmRepository.save(nextAlarm)
-                        nextAlarmId = nextAlarm.id
-                    }
-
                     // stop currently running AlarmService if saved reminder is the one scheduled
-                    if (wasScheduled) {
-                        AlarmService.requestStop(getApplication())
+                    if (stopAlarmsForReminder(getApplication(), reminder)) {
+                        AlarmMediaService.requestStop(getApplication())
                     }
 
-                    enqueueScheduleNext(getApplication(), nextAlarmId)
+                    AlarmSchedulingService.startScheduleNewAlarm(getApplication(), reminder)
                 }
             }
         }
@@ -452,8 +435,8 @@ class ReminderEditorViewModel @Inject constructor(
                     with(getApplication<Application>()) {
                         if (stopAlarmsForReminder(this, reminder)) {
                             // Was currently scheduled, so try to schedule next
-                            AlarmService.requestStop(this)
-                            enqueueScheduleNext(getApplication(), AlarmActionHandler.NO_ALARM_ID)
+                            AlarmMediaService.requestStop(this)
+                            AlarmSchedulingService.startScheduleNext(getApplication())
                         }
                     }
 

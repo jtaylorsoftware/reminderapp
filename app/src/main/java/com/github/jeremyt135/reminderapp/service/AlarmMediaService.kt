@@ -26,7 +26,7 @@ import javax.inject.Inject
  * Service that creates the notification and plays vibration & sound for an Alarm.
  */
 @AndroidEntryPoint
-class AlarmService : Service(), MediaPlayer.OnPreparedListener, MediaPlayer.OnErrorListener {
+class AlarmMediaService : Service(), MediaPlayer.OnPreparedListener, MediaPlayer.OnErrorListener {
     @Inject
     lateinit var reminderRepository: ReminderRepository
 
@@ -142,15 +142,15 @@ class AlarmService : Service(), MediaPlayer.OnPreparedListener, MediaPlayer.OnEr
         Timber.d("Starting vibrate if available")
         val vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
         if (vibrator.hasVibrator()) {
-            vibrator.start()
+            vibrator.startScheduleNext()
         }
     }
 
     private fun startPlayback(soundUri: String) {
         Timber.d("Starting playback")
         mediaPlayer = MediaPlayer().apply {
-            setOnPreparedListener(this@AlarmService)
-            setOnErrorListener(this@AlarmService)
+            setOnPreparedListener(this@AlarmMediaService)
+            setOnErrorListener(this@AlarmMediaService)
             setAudioAttributes(
                 AudioAttributes.Builder()
                     .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
@@ -158,7 +158,7 @@ class AlarmService : Service(), MediaPlayer.OnPreparedListener, MediaPlayer.OnEr
                     .build()
             )
             isLooping = true
-            setDataSource(this@AlarmService, Uri.parse(soundUri))
+            setDataSource(this@AlarmMediaService, Uri.parse(soundUri))
             prepareAsync()
         }
     }
@@ -206,7 +206,7 @@ class AlarmService : Service(), MediaPlayer.OnPreparedListener, MediaPlayer.OnEr
 
     private inner class AlarmServiceBinderImpl : AlarmServiceBinder() {
         override fun stop() {
-            with(this@AlarmService) {
+            with(this@AlarmMediaService) {
                 stopSelf()
             }
         }
@@ -227,7 +227,7 @@ class AlarmService : Service(), MediaPlayer.OnPreparedListener, MediaPlayer.OnEr
          */
         fun bind(context: Context, serviceConnection: ServiceConnection) {
             context.bindService(
-                Intent(context, AlarmService::class.java),
+                Intent(context, AlarmMediaService::class.java),
                 serviceConnection,
                 0
             )
@@ -237,7 +237,7 @@ class AlarmService : Service(), MediaPlayer.OnPreparedListener, MediaPlayer.OnEr
          * Starts the Service using a Reminder to determine vibration & sound settings.
          */
         fun start(context: Context, reminder: Reminder) {
-            Intent(context, AlarmService::class.java).apply {
+            Intent(context, AlarmMediaService::class.java).apply {
                 action = ACTION_ALARM_START
                 putExtra(EXTRA_REMINDER_ID, reminder.id)
                 putExtra(EXTRA_REMINDER_DESCRIPTION, reminder.description)
@@ -257,7 +257,7 @@ class AlarmService : Service(), MediaPlayer.OnPreparedListener, MediaPlayer.OnEr
          */
         fun requestStop(context: Context) {
             context.startService(
-                Intent(context, AlarmService::class.java).apply {
+                Intent(context, AlarmMediaService::class.java).apply {
                     action = ACTION_ALARM_STOP
                 }
             )
@@ -266,7 +266,7 @@ class AlarmService : Service(), MediaPlayer.OnPreparedListener, MediaPlayer.OnEr
 }
 
 @Suppress("DEPRECATION")
-private fun Vibrator.start() {
+private fun Vibrator.startScheduleNext() {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
         val audioAttributes =
             AudioAttributes.Builder()

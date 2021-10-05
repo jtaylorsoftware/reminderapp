@@ -73,7 +73,7 @@ class AlarmUtilTest {
 
         scheduleAlarmForReminder(context, alarm, reminder)
 
-        intent = getCreatedIntentForAlarmAction(context, ACTION_ALARM_START, reminder.id)
+        intent = getCreatedAlarmStartIntent(context, ACTION_ALARM_START, reminder.id)
 
         assertThat(intent).isNotNull()
     }
@@ -98,7 +98,7 @@ class AlarmUtilTest {
             alarms.forEach { runBlocking { alarmRepo.save(it) } }
             assertThat(scheduleNextAlarm(context, alarmRepo, reminderRepository)).isTrue()
 
-            intent = getCreatedIntentForAlarmAction(context, ACTION_ALARM_START, reminders[0].id)
+            intent = getCreatedAlarmStartIntent(context, ACTION_ALARM_START, reminders[0].id)
 
             assertThat(intent).isNotNull()
             assertThat(alarmRepo.getFirstScheduledAlarm()!!.copy(id = 0)).isEqualTo(
@@ -358,21 +358,21 @@ class AlarmUtilTest {
         )
 
         assertThat(
-            getCreatedIntentForAlarmAction(
+            getCreatedAlarmStartIntent(
                 context,
                 ACTION_ALARM_SNOOZE,
                 reminder.id
             )
         ).isNotNull()
         assertThat(
-            getCreatedIntentForAlarmAction(
+            getCreatedAlarmStartIntent(
                 context,
                 ACTION_ALARM_SKIP,
                 reminder.id
             )
         ).isNotNull()
         assertThat(
-            getCreatedIntentForAlarmAction(
+            getCreatedAlarmStartIntent(
                 context,
                 ACTION_ALARM_COMPLETE,
                 reminder.id

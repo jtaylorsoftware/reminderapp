@@ -7,7 +7,6 @@ import androidx.work.WorkerParameters
 import com.github.jeremyt135.reminderapp.data.AlarmRepository
 import com.github.jeremyt135.reminderapp.data.HistoryRepository
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
-import com.github.jeremyt135.reminderapp.work.AlarmActionHandler
 
 /**
  * Factory class for creating AlarmActionHandler in tests, because apparently HiltWorkerFactory just

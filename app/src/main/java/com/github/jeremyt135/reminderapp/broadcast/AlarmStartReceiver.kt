@@ -4,15 +4,11 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import androidx.preference.PreferenceManager
-import androidx.work.ExistingWorkPolicy
 import androidx.work.WorkManager
 import com.github.jeremyt135.R
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.di.AppCoroutineScope
-import com.github.jeremyt135.reminderapp.service.AlarmService
-import com.github.jeremyt135.reminderapp.service.AlarmTimer
-import com.github.jeremyt135.reminderapp.service.AlarmTimerManager
-import com.github.jeremyt135.reminderapp.work.AlarmActionHandler
+import com.github.jeremyt135.reminderapp.service.*
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -40,7 +36,8 @@ class AlarmStartReceiver : BroadcastReceiver() {
             return
         }
 
-        val reminderId = intent.getStringExtra(EXTRA_REMINDER_ID) ?: return enqueueScheduleNext(context, 0)
+        val reminderId = intent.getStringExtra(EXTRA_REMINDER_ID)
+            ?: return AlarmSchedulingService.startScheduleNext(context)
 
         val pendingResult = goAsync()
         applicationScope.launch {
@@ -48,7 +45,7 @@ class AlarmStartReceiver : BroadcastReceiver() {
             if (reminderAndAlarm?.alarm == null) {
                 // had no data to work with, try to schedule next
                 Timber.e("Could not get ReminderAndAlarm")
-                enqueueScheduleNext(context, 0)
+                AlarmSchedulingService.startScheduleNext(context)
                 pendingResult.finish()
                 return@launch
             }
@@ -64,31 +61,25 @@ class AlarmStartReceiver : BroadcastReceiver() {
                     ) * millisPerSec
             Timber.d("Read AlarmDelay as $alarmDelay ms")
 
-            val (reminder, alarm) = reminderAndAlarm
+            val (reminder, _) = reminderAndAlarm
 
             // Start timer
             val started = timerManager.startTimer(applicationScope, alarmDelay.toLong()) {
                 // Snooze when timer ends uninterrupted
-                snoozeAlarm(context, reminder.id)
+                AlarmSnoozeService.start(context, reminder)
             }
             // Ensure that it started
             if (!started) {
                 // the previous timer wasn't cleared, or there's other problems making timers
                 Timber.e("Could not create AlarmTimer for reminder ${reminder.id}")
-                enqueueScheduleNext(context, alarm!!.id)
+                AlarmSchedulingService.startScheduleNext(context)
             } else {
                 // started, so create service
                 Timber.d("AlarmStartReceiver starting service")
-                AlarmService.start(context, reminder)
+                AlarmMediaService.start(context, reminder)
             }
 
             pendingResult.finish()
-        }
-    }
-
-    private fun snoozeAlarm(context: Context, reminderId: String) {
-        AlarmActionHandler.createForAction(ACTION_ALARM_SNOOZE, reminderId).let {
-            WorkManager.getInstance(context).enqueue(it)
         }
     }
 }

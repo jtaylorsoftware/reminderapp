@@ -16,13 +16,12 @@ import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.ReminderAndAlarm
 import com.github.jeremyt135.reminderapp.data.domain.SchedulingRules
 import com.github.jeremyt135.reminderapp.getOrAwaitValue
-import com.github.jeremyt135.reminderapp.service.AlarmService
+import com.github.jeremyt135.reminderapp.service.AlarmMediaService
 import com.github.jeremyt135.reminderapp.service.AlarmTimer
 import com.github.jeremyt135.reminderapp.service.AlarmTimerManager
 import com.github.jeremyt135.reminderapp.util.EventFlow
 import com.github.jeremyt135.reminderapp.util.currentLocalDateTime
 import com.github.jeremyt135.reminderapp.util.getShortLocalTimeDisplay
-import com.github.jeremyt135.reminderapp.work.AlarmActionHandler
 import com.google.common.truth.Truth.assertThat
 import io.mockk.*
 import io.mockk.impl.annotations.MockK
@@ -53,7 +52,7 @@ class AlarmViewModelTest {
     lateinit var actionSlot: CapturingSlot<String>
     lateinit var reminderIdSlot: CapturingSlot<String>
 
-    private lateinit var fakeBinder: AlarmService.AlarmServiceBinder
+    private lateinit var fakeBinder: AlarmMediaService.AlarmServiceBinder
 
     @get:Rule
     var mainCoroutineRule = MainCoroutineRule()
@@ -105,9 +104,9 @@ class AlarmViewModelTest {
             )
         } returns OneTimeWorkRequestBuilder<AlarmActionHandler>().build()
 
-        mockkObject(AlarmService.Companion)
+        mockkObject(AlarmMediaService.Companion)
 
-        fakeBinder = spyk(object : AlarmService.AlarmServiceBinder() {
+        fakeBinder = spyk(object : AlarmMediaService.AlarmServiceBinder() {
             override fun stop() {}
         })
     }

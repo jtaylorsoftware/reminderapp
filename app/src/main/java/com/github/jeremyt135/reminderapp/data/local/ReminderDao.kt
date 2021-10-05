@@ -18,7 +18,7 @@ interface ReminderDao {
         AND hs.completed_at = ( 
             SELECT MAX(completed_at) FROM history 
             WHERE reminder_id = reminder.id
-                AND DATE('now', 'localtime') = DATE(IFNULL(hs.completed_at, 0)/1000, 'unixepoch', 'localtime')
+                AND DATE('now', 'localtime') = DATE(ROUND(IFNULL(hs.completed_at, 0)/1000), 'unixepoch', 'localtime')
         )
     """
     )
@@ -75,6 +75,16 @@ interface ReminderDao {
     """
     )
     fun getAllWithAlarmsTimeAscending(): Flow<List<ReminderAndAlarm>>
+
+    @Transaction
+    @Query(
+        """
+        SELECT reminder.*, alarm.*
+        FROM reminder
+        LEFT OUTER JOIN alarm on reminder.id = alarm.reminder_id
+    """
+    )
+    suspend fun getAllWithAlarms(): List<ReminderAndAlarm>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(reminder: Reminder)

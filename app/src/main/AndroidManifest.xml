@@ -55,7 +55,10 @@
             </intent-filter>
         </receiver>
 
-        <service android:name=".reminderapp.service.AlarmService" />
+        <service android:name=".reminderapp.service.AlarmMediaService" />
+        <service android:name=".reminderapp.service.AlarmHistoryService" />
+        <service android:name=".reminderapp.service.AlarmSchedulingService" />
+        <service android:name=".reminderapp.service.AlarmSnoozeService" />
 
         <provider
             android:name="androidx.startup.InitializationProvider"

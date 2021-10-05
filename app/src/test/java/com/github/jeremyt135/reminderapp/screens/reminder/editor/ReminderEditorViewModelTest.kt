@@ -15,9 +15,8 @@ import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.Alarm
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.SchedulingRules
-import com.github.jeremyt135.reminderapp.service.AlarmService
+import com.github.jeremyt135.reminderapp.service.AlarmMediaService
 import com.github.jeremyt135.reminderapp.util.currentLocalDateTime
-import com.github.jeremyt135.reminderapp.work.AlarmActionHandler
 import com.google.common.truth.Truth.assertThat
 import io.mockk.*
 import io.mockk.impl.annotations.MockK
@@ -73,8 +72,8 @@ class ReminderEditorViewModelTest {
         mockkStatic(WorkManager::class)
         every { WorkManager.getInstance(any()) } returns mockWorkManager
 
-        mockkObject(AlarmService.Companion)
-        justRun { AlarmService.requestStop(any()) }
+        mockkObject(AlarmMediaService.Companion)
+        justRun { AlarmMediaService.requestStop(any()) }
 
         mockkObject(AlarmActionHandler.Companion)
         every {
@@ -176,7 +175,7 @@ class ReminderEditorViewModelTest {
 
             // Should save and schedule the next available alarm
             mockAlarmRepo.save(any())
-            AlarmService.requestStop(mockApplication)
+            AlarmMediaService.requestStop(mockApplication)
             enqueueScheduleNext(any(), alarm.id + 1)
         }
 
@@ -255,7 +254,7 @@ class ReminderEditorViewModelTest {
                 mockAlarmRepo.findByReminderId(reminder.id)
                 cancelAlarmIntentsForReminder(mockApplication, any())
                 mockAlarmRepo.delete(alarm)
-                AlarmService.requestStop(mockApplication)
+                AlarmMediaService.requestStop(mockApplication)
                 mockReminderRepo.delete(reminder)
                 enqueueScheduleNext(any(), 0)
             }

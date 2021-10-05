@@ -6,6 +6,7 @@ import com.github.jeremyt135.reminderapp.data.asDomainModel
 import com.github.jeremyt135.reminderapp.data.domain.History
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -19,8 +20,8 @@ class HistoryLocalDataSource @Inject constructor(private val historyDao: History
             it.asDomainModel()
         }
 
-    override suspend fun getLatestForReminder(reminderId: String): History? =
-        historyDao.getLatestForReminder(reminderId)?.asDomainModel()
+    override suspend fun getLatestForReminder(reminderId: String, onDate: LocalDate): History? =
+        historyDao.getLatestForReminder(reminderId, onDate.toString())?.asDomainModel()
 
     override suspend fun findById(id: String): History? = historyDao.findById(id)?.asDomainModel()
 
