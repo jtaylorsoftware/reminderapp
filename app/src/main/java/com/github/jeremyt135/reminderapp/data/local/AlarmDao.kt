@@ -21,7 +21,7 @@ interface AlarmDao {
     @Query("SELECT * FROM alarm WHERE scheduled IS NOT NULL ORDER BY trigger_at ASC LIMIT 1")
     suspend fun getFirstScheduledAlarm(): Alarm?
 
-    @Insert(onConflict = OnConflictStrategy.ABORT)
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(alarm: Alarm): Long
 
     @Update(entity = Alarm::class)
