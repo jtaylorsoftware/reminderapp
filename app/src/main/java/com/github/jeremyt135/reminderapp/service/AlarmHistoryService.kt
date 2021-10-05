@@ -3,16 +3,15 @@ package com.github.jeremyt135.reminderapp.service
 import android.app.Service
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.os.IBinder
 import com.github.jeremyt135.reminderapp.broadcast.ACTION_ALARM_COMPLETE
 import com.github.jeremyt135.reminderapp.broadcast.ACTION_ALARM_SKIP
-import com.github.jeremyt135.reminderapp.broadcast.EXTRA_REMINDER_ID
+import com.github.jeremyt135.reminderapp.broadcast.EXTRA_REMINDER
 import com.github.jeremyt135.reminderapp.data.HistoryRepository
-import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.History
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.ReminderStatus
+import com.github.jeremyt135.reminderapp.data.domain.parcel.ReminderParcel
 import com.github.jeremyt135.reminderapp.di.AppCoroutineScope
 import com.github.jeremyt135.reminderapp.di.DefaultDispatcher
 import dagger.hilt.android.AndroidEntryPoint
@@ -38,9 +37,6 @@ class AlarmHistoryService : Service() {
     lateinit var dispatcher: CoroutineDispatcher
 
     @Inject
-    lateinit var reminderRepository: ReminderRepository
-
-    @Inject
     lateinit var historyRepository: HistoryRepository
 
     private val mutex = Mutex()
@@ -53,21 +49,31 @@ class AlarmHistoryService : Service() {
         Timber.d("Created AlarmHistoryService")
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        Timber.d("AlarmHistoryService destroyed")
+    }
+
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
         Timber.d("Started for ${intent.action}")
-        val reminderId = intent.getStringExtra(EXTRA_REMINDER_ID) ?: ""
-        when (intent.action) {
-            ACTION_ALARM_SKIP -> createHistoryEntryForReminder(
-                startId,
-                reminderId,
-                ReminderStatus.SKIPPED
-            )
-            ACTION_ALARM_COMPLETE -> createHistoryEntryForReminder(
-                startId,
-                reminderId,
-                ReminderStatus.COMPLETED
-            )
-            else -> tryStopSelf(startId)
+        val reminder = intent.getParcelableExtra<ReminderParcel>(EXTRA_REMINDER)
+        if (reminder == null){
+            tryStopSelf(startId)
+        }
+        else {
+            when (intent.action) {
+                ACTION_ALARM_SKIP -> createHistoryEntryForReminder(
+                    startId,
+                    reminder.data,
+                    ReminderStatus.SKIPPED
+                )
+                ACTION_ALARM_COMPLETE -> createHistoryEntryForReminder(
+                    startId,
+                    reminder.data,
+                    ReminderStatus.COMPLETED
+                )
+                else -> tryStopSelf(startId)
+            }
         }
         return START_REDELIVER_INTENT
     }
@@ -77,16 +83,14 @@ class AlarmHistoryService : Service() {
      */
     private fun createHistoryEntryForReminder(
         startId: Int,
-        reminderId: String,
+        reminder: Reminder,
         status: ReminderStatus
     ) {
         applicationScope.launch {
             mutex.withLock { startCommands.addFirst(startId) }
             launch(dispatcher) {
                 try {
-                    val reminder = reminderRepository.findById(reminderId)
-                        ?: throw IllegalArgumentException("AlarmActionHandler failing: no reminder found saving history")
-                    val historyToday = historyRepository.getLatestForReminder(reminderId)
+                    val historyToday = historyRepository.getLatestForReminder(reminder.id)
                     if (historyToday == null) {
                         // Don't allow saving multiple history on the same day
                         val history = History(
@@ -150,15 +154,11 @@ class AlarmHistoryService : Service() {
                 ReminderStatus.COMPLETED -> ACTION_ALARM_COMPLETE
                 else -> throw IllegalArgumentException("Status must be SKIPPED or COMPLETED")
             }
-            Intent(context, AlarmSnoozeService::class.java).apply {
+            Intent(context, AlarmHistoryService::class.java).apply {
                 action = statusAction
-                putExtra(EXTRA_REMINDER_ID, reminder.id)
+                putExtra(EXTRA_REMINDER, ReminderParcel(reminder))
             }.also {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    context.startForegroundService(it)
-                } else {
-                    context.startService(it)
-                }
+                context.startService(it)
             }
         }
     }

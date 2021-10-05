@@ -1,5 +1,6 @@
 package com.github.jeremyt135.reminderapp.data.domain
 
+import android.os.Parcelable
 import androidx.databinding.BaseObservable
 import androidx.databinding.Bindable
 import com.github.jeremyt135.BR
@@ -8,6 +9,8 @@ import com.github.jeremyt135.reminderapp.data.local.ReminderAndAlarmEntity
 import com.github.jeremyt135.reminderapp.data.local.ReminderAndHistoryEntity
 import com.github.jeremyt135.reminderapp.data.local.ReminderEntity
 import com.github.jeremyt135.reminderapp.util.*
+import kotlinx.parcelize.Parcelize
+import kotlinx.parcelize.TypeParceler
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -172,7 +175,8 @@ enum class ReminderStatus {
 /**
  * Types of Reminders as it relates to scheduling
  */
-enum class SchedulingType {
+@Parcelize
+enum class SchedulingType: Parcelable {
     /**
      * The Reminder is set for one specific date
      */

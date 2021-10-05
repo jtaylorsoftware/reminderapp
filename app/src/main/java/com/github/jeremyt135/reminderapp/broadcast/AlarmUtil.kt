@@ -76,6 +76,11 @@ const val ACTION_ALARM_COMPLETE = "com.github.jeremyt135.reminderapp.ACTION_ALAR
 const val EXTRA_ALARM_ACTION_NAME = "com.github.jeremyt135.reminderapp.EXTRA_ALARM_ACTION_NAME"
 
 /**
+ * Reminder: parcelized Reminder
+ */
+const val EXTRA_REMINDER = "com.github.jeremyt135.reminderapp.EXTRA_REMINDER"
+
+/**
  * String: The UUID of the Reminder
  */
 const val EXTRA_REMINDER_ID = "com.github.jeremyt135.reminderapp.EXTRA_REMINDER_ID"

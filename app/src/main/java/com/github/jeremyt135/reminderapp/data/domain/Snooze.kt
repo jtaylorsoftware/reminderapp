@@ -1,8 +1,13 @@
 package com.github.jeremyt135.reminderapp.data.domain
 
+import android.os.Parcelable
+import kotlinx.parcelize.IgnoredOnParcel
+import kotlinx.parcelize.Parcelize
+
 /**
  * Data for determining how an alarm can snooze.
  */
+@Parcelize
 data class SnoozeRules(
     /**
      * The maximum times an alarm can snooze.
@@ -14,8 +19,11 @@ data class SnoozeRules(
      * How long to snooze each time, in minutes.
      */
     val duration: Long = DEFAULT_SNOOZE_DURATION
-) {
+) : Parcelable {
+    @IgnoredOnParcel
     val neverRepeats = maxRepeats == 0L
+
+    @IgnoredOnParcel
     val alwaysRepeats = maxRepeats == ALWAYS_REPEATS
 
     init {

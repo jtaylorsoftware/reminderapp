@@ -61,6 +61,11 @@ class AlarmSchedulingService : Service() {
         Timber.d("Created AlarmSchedulingService")
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        Timber.d("AlarmSchedulingService destroyed")
+    }
+
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
         Timber.d("Started for ${intent.action}")
         // Set up foreground notification
@@ -98,15 +103,15 @@ class AlarmSchedulingService : Service() {
     }
 
     private fun createNotification(action: String): Notification {
-        val channel = applicationContext.getString(R.string.scheduling_notification_channel_id)
+        val channel = getString(R.string.scheduling_notification_channel_id)
         val title = "Reminders scheduling"
-        val appName = applicationContext.getString(R.string.app_name)
+        val appName = getString(R.string.app_name)
         val message = if (action == ACTION_ALARM_SCHEDULE_NEXT || action == ACTION_ALARM_SAVE_NEW) {
             "\"$appName\" is scheduling your next reminders."
         } else {
             "\"$appName\" is performing rescheduling of your reminders."
         }
-        return NotificationCompat.Builder(applicationContext, channel).apply {
+        return NotificationCompat.Builder(this, channel).apply {
             setContentTitle(title)
             setSmallIcon(R.drawable.ic_scheduling_notification)
             setContentText(message)
@@ -155,7 +160,7 @@ class AlarmSchedulingService : Service() {
                 mutex.withLock {
                     startCommands.remove(startId)
                 }
-                startScheduleNext(applicationContext)
+                startScheduleNext(this@AlarmSchedulingService)
             }
         }
     }
@@ -230,12 +235,12 @@ class AlarmSchedulingService : Service() {
                 alarmRepository.clearScheduled(prevAlarm)
                 reminderRepository.findById(prevAlarm.reminderId)?.let { prevReminder ->
                     // Clear the pending intents
-                    cancelAlarmIntentsForReminder(applicationContext, prevReminder)
+                    cancelAlarmIntentsForReminder(this@AlarmSchedulingService, prevReminder)
                 }
             }
             alarmRepository.setScheduled(alarm)
             reminderRepository.findById(alarm.reminderId)?.let { reminder ->
-                scheduleAlarmForReminder(applicationContext, alarm.copy(scheduled = true), reminder)
+                scheduleAlarmForReminder(this@AlarmSchedulingService, alarm.copy(scheduled = true), reminder)
             }
         } // Else the Alarm was the one already scheduled
 
@@ -285,7 +290,7 @@ class AlarmSchedulingService : Service() {
 
     private suspend fun rescheduleReminders() {
         rescheduleReminders(
-            applicationContext,
+            this,
             reminderRepository,
             alarmRepository,
             historyRepository

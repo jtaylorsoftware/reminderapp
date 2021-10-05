@@ -54,6 +54,11 @@ class AlarmSnoozeService : Service() {
         Timber.d("Created AlarmSnoozeService")
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        Timber.d("AlarmSnoozeService destroyed")
+    }
+
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
         Timber.d("Started for ${intent.action}")
         if (intent.action == ACTION_ALARM_SNOOZE) {
@@ -88,7 +93,7 @@ class AlarmSnoozeService : Service() {
                     // Can't snooze again, never snoozes or out of attempts
                     Timber.d("Not snoozing Alarm: beyond allowed limit")
                     val newAlarm = saveNewAlarm(reminder)
-                    AlarmHistoryService.start(applicationContext, reminder, ReminderStatus.SKIPPED)
+                    AlarmHistoryService.start(this@AlarmSnoozeService, reminder, ReminderStatus.SKIPPED)
                     showSkipNotification(reminder, newAlarm ?: alarm)
                 } else {
                     // Determine next triggerAt for a snoozing alarm
@@ -110,7 +115,7 @@ class AlarmSnoozeService : Service() {
                     showSnoozeNotification(reminder, nextAlarm)
                 }
 
-                AlarmSchedulingService.startScheduleNext(applicationContext)
+                AlarmSchedulingService.startScheduleNext(this@AlarmSnoozeService)
             } catch (e: Exception) {
                 Timber.e(e)
             } finally {
@@ -149,17 +154,17 @@ class AlarmSnoozeService : Service() {
 
     private fun cancelPreviousNotification(notificationId: Int) {
         Timber.d("Cancelling previous notification: $notificationId")
-        NotificationManagerCompat.from(applicationContext).cancel(notificationId)
+        NotificationManagerCompat.from(this).cancel(notificationId)
     }
 
     private fun showSnoozeNotification(reminder: Reminder, alarm: Alarm) {
         Timber.d("Creating snooze notification: ${alarm.notificationId}")
-        showSnoozeNotification(applicationContext, reminder, alarm)
+        showSnoozeNotification(this, reminder, alarm)
     }
 
     private fun showSkipNotification(reminder: Reminder, alarm: Alarm) {
         Timber.d("Creating skip notification: ${alarm.notificationId}")
-        showSkipNotification(applicationContext, reminder, alarm)
+        showSkipNotification(this, reminder, alarm)
     }
 
     /**
@@ -202,11 +207,7 @@ class AlarmSnoozeService : Service() {
                 action = ACTION_ALARM_SNOOZE
                 putExtra(EXTRA_REMINDER_ID, reminder.id)
             }.also {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    context.startForegroundService(it)
-                } else {
-                    context.startService(it)
-                }
+                context.startService(it)
             }
         }
     }
