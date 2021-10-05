@@ -14,8 +14,6 @@
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/card_item_history"
         style="@style/Widget.App.RecyclerList.Card"
-        android:clickable="true"
-        android:focusable="true"
         app:cardElevation="@dimen/recycler_item_cardView_elevation">
 
         <androidx.constraintlayout.widget.ConstraintLayout
