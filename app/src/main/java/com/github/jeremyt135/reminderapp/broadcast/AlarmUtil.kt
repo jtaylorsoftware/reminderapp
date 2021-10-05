@@ -9,7 +9,6 @@ import android.graphics.Color
 import android.os.Build
 import android.widget.Toast
 import androidx.annotation.VisibleForTesting
-import androidx.core.app.AlarmManagerCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.github.jeremyt135.R
@@ -21,9 +20,7 @@ import com.github.jeremyt135.reminderapp.screens.alarm.AlarmActivity
 import com.github.jeremyt135.reminderapp.screens.reminder.editor.ReminderEditorActivity
 import com.github.jeremyt135.reminderapp.service.AlarmSchedulingService
 import com.github.jeremyt135.reminderapp.util.currentLocalDateTime
-import com.github.jeremyt135.reminderapp.util.getShortLocalDateDisplay
 import com.github.jeremyt135.reminderapp.util.getShortLocalTimeDisplay
-import com.github.jeremyt135.reminderapp.util.toEpochMilli
 import kotlinx.coroutines.*
 import timber.log.Timber
 
@@ -134,14 +131,9 @@ suspend fun rescheduleReminders(
                         val newAlarm = refreshAlarm(reminder, alarm, history)
 
                         val alarmsAreSame = alarm == newAlarm
-
                         withContext(NonCancellable) {
                             if (newAlarm != null && !alarmsAreSame) {
                                 newAlarm.id = alarmRepository.save(newAlarm)
-                            }
-
-                            if (alarm != null && newAlarm != null && !alarmsAreSame) {
-                                alarmRepository.delete(alarm)
                             }
                         }
 
@@ -242,11 +234,16 @@ fun refreshAlarm(reminder: Reminder, alarm: Alarm?, history: History?): Alarm? {
             // Did not complete today yet
             reminder.schedulingRules.getNextTimeForAlarm(
                 currentLocalDateTime(),
-                nextTimeOptions = SchedulingRules.NextTimeOptions(allowSameDay = true)
-            )?.let { nextTime ->
+                nextTimeOptions = SchedulingRules.NextTimeOptions.ALLOW_ALL
+            )?.let { scheduledTime ->
+                val time = if (scheduledTime < currentLocalDateTime()) {
+                    currentLocalDateTime().plusMinutes(1)
+                } else {
+                    scheduledTime
+                }
                 Alarm(
                     reminderId = reminder.id,
-                    triggerAt = nextTime,
+                    triggerAt = time,
                     maxSnoozeRepeats = reminder.maxSnoozeRepeats,
                     snoozeDuration = reminder.snoozeDuration
                 )
