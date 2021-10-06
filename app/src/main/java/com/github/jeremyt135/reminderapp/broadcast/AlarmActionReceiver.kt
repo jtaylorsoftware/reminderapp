@@ -24,11 +24,9 @@ import javax.inject.Inject
  *  - ACTION_ALARM_SKIP,
  *  - ACTION_ALARM_SNOOZE,
  *
- *  and creates a WorkRequest for an AlarmActionHandler (CoroutineWorker)
- *  to handle the received action. Typically the receiver runs
- *  as a result of the user pressing a button on the AlarmService
- *  notification; other classes directly create the work they want
- *  to start.
+ *  and starts the appropriate services to handle the action.
+ *  Typically the receiver runs as a result of the user pressing a button on the AlarmService
+ *  notification; other classes can directly start the services they want to start.
  */
 @AndroidEntryPoint
 class AlarmActionReceiver : BroadcastReceiver() {
