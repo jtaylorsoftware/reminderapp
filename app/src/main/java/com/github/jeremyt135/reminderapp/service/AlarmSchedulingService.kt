@@ -130,7 +130,9 @@ class AlarmSchedulingService : Service() {
         applicationScope.launch(dispatcher) {
             mutex.withLock { startCommands.addFirst(startId) }
             try {
-                val allowSameDay = historyRepository.getLatestForReminder(reminder.id) != null
+                val allowSameDay = historyRepository.getLatestForReminder(reminder.id)?.let {
+                    it.completionStatus == ReminderStatus.PENDING
+                } ?: true
 
                 reminder.schedulingRules.getNextTimeForAlarm(
                     currentLocalDateTime(),
