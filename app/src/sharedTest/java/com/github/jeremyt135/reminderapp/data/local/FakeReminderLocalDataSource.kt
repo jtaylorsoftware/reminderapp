@@ -88,6 +88,12 @@ class FakeReminderLocalDataSource(
         }.sortedBy { it.alarm?.triggerAt }
     }
 
+    override suspend fun getAllWithAlarms(): List<ReminderAndAlarm> = reminderCache.map {  reminder ->
+            val alarm = alarmCache.firstOrNull { it.reminderId == reminder.id }
+            ReminderAndAlarm(reminder, alarm)
+        }
+
+
     override suspend fun findById(id: String): Reminder? = reminderCache.find { it.id == id }
 
     override suspend fun save(reminder: Reminder) {

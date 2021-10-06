@@ -4,6 +4,7 @@ import android.content.ComponentName
 import android.content.Intent
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
+import androidx.work.CoroutineWorker
 import androidx.work.Data
 import androidx.work.testing.TestListenableWorkerBuilder
 import com.github.jeremyt135.R
@@ -15,18 +16,18 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
 
 /**
- * Utility class that runs AlarmActionHandler tests in an empty Activity, creating the worker
- * for each test using a new factory.
+ * Utility class that runs tests on workers in an empty Activity, using a custom
+ * worker factory that will correctly construct workers using supplied dependencies.
  */
 class WorkTestCoordinator(
      alarmRepository: AlarmRepository,
      reminderRepository: ReminderRepository,
      historyRepository: HistoryRepository
 ) {
-    private val factory = TestWorkerFactory(alarmRepository, reminderRepository, historyRepository)
+    val factory = TestWorkerFactory(alarmRepository, reminderRepository, historyRepository)
 
     @ExperimentalCoroutinesApi
-    fun runWorkTest(inputData: Data, block: suspend (worker: AlarmActionHandler) -> Unit) {
+    inline fun <reified T: CoroutineWorker> runWorkTest(inputData: Data, crossinline block: suspend (worker: T) -> Unit) {
         val startActivityIntent = Intent.makeMainActivity(
             ComponentName(
                 ApplicationProvider.getApplicationContext(),
@@ -38,7 +39,7 @@ class WorkTestCoordinator(
         )
 
         ActivityScenario.launch<HiltTestActivity>(startActivityIntent).onActivity { activity ->
-            val worker = TestListenableWorkerBuilder<AlarmActionHandler>(
+            val worker = TestListenableWorkerBuilder<T>(
                 ApplicationProvider.getApplicationContext(),
                 inputData = inputData,
             ).setWorkerFactory(factory).build()

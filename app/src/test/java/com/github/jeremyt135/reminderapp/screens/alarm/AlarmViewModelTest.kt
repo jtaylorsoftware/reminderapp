@@ -3,22 +3,13 @@ package com.github.jeremyt135.reminderapp.screens.alarm
 import android.content.Context
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.lifecycle.SavedStateHandle
-import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.Operation
-import androidx.work.WorkManager
-import androidx.work.WorkRequest
 import com.github.jeremyt135.reminderapp.MainCoroutineRule
 import com.github.jeremyt135.reminderapp.ReminderApplication
 import com.github.jeremyt135.reminderapp.broadcast.*
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
-import com.github.jeremyt135.reminderapp.data.domain.Alarm
-import com.github.jeremyt135.reminderapp.data.domain.Reminder
-import com.github.jeremyt135.reminderapp.data.domain.ReminderAndAlarm
-import com.github.jeremyt135.reminderapp.data.domain.SchedulingRules
+import com.github.jeremyt135.reminderapp.data.domain.*
 import com.github.jeremyt135.reminderapp.getOrAwaitValue
-import com.github.jeremyt135.reminderapp.service.AlarmMediaService
-import com.github.jeremyt135.reminderapp.service.AlarmTimer
-import com.github.jeremyt135.reminderapp.service.AlarmTimerManager
+import com.github.jeremyt135.reminderapp.service.*
 import com.github.jeremyt135.reminderapp.util.EventFlow
 import com.github.jeremyt135.reminderapp.util.currentLocalDateTime
 import com.github.jeremyt135.reminderapp.util.getShortLocalTimeDisplay
@@ -48,9 +39,6 @@ class AlarmViewModelTest {
 
     @MockK
     lateinit var mockTimerManager: AlarmTimerManager
-
-    lateinit var actionSlot: CapturingSlot<String>
-    lateinit var reminderIdSlot: CapturingSlot<String>
 
     private lateinit var fakeBinder: AlarmMediaService.AlarmServiceBinder
 
@@ -86,25 +74,20 @@ class AlarmViewModelTest {
         coEvery { mockReminderRepo.getReminderAndAlarm(reminder.id) } returns reminderAndAlarm
         every { mockApplication.applicationContext } returns mockContext
 
-        val mockWorkManager = mockkClass(WorkManager::class)
-        every { mockWorkManager.enqueue(any<WorkRequest>()) } returns mockkClass(Operation::class)
-        mockkStatic(WorkManager::class)
-        every { WorkManager.getInstance(any()) } returns mockWorkManager
-
         mockkStatic(::showToast)
         justRun { showToast(any(), any(), any()) }
 
-        mockkObject(AlarmActionHandler.Companion)
-        actionSlot = slot()
-        reminderIdSlot = slot()
-        every {
-            AlarmActionHandler.createForAction(
-                capture(actionSlot),
-                capture(reminderIdSlot)
-            )
-        } returns OneTimeWorkRequestBuilder<AlarmActionHandler>().build()
+        mockkObject(AlarmSchedulingService.Companion)
+        justRun { AlarmSchedulingService.startScheduleNext(any()) }
+        justRun { AlarmSchedulingService.startScheduleNewAlarm(any(), any()) }
+        mockkObject(AlarmSnoozeService.Companion)
+        justRun { AlarmSnoozeService.start(any(), any()) }
+        mockkObject(AlarmHistoryService.Companion)
+        justRun { AlarmHistoryService.start(any(), any(), any()) }
 
         mockkObject(AlarmMediaService.Companion)
+
+        mockSavedStateHandle = spyk(SavedStateHandle())
 
         fakeBinder = spyk(object : AlarmMediaService.AlarmServiceBinder() {
             override fun stop() {}
@@ -139,41 +122,43 @@ class AlarmViewModelTest {
     }
 
     @Test
-    fun snooze_createsWorkerForSnooze() = mainCoroutineRule.runBlockingTest {
+    fun snooze_startsServiceForSnooze() = mainCoroutineRule.runBlockingTest {
         every { mockSavedStateHandle.get<String>(EXTRA_REMINDER_ID) } returns reminder.id
         viewModel =
             AlarmViewModel(mockApplication, mockReminderRepo, mockSavedStateHandle, timerManager)
 
         viewModel.snooze()
         assertThat(viewModel.finished.peek()).isNotNull()
-        assertThat(actionSlot.isCaptured).isTrue()
-        assertThat(actionSlot.captured).isEqualTo(ACTION_ALARM_SNOOZE)
-        assertThat(reminderIdSlot.captured).isEqualTo(reminder.id)
+        verify {
+            AlarmSnoozeService.start(any(), reminder)
+        }
     }
 
     @Test
-    fun skip_createsWorkerForSkip() = mainCoroutineRule.runBlockingTest {
+    fun skip_startsServiceForSkip() = mainCoroutineRule.runBlockingTest {
         every { mockSavedStateHandle.get<String>(EXTRA_REMINDER_ID) } returns reminder.id
         viewModel =
             AlarmViewModel(mockApplication, mockReminderRepo, mockSavedStateHandle, timerManager)
 
         viewModel.skip()
         assertThat(viewModel.finished.peek()).isNotNull()
-        assertThat(actionSlot.isCaptured).isTrue()
-        assertThat(actionSlot.captured).isEqualTo(ACTION_ALARM_SKIP)
-        assertThat(reminderIdSlot.captured).isEqualTo(reminder.id)
+        verify {
+            AlarmHistoryService.start(any(), any(), ReminderStatus.SKIPPED)
+            AlarmSchedulingService.startScheduleNewAlarm(any(), reminder)
+        }
     }
 
     @Test
-    fun complete_createsWorkerForComplete() = mainCoroutineRule.runBlockingTest {
+    fun complete_startsServiceForComplete() = mainCoroutineRule.runBlockingTest {
         every { mockSavedStateHandle.get<String>(EXTRA_REMINDER_ID) } returns reminder.id
         viewModel =
             AlarmViewModel(mockApplication, mockReminderRepo, mockSavedStateHandle, timerManager)
 
         viewModel.complete()
         assertThat(viewModel.finished.peek()).isNotNull()
-        assertThat(actionSlot.isCaptured).isTrue()
-        assertThat(actionSlot.captured).isEqualTo(ACTION_ALARM_COMPLETE)
-        assertThat(reminderIdSlot.captured).isEqualTo(reminder.id)
+        verify {
+            AlarmHistoryService.start(any(), any(), ReminderStatus.COMPLETED)
+            AlarmSchedulingService.startScheduleNewAlarm(any(), reminder)
+        }
     }
 }

@@ -11,7 +11,9 @@ import com.github.jeremyt135.reminderapp.broadcast.cancelAlarmIntentsForReminder
 import com.github.jeremyt135.reminderapp.data.*
 import com.github.jeremyt135.reminderapp.data.domain.*
 import com.github.jeremyt135.reminderapp.data.local.FakeHistoryLocalDataSource
+import com.github.jeremyt135.reminderapp.service.AlarmHistoryService
 import com.github.jeremyt135.reminderapp.service.AlarmMediaService
+import com.github.jeremyt135.reminderapp.service.AlarmSchedulingService
 import com.github.jeremyt135.reminderapp.util.currentEpochMilli
 import com.github.jeremyt135.reminderapp.util.uuid
 import com.google.common.truth.Truth.assertThat
@@ -95,7 +97,7 @@ class RemindersViewModelTest {
         assertThat(fakeAlarmRepository.findById(1)).isNull()
         verify {
             AlarmMediaService.requestStop(any())
-            AlarmActionHandler.createForScheduleNext(any())
+            AlarmSchedulingService.startScheduleNext(any())
             cancelAlarmIntentsForReminder(any(), reminder)
         }
     }
@@ -371,11 +373,14 @@ class RemindersViewModelTest {
         fakeHistoryRepository = FakeHistoryRepository(FakeHistoryLocalDataSource(historyEntries))
 
         mockkObject(AlarmMediaService.Companion)
-        justRun { AlarmMediaService.requestStop(any()) }
-        mockkObject(AlarmActionHandler.Companion)
-        every { AlarmActionHandler.createForAction(any(), any()) } returns mockk(relaxed = true)
-        mockkStatic(WorkManager::class)
-        every { WorkManager.getInstance(any()) } returns mockk(relaxed = true)
+        justRun { AlarmMediaService.start(any(), any()) }
+
+        mockkObject(AlarmSchedulingService.Companion)
+        justRun { AlarmSchedulingService.startScheduleNext(any()) }
+        justRun { AlarmSchedulingService.startScheduleNewAlarm(any(), any()) }
+        mockkObject(AlarmHistoryService.Companion)
+        justRun { AlarmHistoryService.start(any(), any(), any()) }
+
         mockkStatic(::cancelAlarmIntentsForReminder)
         justRun { cancelAlarmIntentsForReminder(any(), any()) }
 

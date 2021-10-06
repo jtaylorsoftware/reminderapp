@@ -36,6 +36,7 @@ class FakeReminderRepository @Inject constructor(
     }
 
     override fun getAllWithAlarmsTimeAscending(): Flow<List<ReminderAndAlarm>> = fakeLocalDataSource.getAllWithAlarmsTimeAscending()
+    override suspend fun getAllWithAlarms(): List<ReminderAndAlarm> = fakeLocalDataSource.getAllWithAlarms()
 
     override suspend fun save(reminder: Reminder) {
         fakeLocalDataSource.save(reminder)

@@ -130,9 +130,12 @@ suspend fun rescheduleReminders(
                         val history = historyRepository.getLatestForReminder(reminder.id)
                         val newAlarm = refreshAlarm(reminder, alarm, history)
 
-                        val alarmsAreSame = alarm == newAlarm
                         withContext(NonCancellable) {
-                            if (newAlarm != null && !alarmsAreSame) {
+                            if (alarm != null && newAlarm == null){
+                                // Alarm is invalid and also can't reschedule
+                                alarmRepository.delete(alarm)
+                            }
+                            if (newAlarm != null && alarm != newAlarm) {
                                 newAlarm.id = alarmRepository.save(newAlarm)
                             }
                         }
@@ -148,7 +151,7 @@ suspend fun rescheduleReminders(
                 }
             }.awaitAll()
 
-            Result.success(alarms.count { it?.id != 0L })
+            Result.success(alarms.count { it != null && it.id != 0L })
         }
     } catch (e: Exception) {
         Timber.e("rescheduleReminders: parent exception thrown:\n${e.stackTraceToString()}")
@@ -169,10 +172,10 @@ suspend fun rescheduleReminders(
  * @param alarm The current alarm associated with the reminder
  * @param history The latest history entry today with the reminder
  * @return A new Alarm instance if the alarm no longer satisfies its constraints,
- * and a new one could be created. If a new alarm could not be created, null is returned.
+ * and a new one could be created.
  * If the current alarm still satisfies its constraints, returns the parameter alarm.
- * If the parameter alarm is not null and null is returned, it is assumed that somewhere else
- * a new alarm is being saved, or the reminder is a one-off that should not be saved again.
+ * If null is returned, this indicates that the previous alarm is invalid and there could
+ * be no new one saved here.
  */
 fun refreshAlarm(reminder: Reminder, alarm: Alarm?, history: History?): Alarm? {
     return if (alarm != null) {
@@ -180,9 +183,8 @@ fun refreshAlarm(reminder: Reminder, alarm: Alarm?, history: History?): Alarm? {
         val timeNow = currentLocalDateTime()
         if (alarm.triggerAt < timeNow) {
             // In past or same time
-            if (history != null) {
-                // Has history for today, so it's been completed and new alarm must be
-                // in progress of saving otherwise triggerAt should be in the future
+            if (history != null && history.completionStatus != ReminderStatus.PENDING) {
+                // Has history for today, so it's been completed today and this alarm is invalid
                 null
             } else {
                 // No history today & in past, save new time but don't touch snooze settings
@@ -204,14 +206,17 @@ fun refreshAlarm(reminder: Reminder, alarm: Alarm?, history: History?): Alarm? {
                     val newTime = currentLocalDateTime().plusMinutes(1)
                     alarm.copy(triggerAt = newTime, scheduled = null)
                 }
-                else -> {
+                history.completionStatus != ReminderStatus.PENDING -> {
                     null
+                }
+                else -> {
+                    alarm
                 }
             }
         }
     } else {
         // No alarm exists (should not be the usual case), make new one
-        if (history != null) {
+        if (history != null && history.completionStatus != ReminderStatus.PENDING) {
             // Already completed today
             if (reminder.schedulingRules.type == SchedulingType.SINGLE) {
                 // can't do a one-off more than once

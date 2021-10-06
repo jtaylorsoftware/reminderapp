@@ -16,10 +16,13 @@ import com.github.jeremyt135.reminderapp.data.domain.Alarm
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.SchedulingRules
 import com.github.jeremyt135.reminderapp.data.local.AppDatabase
+import com.github.jeremyt135.reminderapp.service.AlarmTimerManager
 import com.github.jeremyt135.reminderapp.util.currentLocalDateTime
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runBlockingTest
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -41,6 +44,9 @@ class AlarmActivityTest {
 
     @Inject
     lateinit var database: AppDatabase
+
+    @Inject
+    lateinit var timerManager: AlarmTimerManager
 
     val time: LocalDateTime = currentLocalDateTime().plusHours(2)
     val reminder = Reminder(
@@ -68,12 +74,15 @@ class AlarmActivityTest {
         }
     }
 
+    @ExperimentalCoroutinesApi
     @Test
-    fun activity_withReminderIdExtra_displaysAlarm() {
+    fun activity_withReminderIdExtra_displaysAlarm() = runBlockingTest {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val intent = Intent(context, AlarmActivity::class.java).apply {
             putExtra(EXTRA_REMINDER_ID, reminder.id)
         }
+
+        timerManager.startTimer(this, delay = 3000) {}
         ActivityScenario.launch<AlarmActivity>(intent)
 
         onView(withText(reminder.description)).check(matches(isDisplayed()))

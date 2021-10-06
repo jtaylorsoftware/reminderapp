@@ -8,6 +8,7 @@ import androidx.test.filters.SmallTest
 import com.github.jeremyt135.reminderapp.data.*
 import com.github.jeremyt135.reminderapp.data.domain.*
 import com.github.jeremyt135.reminderapp.data.local.FakeHistoryLocalDataSource
+import com.github.jeremyt135.reminderapp.service.AlarmSchedulingService
 import com.github.jeremyt135.reminderapp.util.currentEpochMilli
 import com.github.jeremyt135.reminderapp.util.currentLocalDateTime
 import com.github.jeremyt135.reminderapp.util.currentLocalTime
@@ -15,6 +16,7 @@ import com.google.common.truth.Truth.assertThat
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import io.mockk.justRun
+import io.mockk.mockkObject
 import io.mockk.mockkStatic
 import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -54,6 +56,9 @@ class AlarmUtilTest {
     fun setup() {
         context = ApplicationProvider.getApplicationContext()
         hiltAndroidRule.inject()
+
+        mockkObject(AlarmSchedulingService.Companion)
+        justRun { AlarmSchedulingService.startScheduleNext(any()) }
     }
 
     @After
@@ -66,93 +71,7 @@ class AlarmUtilTest {
     }
 
     @Test
-    fun scheduleAlarmForReminder_setsAlarm() {
-        val reminder = Reminder()
-        val alarm =
-            Alarm(1, reminderId = reminder.id, triggerAt = currentLocalDateTime().plusHours(1))
-
-        scheduleAlarmForReminder(context, alarm, reminder)
-
-        intent = getCreatedAlarmStartIntent(context, ACTION_ALARM_START, reminder.id)
-
-        assertThat(intent).isNotNull()
-    }
-
-    @Test
-    fun scheduleNextAlarm_populatedDb_setsAlarmForNextSoonest() =
-        runBlockingTest {
-            val now = currentLocalDateTime()
-
-            val reminders = (1..2).map { Reminder() }
-
-            // Save alarms with descending id but ascending time
-            val alarms = reminders.mapIndexed { i, reminder ->
-                Alarm(
-                    reminderId = reminder.id,
-                    triggerAt = now.plusMinutes(10L * (i + 1))
-                )
-            }
-
-
-            reminderRepository.saveAll(reminders)
-            alarms.forEach { runBlocking { alarmRepo.save(it) } }
-            assertThat(scheduleNextAlarm(context, alarmRepo, reminderRepository)).isTrue()
-
-            intent = getCreatedAlarmStartIntent(context, ACTION_ALARM_START, reminders[0].id)
-
-            assertThat(intent).isNotNull()
-            assertThat(alarmRepo.getFirstScheduledAlarm()!!.copy(id = 0)).isEqualTo(
-                alarms[0].copy(
-                    scheduled = true
-                )
-            )
-
-        }
-
-    @Test
-    fun scheduleNextAlarm_clearsPreviouslyScheduled() = runBlockingTest {
-        val now = currentLocalDateTime()
-
-        val reminders = (1..4).map { Reminder() }
-
-        // Save alarms with descending id but ascending time
-        val alarms = reminders.mapIndexed { i, reminder ->
-            Alarm(
-                reminderId = reminder.id, triggerAt = now.plusMinutes(i.toLong()),
-                scheduled = if (i == 4) true else null
-            )
-        }
-
-
-        reminderRepository.saveAll(reminders)
-        alarms.forEach { runBlocking { alarmRepo.save(it) } }
-
-        assertThat(scheduleNextAlarm(context, alarmRepo, reminderRepository)).isTrue()
-
-        assertThat(alarmRepo.findById(4)!!.scheduled).isNull()
-    }
-
-    @Test
-    fun scheduleNextAlarm_noAlarms_doesNotSchedule() = runBlockingTest {
-        val reminder = Reminder()
-
-        reminderRepository.save(reminder)
-        scheduleNextAlarm(context, alarmRepo, reminderRepository)
-
-
-        mockkStatic(::scheduleAlarmForReminder)
-        justRun { scheduleAlarmForReminder(context, any(), any()) }
-
-        verify(exactly = 0) {
-            scheduleAlarmForReminder(context, any(), any())
-        }
-    }
-
-    @Test
     fun rescheduleAlarms_savesNewAlarms_schedulesNext() = runBlockingTest {
-        mockkStatic(::enqueueScheduleNext)
-        justRun { enqueueScheduleNext(any(), any()) }
-
         val reminders = (1L..4).map {
             Reminder(
                 schedulingRules = SchedulingRules(
@@ -167,17 +86,14 @@ class AlarmUtilTest {
 
         val alarms = alarmRepo.getAll().first()
         assertThat(alarms).hasSize(reminders.size)
-        assertThat(numRescheduled).isEqualTo(reminders.size)
+        assertThat(numRescheduled.getOrNull()!!).isEqualTo(reminders.size)
         verify {
-            enqueueScheduleNext(any(), any())
+            AlarmSchedulingService.startScheduleNext(any())
         }
     }
 
     @Test
     fun rescheduleAlarms_savesExpiredSingleReminders() = runBlockingTest {
-        mockkStatic(::enqueueScheduleNext)
-        justRun { enqueueScheduleNext(any(), any()) }
-
         // the base time for the test
         val t0 = currentLocalTime()
         val reminders = (1L..4).map {
@@ -196,7 +112,7 @@ class AlarmUtilTest {
         // Should save all the reminders
         val alarms = alarmRepo.getAll().first()
         assertThat(alarms).hasSize(reminders.size)
-        assertThat(numRescheduled).isEqualTo(reminders.size)
+        assertThat(numRescheduled.getOrNull()!!).isEqualTo(reminders.size)
 
         // Should only save in the future if the time was in the past
         alarms.forEachIndexed { i, alarm ->
@@ -212,15 +128,12 @@ class AlarmUtilTest {
         }
 
         verify {
-            enqueueScheduleNext(any(), any())
+            AlarmSchedulingService.startScheduleNext(any())
         }
     }
 
     @Test
     fun rescheduleAlarms_doesNotSaveRemindersWithHistoryOnSameDay() = runBlockingTest {
-        mockkStatic(::enqueueScheduleNext)
-        justRun { enqueueScheduleNext(any(), any()) }
-
         val reminders = (1L..4).map {
             Reminder(
                 schedulingRules = SchedulingRules(
@@ -252,7 +165,7 @@ class AlarmUtilTest {
 
         val alarms = alarmRepo.getAll().first()
         assertThat(alarms).hasSize(reminders.size)
-        assertThat(numRescheduled).isEqualTo(reminders.size)
+        assertThat(numRescheduled.getOrNull()!!).isEqualTo(reminders.size)
 
         // The reminder with history COMPLETED should have an alarm saved for tomorrow
         assertThat(alarms[0].triggerAt.toLocalDate().dayOfWeek).isEqualTo(
@@ -267,15 +180,12 @@ class AlarmUtilTest {
         }
 
         verify {
-            enqueueScheduleNext(any(), any())
+            AlarmSchedulingService.startScheduleNext(any())
         }
     }
 
     @Test
     fun rescheduleAlarms_doesNotSaveAlarmsInPast_ifHasHistory() = runBlockingTest {
-        mockkStatic(::enqueueScheduleNext)
-        justRun { enqueueScheduleNext(any(), any()) }
-
         val reminders = (1L..4).map {
             Reminder(
                 schedulingRules = SchedulingRules(
@@ -311,18 +221,15 @@ class AlarmUtilTest {
         val alarms = alarmRepo.getAll().first()
 
         assertThat(alarms).hasSize(reminders.size - 1)
-        assertThat(numRescheduled).isEqualTo(reminders.size - 1)
+        assertThat(numRescheduled.getOrNull()!!).isEqualTo(reminders.size - 1)
         verify {
-            enqueueScheduleNext(any(), any())
+            AlarmSchedulingService.startScheduleNext(any())
         }
     }
 
 
     @Test
     fun rescheduleAlarms_doesSaveAlarmsInPast_ifNoHistory() = runBlockingTest {
-        mockkStatic(::enqueueScheduleNext)
-        justRun { enqueueScheduleNext(any(), any()) }
-
         // save a bunch of single in past
         val reminders = (1L..4).map {
             Reminder(
@@ -339,9 +246,9 @@ class AlarmUtilTest {
         val alarms = alarmRepo.getAll().first()
 
         assertThat(alarms).hasSize(reminders.size)
-        assertThat(numRescheduled).isEqualTo(reminders.size)
+        assertThat(numRescheduled.getOrNull()!!).isEqualTo(reminders.size)
         verify {
-            enqueueScheduleNext(any(), any())
+            AlarmSchedulingService.startScheduleNext(any())
         }
     }
 

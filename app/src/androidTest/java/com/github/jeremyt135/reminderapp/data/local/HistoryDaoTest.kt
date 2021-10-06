@@ -16,6 +16,7 @@ import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import java.time.LocalDate
 import com.github.jeremyt135.reminderapp.data.local.HistoryEntity as History
 
 
@@ -62,7 +63,7 @@ class HistoryDaoTest {
             )
         }
         historyDao.insertAll(histories)
-        assertThat(historyDao.getLatestForReminder("id")!!).isEqualTo(histories.last())
+        assertThat(historyDao.getLatestForReminder("id", LocalDate.now().toString())!!).isEqualTo(histories.last())
     }
 
     @Test
