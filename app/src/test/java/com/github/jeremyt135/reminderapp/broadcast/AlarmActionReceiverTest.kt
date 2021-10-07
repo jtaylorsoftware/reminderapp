@@ -5,25 +5,15 @@ import android.content.Context
 import android.content.Intent
 import androidx.test.core.app.ApplicationProvider
 import com.github.jeremyt135.reminderapp.MainCoroutineRule
-import com.github.jeremyt135.reminderapp.data.*
-import com.github.jeremyt135.reminderapp.data.domain.Alarm
-import com.github.jeremyt135.reminderapp.data.domain.History
+import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.ReminderStatus
-import com.github.jeremyt135.reminderapp.data.local.FakeHistoryLocalDataSource
-import com.github.jeremyt135.reminderapp.di.*
 import com.github.jeremyt135.reminderapp.service.*
-import com.google.common.truth.Truth.assertThat
-import dagger.Module
-import dagger.Provides
-import dagger.hilt.InstallIn
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
-import dagger.hilt.android.testing.UninstallModules
-import dagger.hilt.components.SingletonComponent
 import io.mockk.*
-import kotlinx.coroutines.*
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
 import org.junit.Rule
@@ -32,68 +22,17 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import javax.inject.Inject
-import javax.inject.Singleton
 
-@UninstallModules(
-    DispatcherModule::class,
-    DatabaseModule::class,
-    RepositoryModule::class,
-    AlarmTimerModule::class,
-)
 @HiltAndroidTest
 @Config(application = HiltTestApplication::class)
 @ExperimentalCoroutinesApi
 @RunWith(RobolectricTestRunner::class)
 class AlarmActionReceiverTest {
-    @InstallIn(SingletonComponent::class)
-    @Module
-    inner class TestModule {
-        private val reminderCache: MutableList<Reminder> = mutableListOf()
-        private val alarmCache: MutableList<Alarm> = mutableListOf()
-        private val historyCache: MutableList<History> = mutableListOf()
-
-        @Provides
-        @Singleton
-        fun provideReminderRepository(): ReminderRepository =
-            FakeReminderRepository(reminderCache, alarmCache, historyCache)
-
-
-        @Provides
-        @Singleton
-        fun provideAlarmRepository(): AlarmRepository = FakeAlarmRepository(alarmCache)
-
-        @Provides
-        @Singleton
-        fun provideHistoryRepository(): HistoryRepository = FakeHistoryRepository(
-            FakeHistoryLocalDataSource(historyCache)
-        )
-
-        @Provides
-        @Singleton
-        fun provideAlarmTimerManager(): AlarmTimerManager =
-            mockkClass(AlarmTimerManager::class)
-
-        @DefaultDispatcher
-        @Provides
-        @Singleton
-        fun provideDefaultDispatcher(): CoroutineDispatcher = mainCoroutineRule.dispatcher
-
-        @AppCoroutineScope
-        @Provides
-        @Singleton
-        fun provideApplicationScope(): CoroutineScope = mainCoroutineRule
-
-        @IoDispatcher
-        @Provides
-        @Singleton
-        fun provideIoDispatcher(): CoroutineDispatcher = mainCoroutineRule.dispatcher
-    }
-
-    @get:Rule(order = 1)
+    @get:Rule
     var hiltRule = HiltAndroidRule(this)
 
-    @get:Rule(order = 0)
-    var mainCoroutineRule = MainCoroutineRule()
+    @Inject
+    lateinit var mainCoroutineRule: MainCoroutineRule
 
     @Inject
     lateinit var timerManager: AlarmTimerManager
