@@ -2,26 +2,21 @@ package com.github.jeremyt135.reminderapp.service
 
 import android.app.AlarmManager
 import android.app.Notification
-import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.os.Build
-import android.os.IBinder
+import androidx.annotation.VisibleForTesting
 import androidx.core.app.AlarmManagerCompat
 import androidx.core.app.NotificationCompat
 import com.github.jeremyt135.R
 import com.github.jeremyt135.reminderapp.broadcast.*
 import com.github.jeremyt135.reminderapp.data.AlarmRepository
 import com.github.jeremyt135.reminderapp.data.HistoryRepository
-import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.*
 import com.github.jeremyt135.reminderapp.data.domain.parcel.ReminderParcel
-import com.github.jeremyt135.reminderapp.di.AppCoroutineScope
-import com.github.jeremyt135.reminderapp.di.DefaultDispatcher
 import com.github.jeremyt135.reminderapp.util.*
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
-import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import timber.log.Timber
 import javax.inject.Inject
@@ -30,31 +25,19 @@ import javax.inject.Inject
  * Service for either saving a new alarm or finding and scheduling the next alarm out of all locally saved alarms.
  */
 @AndroidEntryPoint
-class AlarmSchedulingService : Service() {
-    @AppCoroutineScope
-    @Inject
-    lateinit var applicationScope: CoroutineScope
-
-    @DefaultDispatcher
-    @Inject
-    lateinit var dispatcher: CoroutineDispatcher
-
-    @Inject
-    lateinit var reminderRepository: ReminderRepository
-
+class AlarmSchedulingService : ReminderService() {
     @Inject
     lateinit var alarmRepository: AlarmRepository
 
     @Inject
     lateinit var historyRepository: HistoryRepository
 
-    private val mutex = Mutex()
-    private val pendingScheduleNextCommands = ArrayDeque<Int>()
-    private val startCommands = ArrayDeque<Int>()
+    override val binder: Binder = Binder()
+
+    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+    val pendingScheduleNextCommands = ArrayDeque<Int>()
 
     private var scheduleNextJob: Job? = null
-
-    override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -128,7 +111,7 @@ class AlarmSchedulingService : Service() {
      */
     private fun saveNewAlarm(startId: Int, reminder: Reminder) {
         applicationScope.launch(dispatcher) {
-            mutex.withLock { startCommands.addFirst(startId) }
+            addStartCommand(startId)
             try {
                 val allowSameDay = historyRepository.getLatestForReminder(reminder.id)?.let {
                     it.completionStatus == ReminderStatus.PENDING
@@ -156,16 +139,12 @@ class AlarmSchedulingService : Service() {
                     }
                 }
 
-                mutex.withLock {
-                    startCommands.remove(startId)
-                }
+                removeStartCommand(startId)
                 startScheduleNext(this@AlarmSchedulingService)
             } catch (e: Exception) {
                 Timber.e(e)
                 withContext(NonCancellable) {
-                    mutex.withLock {
-                        startCommands.remove(startId)
-                    }
+                    removeStartCommand(startId)
                     startScheduleNext(this@AlarmSchedulingService)
                 }
                 if (e is CancellationException) {
@@ -180,8 +159,8 @@ class AlarmSchedulingService : Service() {
             // Enqueue self (in case waiting)
             mutex.withLock {
                 pendingScheduleNextCommands.addFirst(startId)
-                startCommands.addFirst(startId)
             }
+            addStartCommand(startId)
 
             scheduleNextJob?.join()
             scheduleNextJob = launch {
@@ -219,7 +198,7 @@ class AlarmSchedulingService : Service() {
         }
 
 
-    private suspend fun scheduleNextAlarm(startId: Int) = withContext(dispatcher) {
+    private suspend fun scheduleNextAlarm(startId: Int) {
         val pendingCommands = mutex.withLock {
             // Indicate this one has been received
             pendingScheduleNextCommands.remove(startId)
@@ -240,11 +219,11 @@ class AlarmSchedulingService : Service() {
     /**
      * Schedules the Alarm that is chronologically next to trigger today, if one exists.
      */
-    private suspend fun scheduleNextAlarmImpl(): Boolean = withContext(NonCancellable) {
+    private suspend fun scheduleNextAlarmImpl(): Boolean {
         Timber.d("Scheduling next alarm...")
 
         // The "next" alarm according to chronological order
-        val alarm = alarmRepository.getFirstByTimeAscending() ?: return@withContext false
+        val alarm = alarmRepository.getFirstByTimeAscending() ?: return false
 
         // The alarm that is already saved with scheduled flag set
         val previousScheduled = alarmRepository.getFirstScheduledAlarm()
@@ -252,21 +231,23 @@ class AlarmSchedulingService : Service() {
         // See if there's any obvious work to do by comparing the two instances (normally
         // the "scheduled" is also the first chronologically)
         if (previousScheduled != alarm) {
-            // Alarm is not the one already scheduled - clear previous & set new
-            previousScheduled?.let { prevAlarm ->
-                alarmRepository.clearScheduled(prevAlarm)
-                reminderRepository.findById(prevAlarm.reminderId)?.let { prevReminder ->
-                    // Clear the pending intents
-                    cancelAlarmIntentsForReminder(this@AlarmSchedulingService, prevReminder)
+            withContext(NonCancellable) {
+                // Alarm is not the one already scheduled - clear previous & set new
+                previousScheduled?.let { prevAlarm ->
+                    alarmRepository.clearScheduled(prevAlarm)
+                    reminderRepository.findById(prevAlarm.reminderId)?.let { prevReminder ->
+                        // Clear the pending intents
+                        cancelAlarmIntentsForReminder(this@AlarmSchedulingService, prevReminder)
+                    }
                 }
-            }
-            alarmRepository.setScheduled(alarm)
-            reminderRepository.findById(alarm.reminderId)?.let { reminder ->
-                scheduleAlarmForReminder(
-                    this@AlarmSchedulingService,
-                    alarm.copy(scheduled = true),
-                    reminder
-                )
+                alarmRepository.setScheduled(alarm)
+                reminderRepository.findById(alarm.reminderId)?.let { reminder ->
+                    setAlarmClockForReminder(
+                        this@AlarmSchedulingService,
+                        alarm.copy(scheduled = true),
+                        reminder
+                    )
+                }
             }
         } else {
             // Else the Alarm was the one already scheduled
@@ -275,27 +256,30 @@ class AlarmSchedulingService : Service() {
             if (previousScheduled.triggerAt <= currentLocalDateTime()) {
                 // Is in the past, this has to be fixed by bumping it up, going to also
                 // assume that because it's still saved that it is still valid but dead
-                val updatedPreviousScheduled =
+                val updatedAlarm =
                     previousScheduled.copy(triggerAt = currentLocalDateTime().plusMinutes(1))
-                alarmRepository.save(updatedPreviousScheduled)
-                reminderRepository.findById(alarm.reminderId)?.let { reminder ->
-                    scheduleAlarmForReminder(
-                        this@AlarmSchedulingService,
-                        alarm.copy(scheduled = true),
-                        reminder
-                    )
+                withContext(NonCancellable) {
+                    alarmRepository.save(updatedAlarm)
+                    reminderRepository.findById(alarm.reminderId)?.let { reminder ->
+                        cancelAlarmIntentsForReminder(this@AlarmSchedulingService, reminder)
+                        setAlarmClockForReminder(
+                            this@AlarmSchedulingService,
+                            updatedAlarm,
+                            reminder
+                        )
+                    }
                 }
             } // else nothing to do
         }
 
-        true
+        return true
     }
 
     /**
-     * Schedules a system AlarmClock for the Alarm and Reminder, using the Alarm.triggerAt value
+     * Sets a system AlarmClock for the Alarm and Reminder, using the Alarm.triggerAt value
      * for the AlarmClock triggerAt value.
      */
-    private fun scheduleAlarmForReminder(
+    private fun setAlarmClockForReminder(
         context: Context,
         alarm: Alarm,
         reminder: Reminder
@@ -305,7 +289,7 @@ class AlarmSchedulingService : Service() {
         val intent = createAlarmActionIntent(context, ACTION_ALARM_START, reminder.id)
         val showIntent = getIntentForEditorActivity(context, reminder.id)
 
-        // Sanity check the time in case it was saved in the past (system might also not
+        // Sanity check the time in case it was still somehow saved in the past (system might also not
         // "Fire immediately" if it's in the past)
         val time = if (alarm.triggerAt < currentLocalDateTime()) {
             currentLocalDateTime().plusSeconds(10)
@@ -321,7 +305,7 @@ class AlarmSchedulingService : Service() {
 
     private fun doRescheduleAlarms(startId: Int) {
         applicationScope.launch(dispatcher) {
-            mutex.withLock { startCommands.addFirst(startId) }
+            addStartCommand(startId)
             try {
                 rescheduleReminders()
                 stopSelfIfLast(startId)
@@ -335,7 +319,8 @@ class AlarmSchedulingService : Service() {
         }
     }
 
-    private suspend fun rescheduleReminders(): Result<Int> =
+    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+    suspend fun rescheduleReminders(): Result<Int> =
         rescheduleReminders(
             this,
             reminderRepository,
@@ -343,36 +328,9 @@ class AlarmSchedulingService : Service() {
             historyRepository
         )
 
-
-    /**
-     * Non suspending way to both add a new startId to the queue and also try to stop it immediately.
-     * Use in replacement of stopSelf() in onStartCommand when the start intent should not
-     * be rejected.
-     */
-    private fun tryStopSelf(startId: Int) {
-        applicationScope.launch(dispatcher) {
-            withContext(NonCancellable) {
-                mutex.withLock { startCommands.addFirst(startId) }
-                mutex.withLock {
-                    startCommands.remove(startId)
-                    if (startCommands.lastOrNull() == null) {
-                        stopSelf()
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * Normal alternative to stopSelf() for startCommands that have finished.
-     */
-    private suspend fun stopSelfIfLast(startId: Int) = withContext(NonCancellable) {
-        mutex.withLock {
-            startCommands.remove(startId)
-            if (startCommands.lastOrNull() == null) {
-                stopSelf()
-            }
-        }
+    inner class Binder : ReminderService.Binder() {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ReminderService> getService(): T? = this@AlarmSchedulingService as? T
     }
 
     companion object {

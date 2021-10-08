@@ -20,6 +20,10 @@ import com.github.jeremyt135.reminderapp.data.domain.SchedulingRules
 import com.github.jeremyt135.reminderapp.data.local.FakeHistoryLocalDataSource
 import com.github.jeremyt135.reminderapp.di.DatabaseModule
 import com.github.jeremyt135.reminderapp.di.RepositoryModule
+import com.github.jeremyt135.reminderapp.service.AlarmTimer
+import com.github.jeremyt135.reminderapp.service.AlarmTimerManager
+import com.github.jeremyt135.reminderapp.util.EventFlow
+import com.github.jeremyt135.reminderapp.util.MutableEventFlow
 import com.github.jeremyt135.reminderapp.util.currentLocalDateTime
 import com.github.jeremyt135.reminderapp.util.getShortLocalTimeDisplay
 import dagger.Module
@@ -29,6 +33,9 @@ import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.UninstallModules
 import dagger.hilt.components.SingletonComponent
+import io.mockk.coEvery
+import io.mockk.every
+import io.mockk.mockkClass
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
@@ -39,42 +46,10 @@ import java.time.LocalDateTime
 import javax.inject.Inject
 import javax.inject.Singleton
 
-
-/**
- * TODO: when network data source is implemented add to uninstall
- */
-@UninstallModules(DatabaseModule::class, RepositoryModule::class)
 @MediumTest
 @HiltAndroidTest
 @ExperimentalCoroutinesApi
 class AlarmFragmentTest {
-
-    /**
-     * TODO: when network data source is implemented, add fake here
-     */
-    @InstallIn(SingletonComponent::class)
-    @Module
-    object TestModule {
-        private val reminderCache: MutableList<Reminder> = mutableListOf()
-        private val alarmCache: MutableList<Alarm> = mutableListOf()
-        private val historyCache: MutableList<History> = mutableListOf()
-
-        @Provides
-        @Singleton
-        fun provideReminderRepository(): ReminderRepository =
-            FakeReminderRepository(reminderCache, alarmCache, historyCache)
-
-
-        @Provides
-        @Singleton
-        fun provideAlarmRepository(): AlarmRepository = FakeAlarmRepository(alarmCache)
-
-        @Provides
-        @Singleton
-        fun provideHistoryRepository(): HistoryRepository = FakeHistoryRepository(
-            FakeHistoryLocalDataSource(historyCache)
-        )
-    }
 
     @get:Rule
     val hiltRule = HiltAndroidRule(this)
@@ -87,6 +62,9 @@ class AlarmFragmentTest {
 
     @Inject
     lateinit var historyRepository: HistoryRepository
+
+    @Inject
+    lateinit var timerManager: AlarmTimerManager
 
     val time: LocalDateTime = currentLocalDateTime().plusHours(2)
     val reminder = Reminder(
@@ -119,7 +97,12 @@ class AlarmFragmentTest {
     @Before
     fun setup() {
         hiltRule.inject()
-
+        coEvery { timerManager.startTimer(any(), any(), any()) } returns true
+        val mockTimer = mockkClass(AlarmTimer::class)
+        coEvery { timerManager.timer } returns mockTimer
+        every { mockTimer.stop() } returns true
+        val eventFlow = MutableEventFlow<Unit>(null)
+        every { mockTimer.timerFinished } returns eventFlow
         runBlocking {
             reminderRepository.save(reminder)
             alarmRepository.save(alarm)

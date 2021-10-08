@@ -29,42 +29,9 @@ import org.junit.Test
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/**
- * TODO: when network data source is implemented add to uninstall
- */
-@UninstallModules(DatabaseModule::class, RepositoryModule::class)
 @MediumTest
 @HiltAndroidTest
 class HistoryFragmentTest {
-
-    /**
-     * TODO: when network data source is implemented, add fake here
-     */
-    @InstallIn(SingletonComponent::class)
-    @Module
-    object TestModule {
-        private val historyCache = mutableListOf<History>()
-
-        @Provides
-        @Singleton
-        fun provideHistoryRepository(): HistoryRepository = FakeHistoryRepository(
-            FakeHistoryLocalDataSource(historyCache)
-        )
-
-        private val reminderCache: MutableList<Reminder> = mutableListOf()
-        private val alarmCache: MutableList<Alarm> = mutableListOf()
-
-        @Provides
-        @Singleton
-        fun provideReminderRepository(): ReminderRepository =
-            FakeReminderRepository(reminderCache, alarmCache, historyCache)
-
-
-        @Provides
-        @Singleton
-        fun provideAlarmRepository(): AlarmRepository = FakeAlarmRepository(alarmCache)
-    }
-
 
     @get:Rule
     val hiltRule = HiltAndroidRule(this)

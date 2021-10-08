@@ -1,53 +1,32 @@
 package com.github.jeremyt135.reminderapp.service
 
-import android.app.Service
 import android.content.Context
 import android.content.Intent
-import android.os.Build
-import android.os.IBinder
 import androidx.core.app.NotificationManagerCompat
+import com.github.jeremyt135.BuildConfig
 import com.github.jeremyt135.reminderapp.broadcast.*
 import com.github.jeremyt135.reminderapp.data.AlarmRepository
-import com.github.jeremyt135.reminderapp.data.ReminderRepository
 import com.github.jeremyt135.reminderapp.data.domain.Alarm
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.ReminderStatus
 import com.github.jeremyt135.reminderapp.data.domain.SchedulingType
-import com.github.jeremyt135.reminderapp.di.AppCoroutineScope
-import com.github.jeremyt135.reminderapp.di.DefaultDispatcher
+import com.github.jeremyt135.reminderapp.data.domain.parcel.ReminderParcel
 import com.github.jeremyt135.reminderapp.util.NotificationId
 import com.github.jeremyt135.reminderapp.util.currentLocalDateTime
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import timber.log.Timber
 import javax.inject.Inject
-
 
 /**
  * Service for snoozing alarms.
  */
 @AndroidEntryPoint
-class AlarmSnoozeService : Service() {
-    @AppCoroutineScope
-    @Inject
-    lateinit var applicationScope: CoroutineScope
-
-    @DefaultDispatcher
-    @Inject
-    lateinit var dispatcher: CoroutineDispatcher
-
-    @Inject
-    lateinit var reminderRepository: ReminderRepository
-
+class AlarmSnoozeService : ReminderService() {
     @Inject
     lateinit var alarmRepository: AlarmRepository
 
-    private val mutex = Mutex()
-    private val startCommands = ArrayDeque<Int>()
-
-    override fun onBind(intent: Intent?): IBinder? = null
+    override val binder = Binder()
 
     override fun onCreate() {
         super.onCreate()
@@ -62,11 +41,11 @@ class AlarmSnoozeService : Service() {
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
         Timber.d("Started for ${intent.action}")
         if (intent.action == ACTION_ALARM_SNOOZE) {
-            val reminderId = intent.getStringExtra(EXTRA_REMINDER_ID) ?: ""
-            if (reminderId.isEmpty()) {
+            val reminder = intent.getParcelableExtra<ReminderParcel>(EXTRA_REMINDER)
+            if (reminder == null) {
                 tryStopSelf(startId)
             } else {
-                snoozeAlarmForReminder(startId, reminderId)
+                snoozeAlarmForReminder(startId, reminder.data)
             }
         } else {
             tryStopSelf(startId)
@@ -74,14 +53,12 @@ class AlarmSnoozeService : Service() {
         return START_REDELIVER_INTENT
     }
 
-    private fun snoozeAlarmForReminder(startId: Int, reminderId: String) {
+    private fun snoozeAlarmForReminder(startId: Int, reminder: Reminder) {
         applicationScope.launch(dispatcher) {
-            mutex.withLock { startCommands.addFirst(startId) }
+            addStartCommand(startId)
             try {
-                val reminder = reminderRepository.findById(reminderId)
-                    ?: throw IllegalArgumentException("Reminder did not exist with id $reminderId")
                 val alarm = alarmRepository.findByReminderId(reminder.id)
-                    ?: throw IllegalStateException("Alarm for reminder $reminderId did not exist to snooze")
+                    ?: throw IllegalStateException("Alarm for reminder ${reminder.id} did not exist to snooze")
 
                 cancelPreviousNotification(alarm.notificationId)
                 alarmRepository.delete(alarm)
@@ -92,8 +69,21 @@ class AlarmSnoozeService : Service() {
                 ) {
                     // Can't snooze again, never snoozes or out of attempts
                     Timber.d("Not snoozing Alarm: beyond allowed limit")
+                    // Save new alarm if applicable
                     val newAlarm = saveNewAlarm(reminder)
-                    AlarmHistoryService.start(this@AlarmSnoozeService, reminder, ReminderStatus.SKIPPED)
+
+                    // Check if old reminder should be deleted
+                    if (reminder.schedulingRules.type == SchedulingType.SINGLE) {
+                        // Single reminders are deleted after they have completed - this is a design decision
+                        // to avoid confusion that a reminder is in the list but never rescheduled.
+                        reminderRepository.delete(reminder)
+                    }
+
+                    AlarmHistoryService.start(
+                        this@AlarmSnoozeService,
+                        reminder,
+                        ReminderStatus.SKIPPED
+                    )
                     showSkipNotification(reminder, newAlarm ?: alarm)
                 } else {
                     // Determine next triggerAt for a snoozing alarm
@@ -118,6 +108,13 @@ class AlarmSnoozeService : Service() {
                 AlarmSchedulingService.startScheduleNext(this@AlarmSnoozeService)
             } catch (e: Exception) {
                 Timber.e(e)
+                withContext(NonCancellable) {
+                    removeStartCommand(startId)
+                    AlarmSchedulingService.startScheduleNext(this@AlarmSnoozeService)
+                }
+                if (e is CancellationException) {
+                    throw e
+                }
             } finally {
                 // Notify this one finished
                 stopSelfIfLast(startId)
@@ -145,9 +142,6 @@ class AlarmSnoozeService : Service() {
                     alarm
                 }
         } else {
-            // Single reminders are deleted after they have completed - this is a design decision
-            // to avoid confusion that a reminder is in the list but never rescheduled.
-            reminderRepository.delete(reminder)
             null
         }
     }
@@ -167,35 +161,9 @@ class AlarmSnoozeService : Service() {
         showSkipNotification(this, reminder, alarm)
     }
 
-    /**
-     * Non suspending way to both add a new startId to the queue and also try to stop it immediately.
-     * Use in replacement of stopSelf() in onStartCommand when the start intent should not
-     * be rejected.
-     */
-    private fun tryStopSelf(startId: Int) {
-        applicationScope.launch {
-            withContext(NonCancellable) {
-                mutex.withLock { startCommands.addFirst(startId) }
-                mutex.withLock {
-                    startCommands.remove(startId)
-                    if (startCommands.lastOrNull() == null) {
-                        stopSelf()
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * Normal alternative to stopSelf() for startCommands that have finished.
-     */
-    private suspend fun stopSelfIfLast(startId: Int) = withContext(NonCancellable) {
-        mutex.withLock {
-            startCommands.remove(startId)
-            if (startCommands.lastOrNull() == null) {
-                stopSelf()
-            }
-        }
+    inner class Binder : ReminderService.Binder() {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ReminderService> getService(): T? = this@AlarmSnoozeService as? T
     }
 
     companion object {
@@ -205,7 +173,7 @@ class AlarmSnoozeService : Service() {
         fun start(context: Context, reminder: Reminder) {
             Intent(context, AlarmSnoozeService::class.java).apply {
                 action = ACTION_ALARM_SNOOZE
-                putExtra(EXTRA_REMINDER_ID, reminder.id)
+                putExtra(EXTRA_REMINDER, ReminderParcel(reminder))
             }.also {
                 context.startService(it)
             }

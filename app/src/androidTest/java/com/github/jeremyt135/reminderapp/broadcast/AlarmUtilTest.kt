@@ -30,6 +30,7 @@ import org.junit.Test
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
+import javax.inject.Inject
 
 @ExperimentalCoroutinesApi
 @HiltAndroidTest
@@ -42,15 +43,14 @@ class AlarmUtilTest {
 
     private var intent: PendingIntent? = null
 
-    private var historyCache = mutableListOf<History>()
-    private var historyRepository = FakeHistoryRepository(FakeHistoryLocalDataSource(historyCache))
-    private var alarmCache = mutableListOf<Alarm>()
-    private var alarmRepo: AlarmRepository = FakeAlarmRepository(alarmCache)
-    private var reminderCache = mutableListOf<Reminder>()
-    private var reminderRepository: ReminderRepository = FakeReminderRepository(
-        reminderCache, alarmCache, historyCache
-    )
+    @Inject
+    lateinit var historyRepository: HistoryRepository
 
+    @Inject
+    lateinit var alarmRepo: AlarmRepository
+
+    @Inject
+    lateinit var reminderRepository: ReminderRepository
 
     @Before
     fun setup() {
@@ -65,8 +65,6 @@ class AlarmUtilTest {
     fun teardown() {
         intent?.cancel()
         intent = null
-        alarmCache.clear()
-        reminderCache.clear()
         NotificationManagerCompat.from(context).cancelAll()
     }
 

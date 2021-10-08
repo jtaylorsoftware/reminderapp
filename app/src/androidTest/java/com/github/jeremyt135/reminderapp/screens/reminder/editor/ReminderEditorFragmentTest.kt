@@ -46,39 +46,9 @@ import java.time.LocalTime
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/**
- * TODO: when network data source is implemented add to uninstall
- */
-@UninstallModules(DatabaseModule::class, RepositoryModule::class)
 @HiltAndroidTest
 @MediumTest
 class ReminderEditorFragmentTest {
-
-    /**
-     * TODO: when network data source is implemented, add fake here
-     */
-    @InstallIn(SingletonComponent::class)
-    @Module
-    object TestModule {
-        private val reminderCache: MutableList<Reminder> = mutableListOf()
-        private val alarmCache: MutableList<Alarm> = mutableListOf()
-        private val historyCache = mutableListOf<History>()
-
-        @Provides
-        @Singleton
-        fun provideReminderRepository(): ReminderRepository =
-            FakeReminderRepository(reminderCache, alarmCache, historyCache)
-
-        @Provides
-        @Singleton
-        fun provideAlarmRepository(): AlarmRepository = FakeAlarmRepository(alarmCache)
-
-        @Provides
-        @Singleton
-        fun provideHistoryRepository(): HistoryRepository = FakeHistoryRepository(
-            FakeHistoryLocalDataSource(historyCache)
-        )
-    }
 
     private fun launchEditorFragmentWithReminder(
         reminderId: String,

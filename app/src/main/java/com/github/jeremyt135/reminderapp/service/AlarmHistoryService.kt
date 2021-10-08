@@ -1,6 +1,5 @@
 package com.github.jeremyt135.reminderapp.service
 
-import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.os.IBinder
@@ -12,12 +11,8 @@ import com.github.jeremyt135.reminderapp.data.domain.History
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.ReminderStatus
 import com.github.jeremyt135.reminderapp.data.domain.parcel.ReminderParcel
-import com.github.jeremyt135.reminderapp.di.AppCoroutineScope
-import com.github.jeremyt135.reminderapp.di.DefaultDispatcher
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import timber.log.Timber
 import java.time.Instant
 import java.time.ZoneId
@@ -27,22 +22,11 @@ import javax.inject.Inject
  * Service for saving history entries for reminders.
  */
 @AndroidEntryPoint
-class AlarmHistoryService : Service() {
-    @AppCoroutineScope
-    @Inject
-    lateinit var applicationScope: CoroutineScope
-
-    @DefaultDispatcher
-    @Inject
-    lateinit var dispatcher: CoroutineDispatcher
-
+class AlarmHistoryService : ReminderService() {
     @Inject
     lateinit var historyRepository: HistoryRepository
 
-    private val mutex = Mutex()
-    private val startCommands = ArrayDeque<Int>()
-
-    override fun onBind(intent: Intent?): IBinder? = null
+    override val binder: Binder = Binder()
 
     override fun onCreate() {
         super.onCreate()
@@ -57,10 +41,9 @@ class AlarmHistoryService : Service() {
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
         Timber.d("Started for ${intent.action}")
         val reminder = intent.getParcelableExtra<ReminderParcel>(EXTRA_REMINDER)
-        if (reminder == null){
+        if (reminder == null) {
             tryStopSelf(startId)
-        }
-        else {
+        } else {
             when (intent.action) {
                 ACTION_ALARM_SKIP -> createHistoryEntryForReminder(
                     startId,
@@ -87,7 +70,7 @@ class AlarmHistoryService : Service() {
         status: ReminderStatus
     ) {
         applicationScope.launch(dispatcher) {
-            mutex.withLock { startCommands.addFirst(startId) }
+            addStartCommand(startId)
             launch {
                 try {
                     val historyToday = historyRepository.getLatestForReminder(reminder.id)
@@ -107,10 +90,10 @@ class AlarmHistoryService : Service() {
                     stopSelfIfLast(startId)
                 } catch (e: Exception) {
                     Timber.e(e)
-                    withContext(NonCancellable){
+                    withContext(NonCancellable) {
                         stopSelfIfLast(startId)
                     }
-                    if (e is CancellationException){
+                    if (e is CancellationException) {
                         throw e
                     }
                 }
@@ -118,35 +101,9 @@ class AlarmHistoryService : Service() {
         }
     }
 
-    /**
-     * Non suspending way to both add a new startId to the queue and also try to stop it immediately.
-     * Use in replacement of stopSelf() in onStartCommand when the start intent should not
-     * be rejected.
-     */
-    private fun tryStopSelf(startId: Int) {
-        applicationScope.launch(dispatcher) {
-            withContext(NonCancellable) {
-                mutex.withLock { startCommands.addFirst(startId) }
-                mutex.withLock {
-                    startCommands.remove(startId)
-                    if (startCommands.lastOrNull() == null) {
-                        stopSelf()
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * Normal alternative to stopSelf() for startCommands that have finished.
-     */
-    private suspend fun stopSelfIfLast(startId: Int) = withContext(NonCancellable) {
-        mutex.withLock {
-            startCommands.remove(startId)
-            if (startCommands.lastOrNull() == null) {
-                stopSelf()
-            }
-        }
+    inner class Binder : ReminderService.Binder() {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ReminderService> getService(): T? = this@AlarmHistoryService as? T
     }
 
     companion object {

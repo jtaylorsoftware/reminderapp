@@ -131,7 +131,7 @@ suspend fun rescheduleReminders(
                         val newAlarm = refreshAlarm(reminder, alarm, history)
 
                         withContext(NonCancellable) {
-                            if (alarm != null && newAlarm == null){
+                            if (alarm != null && newAlarm == null) {
                                 // Alarm is invalid and also can't reschedule
                                 alarmRepository.delete(alarm)
                             }
@@ -193,7 +193,7 @@ fun refreshAlarm(reminder: Reminder, alarm: Alarm?, history: History?): Alarm? {
             }
         } else if (alarm.triggerAt > timeNow) {
             // In future, don't need to do anything
-            alarm
+            alarm.copy(scheduled = null)
         } else {
             // TriggerAt is right now
             when {
@@ -210,7 +210,7 @@ fun refreshAlarm(reminder: Reminder, alarm: Alarm?, history: History?): Alarm? {
                     null
                 }
                 else -> {
-                    alarm
+                    alarm.copy(scheduled = null)
                 }
             }
         }
@@ -267,13 +267,8 @@ fun cancelAlarmIntentsForReminder(context: Context, reminder: Reminder) {
 
     val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
-    // Cancel the alarm notification intent
+    // Cancel the alarm start broadcast intent
     getCreatedAlarmStartIntent(context, ACTION_ALARM_START, reminder.id)?.let {
-        alarmManager.cancel(it)
-    }
-
-    // Cancel the snooze intent
-    getCreatedAlarmStartIntent(context, ACTION_ALARM_SNOOZE, reminder.id)?.let {
         alarmManager.cancel(it)
     }
 }
