@@ -12,7 +12,7 @@ class RandomColorCacheTest {
 
     // Can tune as desired to stress test the color generation,
     // but there shouldn't be any with small values
-    private val cacheSize = 500
+    private val cacheSize = 250
 
     @Before
     fun setup(){
