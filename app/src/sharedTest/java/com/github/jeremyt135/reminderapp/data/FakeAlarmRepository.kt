@@ -4,14 +4,16 @@ package com.github.jeremyt135.reminderapp.data
 import com.github.jeremyt135.reminderapp.data.domain.Alarm
 import com.github.jeremyt135.reminderapp.util.toEpochMilli
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.flow
+import java.util.concurrent.atomic.AtomicLong
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class FakeAlarmRepository @Inject constructor(private val cache: MutableList<Alarm>) :
     AlarmRepository {
+    private val id = AtomicLong(0)
+
     override fun getAll(): Flow<List<Alarm>> = flow {
         emit(cache)
     }
@@ -49,10 +51,13 @@ class FakeAlarmRepository @Inject constructor(private val cache: MutableList<Ala
     override suspend fun save(alarm: Alarm): Long =
         when (val index = cache.indexOfFirst { it.id == alarm.id }) {
             -1 -> {
-                cache.add(alarm.copy(id = cache.size + 1L))
-                cache.size.toLong()
+                // Does not exist yet
+                val saved = alarm.copy(id = id.incrementAndGet())
+                cache.add(saved)
+                saved.id
             }
             else -> {
+                // Exists
                 cache[index] = alarm.copy()
                 alarm.id
             }
