@@ -6,11 +6,11 @@ import android.view.*
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.github.jeremyt135.R
 import com.github.jeremyt135.databinding.FragmentRemindersBinding
 import com.github.jeremyt135.reminderapp.screens.reminder.overview.dialog.RemindersFilterDialogFragment
 import com.github.jeremyt135.reminderapp.screens.reminder.overview.dialog.RemindersSortDialogFragment
-import com.google.android.flexbox.*
 import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
 
@@ -36,12 +36,8 @@ class RemindersFragment : Fragment() {
             model = viewModel
             lifecycleOwner = viewLifecycleOwner
 
-            recyclerRemindersList.layoutManager = FlexboxLayoutManager(requireContext()).apply {
-                flexDirection = FlexDirection.COLUMN
-                flexWrap = FlexWrap.NOWRAP
-                alignItems = AlignItems.CENTER
-                justifyContent = JustifyContent.FLEX_START
-            }
+            recyclerRemindersList.layoutManager = LinearLayoutManager(requireContext())
+
             reminderListAdapter = ReminderListAdapter(ReminderListAdapter.OnClickListener {
                 viewModel.editReminder(it.reminder)
             })

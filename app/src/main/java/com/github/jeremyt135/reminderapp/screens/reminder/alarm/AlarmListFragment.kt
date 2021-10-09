@@ -5,10 +5,10 @@ import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.github.jeremyt135.R
 import com.github.jeremyt135.databinding.FragmentAlarmListBinding
 import com.github.jeremyt135.reminderapp.data.domain.ReminderAndAlarm
-import com.google.android.flexbox.*
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -22,12 +22,7 @@ class AlarmListFragment : Fragment(R.layout.fragment_alarm_list) {
             model = viewModel
             lifecycleOwner = viewLifecycleOwner
 
-            recyclerAlarmList.layoutManager = FlexboxLayoutManager(requireContext()).apply {
-                flexDirection = FlexDirection.COLUMN
-                flexWrap = FlexWrap.NOWRAP
-                alignItems = AlignItems.CENTER
-                justifyContent = JustifyContent.FLEX_START
-            }
+            recyclerAlarmList.layoutManager = LinearLayoutManager(requireContext())
 
             recyclerAlarmList.adapter = AlarmListAdapter {
                 navigateToEditor(it)

@@ -10,9 +10,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.github.jeremyt135.databinding.ItemReminderCalendarBinding
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.ReminderAndHistory
-import com.github.jeremyt135.reminderapp.util.RandomColorCache
-import com.google.android.flexbox.AlignSelf
-import com.google.android.flexbox.FlexboxLayoutManager
 
 class CalendarReminderListAdapter(
     private val clickListener: OnClickListener
@@ -36,11 +33,6 @@ class CalendarReminderListAdapter(
         val reminderAndColor = getItem(position)
 
         holder.itemView.let {
-            (it.layoutParams as? FlexboxLayoutManager.LayoutParams)?.apply {
-                flexShrink = 0f
-                alignSelf = AlignSelf.CENTER
-            }
-
             it.setOnClickListener {
                 clickListener.onClick(reminderAndColor.data)
             }

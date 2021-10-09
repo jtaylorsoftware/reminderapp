@@ -9,8 +9,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.github.jeremyt135.databinding.ItemReminderBinding
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.ReminderAndHistory
-import com.google.android.flexbox.AlignSelf
-import com.google.android.flexbox.FlexboxLayoutManager
 import timber.log.Timber
 
 class ReminderListAdapter(private val clickListener: OnClickListener) :
@@ -36,11 +34,6 @@ class ReminderListAdapter(private val clickListener: OnClickListener) :
         val reminderAndHistory = getItem(position)
 
         holder.itemView.let {
-            (it.layoutParams as? FlexboxLayoutManager.LayoutParams)?.apply {
-                flexShrink = 0f
-                alignSelf = AlignSelf.CENTER
-            }
-
             it.setOnClickListener {
                 clickListener.onClick(reminderAndHistory)
             }
