@@ -242,7 +242,6 @@ class CalendarViewModel @Inject constructor(
         reminders: List<Reminder>
     ): List<List<Reminder>> = coroutineScope {
         (1..yearMonth.lengthOfMonth()).map { dayOfMonth ->
-            yield()
             viewModelScope.async {
                 // Transform each array index representing a dayOfMonth into a true/false
                 // value for presence of reminders
