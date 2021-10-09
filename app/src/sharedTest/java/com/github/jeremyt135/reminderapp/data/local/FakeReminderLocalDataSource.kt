@@ -44,11 +44,11 @@ class FakeReminderLocalDataSource(
         reminders.filter { reminder ->
             reminder.schedulingRules.let {
                 when (it.type) {
-                    SchedulingType.SINGLE -> startDate <= it.startDate
+                    SchedulingType.SINGLE -> startDate <= it.startDate && it.startDate <= it.endDate
                     SchedulingType.REPEATING -> {
                         startDate <= it.endDate && endDate >= it.startDate
                     }
-                    SchedulingType.REPEAT_FOREVER -> startDate <= it.startDate
+                    SchedulingType.REPEAT_FOREVER -> endDate >= it.startDate
                 }
             }
         }.map { reminder ->
