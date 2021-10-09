@@ -144,6 +144,14 @@ class ReminderEditorFragment : Fragment(R.layout.fragment_reminder_editor) {
                 }
             }
 
+            textinputEditorDescription.setOnFocusChangeListener { v, hasFocus ->
+                Timber.d("Description focus changed to: $hasFocus")
+                if (!hasFocus) {
+                    (context?.getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager)?.run {
+                        hideSoftInputFromWindow(v.windowToken, 0)
+                    }
+                }
+            }
             textinputEditorDescription.doAfterTextChanged { editable ->
                 editable?.let {
                     viewModel.onDescriptionChanged(it.toString())
