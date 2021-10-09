@@ -11,7 +11,7 @@ import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.ReminderAndHistory
 import timber.log.Timber
 
-class ReminderListAdapter(private val clickListener: OnClickListener) :
+class ReminderListAdapter(val spanCount: Int, private val clickListener: OnClickListener) :
     ListAdapter<ReminderAndHistory, ReminderListAdapter.ReminderViewHolder>(
         ReminderDiffCallback
     ) {
@@ -45,9 +45,46 @@ class ReminderListAdapter(private val clickListener: OnClickListener) :
         }
 
         holder.bind(reminderAndHistory)
+        configureSize(holder.binding)
     }
 
-    class ReminderViewHolder(private val binding: ItemReminderBinding) :
+    private fun configureSize(binding: ItemReminderBinding) {
+        val view = binding.root
+        val density = view.resources.displayMetrics.density
+        val screenWidth = view.resources.configuration.screenWidthDp
+        if (spanCount == 1) {
+            val widthRatioInColumn = 0.80f
+            val width = (widthRatioInColumn * screenWidth * density + 0.5f).toInt()
+
+            view.layoutParams = view.layoutParams.apply {
+                this.width = width
+                this.height = ViewGroup.LayoutParams.WRAP_CONTENT
+            }
+            binding.layoutCardItemReminder.let {
+                it.layoutParams = it.layoutParams.apply {
+                    this.width = ViewGroup.LayoutParams.MATCH_PARENT
+                    this.height = ViewGroup.LayoutParams.MATCH_PARENT
+                }
+            }
+            binding.textItemReminderDescription.maxLines = 2
+        } else {
+            val widthRatioInColumn = 0.90f
+            val width = (widthRatioInColumn / spanCount * screenWidth * density + 0.5f).toInt()
+            view.layoutParams = view.layoutParams.apply {
+                this.width = width
+                this.height = ViewGroup.LayoutParams.WRAP_CONTENT
+            }
+            binding.layoutCardItemReminder.let {
+                it.layoutParams = it.layoutParams.apply {
+                    this.width = ViewGroup.LayoutParams.MATCH_PARENT
+                    this.height = ViewGroup.LayoutParams.MATCH_PARENT
+                }
+            }
+            binding.textItemReminderDescription.maxLines = 4
+        }
+    }
+
+    class ReminderViewHolder(val binding: ItemReminderBinding) :
         RecyclerView.ViewHolder(binding.root) {
         var reminder: Reminder? = null
             private set

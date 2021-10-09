@@ -1,18 +1,20 @@
 package com.github.jeremyt135.reminderapp.screens.reminder.overview
 
 import android.app.AlertDialog
+import android.content.res.Configuration
 import android.os.Bundle
 import android.view.*
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
-import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.GridLayoutManager
 import com.github.jeremyt135.R
 import com.github.jeremyt135.databinding.FragmentRemindersBinding
 import com.github.jeremyt135.reminderapp.screens.reminder.overview.dialog.RemindersFilterDialogFragment
 import com.github.jeremyt135.reminderapp.screens.reminder.overview.dialog.RemindersSortDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
+import kotlin.math.floor
 
 @AndroidEntryPoint
 class RemindersFragment : Fragment() {
@@ -32,24 +34,8 @@ class RemindersFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        FragmentRemindersBinding.bind(view).apply {
-            model = viewModel
-            lifecycleOwner = viewLifecycleOwner
-
-            recyclerRemindersList.layoutManager = LinearLayoutManager(requireContext())
-
-            reminderListAdapter = ReminderListAdapter(ReminderListAdapter.OnClickListener {
-                viewModel.editReminder(it.reminder)
-            })
-            recyclerRemindersList.adapter = reminderListAdapter
-            registerForContextMenu(recyclerRemindersList)
-        }
-
-        activity?.findViewById<View>(R.id.fab_reminders_add)?.setOnClickListener {
-            viewModel.addReminder()
-        } ?: run {
-            Timber.e("RemindersFragment: could not set up FAB, activity null.")
-        }
+        setupBinding(view)
+        setupFab()
 
         viewModel.navigateToEditor.asLiveData().observe(viewLifecycleOwner) { event ->
             event.value?.let { reminder ->
@@ -60,6 +46,54 @@ class RemindersFragment : Fragment() {
                     )
                 )
             }
+        }
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+
+        val layoutView =
+            LayoutInflater.from(requireContext()).inflate(R.layout.fragment_reminders, null)
+        val root = view as ViewGroup
+        root.removeAllViews()
+        root.addView(layoutView)
+        setupBinding(layoutView)
+        setupFab()
+    }
+
+    private fun setupBinding(view: View) {
+        FragmentRemindersBinding.bind(view).apply {
+            model = viewModel
+            lifecycleOwner = viewLifecycleOwner
+
+            val spanCount = getSpanCount()
+            recyclerRemindersList.layoutManager = GridLayoutManager(requireContext(), spanCount)
+
+            reminderListAdapter =
+                ReminderListAdapter(spanCount, ReminderListAdapter.OnClickListener {
+                    viewModel.editReminder(it.reminder)
+                })
+            recyclerRemindersList.adapter = reminderListAdapter
+            registerForContextMenu(recyclerRemindersList)
+        }
+    }
+
+    private fun setupFab() {
+        activity?.findViewById<View>(R.id.fab_reminders_add)?.setOnClickListener {
+            viewModel.addReminder()
+        } ?: run {
+            Timber.e("RemindersFragment: could not set up FAB, activity null.")
+        }
+    }
+
+    private fun getSpanCount(): Int {
+        val screenWidthDp = resources.configuration.screenWidthDp
+        return if (screenWidthDp >= 600) {
+            val minItemWidthDp = 200
+            val maxFittedColumns = floor(screenWidthDp.toFloat() / minItemWidthDp).toInt()
+            maxFittedColumns
+        } else {
+            1
         }
     }
 
