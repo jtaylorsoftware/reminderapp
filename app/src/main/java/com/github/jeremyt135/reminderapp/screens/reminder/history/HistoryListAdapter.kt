@@ -9,7 +9,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.github.jeremyt135.databinding.ItemHistoryBinding
 import com.github.jeremyt135.reminderapp.data.domain.History
 
-class HistoryListAdapter :
+class HistoryListAdapter(val spanCount: Int) :
     ListAdapter<History, HistoryListAdapter.HistoryViewHolder>(HistoryDiffUtil) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): HistoryViewHolder =
@@ -24,9 +24,44 @@ class HistoryListAdapter :
     @SuppressLint("WrongConstant")
     override fun onBindViewHolder(holder: HistoryViewHolder, position: Int) {
         holder.bind(getItem(position))
+        configureSize(holder.binding)
     }
 
-    class HistoryViewHolder(private val binding: ItemHistoryBinding) :
+    private fun configureSize(binding: ItemHistoryBinding) {
+        val view = binding.root
+        val density = view.resources.displayMetrics.density
+        val screenWidth = view.resources.configuration.screenWidthDp
+        if (spanCount == 1) {
+            val widthRatioInColumn = 0.80f
+            val width = (widthRatioInColumn * screenWidth * density + 0.5f).toInt()
+
+            view.layoutParams = view.layoutParams.apply {
+                this.width = width
+                this.height = ViewGroup.LayoutParams.WRAP_CONTENT
+            }
+            binding.layoutCardItemHistory.let {
+                it.layoutParams = it.layoutParams.apply {
+                    this.width = ViewGroup.LayoutParams.MATCH_PARENT
+                    this.height = ViewGroup.LayoutParams.MATCH_PARENT
+                }
+            }
+        } else {
+            val widthRatioInColumn = 0.90f
+            val width = (widthRatioInColumn / spanCount * screenWidth * density + 0.5f).toInt()
+            view.layoutParams = view.layoutParams.apply {
+                this.width = width
+                this.height = ViewGroup.LayoutParams.WRAP_CONTENT
+            }
+            binding.layoutCardItemHistory.let {
+                it.layoutParams = it.layoutParams.apply {
+                    this.width = ViewGroup.LayoutParams.MATCH_PARENT
+                    this.height = ViewGroup.LayoutParams.MATCH_PARENT
+                }
+            }
+        }
+    }
+
+    class HistoryViewHolder(val binding: ItemHistoryBinding) :
         RecyclerView.ViewHolder(binding.root) {
         fun bind(item: History) {
             binding.history = item

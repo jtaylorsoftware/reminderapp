@@ -1,15 +1,18 @@
 package com.github.jeremyt135.reminderapp.screens.reminder.history
 
 import android.app.AlertDialog
+import android.content.res.Configuration
 import android.os.Bundle
 import android.view.*
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.github.jeremyt135.R
 import com.github.jeremyt135.databinding.FragmentHistoryBinding
 import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
+import kotlin.math.floor
 
 @AndroidEntryPoint
 class HistoryFragment : Fragment(R.layout.fragment_history) {
@@ -27,13 +30,39 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        setupBinding(view)
+    }
 
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+
+        val layoutView =
+            LayoutInflater.from(requireContext()).inflate(R.layout.fragment_history, null)
+        val root = view as ViewGroup
+        root.removeAllViews()
+        root.addView(layoutView)
+        setupBinding(layoutView)
+    }
+
+    private fun setupBinding(view: View){
         FragmentHistoryBinding.bind(view).apply {
             lifecycleOwner = viewLifecycleOwner
             model = viewModel
 
-            recyclerHistoryList.layoutManager = LinearLayoutManager(requireContext())
-            recyclerHistoryList.adapter = HistoryListAdapter()
+            val spanCount = getSpanCount()
+            recyclerHistoryList.layoutManager = GridLayoutManager(requireContext(), spanCount)
+            recyclerHistoryList.adapter = HistoryListAdapter(spanCount)
+        }
+    }
+
+    private fun getSpanCount(): Int {
+        val screenWidthDp = resources.configuration.screenWidthDp
+        return if (screenWidthDp >= 600) {
+            val minItemWidthDp = 200
+            val maxFittedColumns = floor(screenWidthDp.toFloat() / minItemWidthDp).toInt()
+            maxFittedColumns
+        } else {
+            1
         }
     }
 
