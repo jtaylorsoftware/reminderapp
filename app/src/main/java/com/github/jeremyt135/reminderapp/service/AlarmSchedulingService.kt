@@ -113,7 +113,17 @@ class AlarmSchedulingService : ReminderService() {
         applicationScope.launch(dispatcher) {
             addStartCommand(startId)
             try {
-                val allowSameDay = historyRepository.getLatestForReminder(reminder.id)?.let {
+                val history = historyRepository.getLatestForReminder(reminder.id)
+
+                // Don't allow SINGLE to be saved again after having history for today
+                if (reminder.schedulingRules.type == SchedulingType.SINGLE && history != null){
+                    Timber.w("Can't save new alarm for type SINGLE reminder - has history entry today")
+                    removeStartCommand(startId)
+                    startScheduleNext(this@AlarmSchedulingService)
+                    return@launch
+                }
+
+                val allowSameDay = history?.let {
                     it.completionStatus == ReminderStatus.PENDING
                 } ?: true
 
