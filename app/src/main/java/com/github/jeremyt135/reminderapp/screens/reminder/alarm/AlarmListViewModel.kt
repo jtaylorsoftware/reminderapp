@@ -39,18 +39,18 @@ class AlarmListViewModel @Inject constructor(
         labeledAlarms.add(list[0])
 
         // Store other alarms in time categories
-        var today: MutableList<Any> = mutableListOf()
-        var thisWeek: MutableList<Any> = mutableListOf()
-        var future: MutableList<Any> = mutableListOf()
+        val today: MutableList<Any> = mutableListOf()
+        val thisWeek: MutableList<Any> = mutableListOf()
+        val future: MutableList<Any> = mutableListOf()
         coroutineScope {
             launch {
                 getTodayAlarms(list.subList(1, list.size)).toList(today)
             }
             launch {
-                getThisWeekAlarms(list).toList(today)
+                getThisWeekAlarms(list.subList(1, list.size)).toList(thisWeek)
             }
             launch {
-                getFutureAlarms(list).toList(future)
+                getFutureAlarms(list.subList(1, list.size)).toList(future)
             }
         }
 
