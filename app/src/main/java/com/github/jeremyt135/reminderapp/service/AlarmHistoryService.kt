@@ -10,6 +10,7 @@ import com.github.jeremyt135.reminderapp.data.HistoryRepository
 import com.github.jeremyt135.reminderapp.data.domain.History
 import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.ReminderStatus
+import com.github.jeremyt135.reminderapp.data.domain.SchedulingType
 import com.github.jeremyt135.reminderapp.data.domain.parcel.ReminderParcel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
@@ -86,6 +87,12 @@ class AlarmHistoryService : ReminderService() {
                                 .toEpochMilli()
                         )
                         historyRepository.save(history)
+
+                        if (reminder.schedulingRules.type == SchedulingType.SINGLE) {
+                            // Single reminders are deleted after they have completed - this is a design decision
+                            // to avoid confusion that a reminder is in the list but never rescheduled.
+                            reminderRepository.delete(reminder)
+                        }
                     }
                     stopSelfIfLast(startId)
                 } catch (e: Exception) {
