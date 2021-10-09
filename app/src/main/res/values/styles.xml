@@ -104,8 +104,8 @@
     </style>
 
     <style name="Widget.App.RecyclerList.Card" parent="Widget.MaterialComponents.CardView">
-        <item name="android:layout_width">@dimen/recycler_item_width</item>
-        <item name="android:layout_height">@dimen/recycler_item_height</item>
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
         <item name="android:layout_margin">8dp</item>
         <item name="cardElevation">@dimen/recycler_item_cardView_elevation</item>
     </style>
