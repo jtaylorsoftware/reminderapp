@@ -5,12 +5,14 @@ import android.content.res.ColorStateList
 import android.content.res.Configuration
 import android.graphics.PorterDuff
 import android.util.AttributeSet
+import android.view.ContextMenu
 import android.view.LayoutInflater
 import androidx.annotation.AttrRes
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.content.ContextCompat
 import androidx.core.widget.ImageViewCompat
+import androidx.fragment.app.findFragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.findViewTreeLifecycleOwner
@@ -73,6 +75,13 @@ class CalendarView : ConstraintLayout {
         viewModel.refreshData()
     }
 
+    /**
+     * Sets the selected year & month
+     */
+    fun setYearMonth(yearMonth: YearMonth){
+        viewModel.setSelectedMonth(yearMonth)
+    }
+
     override fun onConfigurationChanged(newConfig: Configuration?) {
         Timber.d("onConfigurationChanged")
         super.onConfigurationChanged(newConfig)
@@ -111,6 +120,10 @@ class CalendarView : ConstraintLayout {
 
         observeCalendarData()
         observeSelectedDate()
+
+        binding?.textCalendarMonthYear?.let {
+            findFragment<CalendarFragment>().registerForContextMenu(it)
+        }
 
         binding?.recyclerCalendarReminders?.adapter =
             CalendarReminderListAdapter(

@@ -153,7 +153,7 @@ class CalendarViewModel @Inject constructor(
         refresh.tryEmit(Unit)
     }
 
-    private fun setSelectedMonth(yearMonth: YearMonth) {
+    fun setSelectedMonth(yearMonth: YearMonth) {
         setSelectedDate(null)
         _selectedYearMonth.value = yearMonth
     }

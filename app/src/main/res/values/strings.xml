@@ -153,4 +153,6 @@
 
     <string name="button_next_month_description">Next month</string>
     <string name="button_previous_month_description">Previous month</string>
+
+    <string name="go_to_current_month">Go to current month</string>
 </resources>

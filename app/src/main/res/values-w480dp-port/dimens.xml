@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dimens for calendar cells -->
+    <dimen name="calendar_cell_width">48dp</dimen>
+    <dimen name="calendar_cell_height">48dp</dimen>
+    <dimen name="calendar_cell_indicator_size">6dp</dimen>
+    <dimen name="calendar_cell_padding_h">0dp</dimen>
+    <dimen name="calendar_cell_padding_v">0dp</dimen>
+    <dimen name="calendar_cell_margin_h">6dp</dimen>
+    <dimen name="calendar_cell_margin_v">4dp</dimen>
+
+    <!-- Common dimens for recycler items -->
+    <dimen name="recycler_item_width">400dp</dimen>
+    <dimen name="recycler_item_width_land">560dp</dimen>
+
+    <!-- Size of recycler reminder item in calendar view -->
+    <dimen name="recycler_reminderItemCalendar_width">360dp</dimen>
+    <dimen name="recycler_reminderItemCalendar_width_land">360dp</dimen>
+</resources>

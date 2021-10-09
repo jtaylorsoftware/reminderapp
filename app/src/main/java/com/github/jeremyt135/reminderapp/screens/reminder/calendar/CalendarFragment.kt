@@ -1,6 +1,8 @@
 package com.github.jeremyt135.reminderapp.screens.reminder.calendar
 
 import android.os.Bundle
+import android.view.ContextMenu
+import android.view.Menu
 import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
@@ -10,6 +12,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import timber.log.Timber
 import java.time.LocalDate
+import java.time.YearMonth
 
 @AndroidEntryPoint
 @ExperimentalCoroutinesApi
@@ -31,6 +34,22 @@ class CalendarFragment : Fragment(R.layout.fragment_calendar) {
     override fun onResume() {
         super.onResume()
         calendarView.refreshData()
+    }
+
+    override fun onCreateContextMenu(
+        menu: ContextMenu,
+        v: View,
+        menuInfo: ContextMenu.ContextMenuInfo?
+    ) {
+        super.onCreateContextMenu(menu, v, menuInfo)
+        if (v.id == R.id.text_calendar_monthYear) {
+            menu.add(Menu.NONE, v.id, 0, getString(R.string.go_to_current_month)).apply {
+                setOnMenuItemClickListener {
+                    calendarView.setYearMonth(YearMonth.now())
+                    true
+                }
+            }
+        }
     }
 
     private fun navigateToEditor(reminder: Reminder) {

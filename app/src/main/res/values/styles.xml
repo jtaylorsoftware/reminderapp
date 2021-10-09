@@ -146,6 +146,6 @@
     </style>
 
     <style name="Widget.App.Calendar.ReminderItem" parent="Widget.App.RecyclerList.Card">
-        <item name="android:layout_width">@dimen/recycler_item_calendar_width</item>
+        <item name="android:layout_width">@dimen/recycler_reminderItemCalendar_width</item>
     </style>
 </resources>

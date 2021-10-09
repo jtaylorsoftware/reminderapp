@@ -26,9 +26,9 @@
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:clipToPadding="false"
             android:paddingHorizontal="@dimen/recycler_item_padding_h"
-            android:paddingVertical="@dimen/recycler_item_padding_v"
-            android:clipToPadding="false">
+            android:paddingVertical="@dimen/recycler_item_padding_v">
 
             <ImageView
                 android:id="@+id/image_item_reminder_status"
@@ -209,6 +209,8 @@
                 android:paddingVertical="2dp"
                 android:scrollHorizontally="true"
                 android:text="@{data.reminder.description}"
+                android:gravity="center_vertical"
+                app:layout_constraintHeight_min="38dp"
                 app:layout_constraintBottom_toTopOf="@+id/text_itemReminder_sunday"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_chainStyle="spread_inside"

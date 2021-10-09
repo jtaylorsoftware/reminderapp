@@ -21,30 +21,38 @@
             android:id="@+id/card_calendar"
             style="@style/Widget.App.CardView.Calendar"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="0dp"
             android:visibility="visible"
             app:layout_constraintBottom_toTopOf="@+id/card_calendar_reminderList"
             app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHeight_percent="0.6"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.0"
+            app:layout_constraintVertical_chainStyle="packed">
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
+                android:clipToPadding="false"
                 android:padding="8dp">
 
                 <TextView
                     android:id="@+id/text_calendar_monthYear"
                     style="@style/TextAppearance.App.Calendar.YearMonth"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_height="48dp"
                     android:layout_marginTop="16dp"
+                    android:gravity="center"
                     android:text="@{model.selectedYearMonthString}"
                     android:textSize="20sp"
+                    app:layout_constraintBottom_toTopOf="@+id/recycler_calendar"
                     app:layout_constraintEnd_toStartOf="@+id/button_calendar_forward"
                     app:layout_constraintHorizontal_bias="0.5"
                     app:layout_constraintStart_toEndOf="@+id/button_calendar_backward"
                     app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintVertical_bias="0.0"
+                    app:layout_constraintVertical_chainStyle="packed"
                     tools:text="September 00" />
 
                 <ImageButton
@@ -54,7 +62,7 @@
                     android:background="@color/transparent"
                     android:contentDescription="@string/button_next_month_description"
                     app:layout_constraintBottom_toBottomOf="@+id/text_calendar_monthYear"
-                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintEnd_toEndOf="@+id/recycler_calendar"
                     app:layout_constraintHorizontal_bias="0.5"
                     app:layout_constraintStart_toEndOf="@+id/text_calendar_monthYear"
                     app:layout_constraintTop_toTopOf="@+id/text_calendar_monthYear"
@@ -70,7 +78,7 @@
                     app:layout_constraintEnd_toStartOf="@+id/text_calendar_monthYear"
                     app:layout_constraintHorizontal_bias="0.5"
                     app:layout_constraintHorizontal_chainStyle="spread_inside"
-                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintStart_toStartOf="@+id/recycler_calendar"
                     app:layout_constraintTop_toTopOf="@+id/text_calendar_monthYear"
                     app:srcCompat="@drawable/ic_baseline_arrow_back_24" />
 
@@ -79,10 +87,12 @@
                     android:id="@+id/recycler_calendar"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
+                    android:layout_marginTop="8dp"
                     android:nestedScrollingEnabled="false"
                     app:calendarData="@{model.calendarData}"
+                    app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintHorizontal_bias="0.5"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@+id/text_calendar_monthYear"
                     tools:itemCount="42"
@@ -99,6 +109,7 @@
             style="@style/Widget.App.CardView.Calendar.ReminderList"
             android:layout_width="match_parent"
             android:layout_height="0dp"
+            app:layout_constraintHeight_percent="0.4"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
