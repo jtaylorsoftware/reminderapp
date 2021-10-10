@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -13,6 +14,9 @@ import com.github.jeremyt135.databinding.ItemAlarmBinding
 import com.github.jeremyt135.reminderapp.data.domain.ReminderAndAlarm
 import com.github.jeremyt135.reminderapp.util.getShortLocalDateDisplay
 import com.github.jeremyt135.reminderapp.util.getShortLocalTimeDisplay
+import timber.log.Timber
+import java.time.LocalDate
+import java.time.temporal.ChronoUnit
 
 /**
  * Separator between the next & upcoming alarms
@@ -21,7 +25,7 @@ data class AlarmListSeparator(val titleText: String)
 
 typealias OnAlarmClickListener = (ReminderAndAlarm) -> Unit
 
-class AlarmListAdapter(private val onAlarmClickListener: OnAlarmClickListener) :
+class AlarmListAdapter(val spanCount: Int, private val onAlarmClickListener: OnAlarmClickListener) :
     ListAdapter<Any, RecyclerView.ViewHolder>(
         AlarmDiffCallback
     ) {
@@ -49,14 +53,51 @@ class AlarmListAdapter(private val onAlarmClickListener: OnAlarmClickListener) :
             ViewType.ALARM -> {
                 holder as ReminderAndAlarmViewHolder
                 val reminderAndAlarm = getItem(position) as ReminderAndAlarm
-                holder.bind(reminderAndAlarm)
+                holder.bind(reminderAndAlarm, position, spanCount > 1)
 
                 holder.itemView.let {
                     it.setOnClickListener {
                         onAlarmClickListener(reminderAndAlarm)
                     }
                 }
+                configureSize(holder.binding)
             }
+        }
+    }
+
+    private fun configureSize(binding: ItemAlarmBinding) {
+        val view = binding.root
+        val density = view.resources.displayMetrics.density
+        val screenWidth = view.resources.configuration.screenWidthDp
+        if (spanCount == 1) {
+            val widthRatioInColumn = 0.80f
+            val width = (widthRatioInColumn * screenWidth * density + 0.5f).toInt()
+
+            view.layoutParams = view.layoutParams.apply {
+                this.width = width
+                this.height = ViewGroup.LayoutParams.WRAP_CONTENT
+            }
+            binding.layoutCardItemAlarm.let {
+                it.layoutParams = it.layoutParams.apply {
+                    this.width = ViewGroup.LayoutParams.MATCH_PARENT
+                    this.height = ViewGroup.LayoutParams.MATCH_PARENT
+                }
+            }
+            binding.textItemAlarmDaysUntil.visibility = View.GONE
+        } else {
+            val widthRatioInColumn = 0.90f
+            val width = (widthRatioInColumn / spanCount * screenWidth * density + 0.5f).toInt()
+            view.layoutParams = view.layoutParams.apply {
+                this.width = width
+                this.height = ViewGroup.LayoutParams.WRAP_CONTENT
+            }
+            binding.layoutCardItemAlarm.let {
+                it.layoutParams = it.layoutParams.apply {
+                    this.width = ViewGroup.LayoutParams.MATCH_PARENT
+                    this.height = ViewGroup.LayoutParams.MATCH_PARENT
+                }
+            }
+            binding.textItemAlarmDaysUntil.visibility = View.VISIBLE
         }
     }
 
@@ -70,16 +111,49 @@ class AlarmListAdapter(private val onAlarmClickListener: OnAlarmClickListener) :
         }
     }
 
-    class ReminderAndAlarmViewHolder(private val binding: ItemAlarmBinding) :
+    class ReminderAndAlarmViewHolder(val binding: ItemAlarmBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
-        fun bind(reminderAndAlarm: ReminderAndAlarm) {
+        private val textSecondary = binding.textItemAlarmDaysUntil.currentTextColor
+
+        private val colorPrimary =
+            ContextCompat.getColor(binding.root.context, R.color.reminder_day_of_week_tint)
+
+        fun bind(reminderAndAlarm: ReminderAndAlarm, position: Int, displayDaysUntil: Boolean) {
+            Timber.d("textSecondary = $textSecondary")
             binding.apply {
                 description = reminderAndAlarm.reminder.description
                 val alarmDateTime = requireNotNull(reminderAndAlarm.alarm).triggerAt
+
                 date = alarmDateTime.getShortLocalDateDisplay()
                 time = alarmDateTime.getShortLocalTimeDisplay()
+
+                val daysUntil = LocalDate.now().until(alarmDateTime.toLocalDate(), ChronoUnit.DAYS)
+                setTextDaysUntil(daysUntil, position, displayDaysUntil)
+
                 executePendingBindings()
+            }
+        }
+
+        private fun setTextDaysUntil(daysUntil: Long, position: Int, daysUntilVisible: Boolean) {
+            if (daysUntilVisible) {
+                val daysUntilText = when (daysUntil) {
+                    0L -> if (position == 0) "Next" else "Today"
+                    in (1L..7L) -> "< 1 week"
+                    else -> "Future"
+                }
+
+                binding.textItemAlarmDaysUntil.apply {
+                    if (position == 0) {
+                        setTextColor(colorPrimary)
+                    } else {
+                        setTextColor(textSecondary)
+                    }
+                    text = daysUntilText
+                    visibility = View.VISIBLE
+                }
+            } else {
+                binding.textItemAlarmDaysUntil.visibility = View.GONE
             }
         }
     }

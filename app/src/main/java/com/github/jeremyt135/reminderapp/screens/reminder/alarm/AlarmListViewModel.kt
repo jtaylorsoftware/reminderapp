@@ -22,11 +22,31 @@ class AlarmListViewModel @Inject constructor(
     reminderRepository: ReminderRepository,
     @DefaultDispatcher dispatcher: CoroutineDispatcher = Dispatchers.Default
 ) : ViewModel() {
-    val remindersAndAlarms = reminderRepository.getAllWithAlarmsTimeAscending().map {
-        categorizeAlarms(it)
-    }.flowOn(dispatcher).asLiveData()
+    /**
+     * Flag indicating the view is being displayed as a single column (false) or
+     * multiple columns (true)
+     */
+    private val wideLayout = MutableStateFlow(false)
 
-    private suspend fun categorizeAlarms(list: List<ReminderAndAlarm>): List<Any> = coroutineScope {
+    @ExperimentalCoroutinesApi
+    val remindersAndAlarms =
+        reminderRepository.getAllWithAlarmsTimeAscending().flatMapLatest { alarms ->
+            wideLayout.mapLatest {
+                categorizeAlarms(alarms, wideLayout = it)
+            }
+        }.flowOn(dispatcher).asLiveData()
+
+    /**
+     * Changes whether the data list includes labels. Wide layouts do not include the labels
+     */
+    fun setWideLayout(wideLayout: Boolean){
+        this.wideLayout.value = wideLayout
+    }
+
+    private suspend fun categorizeAlarms(
+        list: List<ReminderAndAlarm>,
+        wideLayout: Boolean
+    ): List<Any> = coroutineScope {
         if (list.isEmpty()) {
             return@coroutineScope emptyList()
         }
@@ -35,7 +55,9 @@ class AlarmListViewModel @Inject constructor(
         val labeledAlarms = mutableListOf<Any>()
 
         // Label the first alarm as "next"
-        labeledAlarms.add(AlarmListSeparator("Next"))
+        if (!wideLayout) {
+            labeledAlarms.add(AlarmListSeparator("Next"))
+        }
         labeledAlarms.add(list[0])
 
         // Store other alarms in time categories
@@ -56,18 +78,24 @@ class AlarmListViewModel @Inject constructor(
 
         // Add ones today
         if (today.isNotEmpty()) {
-            labeledAlarms.add(AlarmListSeparator("Today"))
+            if (!wideLayout) {
+                labeledAlarms.add(AlarmListSeparator("Today"))
+            }
             labeledAlarms.addAll(today)
         }
 
         // Add ones within a week
         if (thisWeek.isNotEmpty()) {
-            labeledAlarms.add(AlarmListSeparator("Within a week"))
+            if (!wideLayout) {
+                labeledAlarms.add(AlarmListSeparator("Within a week"))
+            }
             labeledAlarms.addAll(thisWeek)
         }
         // Label ones further than a week into the future as
         if (future.isNotEmpty()) {
-            labeledAlarms.add(AlarmListSeparator("Future"))
+            if (!wideLayout) {
+                labeledAlarms.add(AlarmListSeparator("Future"))
+            }
             labeledAlarms.addAll(future)
         }
 
