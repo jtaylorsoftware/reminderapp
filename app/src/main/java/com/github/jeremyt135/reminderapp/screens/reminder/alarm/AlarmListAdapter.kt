@@ -49,6 +49,7 @@ class AlarmListAdapter(val spanCount: Int, private val onAlarmClickListener: OnA
         when (position.asViewType) {
             ViewType.SEPARATOR -> {
                 (holder as SeparatorViewHolder).bind(getItem(position) as AlarmListSeparator)
+                configureSeparatorSize(holder.itemView)
             }
             ViewType.ALARM -> {
                 holder as ReminderAndAlarmViewHolder
@@ -62,6 +63,16 @@ class AlarmListAdapter(val spanCount: Int, private val onAlarmClickListener: OnA
                 }
                 configureSize(holder.binding)
             }
+        }
+    }
+
+    private fun configureSeparatorSize(view: View){
+        val density = view.resources.displayMetrics.density
+        val screenWidth = view.resources.configuration.screenWidthDp
+        val widthRatioInColumn = 0.80f
+        val width = (widthRatioInColumn * screenWidth * density + 0.5f).toInt()
+        view.layoutParams = view.layoutParams.apply {
+            this.width = width
         }
     }
 

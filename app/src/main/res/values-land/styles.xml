@@ -7,19 +7,6 @@
         <item name="cardElevation">@dimen/recycler_item_cardView_elevation</item>
     </style>
 
-    <style name="Widget.App.RecyclerList.Divider" parent="">
-        <item name="android:layout_height">1dp</item>
-        <item name="android:layout_width">@dimen/recycler_item_width_land</item>
-        <item name="android:layout_margin">8dp</item>
-    </style>
-
-    <style name="Widget.App.RecyclerList.Divider.Title" parent="">
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:layout_width">@dimen/recycler_item_width_land</item>
-        <item name="android:paddingStart">8dp</item>
-        <item name="android:textAppearance">@style/TextAppearance.MaterialComponents.Caption</item>
-    </style>
-
     <style name="Widget.App.RecyclerList.Hint" parent="Widget.MaterialComponents.TextView">
         <item name="android:textAppearance">@style/TextAppearance.MaterialComponents.Body2</item>
         <item name="android:maxWidth">@dimen/recycler_item_width_land</item>
