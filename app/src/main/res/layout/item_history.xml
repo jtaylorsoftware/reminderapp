@@ -70,7 +70,8 @@
                 app:layout_constraintHorizontal_chainStyle="spread_inside"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintVertical_chainStyle="packed"
+                app:layout_constraintVertical_bias="0.0"
+                app:layout_constraintVertical_chainStyle="spread_inside"
                 tools:text="6:15 AM" />
 
 
@@ -80,9 +81,10 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
                 android:contentDescription="@string/notification_icon_description"
-                app:layout_constraintBottom_toBottomOf="@+id/text_history_placeholder"
+                app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/text_item_history_description"
+                app:layout_constraintVertical_bias="1.0"
                 app:statusForIcon="@{history}"
                 tools:srcCompat="@drawable/ic_notification_pending"
                 tools:tint="@color/status_complete" />
