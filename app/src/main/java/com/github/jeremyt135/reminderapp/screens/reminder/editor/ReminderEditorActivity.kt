@@ -1,11 +1,9 @@
 package com.github.jeremyt135.reminderapp.screens.reminder.editor
 
-import android.content.Intent
 import android.os.Bundle
 import android.view.MenuItem
 import androidx.activity.viewModels
 import com.github.jeremyt135.R
-import com.github.jeremyt135.reminderapp.MainActivity
 import com.github.jeremyt135.reminderapp.data.domain.SnoozeRules
 import com.github.jeremyt135.reminderapp.screens.reminder.editor.dialog.DayOfWeekDialogFragment
 import com.github.jeremyt135.reminderapp.screens.reminder.editor.dialog.SnoozeOptionsDialogFragment
@@ -39,15 +37,7 @@ class ReminderEditorActivity : SettingsActivity(), SoundPickerDialogFragment.Dia
         when (item.itemId) {
             // "Up" button is pressed
             android.R.id.home -> {
-                if (isTaskRoot) {
-                    // If only activity, start new MainActivity on up
-                    // (this typically happens through alarm clock's showIntent or
-                    // notification snoozed intent
-                    startActivity(Intent(this, MainActivity::class.java))
-                    finish()
-                } else {
-                    finish()
-                }
+                finish()
                 true
             }
             else -> super.onOptionsItemSelected(item)

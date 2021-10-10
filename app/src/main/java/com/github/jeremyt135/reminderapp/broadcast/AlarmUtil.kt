@@ -307,8 +307,12 @@ fun triggerNotification(context: Context, reminder: Reminder, alarm: Alarm) {
 
 fun getIntentForEditorActivity(context: Context, reminderId: String): PendingIntent =
     Intent(context, ReminderEditorActivity::class.java).run {
-//        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
-        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_HISTORY
+        flags =
+            (Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                    Intent.FLAG_ACTIVITY_NEW_TASK or
+                    Intent.FLAG_ACTIVITY_CLEAR_TASK or
+                    Intent.FLAG_ACTIVITY_NO_HISTORY or
+                    Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
         putExtra(EXTRA_REMINDER_ID, reminderId)
         PendingIntent.getActivity(
             context,
@@ -325,8 +329,12 @@ fun getIntentForEditorActivity(context: Context, reminderId: String): PendingInt
 @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
 fun getCreatedIntentForEditorActivity(context: Context, reminderId: String): PendingIntent? =
     Intent(context, ReminderEditorActivity::class.java).run {
-//        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
-        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_HISTORY
+        flags =
+            (Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                    Intent.FLAG_ACTIVITY_NEW_TASK or
+                    Intent.FLAG_ACTIVITY_CLEAR_TASK or
+                    Intent.FLAG_ACTIVITY_NO_HISTORY or
+                    Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
         putExtra(EXTRA_REMINDER_ID, reminderId)
         PendingIntent.getActivity(
             context,
@@ -353,9 +361,8 @@ private fun createAlarmActivityIntent(
     pendingIntentFlags: Int
 ): PendingIntent? =
     Intent(context, AlarmActivity::class.java).run {
-//        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
         flags =
-            Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_HISTORY or Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
+            Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_HISTORY
         putExtra(EXTRA_REMINDER_ID, reminderId)
         PendingIntent.getActivity(
             context,

@@ -29,6 +29,7 @@
             android:name=".reminderapp.screens.reminder.editor.ReminderEditorActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:parentActivityName=".reminderapp.MainActivity"
+            android:launchMode="singleTask"
             android:windowSoftInputMode="adjustPan" />
         <activity
             android:name=".reminderapp.screens.preferences.PreferencesActivity"
@@ -41,6 +42,9 @@
         <activity
             android:name=".reminderapp.screens.alarm.AlarmActivity"
             android:configChanges="orientation|uiMode"
+            android:launchMode="singleTask"
+            android:taskAffinity=""
+            android:excludeFromRecents="true"
             android:theme="@style/Theme.ReminderApp.Alarm" />
 
         <receiver android:name=".reminderapp.broadcast.AlarmStartReceiver" />
@@ -63,8 +67,7 @@
         <provider
             android:name="androidx.startup.InitializationProvider"
             android:authorities="${applicationId}.androidx-startup"
-            tools:node="remove">
-        </provider>
+            tools:node="remove"></provider>
 
     </application>
 
