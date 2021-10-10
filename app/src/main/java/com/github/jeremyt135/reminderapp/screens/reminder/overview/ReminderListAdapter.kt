@@ -66,7 +66,6 @@ class ReminderListAdapter(val spanCount: Int, private val clickListener: OnClick
                     this.height = ViewGroup.LayoutParams.MATCH_PARENT
                 }
             }
-            binding.textItemReminderDescription.maxLines = 2
         } else {
             val widthRatioInColumn = 0.90f
             val width = (widthRatioInColumn / spanCount * screenWidth * density + 0.5f).toInt()
@@ -80,7 +79,6 @@ class ReminderListAdapter(val spanCount: Int, private val clickListener: OnClick
                     this.height = ViewGroup.LayoutParams.MATCH_PARENT
                 }
             }
-            binding.textItemReminderDescription.maxLines = 4
         }
     }
 
