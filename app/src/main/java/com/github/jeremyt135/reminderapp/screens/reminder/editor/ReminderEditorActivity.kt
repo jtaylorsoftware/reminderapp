@@ -44,6 +44,7 @@ class ReminderEditorActivity : SettingsActivity(), SoundPickerDialogFragment.Dia
                     // (this typically happens through alarm clock's showIntent or
                     // notification snoozed intent
                     startActivity(Intent(this, MainActivity::class.java))
+                    finish()
                 } else {
                     finish()
                 }
