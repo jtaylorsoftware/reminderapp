@@ -1,15 +1,16 @@
 package com.github.jeremyt135.reminderapp.screens.reminder.editor
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.MenuItem
 import androidx.activity.viewModels
 import com.github.jeremyt135.R
+import com.github.jeremyt135.reminderapp.MainActivity
 import com.github.jeremyt135.reminderapp.data.domain.SnoozeRules
 import com.github.jeremyt135.reminderapp.screens.reminder.editor.dialog.DayOfWeekDialogFragment
 import com.github.jeremyt135.reminderapp.screens.reminder.editor.dialog.SnoozeOptionsDialogFragment
 import com.github.jeremyt135.reminderapp.screens.reminder.editor.dialog.SoundPickerDialogFragment
 import com.github.jeremyt135.reminderapp.settings.SettingsActivity
-import com.github.jeremyt135.reminderapp.theme.ThemeActivity
 import dagger.hilt.android.AndroidEntryPoint
 import java.time.DayOfWeek
 import java.util.*
@@ -36,9 +37,16 @@ class ReminderEditorActivity : SettingsActivity(), SoundPickerDialogFragment.Dia
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean =
         when (item.itemId) {
-            // When "Up" button is pressed in toolbar, finish activity (similar to "back" button)
+            // "Up" button is pressed
             android.R.id.home -> {
-                finish()
+                if (isTaskRoot) {
+                    // If only activity, start new MainActivity on up
+                    // (this typically happens through alarm clock's showIntent or
+                    // notification snoozed intent
+                    startActivity(Intent(this, MainActivity::class.java))
+                } else {
+                    finish()
+                }
                 true
             }
             else -> super.onOptionsItemSelected(item)
