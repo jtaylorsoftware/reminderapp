@@ -31,6 +31,7 @@ class HistoryListAdapter(val spanCount: Int) :
         val view = binding.root
         val density = view.resources.displayMetrics.density
         val screenWidth = view.resources.configuration.screenWidthDp
+        val screenHeight = view.resources.configuration.screenHeightDp
         if (spanCount == 1) {
             val widthRatioInColumn = 0.80f
             val width = (widthRatioInColumn * screenWidth * density + 0.5f).toInt()
@@ -45,6 +46,8 @@ class HistoryListAdapter(val spanCount: Int) :
                     this.height = ViewGroup.LayoutParams.MATCH_PARENT
                 }
             }
+            binding.textItemHistoryDescription.minLines = 1
+            binding.textItemHistoryDescription.maxLines = 5
         } else {
             val widthRatioInColumn = 0.90f
             val width = (widthRatioInColumn / spanCount * screenWidth * density + 0.5f).toInt()
@@ -58,6 +61,9 @@ class HistoryListAdapter(val spanCount: Int) :
                     this.height = ViewGroup.LayoutParams.MATCH_PARENT
                 }
             }
+            val maxLines = if (screenHeight >= 600) 5 else 4
+            binding.textItemHistoryDescription.minLines = maxLines
+            binding.textItemHistoryDescription.maxLines = maxLines
         }
     }
 

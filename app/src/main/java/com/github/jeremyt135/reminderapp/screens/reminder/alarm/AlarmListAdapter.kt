@@ -69,6 +69,7 @@ class AlarmListAdapter(val spanCount: Int, private val onAlarmClickListener: OnA
         val view = binding.root
         val density = view.resources.displayMetrics.density
         val screenWidth = view.resources.configuration.screenWidthDp
+        val screenHeight = view.resources.configuration.screenHeightDp
         if (spanCount == 1) {
             val widthRatioInColumn = 0.80f
             val width = (widthRatioInColumn * screenWidth * density + 0.5f).toInt()
@@ -84,6 +85,8 @@ class AlarmListAdapter(val spanCount: Int, private val onAlarmClickListener: OnA
                 }
             }
             binding.textItemAlarmDaysUntil.visibility = View.GONE
+            binding.textItemAlarmDescription.minLines = 1
+            binding.textItemAlarmDescription.maxLines = 5
         } else {
             val widthRatioInColumn = 0.90f
             val width = (widthRatioInColumn / spanCount * screenWidth * density + 0.5f).toInt()
@@ -98,6 +101,9 @@ class AlarmListAdapter(val spanCount: Int, private val onAlarmClickListener: OnA
                 }
             }
             binding.textItemAlarmDaysUntil.visibility = View.VISIBLE
+            val maxLines = if (screenHeight >= 600) 5 else 4
+            binding.textItemAlarmDescription.minLines = maxLines
+            binding.textItemAlarmDescription.maxLines = maxLines
         }
     }
 
