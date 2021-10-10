@@ -58,7 +58,7 @@
                     android:layout_height="wrap_content"
                     android:imeOptions="actionDone"
                     android:inputType="text|textMultiLine"
-                    android:maxLength="160"
+                    android:maxLength="100"
                     android:scrollHorizontally="false"
                     android:text="@{reminder.description}" />
 
