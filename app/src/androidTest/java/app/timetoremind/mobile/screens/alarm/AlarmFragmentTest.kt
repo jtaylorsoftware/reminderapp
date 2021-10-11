@@ -11,6 +11,7 @@ import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.filters.MediumTest
+import androidx.test.filters.SdkSuppress
 import app.timetoremind.mobile.broadcast.EXTRA_REMINDER_ID
 import app.timetoremind.mobile.data.*
 import app.timetoremind.mobile.data.domain.Alarm
@@ -38,6 +39,7 @@ import javax.inject.Inject
 @MediumTest
 @HiltAndroidTest
 @ExperimentalCoroutinesApi
+@SdkSuppress(minSdkVersion = 28)
 class AlarmFragmentTest {
 
     @get:Rule

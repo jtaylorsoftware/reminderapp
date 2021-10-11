@@ -4,6 +4,7 @@ import android.app.PendingIntent
 import android.content.Context
 import androidx.core.app.NotificationManagerCompat
 import androidx.test.core.app.ApplicationProvider
+import androidx.test.filters.SdkSuppress
 import androidx.test.filters.SmallTest
 import app.timetoremind.mobile.data.*
 import app.timetoremind.mobile.data.domain.*
@@ -31,6 +32,7 @@ import javax.inject.Inject
 @ExperimentalCoroutinesApi
 @HiltAndroidTest
 @SmallTest
+@SdkSuppress(minSdkVersion = 28)
 class AlarmUtilTest {
     @get:Rule
     var hiltAndroidRule = HiltAndroidRule(this)

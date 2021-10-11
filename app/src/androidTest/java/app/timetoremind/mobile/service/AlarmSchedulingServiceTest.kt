@@ -6,6 +6,7 @@ import android.content.Intent
 import android.os.IBinder
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.filters.MediumTest
+import androidx.test.filters.SdkSuppress
 import androidx.test.rule.ServiceTestRule
 import app.timetoremind.mobile.MainCoroutineRule
 import app.timetoremind.mobile.broadcast.*
@@ -36,6 +37,7 @@ import kotlin.properties.Delegates
 @ExperimentalCoroutinesApi
 @HiltAndroidTest
 @MediumTest
+@SdkSuppress(minSdkVersion = 28)
 class AlarmSchedulingServiceTest {
     @get:Rule
     val hiltRule = HiltAndroidRule(this)
