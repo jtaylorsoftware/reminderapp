@@ -104,43 +104,41 @@ class ReminderEditorFragment : Fragment(R.layout.fragment_reminder_editor) {
             model = viewModel
             reminder = viewModel.reminder.asLiveData(lifecycleScope.coroutineContext)
 
-            lifecycleScope.launchWhenResumed {
-                viewModel.startDateState.observe(viewLifecycleOwner) {
-                    if (it.errorEnabled) {
-                        textlayoutEditorStartDate.error =
-                            "Start date must be in future and after end date"
-                    } else {
-                        textlayoutEditorStartDate.error = ""
-                    }
+            viewModel.startDateState.observe(viewLifecycleOwner) {
+                if (it.errorEnabled) {
+                    textlayoutEditorStartDate.error =
+                        "Start date must be in future and after end date"
+                } else {
+                    textlayoutEditorStartDate.error = ""
                 }
-                viewModel.endDateState.observe(viewLifecycleOwner) {
-                    if (it.errorEnabled) {
-                        textlayoutEditorEndDate.error =
-                            "End date must be in future and after start date"
-                    } else {
-                        textlayoutEditorEndDate.error = ""
-                    }
+            }
+            viewModel.endDateState.observe(viewLifecycleOwner) {
+                if (it.errorEnabled) {
+                    textlayoutEditorEndDate.error =
+                        "End date must be in future and after start date"
+                } else {
+                    textlayoutEditorEndDate.error = ""
                 }
-                viewModel.timeState.observe(viewLifecycleOwner) {
-                    if (it.errorEnabled) {
-                        textlayoutEditorTime.error = "Time cannot be in the past"
-                    } else {
-                        textlayoutEditorTime.error = ""
-                    }
+            }
+            viewModel.timeState.observe(viewLifecycleOwner) {
+                if (it.errorEnabled) {
+                    textlayoutEditorTime.error = "Time cannot be in the past"
+                } else {
+                    textlayoutEditorTime.error = ""
                 }
-                viewModel.daysOfWeekState.observe(viewLifecycleOwner) {
-                    if (it.errorEnabled) {
-                        textlayoutEditorDaysOfWeek.error = "Select at least one day of week"
-                    } else {
-                        textlayoutEditorDaysOfWeek.error = ""
-                    }
+            }
+            viewModel.daysOfWeekState.observe(viewLifecycleOwner) {
+                if (it.errorEnabled) {
+                    textlayoutEditorDaysOfWeek.error = "Select at least one day of week"
+                } else {
+                    textlayoutEditorDaysOfWeek.error = ""
                 }
-                viewModel.descriptionState.observe(viewLifecycleOwner) {
-                    if (it.errorEnabled) {
-                        textlayoutEditorDescription.error = "Description cannot be blank"
-                    } else {
-                        textlayoutEditorDescription.error = ""
-                    }
+            }
+            viewModel.descriptionState.observe(viewLifecycleOwner) {
+                if (it.errorEnabled) {
+                    textlayoutEditorDescription.error = "Description cannot be blank"
+                } else {
+                    textlayoutEditorDescription.error = ""
                 }
             }
 
