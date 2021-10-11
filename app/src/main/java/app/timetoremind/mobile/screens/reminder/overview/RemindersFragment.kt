@@ -10,11 +10,11 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.GridLayoutManager
 import app.timetoremind.mobile.R
 import app.timetoremind.mobile.databinding.FragmentRemindersBinding
+import app.timetoremind.mobile.screens.reminder.getLayoutSpanCount
 import app.timetoremind.mobile.screens.reminder.overview.dialog.RemindersFilterDialogFragment
 import app.timetoremind.mobile.screens.reminder.overview.dialog.RemindersSortDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
-import kotlin.math.floor
 
 @AndroidEntryPoint
 class RemindersFragment : Fragment() {
@@ -66,7 +66,7 @@ class RemindersFragment : Fragment() {
             model = viewModel
             lifecycleOwner = viewLifecycleOwner
 
-            val spanCount = getSpanCount()
+            val spanCount = getLayoutSpanCount()
             recyclerRemindersList.layoutManager = GridLayoutManager(requireContext(), spanCount)
 
             reminderListAdapter =
@@ -83,17 +83,6 @@ class RemindersFragment : Fragment() {
             viewModel.addReminder()
         } ?: run {
             Timber.e("RemindersFragment: could not set up FAB, activity null.")
-        }
-    }
-
-    private fun getSpanCount(): Int {
-        val screenWidthDp = resources.configuration.screenWidthDp
-        return if (screenWidthDp >= 600) {
-            val minItemWidthDp = 200
-            val maxFittedColumns = floor(screenWidthDp.toFloat() / minItemWidthDp).toInt()
-            maxFittedColumns
-        } else {
-            1
         }
     }
 

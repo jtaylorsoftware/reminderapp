@@ -10,10 +10,10 @@ import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.GridLayoutManager
 import app.timetoremind.mobile.R
-import app.timetoremind.mobile.databinding.FragmentAlarmListBinding
 import app.timetoremind.mobile.data.domain.ReminderAndAlarm
+import app.timetoremind.mobile.databinding.FragmentAlarmListBinding
+import app.timetoremind.mobile.screens.reminder.getLayoutSpanCount
 import dagger.hilt.android.AndroidEntryPoint
-import kotlin.math.floor
 
 @AndroidEntryPoint
 class AlarmListFragment : Fragment(R.layout.fragment_alarm_list) {
@@ -41,24 +41,13 @@ class AlarmListFragment : Fragment(R.layout.fragment_alarm_list) {
             model = viewModel
             lifecycleOwner = viewLifecycleOwner
 
-            val spanCount = getSpanCount()
+            val spanCount = getLayoutSpanCount()
             viewModel.setWideLayout(spanCount > 1)
 
             recyclerAlarmList.layoutManager = GridLayoutManager(requireContext(), spanCount)
             recyclerAlarmList.adapter = AlarmListAdapter(spanCount) {
                 navigateToEditor(it)
             }
-        }
-    }
-
-    private fun getSpanCount(): Int {
-        val screenWidthDp = resources.configuration.screenWidthDp
-        return if (screenWidthDp >= 600) {
-            val minItemWidthDp = 200
-            val maxFittedColumns = floor(screenWidthDp.toFloat() / minItemWidthDp).toInt()
-            maxFittedColumns
-        } else {
-            1
         }
     }
 

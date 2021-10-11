@@ -9,9 +9,9 @@ import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.GridLayoutManager
 import app.timetoremind.mobile.R
 import app.timetoremind.mobile.databinding.FragmentHistoryBinding
+import app.timetoremind.mobile.screens.reminder.getLayoutSpanCount
 import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
-import kotlin.math.floor
 
 @AndroidEntryPoint
 class HistoryFragment : Fragment(R.layout.fragment_history) {
@@ -48,20 +48,9 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
             lifecycleOwner = viewLifecycleOwner
             model = viewModel
 
-            val spanCount = getSpanCount()
+            val spanCount = getLayoutSpanCount()
             recyclerHistoryList.layoutManager = GridLayoutManager(requireContext(), spanCount)
             recyclerHistoryList.adapter = HistoryListAdapter(spanCount)
-        }
-    }
-
-    private fun getSpanCount(): Int {
-        val screenWidthDp = resources.configuration.screenWidthDp
-        return if (screenWidthDp >= 600) {
-            val minItemWidthDp = 200
-            val maxFittedColumns = floor(screenWidthDp.toFloat() / minItemWidthDp).toInt()
-            maxFittedColumns
-        } else {
-            1
         }
     }
 
