@@ -3,7 +3,6 @@ package com.github.jeremyt135.reminderapp.service
 import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationManagerCompat
-import com.github.jeremyt135.BuildConfig
 import com.github.jeremyt135.reminderapp.broadcast.*
 import com.github.jeremyt135.reminderapp.data.AlarmRepository
 import com.github.jeremyt135.reminderapp.data.domain.Alarm

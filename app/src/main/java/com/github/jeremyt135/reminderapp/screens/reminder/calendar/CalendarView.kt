@@ -5,7 +5,6 @@ import android.content.res.ColorStateList
 import android.content.res.Configuration
 import android.graphics.PorterDuff
 import android.util.AttributeSet
-import android.view.ContextMenu
 import android.view.LayoutInflater
 import androidx.annotation.AttrRes
 import androidx.constraintlayout.widget.ConstraintLayout

@@ -1,10 +1,7 @@
 package com.github.jeremyt135.reminderapp.theme
 
 import android.content.SharedPreferences
-import android.content.res.Configuration
-import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
-import timber.log.Timber
 
 enum class ThemeSetting {
     DARK, LIGHT, SYSTEM;

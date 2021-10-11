@@ -10,7 +10,6 @@ import com.github.jeremyt135.reminderapp.data.local.ReminderAndHistoryEntity
 import com.github.jeremyt135.reminderapp.data.local.ReminderEntity
 import com.github.jeremyt135.reminderapp.util.*
 import kotlinx.parcelize.Parcelize
-import kotlinx.parcelize.TypeParceler
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime

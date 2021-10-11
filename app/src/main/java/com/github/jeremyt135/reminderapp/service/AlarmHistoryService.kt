@@ -2,7 +2,6 @@ package com.github.jeremyt135.reminderapp.service
 
 import android.content.Context
 import android.content.Intent
-import android.os.IBinder
 import com.github.jeremyt135.reminderapp.broadcast.ACTION_ALARM_COMPLETE
 import com.github.jeremyt135.reminderapp.broadcast.ACTION_ALARM_SKIP
 import com.github.jeremyt135.reminderapp.broadcast.EXTRA_REMINDER

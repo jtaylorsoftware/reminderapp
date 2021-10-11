@@ -2,20 +2,15 @@ package com.github.jeremyt135.reminderapp.screens.reminder.alarm
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
-import androidx.lifecycle.viewModelScope
 import com.github.jeremyt135.reminderapp.data.ReminderRepository
-import com.github.jeremyt135.reminderapp.data.domain.Reminder
 import com.github.jeremyt135.reminderapp.data.domain.ReminderAndAlarm
 import com.github.jeremyt135.reminderapp.di.DefaultDispatcher
-import com.github.jeremyt135.reminderapp.util.currentLocalDateTime
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 import javax.inject.Inject
-import kotlin.coroutines.coroutineContext
-import kotlin.math.abs
 
 @HiltViewModel
 class AlarmListViewModel @Inject constructor(
