@@ -9,11 +9,11 @@
 
         <import type="android.view.View" />
 
-        <import type="com.github.jeremyt135.reminderapp.data.domain.SchedulingType" />
+        <import type="app.timetoremind.mobile.data.domain.SchedulingType" />
 
         <variable
             name="data"
-            type="com.github.jeremyt135.reminderapp.data.domain.ReminderAndHistory" />
+            type="app.timetoremind.mobile.data.domain.ReminderAndHistory" />
     </data>
 
     <com.google.android.material.card.MaterialCardView
@@ -70,7 +70,8 @@
                     android:layout_marginStart="1dp"
                     android:layout_marginEnd="1dp"
                     android:src="@drawable/ic_baseline_arrow_forward_12"
-                    android:visibility="@{data.reminder.schedulingRules.type != SchedulingType.SINGLE ? View.VISIBLE : View.GONE}" />
+                    android:visibility="@{data.reminder.schedulingRules.type != SchedulingType.SINGLE ? View.VISIBLE : View.GONE}"
+                    android:contentDescription="@string/until" />
 
                 <TextView
                     android:id="@+id/text_item_reminder_endDate"

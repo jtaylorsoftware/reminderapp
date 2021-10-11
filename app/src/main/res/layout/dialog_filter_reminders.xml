@@ -5,11 +5,11 @@
 
     <data>
 
-        <import type="com.github.jeremyt135.reminderapp.screens.reminder.overview.dialog.ReminderFilterViewModel" />
+        <import type="app.timetoremind.mobile.screens.reminder.overview.dialog.ReminderFilterViewModel" />
 
-        <import type="com.github.jeremyt135.reminderapp.screens.reminder.overview.ReminderFilterRules" />
+        <import type="app.timetoremind.mobile.screens.reminder.overview.ReminderFilterRules" />
 
-        <import type="com.github.jeremyt135.reminderapp.data.domain.ReminderStatus" />
+        <import type="app.timetoremind.mobile.data.domain.ReminderStatus" />
 
         <import type="androidx.lifecycle.LiveData" />
 

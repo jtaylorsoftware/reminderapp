@@ -6,7 +6,7 @@
     <data>
         <variable
             name="model"
-            type="com.github.jeremyt135.reminderapp.screens.reminder.editor.dialog.SoundPickerViewModel" />
+            type="app.timetoremind.mobile.screens.reminder.editor.dialog.SoundPickerViewModel" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout

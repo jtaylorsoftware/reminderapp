@@ -123,7 +123,7 @@
     <string name="dialogSnooze_option_alwaysSnooze">Always snooze</string>
     <string name="dialogSnooze_option_number">Number of times</string>
     <string name="dialogSnooze_snoozeOptions_title">Snooze</string>
-    <string name="dialogSnooze_duration_caption">Minimum %d minutes, max %d minutes</string>
+    <string name="dialogSnooze_duration_caption">Minimum %1$d minutes, max %2$d minutes</string>
 
     <string name="dialog_day_everyday">Every day</string>
     <string name="dialog_day_mondays">Mondays</string>
@@ -161,4 +161,5 @@
     <string name="snooze_alarm">Snooze alarm</string>
     <string name="skip_alarm">Skip alarm</string>
     <string name="complete_alarm">Complete alarm</string>
+    <string name="until">Until</string>
 </resources>

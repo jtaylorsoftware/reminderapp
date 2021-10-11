@@ -9,7 +9,7 @@
 
         <variable
             name="model"
-            type="com.github.jeremyt135.reminderapp.screens.reminder.overview.RemindersViewModel" />
+            type="app.timetoremind.mobile.screens.reminder.overview.RemindersViewModel" />
     </data>
 
     <LinearLayout
@@ -17,7 +17,7 @@
         android:layout_height="match_parent"
         android:gravity="center_horizontal"
         android:orientation="vertical"
-        tools:context=".reminderapp.screens.reminder.overview.RemindersFragment">
+        tools:context="app.timetoremind.mobile.screens.reminder.overview.RemindersFragment">
 
         <TextView
             android:id="@+id/text_reminders_hint"

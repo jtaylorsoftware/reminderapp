@@ -9,11 +9,11 @@
 
         <import type="android.view.View" />
 
-        <import type="com.github.jeremyt135.reminderapp.data.domain.SchedulingType" />
+        <import type="app.timetoremind.mobile.data.domain.SchedulingType" />
 
         <variable
             name="data"
-            type="com.github.jeremyt135.reminderapp.data.domain.ReminderAndHistory" />
+            type="app.timetoremind.mobile.data.domain.ReminderAndHistory" />
     </data>
 
     <com.google.android.material.card.MaterialCardView
@@ -68,7 +68,8 @@
                 app:layout_constraintEnd_toStartOf="@+id/text_item_reminderCalendar_endDate"
                 app:layout_constraintHorizontal_bias="0.5"
                 app:layout_constraintStart_toEndOf="@+id/text_item_reminderCalendar_startDate"
-                app:layout_constraintTop_toTopOf="@+id/text_item_reminderCalendar_startDate" />
+                app:layout_constraintTop_toTopOf="@+id/text_item_reminderCalendar_startDate"
+                android:contentDescription="@string/until" />
 
             <TextView
                 android:id="@+id/text_item_reminderCalendar_startDate"

@@ -15,7 +15,7 @@
 
         <variable
             name="model"
-            type="com.github.jeremyt135.reminderapp.screens.reminder.editor.dialog.DialogDayViewModel" />
+            type="app.timetoremind.mobile.screens.reminder.editor.dialog.DialogDayViewModel" />
 
         <variable
             name="daysOfWeek"
@@ -30,7 +30,7 @@
             android:id="@+id/checkbox_dialogDay_everyday"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="8dp"
             android:checked="@{model.isEveryDay}"
             android:text="@string/dialog_day_everyday"
             app:layout_constraintEnd_toStartOf="@+id/checkbox_dialogDay_thursday"
@@ -42,7 +42,7 @@
             android:id="@+id/checkbox_dialogDay_monday"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="2dp"
             android:checked="@{daysOfWeek.contains(DayOfWeek.MONDAY)}"
             android:text="@string/dialog_day_mondays"
             app:layout_constraintStart_toStartOf="@+id/checkbox_dialogDay_everyday"
@@ -52,7 +52,7 @@
             android:id="@+id/checkbox_dialogDay_tuesday"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="2dp"
             android:checked="@{daysOfWeek.contains(DayOfWeek.TUESDAY)}"
             android:text="@string/dialog_day_tuesdays"
             app:layout_constraintStart_toStartOf="@+id/checkbox_dialogDay_monday"
@@ -62,7 +62,7 @@
             android:id="@+id/checkbox_dialogDay_wednesday"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="2dp"
             android:checked="@{daysOfWeek.contains(DayOfWeek.WEDNESDAY)}"
             android:text="@string/dialog_day_wednesdays"
             app:layout_constraintStart_toStartOf="@+id/checkbox_dialogDay_tuesday"
@@ -83,7 +83,7 @@
             android:id="@+id/checkbox_dialogDay_friday"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="2dp"
             android:checked="@{daysOfWeek.contains(DayOfWeek.FRIDAY)}"
             android:text="@string/dialog_day_fridays"
             app:layout_constraintStart_toStartOf="@+id/checkbox_dialogDay_thursday"
@@ -93,7 +93,7 @@
             android:id="@+id/checkbox_dialogDay_saturday"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="2dp"
             android:checked="@{daysOfWeek.contains(DayOfWeek.SATURDAY)}"
             android:text="@string/dialog_day_saturdays"
             app:layout_constraintStart_toStartOf="@+id/checkbox_dialogDay_friday"
@@ -103,7 +103,7 @@
             android:id="@+id/checkbox_dialogDay_sunday"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="2dp"
             android:checked="@{daysOfWeek.contains(DayOfWeek.SUNDAY)}"
             android:text="@string/dialog_day_sundays"
             app:layout_constraintStart_toStartOf="@+id/checkbox_dialogDay_saturday"

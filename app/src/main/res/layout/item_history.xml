@@ -7,7 +7,7 @@
 
         <variable
             name="history"
-            type="com.github.jeremyt135.reminderapp.data.domain.History" />
+            type="app.timetoremind.mobile.data.domain.History" />
     </data>
 
 

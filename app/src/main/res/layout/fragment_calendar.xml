@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <com.github.jeremyt135.reminderapp.screens.reminder.calendar.CalendarView
+    <app.timetoremind.mobile.screens.reminder.calendar.CalendarView
         android:id="@+id/calendarView"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />

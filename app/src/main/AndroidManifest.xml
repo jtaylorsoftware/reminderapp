@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="com.github.jeremyt135">
+    package="app.timetoremind.mobile">
 
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
@@ -9,14 +9,14 @@
     <uses-permission android:name="android.permission.VIBRATE" />
 
     <application
-        android:name=".reminderapp.ReminderApplication"
+        android:name="app.timetoremind.mobile.ReminderApplication"
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:theme="@style/Theme.ReminderApp">
         <activity
-            android:name=".reminderapp.MainActivity"
+            android:name="app.timetoremind.mobile.MainActivity"
             android:configChanges="orientation|screenSize"
             android:exported="true"
             android:windowSoftInputMode="adjustPan">
@@ -26,31 +26,31 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".reminderapp.screens.reminder.editor.ReminderEditorActivity"
+            android:name="app.timetoremind.mobile.screens.reminder.editor.ReminderEditorActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
-            android:parentActivityName=".reminderapp.MainActivity"
+            android:parentActivityName="app.timetoremind.mobile.MainActivity"
             android:launchMode="singleTask"
             android:windowSoftInputMode="adjustPan" />
         <activity
-            android:name=".reminderapp.screens.preferences.PreferencesActivity"
+            android:name="app.timetoremind.mobile.screens.preferences.PreferencesActivity"
             android:theme="@style/Theme.Preferences" />
-        <activity android:name=".reminderapp.screens.reminder.editor.ReminderEditorTestActivity" />
-        <activity android:name=".reminderapp.HiltTestActivity" />
-        <activity android:name=".reminderapp.screens.alarm.AlarmTestActivity" />
-        <activity android:name=".reminderapp.settings.SettingsActivity" />
-        <activity android:name=".reminderapp.theme.ThemeActivity" />
+        <activity android:name="app.timetoremind.mobile.screens.reminder.editor.ReminderEditorTestActivity" />
+        <activity android:name="app.timetoremind.mobile.HiltTestActivity" />
+        <activity android:name="app.timetoremind.mobile.screens.alarm.AlarmTestActivity" />
+        <activity android:name="app.timetoremind.mobile.settings.SettingsActivity" />
+        <activity android:name="app.timetoremind.mobile.theme.ThemeActivity" />
         <activity
-            android:name=".reminderapp.screens.alarm.AlarmActivity"
+            android:name="app.timetoremind.mobile.screens.alarm.AlarmActivity"
             android:configChanges="orientation|uiMode"
             android:launchMode="singleTask"
             android:taskAffinity=""
             android:excludeFromRecents="true"
             android:theme="@style/Theme.ReminderApp.Alarm" />
 
-        <receiver android:name=".reminderapp.broadcast.AlarmStartReceiver" />
-        <receiver android:name=".reminderapp.broadcast.AlarmActionReceiver" />
+        <receiver android:name="app.timetoremind.mobile.broadcast.AlarmStartReceiver" />
+        <receiver android:name="app.timetoremind.mobile.broadcast.AlarmActionReceiver" />
         <receiver
-            android:name=".reminderapp.broadcast.AlarmBootScheduler"
+            android:name="app.timetoremind.mobile.broadcast.AlarmBootScheduler"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
@@ -59,15 +59,15 @@
             </intent-filter>
         </receiver>
 
-        <service android:name=".reminderapp.service.AlarmMediaService" />
-        <service android:name=".reminderapp.service.AlarmHistoryService" />
-        <service android:name=".reminderapp.service.AlarmSchedulingService" />
-        <service android:name=".reminderapp.service.AlarmSnoozeService" />
+        <service android:name="app.timetoremind.mobile.service.AlarmMediaService" />
+        <service android:name="app.timetoremind.mobile.service.AlarmHistoryService" />
+        <service android:name="app.timetoremind.mobile.service.AlarmSchedulingService" />
+        <service android:name="app.timetoremind.mobile.service.AlarmSnoozeService" />
 
         <provider
             android:name="androidx.startup.InitializationProvider"
             android:authorities="${applicationId}.androidx-startup"
-            tools:node="remove"></provider>
+            tools:node="remove" />
 
     </application>
 

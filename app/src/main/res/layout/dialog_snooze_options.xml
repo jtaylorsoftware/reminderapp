@@ -9,11 +9,11 @@
 
         <import type="androidx.lifecycle.LiveData" />
 
-        <import type="com.github.jeremyt135.reminderapp.data.domain.SnoozeRules" />
+        <import type="app.timetoremind.mobile.data.domain.SnoozeRules" />
 
         <variable
             name="model"
-            type="com.github.jeremyt135.reminderapp.screens.reminder.editor.dialog.SnoozeOptionsViewModel" />
+            type="app.timetoremind.mobile.screens.reminder.editor.dialog.SnoozeOptionsViewModel" />
 
         <variable
             name="snoozeRules"
@@ -43,6 +43,7 @@
                 android:layout_marginStart="16dp"
                 android:ems="10"
                 android:gravity="center_vertical"
+                android:labelFor="@id/edit_dialogSnooze_maxSnoozeRepeats"
                 android:text="@string/dialogSnooze_label_maxSnoozeRepeats"
                 app:layout_constraintBottom_toBottomOf="@+id/edit_dialogSnooze_maxSnoozeRepeats"
                 app:layout_constraintStart_toStartOf="parent"
@@ -55,6 +56,7 @@
                 android:layout_marginTop="8dp"
                 android:ems="4"
                 android:gravity="center_horizontal"
+                android:importantForAutofill="no"
                 android:inputType="numberSigned"
                 android:maxLength="2"
                 android:maxLines="1"
@@ -76,6 +78,7 @@
                 android:layout_marginTop="8dp"
                 android:ems="4"
                 android:gravity="center_horizontal"
+                android:importantForAutofill="no"
                 android:inputType="numberSigned"
                 android:maxLength="2"
                 android:maxLines="1"
@@ -90,6 +93,7 @@
                 android:layout_marginStart="16dp"
                 android:ems="10"
                 android:gravity="center_vertical"
+                android:labelFor="@id/edit_dialogSnooze_snoozeDuration"
                 android:text="@string/dialogSnooze_label_snoozeDuration"
                 app:layout_constraintBottom_toBottomOf="@+id/edit_dialogSnooze_snoozeDuration"
                 app:layout_constraintStart_toStartOf="parent"
@@ -151,7 +155,8 @@
                 android:layout_marginStart="16dp"
                 android:layout_marginTop="8dp"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/edit_dialogSnooze_snoozeDuration" />
+                app:layout_constraintTop_toBottomOf="@+id/edit_dialogSnooze_snoozeDuration"
+                tools:text="Min x, maximum y minutes" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
     </ScrollView>

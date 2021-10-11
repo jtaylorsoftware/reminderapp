@@ -9,7 +9,7 @@
 
         <variable
             name="model"
-            type="com.github.jeremyt135.reminderapp.screens.reminder.history.HistoryViewModel" />
+            type="app.timetoremind.mobile.screens.reminder.history.HistoryViewModel" />
     </data>
 
     <LinearLayout

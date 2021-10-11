@@ -25,7 +25,7 @@
 
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/fragment_container_reminder_editor"
-        android:name="com.github.jeremyt135.reminderapp.screens.reminder.editor.ReminderEditorFragment"
+        android:name="app.timetoremind.mobile.screens.reminder.editor.ReminderEditorFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:layout_behavior="@string/appbar_scrolling_view_behavior"
