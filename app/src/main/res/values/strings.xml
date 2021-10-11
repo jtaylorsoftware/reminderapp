@@ -43,6 +43,9 @@
     <string name="add_reminder">Add Reminder</string>
     <string name="edit_reminder">Edit reminder text</string>
 
+    <string name="editor_title_editing">Edit Reminder</string>
+    <string name="editor_title_new">@string/add_reminder</string>
+
     <string name="saturday_abbrev">S</string>
     <string name="sunday_abbrev">S</string>
     <string name="monday_abbrev">M</string>
