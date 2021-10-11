@@ -25,7 +25,7 @@
             android:visibility="invisible"
             app:layout_constraintBottom_toTopOf="@+id/card_calendar_reminderList"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHeight_percent="0.4"
+            app:layout_constraintHeight_percent="0.5"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintVertical_bias="0.0"
@@ -42,7 +42,6 @@
                     style="@style/TextAppearance.App.Calendar.YearMonth"
                     android:layout_width="wrap_content"
                     android:layout_height="48dp"
-                    android:layout_marginTop="24dp"
                     android:gravity="center"
                     android:text="@{model.selectedYearMonthString}"
                     android:textSize="20sp"
@@ -51,6 +50,7 @@
                     app:layout_constraintHorizontal_bias="0.5"
                     app:layout_constraintStart_toEndOf="@+id/button_calendar_backward"
                     app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintVertical_bias="0.0"
                     app:layout_constraintVertical_chainStyle="packed"
                     tools:text="September 00" />
 
@@ -86,7 +86,6 @@
                     android:id="@+id/recycler_calendar"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
                     android:nestedScrollingEnabled="false"
                     app:calendarData="@{model.calendarData}"
                     app:layout_constraintBottom_toBottomOf="parent"
@@ -112,7 +111,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/card_calendar"
-            app:layout_constraintHeight_percent="0.4">
+            app:layout_constraintHeight_percent="0.5">
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"

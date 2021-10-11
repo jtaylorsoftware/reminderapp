@@ -91,7 +91,7 @@ class CalendarViewModelTest {
     fun yearMonthString_hasShortFormat() = testScope.runBlockingTest {
         var monthString = YearMonth.now().month.toString()
         monthString = monthString[0] + monthString.substring(1).lowercase()
-        val expected = "${monthString} '${YearMonth.now().year.toString().substring(2)}"
+        val expected = "${monthString} ${YearMonth.now().year.toString()}"
         assertThat(viewModel.selectedYearMonthString.getOrAwaitValue()).isEqualTo(expected)
     }
 

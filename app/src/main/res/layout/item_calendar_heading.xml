@@ -4,7 +4,7 @@
     android:id="@+id/text_calendar_dayOfWeek"
     style="@style/TextAppearance.App.Calendar.Heading"
     android:layout_width="@dimen/calendar_cell_width"
-    android:layout_height="@dimen/calendar_cell_height"
+    android:layout_height="wrap_content"
     android:layout_marginHorizontal="@dimen/calendar_cell_margin_h"
     android:layout_marginVertical="@dimen/calendar_cell_margin_v"
     android:gravity="center"

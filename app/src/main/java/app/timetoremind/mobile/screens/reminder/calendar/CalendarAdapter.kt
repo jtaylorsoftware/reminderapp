@@ -187,11 +187,19 @@ class CalendarAdapter(
         private fun useOutlineImage() {
             selectedImage.setImageResource(R.drawable.bg_calendar_day_outline)
             selectedImage.visibility = View.VISIBLE
+            ImageViewCompat.setImageTintList(
+                selectedImage,
+                ColorStateList.valueOf(MaterialColors.getColor(selectedImage, R.attr.colorOnSurface))
+            )
         }
 
         private fun useFilledImage() {
             selectedImage.setImageResource(R.drawable.bg_calendar_day_filled)
             selectedImage.visibility = View.VISIBLE
+            ImageViewCompat.setImageTintList(
+                selectedImage,
+                ColorStateList.valueOf(MaterialColors.getColor(selectedImage, R.attr.colorPrimary))
+            )
         }
 
         private fun hideBackgroundImage() {

@@ -21,11 +21,10 @@
             android:id="@+id/card_calendar"
             style="@style/Widget.App.CardView.Calendar"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
+            android:layout_height="wrap_content"
             android:visibility="visible"
             app:layout_constraintBottom_toTopOf="@+id/card_calendar_reminderList"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHeight_percent="0.6"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintVertical_bias="0.0"
@@ -33,7 +32,7 @@
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_height="wrap_content"
                 android:clipToPadding="false"
                 android:padding="8dp">
 
@@ -42,7 +41,7 @@
                     style="@style/TextAppearance.App.Calendar.YearMonth"
                     android:layout_width="wrap_content"
                     android:layout_height="48dp"
-                    android:layout_marginTop="16dp"
+                    android:layout_marginTop="4dp"
                     android:gravity="center"
                     android:text="@{model.selectedYearMonthString}"
                     android:textSize="20sp"
@@ -87,7 +86,6 @@
                     android:id="@+id/recycler_calendar"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
                     android:nestedScrollingEnabled="false"
                     app:calendarData="@{model.calendarData}"
                     app:layout_constraintBottom_toBottomOf="parent"
@@ -109,7 +107,6 @@
             style="@style/Widget.App.CardView.Calendar.ReminderList"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            app:layout_constraintHeight_percent="0.4"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"

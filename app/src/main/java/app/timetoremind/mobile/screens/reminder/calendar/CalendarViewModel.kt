@@ -48,7 +48,7 @@ class CalendarViewModel @Inject constructor(
      * "September '21."
      */
     val selectedYearMonthString = _selectedYearMonth.map { date ->
-        date.format(DateTimeFormatter.ofPattern("MMMM ''uu"))
+        date.format(DateTimeFormatter.ofPattern("MMMM uuuu"))
     }.asLiveData()
 
     /**
