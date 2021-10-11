@@ -155,4 +155,7 @@
     <string name="button_previous_month_description">Previous month</string>
 
     <string name="go_to_current_month">Go to current month</string>
+    <string name="snooze_alarm">Snooze alarm</string>
+    <string name="skip_alarm">Skip alarm</string>
+    <string name="complete_alarm">Complete alarm</string>
 </resources>

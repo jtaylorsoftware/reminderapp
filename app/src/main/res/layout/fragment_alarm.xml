@@ -21,6 +21,7 @@
             android:layout_height="0dp"
             app:layout_constraintBottom_toTopOf="@+id/linearLayout3"
             app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.5"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintVertical_bias="0.0"
@@ -30,47 +31,45 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
-                <LinearLayout
-                    android:id="@+id/linearLayout"
+                <TextView
+                    android:id="@+id/text_alarm_time"
+                    style="@style/TextAppearance.MaterialComponents.Headline4"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="32dp"
+                    android:layout_marginBottom="32dp"
+                    android:text="@{model.time}"
+                    app:layout_constraintBottom_toTopOf="@+id/text_alarm_description"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/text_alarm_heading"
+                    tools:text="11:10 am" />
+
+                <TextView
+                    android:id="@+id/text_alarm_description"
+                    style="@style/TextAppearance.MaterialComponents.Headline6"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="16dp"
+                    app:layout_constraintWidth_percent="0.70"
                     android:gravity="center"
-                    android:orientation="vertical"
+                    android:paddingHorizontal="16dp"
+                    android:text="@{model.reminder.description}"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintHorizontal_bias="0.5"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/text_alarm_heading">
+                    app:layout_constraintTop_toBottomOf="@+id/text_alarm_time"
+                    tools:text="Reminder description that is a very long and descriptive text and should wrap text" />
 
-                    <TextView
-                        android:id="@+id/text_alarm_time"
-                        style="@style/TextAppearance.MaterialComponents.Headline4"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="32dp"
-                        android:text="@{model.time}"
-                        tools:text="11:10 am" />
-
-                    <TextView
-                        android:id="@+id/text_alarm_description"
-                        style="@style/TextAppearance.MaterialComponents.Headline6"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:paddingStart="16dp"
-                        android:paddingEnd="16dp"
-                        android:text="@{model.reminder.description}"
-                        tools:text="Reminder description" />
-                </LinearLayout>
 
                 <TextView
                     android:id="@+id/text_alarm_heading"
                     style="@style/TextAppearance.MaterialComponents.Headline5"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="32dp"
+                    android:layout_marginTop="48dp"
                     android:text="@string/reminder"
-                    app:layout_constraintBottom_toTopOf="@+id/linearLayout"
+                    app:layout_constraintBottom_toTopOf="@+id/text_alarm_time"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintHorizontal_bias="0.5"
                     app:layout_constraintStart_toStartOf="parent"
@@ -85,35 +84,48 @@
             android:id="@+id/linearLayout3"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
-            android:gravity="center_horizontal"
+            android:layout_marginBottom="48dp"
+            android:gravity="center"
             android:orientation="horizontal"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent">
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/scrollView2">
 
-            <Button
-                android:id="@+id/button_alarm_snooze"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="4dp"
-                android:onClick="@{() -> model.snooze(true)}"
-                android:text="@string/snooze" />
-
-            <Button
+            <ImageView
                 android:id="@+id/button_alarm_skip"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginHorizontal="8dp"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:clickable="true"
+                android:contentDescription="@string/skip_alarm"
+                android:focusable="true"
                 android:onClick="@{() -> model.skip(true)}"
-                android:text="@string/skip" />
+                app:srcCompat="@drawable/ic_notification_skip"
+                app:tint="@color/status_skip" />
 
-            <Button
+            <ImageView
+                android:id="@+id/button_alarm_snooze"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:layout_marginHorizontal="48dp"
+                android:clickable="true"
+                android:contentDescription="@string/snooze_alarm"
+                android:focusable="true"
+                android:onClick="@{() -> model.snooze(true)}"
+                app:srcCompat="@drawable/ic_notification_snooze"
+                app:tint="?attr/colorPrimary" />
+
+            <ImageView
                 android:id="@+id/buttom_alarm_complete"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:clickable="true"
+                android:contentDescription="@string/complete_alarm"
+                android:focusable="true"
                 android:onClick="@{() -> model.complete(true)}"
-                android:text="@string/complete" />
+                app:srcCompat="@drawable/ic_notification_complete"
+                app:tint="@color/status_complete" />
 
         </LinearLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>
