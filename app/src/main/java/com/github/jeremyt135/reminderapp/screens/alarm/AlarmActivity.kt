@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.lifecycle.asLiveData
 import com.github.jeremyt135.R
 import dagger.hilt.android.AndroidEntryPoint
@@ -53,6 +54,7 @@ class AlarmActivity : AppCompatActivity() {
             }
         }
 
+        delegate.localNightMode = AppCompatDelegate.MODE_NIGHT_YES
         setContentView(R.layout.activity_alarm)
         supportActionBar?.hide()
     }
