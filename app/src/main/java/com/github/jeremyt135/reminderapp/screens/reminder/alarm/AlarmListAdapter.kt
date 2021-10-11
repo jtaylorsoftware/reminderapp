@@ -14,7 +14,6 @@ import com.github.jeremyt135.databinding.ItemAlarmBinding
 import com.github.jeremyt135.reminderapp.data.domain.ReminderAndAlarm
 import com.github.jeremyt135.reminderapp.util.getShortLocalDateDisplay
 import com.github.jeremyt135.reminderapp.util.getShortLocalTimeDisplay
-import timber.log.Timber
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 
@@ -54,7 +53,11 @@ class AlarmListAdapter(val spanCount: Int, private val onAlarmClickListener: OnA
             ViewType.ALARM -> {
                 holder as ReminderAndAlarmViewHolder
                 val reminderAndAlarm = getItem(position) as ReminderAndAlarm
-                holder.bind(reminderAndAlarm, position, spanCount > 1)
+                val isNext = if (currentList.isEmpty()) false else {
+                    val firstAlarmIndex = if (currentList[0] is ReminderAndAlarm) 0 else 1
+                    currentList.getOrNull(firstAlarmIndex) == reminderAndAlarm
+                }
+                holder.bind(reminderAndAlarm, isNext, spanCount > 1)
 
                 holder.itemView.let {
                     it.setOnClickListener {
@@ -66,7 +69,7 @@ class AlarmListAdapter(val spanCount: Int, private val onAlarmClickListener: OnA
         }
     }
 
-    private fun configureSeparatorSize(view: View){
+    private fun configureSeparatorSize(view: View) {
         val density = view.resources.displayMetrics.density
         val screenWidth = view.resources.configuration.screenWidthDp
         val widthRatioInColumn = 0.80f
@@ -136,8 +139,7 @@ class AlarmListAdapter(val spanCount: Int, private val onAlarmClickListener: OnA
         private val colorPrimary =
             ContextCompat.getColor(binding.root.context, R.color.reminder_day_of_week_tint)
 
-        fun bind(reminderAndAlarm: ReminderAndAlarm, position: Int, displayDaysUntil: Boolean) {
-            Timber.d("textSecondary = $textSecondary")
+        fun bind(reminderAndAlarm: ReminderAndAlarm, isNext: Boolean, displayDaysUntil: Boolean) {
             binding.apply {
                 description = reminderAndAlarm.reminder.description
                 val alarmDateTime = requireNotNull(reminderAndAlarm.alarm).triggerAt
@@ -146,22 +148,24 @@ class AlarmListAdapter(val spanCount: Int, private val onAlarmClickListener: OnA
                 time = alarmDateTime.getShortLocalTimeDisplay()
 
                 val daysUntil = LocalDate.now().until(alarmDateTime.toLocalDate(), ChronoUnit.DAYS)
-                setTextDaysUntil(daysUntil, position, displayDaysUntil)
+                setTextDaysUntil(daysUntil, isNext, displayDaysUntil)
 
                 executePendingBindings()
             }
         }
 
-        private fun setTextDaysUntil(daysUntil: Long, position: Int, daysUntilVisible: Boolean) {
+        private fun setTextDaysUntil(daysUntil: Long, isNext: Boolean, daysUntilVisible: Boolean) {
             if (daysUntilVisible) {
-                val daysUntilText = when (daysUntil) {
-                    0L -> if (position == 0) "Next" else "Today"
-                    in (1L..7L) -> "< 1 week"
-                    else -> "Future"
-                }
+                val daysUntilText = if (isNext) "Next" else
+                    when (daysUntil) {
+                        -1L -> ""
+                        0L -> "Today"
+                        in (1L..7L) -> "< 1 week"
+                        else -> "Future"
+                    }
 
                 binding.textItemAlarmDaysUntil.apply {
-                    if (position == 0) {
+                    if (isNext) {
                         setTextColor(colorPrimary)
                     } else {
                         setTextColor(textSecondary)
