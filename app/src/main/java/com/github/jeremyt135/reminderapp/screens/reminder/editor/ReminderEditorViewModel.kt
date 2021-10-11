@@ -222,7 +222,7 @@ class ReminderEditorViewModel @Inject constructor(
         with(_reminder.value.schedulingRules) {
             _startDateState.value =
                 _startDateState.value.copy(
-                    errorEnabled = startDate < LocalDate.now() || startDate > endDate && _hasEndDate.value
+                    errorEnabled = !isEditing && (startDate < LocalDate.now() || startDate > endDate && _hasEndDate.value)
                 )
             if (type == SchedulingType.REPEATING) {
                 _endDateState.value =
@@ -329,7 +329,7 @@ class ReminderEditorViewModel @Inject constructor(
             val startDateTime = schedulingRules.startDate.atTime(schedulingRules.time)
             schedulingRules.type == SchedulingType.SINGLE && startDateTime < currentLocalDateTime()
         }
-        _timeState.value = _timeState.value.copy(errorEnabled = errorEnabled)
+        _timeState.value = _timeState.value.copy(errorEnabled = !isEditing && errorEnabled)
         Timber.d("CheckTimeErrors errorenabled: $formHasErrors")
     }
 
