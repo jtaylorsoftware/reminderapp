@@ -32,17 +32,6 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
         setupBinding(view)
     }
 
-    override fun onConfigurationChanged(newConfig: Configuration) {
-        super.onConfigurationChanged(newConfig)
-
-        val layoutView =
-            LayoutInflater.from(requireContext()).inflate(R.layout.fragment_history, null)
-        val root = view as ViewGroup
-        root.removeAllViews()
-        root.addView(layoutView)
-        setupBinding(layoutView)
-    }
-
     private fun setupBinding(view: View){
         FragmentHistoryBinding.bind(view).apply {
             lifecycleOwner = viewLifecycleOwner

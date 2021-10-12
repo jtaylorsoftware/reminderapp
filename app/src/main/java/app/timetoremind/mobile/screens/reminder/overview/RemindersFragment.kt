@@ -49,18 +49,6 @@ class RemindersFragment : Fragment() {
         }
     }
 
-    override fun onConfigurationChanged(newConfig: Configuration) {
-        super.onConfigurationChanged(newConfig)
-
-        val layoutView =
-            LayoutInflater.from(requireContext()).inflate(R.layout.fragment_reminders, null)
-        val root = view as ViewGroup
-        root.removeAllViews()
-        root.addView(layoutView)
-        setupBinding(layoutView)
-        setupFab()
-    }
-
     private fun setupBinding(view: View) {
         FragmentRemindersBinding.bind(view).apply {
             model = viewModel

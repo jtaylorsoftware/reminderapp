@@ -17,7 +17,6 @@
         android:theme="@style/Theme.ReminderApp">
         <activity
             android:name="app.timetoremind.mobile.MainActivity"
-            android:configChanges="orientation|screenSize"
             android:exported="true"
             android:windowSoftInputMode="adjustPan">
             <intent-filter>

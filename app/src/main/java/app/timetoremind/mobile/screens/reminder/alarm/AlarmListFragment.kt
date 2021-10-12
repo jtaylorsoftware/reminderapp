@@ -25,17 +25,6 @@ class AlarmListFragment : Fragment(R.layout.fragment_alarm_list) {
         setupBinding(view)
     }
 
-    override fun onConfigurationChanged(newConfig: Configuration) {
-        super.onConfigurationChanged(newConfig)
-
-        val layoutView =
-            LayoutInflater.from(requireContext()).inflate(R.layout.fragment_alarm_list, null)
-        val root = view as ViewGroup
-        root.removeAllViews()
-        root.addView(layoutView)
-        setupBinding(layoutView)
-    }
-
     private fun setupBinding(view: View) {
         FragmentAlarmListBinding.bind(view).apply {
             model = viewModel

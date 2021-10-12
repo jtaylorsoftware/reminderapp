@@ -2,7 +2,6 @@ package app.timetoremind.mobile.screens.reminder.calendar
 
 import android.content.Context
 import android.content.res.ColorStateList
-import android.content.res.Configuration
 import android.graphics.PorterDuff
 import android.util.AttributeSet
 import android.view.LayoutInflater
@@ -19,8 +18,8 @@ import androidx.lifecycle.findViewTreeViewModelStoreOwner
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.transition.TransitionManager
 import app.timetoremind.mobile.R
-import app.timetoremind.mobile.databinding.ViewCalendarBinding
 import app.timetoremind.mobile.data.domain.Reminder
+import app.timetoremind.mobile.databinding.ViewCalendarBinding
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest
@@ -77,16 +76,8 @@ class CalendarView : ConstraintLayout {
     /**
      * Sets the selected year & month
      */
-    fun setYearMonth(yearMonth: YearMonth){
+    fun setYearMonth(yearMonth: YearMonth) {
         viewModel.setSelectedMonth(yearMonth)
-    }
-
-    override fun onConfigurationChanged(newConfig: Configuration?) {
-        Timber.d("onConfigurationChanged")
-        super.onConfigurationChanged(newConfig)
-        removeAllViews()
-        binding = ViewCalendarBinding.inflate(LayoutInflater.from(context), this, true)
-        attachBinding()
     }
 
     private fun attachBinding() {
@@ -97,7 +88,6 @@ class CalendarView : ConstraintLayout {
         binding?.lifecycleOwner = lifecycleOwner
 
         setupBindingViews()
-
         startCoroutines()
     }
 

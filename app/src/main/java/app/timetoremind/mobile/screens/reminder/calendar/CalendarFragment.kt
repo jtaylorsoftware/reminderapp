@@ -18,6 +18,7 @@ import java.time.YearMonth
 @ExperimentalCoroutinesApi
 class CalendarFragment : Fragment(R.layout.fragment_calendar) {
     private lateinit var calendarView: CalendarView
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 

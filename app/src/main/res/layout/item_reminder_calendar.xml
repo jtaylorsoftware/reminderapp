@@ -24,6 +24,7 @@
         app:cardElevation="@dimen/recycler_item_cardView_elevation">
 
         <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/layout_card_item_reminderCalendar"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:clipToPadding="false"
@@ -222,7 +223,6 @@
                 android:layout_marginTop="4dp"
                 android:layout_marginBottom="4dp"
                 android:ellipsize="end"
-                android:maxLines="2"
                 android:paddingHorizontal="2dp"
                 android:paddingVertical="2dp"
                 android:scrollHorizontally="true"
