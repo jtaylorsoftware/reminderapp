@@ -37,7 +37,6 @@
         <activity android:name="app.timetoremind.mobile.HiltTestActivity" />
         <activity android:name="app.timetoremind.mobile.screens.alarm.AlarmTestActivity" />
         <activity android:name="app.timetoremind.mobile.settings.SettingsActivity" />
-        <activity android:name="app.timetoremind.mobile.theme.ThemeActivity" />
         <activity
             android:name="app.timetoremind.mobile.screens.alarm.AlarmActivity"
             android:configChanges="orientation|uiMode"

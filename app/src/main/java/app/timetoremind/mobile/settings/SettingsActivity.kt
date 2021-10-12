@@ -3,16 +3,16 @@ package app.timetoremind.mobile.settings
 import android.content.Intent
 import android.view.Menu
 import android.view.MenuItem
+import androidx.appcompat.app.AppCompatActivity
 import app.timetoremind.mobile.R
 import app.timetoremind.mobile.screens.preferences.PreferencesActivity
-import app.timetoremind.mobile.theme.ThemeActivity
 import dagger.hilt.android.AndroidEntryPoint
 
 /**
  * An Activity that uses a settings menu, and is aware of theme changes.
  */
 @AndroidEntryPoint
-open class SettingsActivity : ThemeActivity() {
+open class SettingsActivity : AppCompatActivity() {
     override fun onPrepareOptionsMenu(menu: Menu): Boolean {
         super.onPrepareOptionsMenu(menu)
         prepareMenuForSettings(menu)

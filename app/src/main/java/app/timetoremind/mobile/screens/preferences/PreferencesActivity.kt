@@ -3,19 +3,24 @@ package app.timetoremind.mobile.screens.preferences
 import android.content.SharedPreferences
 import android.os.Bundle
 import android.view.MenuItem
+import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.preference.PreferenceManager
 import app.timetoremind.mobile.R
-import app.timetoremind.mobile.theme.ThemeActivity
 import app.timetoremind.mobile.theme.ThemeSetting
 import app.timetoremind.mobile.work.AlarmSchedulingWorker
 import timber.log.Timber
 
-class PreferencesActivity : ThemeActivity(),
+class PreferencesActivity : AppCompatActivity(),
     SharedPreferences.OnSharedPreferenceChangeListener {
     private val themeKey: String by lazy {
         getString(R.string.preference_key_theme)
     }
     private val scheduleIntervalKey: String by lazy {
         getString(R.string.preference_key_schedule_interval)
+    }
+    private val sharedPreferences: SharedPreferences by lazy {
+        PreferenceManager.getDefaultSharedPreferences(this)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -53,9 +58,10 @@ class PreferencesActivity : ThemeActivity(),
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String) {
         when (key) {
             themeKey -> {
-                super.handleThemeChange(
-                    ThemeSetting.valueOf(sharedPreferences.getString(themeKey, "")!!)
-                )
+//                super.handleThemeChange(
+//                    ThemeSetting.valueOf(sharedPreferences.getString(themeKey, "")!!)
+//                )
+                handleThemeChange(sharedPreferences.getString(themeKey, "SYSTEM")!!)
             }
             scheduleIntervalKey -> {
                 AlarmSchedulingWorker.cancelWork(this)
@@ -67,5 +73,10 @@ class PreferencesActivity : ThemeActivity(),
                 Timber.d("Updated interval to $interval minutes")
             }
         }
+    }
+
+    private fun handleThemeChange(newValue: String) {
+        val newTheme = ThemeSetting.valueOf(newValue).toAppNightMode()
+        AppCompatDelegate.setDefaultNightMode(newTheme)
     }
 }

@@ -4,10 +4,9 @@ import android.app.Application
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.preference.PreferenceManager
-import app.timetoremind.mobile.BuildConfig
-import app.timetoremind.mobile.R
 import app.timetoremind.mobile.di.AppCoroutineScope
 import app.timetoremind.mobile.service.AlarmSchedulingService
+import app.timetoremind.mobile.theme.getTheme
 import app.timetoremind.mobile.work.AlarmSchedulingWorker
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
@@ -24,9 +23,14 @@ class ReminderApplication : Application(), androidx.work.Configuration.Provider 
     @Inject
     lateinit var workerFactory: HiltWorkerFactory
 
+    private val themeKey: String by lazy {
+        getString(R.string.preference_key_theme)
+    }
+
     override fun onCreate() {
         super.onCreate()
         setDefaultPreferences()
+        loadDarkModePreference()
         applicationScope.launch { delayedInit() }
     }
 
@@ -42,13 +46,6 @@ class ReminderApplication : Application(), androidx.work.Configuration.Provider 
         androidx.work.Configuration.Builder()
             .setWorkerFactory(workerFactory)
             .build()
-
-    /**
-     * Changes the default night mode for the app.
-     */
-    fun setDefaultNightMode(mode: Int) {
-        AppCompatDelegate.setDefaultNightMode(mode)
-    }
 
     private fun doFirstTimeSetup() {
         val preferences = PreferenceManager.getDefaultSharedPreferences(this)
@@ -85,5 +82,13 @@ class ReminderApplication : Application(), androidx.work.Configuration.Provider 
             R.xml.preference_screen,
             false
         )
+    }
+
+    /**
+     * Loads the dark/night theme preference and immediately sets it as default
+     */
+    private fun loadDarkModePreference() {
+        val preference = PreferenceManager.getDefaultSharedPreferences(this).getTheme(themeKey)
+        AppCompatDelegate.setDefaultNightMode(preference.toAppNightMode())
     }
 }
