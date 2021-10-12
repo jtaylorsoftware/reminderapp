@@ -20,11 +20,10 @@
     <string name="theme_setting_summary">Tap to set the app theme.</string>
     <string name="preference_title_theme">Theme</string>
     <string name="preference_title_alarm_snooze">Alarm snooze delay</string>
-    <string name="alarm_snooze_delay_summary">How long alarms should wait before automatically snoozing, measured in seconds.</string>
+    <string name="alarm_snooze_delay_summary">How long alarms should wait before automatically snoozing, in seconds.</string>
     <string name="preference_title_reschedule">Background rescheduling</string>
-    <string name="reschedule_interval_summary">How long to wait between background rescheduling attempts, measured in minutes.
-        Lower values may reduce the possibility of missed alarms at the expense of extra battery use.
-        Recommended to leave at the default value unless you notice alarms not firing at the right time.</string>
+    <string name="reschedule_interval_summary">How long to wait between background rescheduling attempts, in minutes.
+        Lower values can reduce the chances of missed alarms but increases battery use.</string>
 
     <string name="skip">Skip</string>
     <string name="snooze">Snooze</string>
