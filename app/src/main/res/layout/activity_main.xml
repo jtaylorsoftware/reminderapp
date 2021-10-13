@@ -9,16 +9,17 @@
     tools:context="app.timetoremind.mobile.MainActivity">
 
     <com.google.android.material.appbar.AppBarLayout
+        style="@style/Widget.MaterialComponents.AppBarLayout.PrimarySurface"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        style="@style/Widget.MaterialComponents.AppBarLayout.PrimarySurface">
+        android:layout_height="wrap_content">
 
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/top_app_bar"
             style="@style/Widget.MaterialComponents.Toolbar.PrimarySurface"
-            android:backgroundTint="@color/transparent"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
+            android:backgroundTint="@color/transparent"
+            android:elevation="0dp"
             app:title="Reminders" />
 
     </com.google.android.material.appbar.AppBarLayout>
@@ -87,13 +88,13 @@
                 android:layout_height="0dp"
                 android:enabled="false"
                 android:visibility="gone"
-                tools:visibility="invisible"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toStartOf="@+id/bottomNav_item_alarms"
                 app:layout_constraintHorizontal_bias="0.5"
                 app:layout_constraintStart_toEndOf="@+id/bottomNav_item_reminders"
                 app:layout_constraintTop_toTopOf="parent"
-                app:rippleColor="@color/color_on_primary_ripple" />
+                app:rippleColor="@color/color_on_primary_ripple"
+                tools:visibility="invisible" />
 
 
             <Button
