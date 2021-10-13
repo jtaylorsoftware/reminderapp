@@ -5,6 +5,7 @@ import android.view.View
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceFragmentCompat
 import app.timetoremind.mobile.R
+import app.timetoremind.mobile.theme.ThemeSetting
 import timber.log.Timber
 
 class PreferencesFragment : PreferenceFragmentCompat() {
@@ -23,8 +24,12 @@ class PreferencesFragment : PreferenceFragmentCompat() {
         super.onViewCreated(view, savedInstanceState)
         val themeKey = getString(R.string.preference_key_theme)
         preferenceScreen.findPreference<ListPreference>(themeKey)?.let {
-            val previousValue = preferenceManager.sharedPreferences.getString(themeKey, "SYSTEM")
-            it.setValueIndex(it.findIndexOfValue(previousValue))
+            val previousValue = preferenceManager.sharedPreferences.getString(
+                themeKey,
+                ThemeSetting.defaultValue().toString()
+            )
+            val indexOfPrevious = it.findIndexOfValue(previousValue)
+            it.setValueIndex(if (indexOfPrevious == -1) 0 else indexOfPrevious)
         }
     }
 }

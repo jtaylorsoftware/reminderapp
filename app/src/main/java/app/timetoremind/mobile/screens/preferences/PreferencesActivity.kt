@@ -58,10 +58,12 @@ class PreferencesActivity : AppCompatActivity(),
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String) {
         when (key) {
             themeKey -> {
-//                super.handleThemeChange(
-//                    ThemeSetting.valueOf(sharedPreferences.getString(themeKey, "")!!)
-//                )
-                handleThemeChange(sharedPreferences.getString(themeKey, "SYSTEM")!!)
+                handleThemeChange(
+                    sharedPreferences.getString(
+                        themeKey,
+                        ThemeSetting.defaultValue().toString()
+                    )!!
+                )
             }
             scheduleIntervalKey -> {
                 AlarmSchedulingWorker.cancelWork(this)
