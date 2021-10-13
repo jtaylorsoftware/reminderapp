@@ -6,9 +6,10 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import app.timetoremind.mobile.databinding.ItemReminderBinding
 import app.timetoremind.mobile.data.domain.Reminder
 import app.timetoremind.mobile.data.domain.ReminderAndHistory
+import app.timetoremind.mobile.databinding.ItemReminderBinding
+import app.timetoremind.mobile.util.dateNoun
 import timber.log.Timber
 
 class ReminderListAdapter(val spanCount: Int, private val clickListener: OnClickListener) :
@@ -95,10 +96,23 @@ class ReminderListAdapter(val spanCount: Int, private val clickListener: OnClick
 
         fun bind(reminderAndHistory: ReminderAndHistory) {
             this.reminder = reminderAndHistory.reminder
-            binding.apply {
-                this.data = reminderAndHistory
-                executePendingBindings()
+            binding.data = reminderAndHistory
+
+            val startDateRes = reminder!!.schedulingRules.startDate.dateNoun()
+            if (startDateRes != null) {
+                binding.textItemReminderStartDate.setText(startDateRes)
+            } else {
+                binding.textItemReminderStartDate.text =
+                    reminder!!.schedulingRules.startDateDisplayString()
             }
+            val endDateRes = reminder!!.schedulingRules.endDate.dateNoun()
+            if (endDateRes != null) {
+                binding.textItemReminderEndDate.setText(endDateRes)
+            } else {
+                binding.textItemReminderEndDate.text =
+                    reminder!!.schedulingRules.endDateDisplayString()
+            }
+            binding.executePendingBindings()
         }
     }
 

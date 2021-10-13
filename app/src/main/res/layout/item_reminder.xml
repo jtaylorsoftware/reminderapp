@@ -14,6 +14,7 @@
         <variable
             name="data"
             type="app.timetoremind.mobile.data.domain.ReminderAndHistory" />
+
     </data>
 
     <com.google.android.material.card.MaterialCardView
@@ -60,7 +61,6 @@
                     android:layout_height="wrap_content"
                     android:gravity="center"
                     android:padding="2dp"
-                    android:text="@{data.reminder.schedulingRules.startDateDisplayString()}"
                     tools:text="9/5/21" />
 
                 <ImageView
@@ -80,7 +80,6 @@
                     android:layout_height="wrap_content"
                     android:gravity="center"
                     android:padding="2dp"
-                    android:text="@{data.reminder.schedulingRules.endDateDisplayString()}"
                     android:visibility="@{data.reminder.schedulingRules.type != SchedulingType.SINGLE ? View.VISIBLE : View.GONE}"
                     tools:text="9/6/21" />
             </LinearLayout>

@@ -25,13 +25,12 @@
             android:paddingVertical="@dimen/recycler_item_padding_v">
 
             <TextView
-                android:id="@+id/text_item_history_startDate"
+                android:id="@+id/text_item_history_completedDate"
                 style="@style/TextAppearance.MaterialComponents.Caption"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:gravity="center"
                 android:padding="2dp"
-                android:text="@{history.dateDisplayString}"
                 app:layout_constraintBottom_toBottomOf="@+id/text_item_history_time"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_bias="0.5"
@@ -65,7 +64,7 @@
                 android:paddingVertical="2dp"
                 android:text="@{history.timeDisplayString}"
                 app:layout_constraintBottom_toTopOf="@+id/text_item_history_description"
-                app:layout_constraintEnd_toStartOf="@+id/text_item_history_startDate"
+                app:layout_constraintEnd_toStartOf="@+id/text_item_history_completedDate"
                 app:layout_constraintHorizontal_bias="0.5"
                 app:layout_constraintHorizontal_chainStyle="spread_inside"
                 app:layout_constraintStart_toStartOf="parent"

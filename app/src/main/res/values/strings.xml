@@ -133,6 +133,14 @@
     <string name="dialog_day_saturdays">Saturdays</string>
     <string name="dialog_day_sundays">Sundays</string>
 
+    <string name="today">Today</string>
+    <string name="tomorrow">Tomorrow</string>
+    <string name="forever">Forever</string>
+    <string name="yesterday">Yesterday</string>
+    <string name="less_than_week">&lt; 1 week</string>
+    <string name="next">Next</string>
+    <string name="future">Future</string>
+
     <string name="editor_startDate_hint">Select date</string>
     <string name="editor_checkbox_repeats">Repeats</string>
     <string name="editor_checkbox_endDate">Has end date</string>

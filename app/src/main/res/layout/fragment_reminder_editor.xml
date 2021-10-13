@@ -84,8 +84,7 @@
                     android:layout_height="wrap_content"
                     android:cursorVisible="false"
                     android:focusable="false"
-                    android:inputType="none"
-                    android:text="@{model.startDateString}" />
+                    android:inputType="none" />
 
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -136,8 +135,7 @@
                     android:layout_height="wrap_content"
                     android:cursorVisible="false"
                     android:focusable="false"
-                    android:inputType="none"
-                    android:text="@{model.endDateString}" />
+                    android:inputType="none" />
 
             </com.google.android.material.textfield.TextInputLayout>
 

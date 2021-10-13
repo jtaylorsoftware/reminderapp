@@ -5,13 +5,15 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import app.timetoremind.mobile.R
-import app.timetoremind.mobile.databinding.ItemAlarmBinding
 import app.timetoremind.mobile.data.domain.ReminderAndAlarm
+import app.timetoremind.mobile.databinding.ItemAlarmBinding
+import app.timetoremind.mobile.util.dateNoun
 import app.timetoremind.mobile.util.getShortLocalDateDisplay
 import app.timetoremind.mobile.util.getShortLocalTimeDisplay
 import java.time.LocalDate
@@ -144,7 +146,13 @@ class AlarmListAdapter(val spanCount: Int, private val onAlarmClickListener: OnA
                 description = reminderAndAlarm.reminder.description
                 val alarmDateTime = requireNotNull(reminderAndAlarm.alarm).triggerAt
 
-                date = alarmDateTime.getShortLocalDateDisplay()
+                val dateRes = alarmDateTime.toLocalDate().dateNoun()
+                if (dateRes != null) {
+                    textItemAlarmStartDate.setText(dateRes)
+                } else {
+                    textItemAlarmStartDate.text = alarmDateTime.getShortLocalDateDisplay()
+                }
+
                 time = alarmDateTime.getShortLocalTimeDisplay()
 
                 val daysUntil = LocalDate.now().until(alarmDateTime.toLocalDate(), ChronoUnit.DAYS)
@@ -156,13 +164,7 @@ class AlarmListAdapter(val spanCount: Int, private val onAlarmClickListener: OnA
 
         private fun setTextDaysUntil(daysUntil: Long, isNext: Boolean, daysUntilVisible: Boolean) {
             if (daysUntilVisible) {
-                val daysUntilText = if (isNext) "Next" else
-                    when (daysUntil) {
-                        -1L -> ""
-                        0L -> "Today"
-                        in (1L..7L) -> "< 1 week"
-                        else -> "Future"
-                    }
+                val daysUntilLabelRes = daysUntilLabel(daysUntil, isNext)
 
                 binding.textItemAlarmDaysUntil.apply {
                     if (isNext) {
@@ -170,13 +172,33 @@ class AlarmListAdapter(val spanCount: Int, private val onAlarmClickListener: OnA
                     } else {
                         setTextColor(textSecondary)
                     }
-                    text = daysUntilText
+                    if (daysUntilLabelRes != null) {
+                        setText(daysUntilLabelRes)
+                    } else {
+                        text = ""
+                    }
                     visibility = View.VISIBLE
                 }
             } else {
                 binding.textItemAlarmDaysUntil.visibility = View.GONE
             }
         }
+
+        /**
+         * Returns a StringRes for a label that corresponds to the days between
+         * this date and a starting date, where the label is one of: next, today, "< 1 week",
+         * or future.
+         * @return The StringRes or null if no suitable label exists.
+         */
+        @StringRes
+        private fun daysUntilLabel(daysUntil: Long, isNext: Boolean): Int? =
+            if (isNext) R.string.next else
+                when (daysUntil) {
+                    -1L -> null
+                    0L -> R.string.today
+                    in (1L..7L) -> R.string.less_than_week
+                    else -> R.string.future
+                }
     }
 
     object AlarmDiffCallback : DiffUtil.ItemCallback<Any>() {

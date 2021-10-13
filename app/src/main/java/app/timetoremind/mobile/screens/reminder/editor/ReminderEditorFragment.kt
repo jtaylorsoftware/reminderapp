@@ -15,8 +15,8 @@ import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.lifecycleScope
 import app.timetoremind.mobile.R
-import app.timetoremind.mobile.databinding.FragmentReminderEditorBinding
 import app.timetoremind.mobile.broadcast.EXTRA_REMINDER_ID
+import app.timetoremind.mobile.databinding.FragmentReminderEditorBinding
 import app.timetoremind.mobile.screens.reminder.editor.dialog.DayOfWeekDialogFragment
 import app.timetoremind.mobile.screens.reminder.editor.dialog.SnoozeOptionsDialogFragment
 import app.timetoremind.mobile.screens.reminder.editor.dialog.SoundPickerDialogFragment
@@ -139,6 +139,20 @@ class ReminderEditorFragment : Fragment(R.layout.fragment_reminder_editor) {
                     textlayoutEditorDescription.error = "Description cannot be blank"
                 } else {
                     textlayoutEditorDescription.error = ""
+                }
+            }
+            viewModel.startDateString.observe(viewLifecycleOwner) {
+                if (it is String) {
+                    textinputEditorStartDate.setText(it)
+                } else {
+                    textinputEditorStartDate.setText(it as Int)
+                }
+            }
+            viewModel.endDateString.observe(viewLifecycleOwner) {
+                if (it is String) {
+                    textinputEditorEndDate.setText(it)
+                } else {
+                    textinputEditorEndDate.setText(it as Int)
                 }
             }
 

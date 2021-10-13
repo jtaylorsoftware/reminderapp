@@ -6,8 +6,10 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import app.timetoremind.mobile.databinding.ItemHistoryBinding
 import app.timetoremind.mobile.data.domain.History
+import app.timetoremind.mobile.databinding.ItemHistoryBinding
+import app.timetoremind.mobile.util.dateNoun
+import app.timetoremind.mobile.util.toLocalDate
 
 class HistoryListAdapter(val spanCount: Int) :
     ListAdapter<History, HistoryListAdapter.HistoryViewHolder>(HistoryDiffUtil) {
@@ -69,8 +71,15 @@ class HistoryListAdapter(val spanCount: Int) :
 
     class HistoryViewHolder(val binding: ItemHistoryBinding) :
         RecyclerView.ViewHolder(binding.root) {
+
         fun bind(item: History) {
             binding.history = item
+            val dateRes = item.completedAt.toLocalDate().dateNoun()
+            if (dateRes != null) {
+                binding.textItemHistoryCompletedDate.setText(dateRes)
+            } else {
+                binding.textItemHistoryCompletedDate.text = item.getDateDisplayString()
+            }
         }
     }
 

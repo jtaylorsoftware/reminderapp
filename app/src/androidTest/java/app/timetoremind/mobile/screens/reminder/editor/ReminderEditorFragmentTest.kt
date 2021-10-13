@@ -33,6 +33,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import java.time.DayOfWeek
+import java.time.LocalDate
 import java.time.LocalTime
 import javax.inject.Inject
 
@@ -126,7 +127,7 @@ class ReminderEditorFragmentTest {
                 daysOfWeek = sortedSetOf(
                     DayOfWeek.MONDAY,
                     DayOfWeek.TUESDAY
-                ), time = LocalTime.now()
+                ), time = LocalTime.now(), startDate = LocalDate.now()
             ),
         )
         val id = reminder.id
@@ -135,7 +136,7 @@ class ReminderEditorFragmentTest {
 
         onView(withText(reminder.description)).check(matches(isDisplayed()))
         onView(withId(R.id.textinput_editor_description)).check(matches(withText(reminder.description)))
-        onView(withId(R.id.textinput_editor_startDate)).check(matches(withText(reminder.schedulingRules.startDateDisplayString())))
+        onView(withId(R.id.textinput_editor_startDate)).check(matches(withText("Today")))
         onView(withId(R.id.textinput_editor_time)).check(matches(withText(reminder.getTimeDisplayString())))
         onView(withId(R.id.textinput_editor_daysOfWeek)).check(matches(withText(reminder.getDaysDisplayString())))
         onView(withId(R.id.textinput_editor_snooze)).check(matches(withText(reminder.snoozeRules.getDisplayString())))

@@ -7,9 +7,10 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import app.timetoremind.mobile.databinding.ItemReminderCalendarBinding
 import app.timetoremind.mobile.data.domain.Reminder
 import app.timetoremind.mobile.data.domain.ReminderAndHistory
+import app.timetoremind.mobile.databinding.ItemReminderCalendarBinding
+import app.timetoremind.mobile.util.dateNoun
 
 class CalendarReminderListAdapter(
     private val clickListener: OnClickListener
@@ -46,13 +47,27 @@ class CalendarReminderListAdapter(
         var reminder: Reminder? = null
             private set
 
-        fun bind(reminder: ReminderAndColor, color: ColorDrawable) {
-            this.reminder = reminder.data.reminder
-            binding.apply {
-                data = reminder.data
-                viewItemReminderCalendarColorIndicator.background = color
-                executePendingBindings()
+        fun bind(reminderAndColor: ReminderAndColor, color: ColorDrawable) {
+            this.reminder = reminderAndColor.data.reminder
+            binding.data = reminderAndColor.data
+
+            val startDateRes = reminder!!.schedulingRules.startDate.dateNoun()
+            if (startDateRes != null) {
+                binding.textItemReminderCalendarStartDate.setText(startDateRes)
+            } else {
+                binding.textItemReminderCalendarStartDate.text =
+                    reminder!!.schedulingRules.startDateDisplayString()
             }
+            val endDateRes = reminder!!.schedulingRules.endDate.dateNoun()
+            if (endDateRes != null) {
+                binding.textItemReminderCalendarEndDate.setText(endDateRes)
+            } else {
+                binding.textItemReminderCalendarEndDate.text =
+                    reminder!!.schedulingRules.endDateDisplayString()
+            }
+
+            binding.viewItemReminderCalendarColorIndicator.background = color
+            binding.executePendingBindings()
         }
     }
 

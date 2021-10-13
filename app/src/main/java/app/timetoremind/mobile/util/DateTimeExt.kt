@@ -1,5 +1,7 @@
 package app.timetoremind.mobile.util
 
+import androidx.annotation.StringRes
+import app.timetoremind.mobile.R
 import java.time.*
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
@@ -81,4 +83,14 @@ fun DayOfWeek.getFullLocaleDisplay(): String = getDisplayName(TextStyle.FULL, Lo
  */
 fun DayOfWeek.getShortLocaleDisplay(): String = getDisplayName(TextStyle.SHORT, Locale.getDefault())
 
-
+/**
+ * Returns a StringRes for the noun fitting this LocalDate, where the noun is one of: today, tomorrow, yesterday.
+ * @return The StringRes or null if no noun fits the date.
+ */
+@StringRes
+fun LocalDate.dateNoun(): Int? = when (this) {
+    LocalDate.now() -> R.string.today
+    LocalDate.now().plusDays(1) -> R.string.tomorrow
+    LocalDate.now().minusDays(1) -> R.string.yesterday
+    else -> null
+}

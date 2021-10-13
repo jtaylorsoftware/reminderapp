@@ -18,10 +18,7 @@ import app.timetoremind.mobile.data.domain.SnoozeRules
 import app.timetoremind.mobile.di.AppCoroutineScope
 import app.timetoremind.mobile.service.AlarmMediaService
 import app.timetoremind.mobile.service.AlarmSchedulingService
-import app.timetoremind.mobile.util.MutableEventFlow
-import app.timetoremind.mobile.util.asEventFlow
-import app.timetoremind.mobile.util.currentLocalDateTime
-import app.timetoremind.mobile.util.getShortLocalDateDisplay
+import app.timetoremind.mobile.util.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -74,9 +71,10 @@ class ReminderEditorViewModel @Inject constructor(
     /**
      * String containing the selected start date
      */
-    val startDateString: LiveData<String> =
+    val startDateString: LiveData<Any> =
         _startDateState.combine(_reminder) { _, reminder ->
-            reminder.schedulingRules.startDate.getShortLocalDateDisplay()
+            reminder.schedulingRules.startDate.dateNoun()
+                ?: reminder.schedulingRules.startDate.getShortLocalDateDisplay()
         }.asLiveData(viewModelScope.coroutineContext)
 
     /**
@@ -88,9 +86,10 @@ class ReminderEditorViewModel @Inject constructor(
     /**
      * String containing the selected end date
      */
-    val endDateString: LiveData<String> =
+    val endDateString: LiveData<Any> =
         _endDateState.combine(_reminder) { _, reminder ->
-            reminder.schedulingRules.endDate.getShortLocalDateDisplay()
+            reminder.schedulingRules.endDate.dateNoun()
+                ?: reminder.schedulingRules.endDate.getShortLocalDateDisplay()
         }.asLiveData(viewModelScope.coroutineContext)
 
     /**
@@ -402,7 +401,11 @@ class ReminderEditorViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 Timber.e(e)
-                showToast(getApplication(), "Could not save your reminder right now", Toast.LENGTH_LONG)
+                showToast(
+                    getApplication(),
+                    "Could not save your reminder right now",
+                    Toast.LENGTH_LONG
+                )
                 if (e is CancellationException) {
                     throw e
                 }
