@@ -1,9 +1,11 @@
 package app.timetoremind.mobile.data.domain
 
 import android.os.Parcelable
+import androidx.annotation.StringRes
 import androidx.databinding.BaseObservable
 import androidx.databinding.Bindable
 import app.timetoremind.mobile.BR
+import app.timetoremind.mobile.R
 import app.timetoremind.mobile.data.DomainModel
 import app.timetoremind.mobile.data.local.ReminderAndAlarmEntity
 import app.timetoremind.mobile.data.local.ReminderAndHistoryEntity
@@ -320,12 +322,15 @@ class SchedulingRules(
 
     fun startDateDisplayString() = startDate.getShortLocalDateDisplay()
 
-    fun endDateDisplayString() = when (type) {
-        SchedulingType.REPEATING -> endDate.getShortLocalDateDisplay()
-        SchedulingType.REPEAT_FOREVER -> "Forever"
-        SchedulingType.SINGLE -> {
-            ""
-        }
+    /**
+     * Returns String resource for the endDate of this schedule.
+     * @return Null if there is no predefined, usable resource.
+     */
+    @StringRes
+    fun endDateStringRes(): Int? = when (type) {
+        SchedulingType.REPEATING -> null
+        SchedulingType.REPEAT_FOREVER -> R.string.forever
+        SchedulingType.SINGLE -> null
     }
 
     fun dayIsScheduled(dayString: String) = dayIsScheduled(DayOfWeek.valueOf(dayString))

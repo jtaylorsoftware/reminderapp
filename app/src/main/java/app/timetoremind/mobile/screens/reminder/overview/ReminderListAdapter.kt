@@ -8,8 +8,10 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import app.timetoremind.mobile.data.domain.Reminder
 import app.timetoremind.mobile.data.domain.ReminderAndHistory
+import app.timetoremind.mobile.data.domain.SchedulingType
 import app.timetoremind.mobile.databinding.ItemReminderBinding
 import app.timetoremind.mobile.util.dateNoun
+import app.timetoremind.mobile.util.getShortLocalDateDisplay
 import timber.log.Timber
 
 class ReminderListAdapter(val spanCount: Int, private val clickListener: OnClickListener) :
@@ -105,12 +107,23 @@ class ReminderListAdapter(val spanCount: Int, private val clickListener: OnClick
                 binding.textItemReminderStartDate.text =
                     reminder!!.schedulingRules.startDateDisplayString()
             }
-            val endDateRes = reminder!!.schedulingRules.endDate.dateNoun()
-            if (endDateRes != null) {
-                binding.textItemReminderEndDate.setText(endDateRes)
+            // Try to use a noun like "today, tomorrow"
+            val endDateNounRes = reminder!!.schedulingRules.endDate.dateNoun()
+            if (endDateNounRes != null) {
+                binding.textItemReminderEndDate.setText(endDateNounRes)
             } else {
-                binding.textItemReminderEndDate.text =
-                    reminder!!.schedulingRules.endDateDisplayString()
+                // Get either "future" or the actual date
+                val endDateStringRes = reminder!!.schedulingRules.endDateStringRes()
+                if (endDateStringRes != null) {
+                    binding.textItemReminderEndDate.setText(endDateStringRes)
+                } else {
+                    if (reminder!!.schedulingRules.type == SchedulingType.SINGLE) {
+                        binding.textItemReminderEndDate.text = ""
+                    } else {
+                        binding.textItemReminderEndDate.text =
+                            reminder!!.schedulingRules.endDate.getShortLocalDateDisplay()
+                    }
+                }
             }
             binding.executePendingBindings()
         }

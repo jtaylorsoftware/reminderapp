@@ -9,8 +9,10 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import app.timetoremind.mobile.data.domain.Reminder
 import app.timetoremind.mobile.data.domain.ReminderAndHistory
+import app.timetoremind.mobile.data.domain.SchedulingType
 import app.timetoremind.mobile.databinding.ItemReminderCalendarBinding
 import app.timetoremind.mobile.util.dateNoun
+import app.timetoremind.mobile.util.getShortLocalDateDisplay
 
 class CalendarReminderListAdapter(
     private val clickListener: OnClickListener
@@ -58,12 +60,24 @@ class CalendarReminderListAdapter(
                 binding.textItemReminderCalendarStartDate.text =
                     reminder!!.schedulingRules.startDateDisplayString()
             }
-            val endDateRes = reminder!!.schedulingRules.endDate.dateNoun()
-            if (endDateRes != null) {
-                binding.textItemReminderCalendarEndDate.setText(endDateRes)
+
+            // Try to use a noun like "today, tomorrow"
+            val endDateNounRes = reminder!!.schedulingRules.endDate.dateNoun()
+            if (endDateNounRes != null) {
+                binding.textItemReminderCalendarEndDate.setText(endDateNounRes)
             } else {
-                binding.textItemReminderCalendarEndDate.text =
-                    reminder!!.schedulingRules.endDateDisplayString()
+                // Get either "future" or the actual date
+                val endDateStringRes = reminder!!.schedulingRules.endDateStringRes()
+                if (endDateStringRes != null) {
+                    binding.textItemReminderCalendarEndDate.setText(endDateStringRes)
+                } else {
+                    if (reminder!!.schedulingRules.type == SchedulingType.SINGLE) {
+                        binding.textItemReminderCalendarEndDate.text = ""
+                    } else {
+                        binding.textItemReminderCalendarEndDate.text =
+                            reminder!!.schedulingRules.endDate.getShortLocalDateDisplay()
+                    }
+                }
             }
 
             binding.viewItemReminderCalendarColorIndicator.background = color
