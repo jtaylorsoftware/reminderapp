@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph_preferences"
+    app:startDestination="@id/fragment_preferences">
+
+    <fragment
+        android:id="@+id/fragment_preferences"
+        android:name="app.timetoremind.mobile.screens.preferences.PreferencesFragment"
+        android:label="@string/settings" >
+        <action
+            android:id="@+id/action_preferencesFragment_to_aboutFragment"
+            app:destination="@id/fragment_about" />
+    </fragment>
+    <fragment
+        android:id="@+id/fragment_about"
+        android:name="app.timetoremind.mobile.screens.preferences.about.AboutFragment"
+        android:label="@string/preference_title_about" >
+        <action
+            android:id="@+id/action_fragment_about_to_legalFragment"
+            app:destination="@id/fragment_legal" />
+    </fragment>
+    <fragment
+        android:id="@+id/fragment_legal"
+        android:name="app.timetoremind.mobile.screens.preferences.about.LegalFragment"
+        android:label="@string/legal" />
+</navigation>

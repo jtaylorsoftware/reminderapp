@@ -3,44 +3,53 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:title="Settings"
-    >
-
-    <ListPreference
-        android:title="Theme"
-        android:summary="@string/theme_setting_summary"
-        android:key="@string/preference_key_theme"
-        android:defaultValue="SYSTEM"
-        android:icon="@drawable/ic_toggle_light_theme"
-        android:dialogIcon="@drawable/ic_toggle_light_theme"
-        android:entries="@array/themeOptions"
-        android:entryValues="@array/themeOptionsValues"
-        />
+    android:title="Settings">
 
     <PreferenceCategory
         app:key="alarm_category"
         app:title="@string/preference_category_alarms">
 
         <SeekBarPreference
-            android:key="@string/preference_key_alarm_delay"
-            android:title="@string/preference_title_alarm_snooze"
-            android:summary="@string/alarm_snooze_delay_summary"
-            app:showSeekBarValue="true"
             android:defaultValue="30"
-            app:min="30"
+            android:key="@string/preference_key_alarm_delay"
             android:max="120"
-            />
+            android:summary="@string/alarm_snooze_delay_summary"
+            android:title="@string/preference_title_alarm_snooze"
+            app:allowDividerBelow="true"
+            app:min="30"
+            app:showSeekBarValue="true" />
 
         <SeekBarPreference
-            android:key="@string/preference_key_schedule_interval"
-            android:title="@string/preference_title_reschedule"
-            android:summary="@string/reschedule_interval_summary"
-            app:showSeekBarValue="true"
             android:defaultValue="30"
-            app:min="15"
+            android:key="@string/preference_key_schedule_interval"
             android:max="60"
-            />
+            android:summary="@string/reschedule_interval_summary"
+            android:title="@string/preference_title_reschedule"
+            app:allowDividerAbove="true"
+            app:min="15"
+            app:showSeekBarValue="true" />
 
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        app:key="system_category"
+        app:title="@string/preference_category_system"
+        app:allowDividerAbove="false"
+        app:allowDividerBelow="false">
+        <ListPreference
+            android:defaultValue="SYSTEM"
+            android:dialogIcon="@drawable/ic_toggle_light_theme"
+            android:entries="@array/themeOptions"
+            android:entryValues="@array/themeOptionsValues"
+            android:key="@string/preference_key_theme"
+            android:summary="@string/theme_setting_summary"
+            android:title="Theme"
+            app:allowDividerBelow="true" />
+        <Preference
+            app:allowDividerAbove="true"
+            app:allowDividerBelow="true"
+            app:key="about"
+            app:title="@string/preference_title_about"/>
     </PreferenceCategory>
 
 </PreferenceScreen>

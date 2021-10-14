@@ -5,6 +5,11 @@ import android.os.Bundle
 import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.navigation.NavController
+import androidx.navigation.fragment.findNavController
+import androidx.navigation.ui.AppBarConfiguration
+import androidx.navigation.ui.navigateUp
+import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.preference.PreferenceManager
 import app.timetoremind.mobile.R
 import app.timetoremind.mobile.theme.ThemeSetting
@@ -22,17 +27,19 @@ class PreferencesActivity : AppCompatActivity(),
     private val sharedPreferences: SharedPreferences by lazy {
         PreferenceManager.getDefaultSharedPreferences(this)
     }
+    private lateinit var navController: NavController
+    private lateinit var appBarConfiguration: AppBarConfiguration
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_preferences)
 
+        val navHostFragment =
+            requireNotNull(supportFragmentManager.findFragmentById(R.id.nav_host_fragment_preferences))
+        navController = navHostFragment.findNavController()
+        appBarConfiguration = AppBarConfiguration(navController.graph)
+        setupActionBarWithNavController(navController, appBarConfiguration)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.title = getString(R.string.settings)
-
-        supportFragmentManager
-            .beginTransaction()
-            .replace(android.R.id.content, PreferencesFragment())
-            .commit()
     }
 
     override fun onResume() {
@@ -49,11 +56,19 @@ class PreferencesActivity : AppCompatActivity(),
         when (item.itemId) {
             // When "Up" button is pressed in toolbar, finish activity (similar to "back" button)
             android.R.id.home -> {
-                finish()
-                true
+                if (navController.currentDestination?.id == R.id.fragment_preferences) {
+                    finish()
+                    true
+                } else {
+                    onSupportNavigateUp()
+                }
             }
             else -> super.onOptionsItemSelected(item)
         }
+
+    override fun onSupportNavigateUp(): Boolean {
+        return navController.navigateUp(appBarConfiguration) || super.onSupportNavigateUp()
+    }
 
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String) {
         when (key) {

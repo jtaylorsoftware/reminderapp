@@ -2,7 +2,9 @@ package app.timetoremind.mobile.screens.preferences
 
 import android.os.Bundle
 import android.view.View
+import androidx.navigation.fragment.findNavController
 import androidx.preference.ListPreference
+import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import app.timetoremind.mobile.R
 import app.timetoremind.mobile.theme.ThemeSetting
@@ -30,6 +32,11 @@ class PreferencesFragment : PreferenceFragmentCompat() {
             )
             val indexOfPrevious = it.findIndexOfValue(previousValue)
             it.setValueIndex(if (indexOfPrevious == -1) 0 else indexOfPrevious)
+        }
+
+        preferenceScreen.findPreference<Preference>("about")?.setOnPreferenceClickListener {
+            findNavController().navigate(R.id.fragment_about)
+            true
         }
     }
 }
