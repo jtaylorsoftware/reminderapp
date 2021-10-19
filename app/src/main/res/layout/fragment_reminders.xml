@@ -17,6 +17,7 @@
         android:layout_height="match_parent"
         android:gravity="center_horizontal"
         android:orientation="vertical"
+        android:paddingBottom="@dimen/bottom_app_bar_height"
         tools:context="app.timetoremind.mobile.screens.reminder.overview.RemindersFragment">
 
         <TextView

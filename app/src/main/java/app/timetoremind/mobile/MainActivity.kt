@@ -19,7 +19,6 @@ import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupActionBarWithNavController
-import app.timetoremind.mobile.R
 import app.timetoremind.mobile.broadcast.NOTIFICATION_LED_ARGB
 import app.timetoremind.mobile.screens.reminder.overview.*
 import app.timetoremind.mobile.screens.reminder.overview.dialog.RemindersFilterDialogFragment
@@ -134,10 +133,19 @@ class MainActivity : SettingsActivity(), RemindersSortDialogFragment.DialogListe
             } else {
                 hideFab()
             }
-            if (destination.id == R.id.fragment_calendar) {
-                toolbar.visibility = View.GONE
-            } else {
-                toolbar.visibility = View.VISIBLE
+
+            when (destination.id) {
+                R.id.fragment_calendar -> {
+                    toolbar.visibility = View.GONE
+                }
+                R.id.fragment_welcome -> {
+                    toolbar.visibility = View.GONE
+                    bottomAppBar.visibility = View.GONE
+                }
+                else -> {
+                    toolbar.visibility = View.VISIBLE
+                    bottomAppBar.visibility = View.VISIBLE
+                }
             }
         }
         return navController

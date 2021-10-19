@@ -149,4 +149,9 @@
     <style name="Widget.App.Calendar.ReminderItem" parent="Widget.App.RecyclerList.Card">
         <item name="android:layout_width">match_parent</item>
     </style>
+    
+    <style name="ShapeAppearanceOverlay.App.LauncherImage" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">50%</item>
+    </style>
 </resources>

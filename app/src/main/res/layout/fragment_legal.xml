@@ -18,8 +18,17 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
+            <View
+                android:id="@+id/divider_legal1"
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:background="?android:attr/listDivider"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/layout_legal_terms" />
+
             <LinearLayout
-                android:id="@+id/layout_legal_licenses"
+                android:id="@+id/layout_legal_terms"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="?android:attr/selectableItemBackground"
@@ -33,43 +42,11 @@
                 app:layout_constraintTop_toTopOf="parent">
 
                 <TextView
-                    android:id="@+id/text_legal_licenses"
+                    android:id="@+id/text_legal_terms"
                     style="@style/TextAppearance.MaterialComponents.Subtitle1"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/software_licenses" />
-
-            </LinearLayout>
-
-            <View
-                android:id="@+id/divider_legal1"
-                android:layout_width="0dp"
-                android:layout_height="1dp"
-                android:background="?android:attr/listDivider"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/layout_legal_licenses" />
-
-            <LinearLayout
-                android:id="@+id/layout_legal_eula"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="?android:attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true"
-                android:orientation="vertical"
-                android:paddingHorizontal="16dp"
-                android:paddingVertical="16dp"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/divider_legal1">
-
-                <TextView
-                    android:id="@+id/text_legal_eula"
-                    style="@style/TextAppearance.MaterialComponents.Subtitle1"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/eula" />
+                    android:text="@string/terms_and_conditions" />
 
             </LinearLayout>
 
@@ -80,7 +57,7 @@
                 android:background="?android:attr/listDivider"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/layout_legal_eula" />
+                app:layout_constraintTop_toBottomOf="@+id/layout_legal_privacy" />
 
             <LinearLayout
                 android:id="@+id/layout_legal_privacy"
@@ -94,7 +71,7 @@
                 android:paddingVertical="16dp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/divider_legal2">
+                app:layout_constraintTop_toBottomOf="@id/divider_legal1">
 
                 <TextView
                     android:id="@+id/text_legal_privacy"
@@ -112,7 +89,30 @@
                 android:background="?android:attr/listDivider"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/layout_legal_privacy" />
+                app:layout_constraintTop_toBottomOf="@+id/layout_legal_licenses" />
+
+            <LinearLayout
+                android:id="@+id/layout_legal_licenses"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="?android:attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true"
+                android:orientation="vertical"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="16dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/divider_legal2">
+
+                <TextView
+                    android:id="@+id/text_legal_licenses"
+                    style="@style/TextAppearance.MaterialComponents.Subtitle1"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/software_licenses" />
+
+            </LinearLayout>
 
         </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.core.widget.NestedScrollView>

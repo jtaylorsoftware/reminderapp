@@ -1,13 +1,14 @@
 package app.timetoremind.mobile.screens.reminder.overview
 
 import android.app.AlertDialog
-import android.content.res.Configuration
 import android.os.Bundle
 import android.view.*
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
+import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.GridLayoutManager
+import app.timetoremind.mobile.BuildConfig
 import app.timetoremind.mobile.R
 import app.timetoremind.mobile.databinding.FragmentRemindersBinding
 import app.timetoremind.mobile.screens.reminder.getLayoutSpanCount
@@ -21,6 +22,23 @@ class RemindersFragment : Fragment() {
     private val viewModel: RemindersViewModel by activityViewModels()
 
     private lateinit var reminderListAdapter: ReminderListAdapter
+
+    private val acceptedTermsKey: String by lazy {
+        getString(R.string.preference_key_accepted_terms)
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val navController = findNavController()
+        val currentBackStackEntry = navController.currentBackStackEntry!!
+        val savedStateHandle = currentBackStackEntry.savedStateHandle
+        savedStateHandle.getLiveData<Boolean>(acceptedTermsKey).observe(currentBackStackEntry,
+            { acceptedEula ->
+                if (!acceptedEula) {
+                    navController.navigate(R.id.fragment_welcome)
+                }
+            })
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -37,14 +55,20 @@ class RemindersFragment : Fragment() {
         setupBinding(view)
         setupFab()
 
-        viewModel.navigateToEditor.asLiveData().observe(viewLifecycleOwner) { event ->
-            event.value?.let { reminder ->
-                Timber.d("navigateToEditor received reminder: $reminder")
-                findNavController().navigate(
-                    RemindersFragmentDirections.actionFragmentRemindersToReminderEditorActivity(
-                        reminder.id
+        val preferences = PreferenceManager.getDefaultSharedPreferences(requireContext())
+        val acceptedEula = preferences.getBoolean(acceptedTermsKey, false)
+        if (!acceptedEula && !BuildConfig.DEBUG) {
+            findNavController().navigate(R.id.fragment_welcome)
+        } else {
+            viewModel.navigateToEditor.asLiveData().observe(viewLifecycleOwner) { event ->
+                event.value?.let { reminder ->
+                    Timber.d("navigateToEditor received reminder: $reminder")
+                    findNavController().navigate(
+                        RemindersFragmentDirections.actionFragmentRemindersToReminderEditorActivity(
+                            reminder.id
+                        )
                     )
-                )
+                }
             }
         }
     }

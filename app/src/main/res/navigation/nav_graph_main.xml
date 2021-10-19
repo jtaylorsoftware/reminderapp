@@ -83,4 +83,8 @@
                 android:defaultValue="@null" />
         </action>
     </fragment>
+    <fragment
+        android:id="@+id/fragment_welcome"
+        android:name="app.timetoremind.mobile.screens.preferences.WelcomeFragment"
+        android:label="Welcome" />
 </navigation>

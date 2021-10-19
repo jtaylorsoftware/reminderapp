@@ -44,12 +44,18 @@
             android:taskAffinity=""
             android:excludeFromRecents="true"
             android:theme="@style/Theme.ReminderApp.Alarm" />
+        <activity
+            android:name="com.google.android.gms.oss.licenses.OssLicensesMenuActivity"
+            android:theme="@style/Theme.Preferences" />
+        <activity
+            android:name="com.google.android.gms.oss.licenses.OssLicensesActivity"
+            android:theme="@style/Theme.Preferences" />
 
         <receiver android:name="app.timetoremind.mobile.broadcast.AlarmStartReceiver" />
         <receiver android:name="app.timetoremind.mobile.broadcast.AlarmActionReceiver" />
         <receiver
             android:name="app.timetoremind.mobile.broadcast.AlarmBootScheduler"
-            android:exported="true">
+            android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />

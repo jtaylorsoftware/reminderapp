@@ -6,6 +6,9 @@
     <!-- Key indicating app has run before (bool) -->
     <string name="preference_key_first_startup">FIRST_STARTUP</string>
 
+    <!-- Indicates user has accepted legal (bool) -->
+    <string name="preference_key_accepted_terms">ACCEPTED_TERMS</string>
+
     <!-- Key for background rescheduling interval in minutes (int) -->
     <string name="preference_key_schedule_interval">SCHEDULE_INTERVAL</string>
 
@@ -177,10 +180,15 @@
     <string name="legal">Legal</string>
 
     <string name="copyright_notice">Copyright 2021 Jeremy Taylor</string>
-    <string name="legal_caption">Licenses, EULA, Privacy Policy</string>
+    <string name="legal_caption">Licenses, Terms and Conditions, Privacy Policy</string>
     <string name="version">Version</string>
     <string name="time_to_remind_version">Time to Remind %1$s</string>
-    <string name="software_licenses">Software licenses</string>
-    <string name="eula">EULA</string>
+    <string name="software_licenses">Open Source &amp; Third Party Licenses</string>
     <string name="privacy_policy">Privacy Policy</string>
+    <string name="welcome">Welcome</string>
+    <string name="by_using">By using Time to Remind or clicking \"ACCEPT\" you agree to its Terms and Conditions and its Privacy Policy.</string>
+    <string name="terms_and_conditions">Terms and Conditions</string>
+    <string name="terms_link">https://timetoremind.app/terms</string>
+    <string name="privacy_link">https://timetoremind.app/privacy</string>
+    <string name="accept">Accept</string>
 </resources>
