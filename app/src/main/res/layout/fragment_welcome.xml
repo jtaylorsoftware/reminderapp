@@ -83,7 +83,7 @@
                 android:id="@+id/button_welcome_accept"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/accept" />
+                android:text="@string/accept_continue" />
         </LinearLayout>
 
 

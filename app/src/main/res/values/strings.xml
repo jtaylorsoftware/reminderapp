@@ -186,9 +186,10 @@
     <string name="software_licenses">Open Source &amp; Third Party Licenses</string>
     <string name="privacy_policy">Privacy Policy</string>
     <string name="welcome">Welcome</string>
-    <string name="by_using">By using Time to Remind or clicking \"ACCEPT\" you agree to its Terms of Service and Privacy Policy.</string>
+    <string name="by_using">By using Time to Remind or clicking \"ACCEPT &amp; CONTINUE\" you agree to the Terms of Service and Privacy Policy.</string>
     <string name="terms_of_service">Terms of Service</string>
     <string name="terms_link">https://timetoremind.app/terms</string>
     <string name="privacy_link">https://timetoremind.app/privacy</string>
     <string name="accept">Accept</string>
+    <string name="accept_continue">Accept &amp; Continue</string>
 </resources>
