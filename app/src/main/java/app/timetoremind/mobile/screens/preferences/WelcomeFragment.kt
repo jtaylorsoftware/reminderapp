@@ -46,7 +46,7 @@ class WelcomeFragment : Fragment(R.layout.fragment_welcome) {
     private fun setContentText(view: View) {
         val content = view.findViewById<TextView>(R.id.text_welcome_content)
         val byUsing = getString(R.string.by_using)
-        val terms = getString(R.string.terms_and_conditions)
+        val terms = getString(R.string.terms_of_service)
         val privacy = getString(R.string.privacy_policy)
         val termsLink = getString(R.string.terms_link)
         val privacyLink = getString(R.string.privacy_link)
