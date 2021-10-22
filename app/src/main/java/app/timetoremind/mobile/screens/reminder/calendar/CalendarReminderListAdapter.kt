@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import app.timetoremind.mobile.R
 import app.timetoremind.mobile.data.domain.Reminder
 import app.timetoremind.mobile.data.domain.ReminderAndHistory
 import app.timetoremind.mobile.data.domain.SchedulingType
@@ -61,22 +62,22 @@ class CalendarReminderListAdapter(
                     reminder!!.schedulingRules.startDateDisplayString()
             }
 
-            // Try to use a noun like "today, tomorrow"
-            val endDateNounRes = reminder!!.schedulingRules.endDate.dateNoun()
-            if (endDateNounRes != null) {
-                binding.textItemReminderCalendarEndDate.setText(endDateNounRes)
-            } else {
-                // Get either "future" or the actual date
-                val endDateStringRes = reminder!!.schedulingRules.endDateStringRes()
-                if (endDateStringRes != null) {
-                    binding.textItemReminderCalendarEndDate.setText(endDateStringRes)
-                } else {
-                    if (reminder!!.schedulingRules.type == SchedulingType.SINGLE) {
-                        binding.textItemReminderCalendarEndDate.text = ""
+            // Set appropriate string for end date
+            when (reminder!!.schedulingRules.type) {
+                SchedulingType.SINGLE -> {
+                    binding.textItemReminderCalendarEndDate.text = ""
+                }
+                SchedulingType.REPEATING -> {
+                    val endDate = reminder!!.schedulingRules.endDate
+                    val endDateNoun = endDate.dateNoun()
+                    if (endDateNoun != null) {
+                        binding.textItemReminderCalendarEndDate.setText(endDateNoun)
                     } else {
-                        binding.textItemReminderCalendarEndDate.text =
-                            reminder!!.schedulingRules.endDate.getShortLocalDateDisplay()
+                        binding.textItemReminderCalendarEndDate.text = endDate.getShortLocalDateDisplay()
                     }
+                }
+                SchedulingType.REPEAT_FOREVER -> {
+                    binding.textItemReminderCalendarEndDate.setText(R.string.forever)
                 }
             }
 
