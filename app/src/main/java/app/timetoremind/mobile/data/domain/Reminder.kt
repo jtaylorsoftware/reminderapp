@@ -1,6 +1,7 @@
 package app.timetoremind.mobile.data.domain
 
 import android.os.Parcelable
+import androidx.annotation.Keep
 import androidx.annotation.StringRes
 import androidx.databinding.BaseObservable
 import androidx.databinding.Bindable
@@ -224,6 +225,7 @@ class SchedulingRules(
         }
 
     // True if this Reminder runs every day.
+    @Keep
     val isEveryDay: Boolean = daysOfWeek.size == ChronoField.DAY_OF_WEEK.range().maximum.toInt()
 
     /**
