@@ -73,7 +73,11 @@ class MainActivity : SettingsActivity(), RemindersSortDialogFragment.DialogListe
         createNotificationChannels()
 
         onBackPressedDispatcher.addCallback(owner = this) {
-            popToHome()
+            if (navController.currentDestination?.id == R.id.fragment_welcome) {
+                finish()
+            } else {
+                popToHome()
+            }
         }
     }
 
