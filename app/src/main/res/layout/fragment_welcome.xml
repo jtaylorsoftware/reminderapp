@@ -8,8 +8,12 @@
     android:fillViewport="true">
 
     <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
+        android:padding="8dp"
+        android:clipToPadding="false"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="wrap_content">
 
         <TextView
             android:id="@+id/text_welcome_heading"
@@ -35,12 +39,12 @@
             android:padding="0dp"
             app:layout_constraintBottom_toTopOf="@+id/text_welcome_heading"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHeight_max="128dp"
+            app:layout_constraintHeight_max="92dp"
             app:layout_constraintHeight_min="64dp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintVertical_chainStyle="spread_inside"
-            app:layout_constraintWidth_max="128dp"
+            app:layout_constraintWidth_max="92dp"
             app:layout_constraintWidth_min="64dp"
             app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.App.LauncherImage"
             app:srcCompat="@drawable/bg_app_icon_small" />
@@ -53,13 +57,14 @@
             android:layout_marginStart="24dp"
             android:layout_marginTop="16dp"
             android:layout_marginEnd="24dp"
-            android:gravity="center"
+            android:gravity="center_horizontal"
             android:lineSpacingMultiplier="1.3"
             app:layout_constraintBottom_toTopOf="@+id/button_welcome_accept"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/text_welcome_heading"
             app:layout_constraintWidth_percent="0.75"
+            app:layout_constraintWidth_max="400dp"
             tools:text="@string/by_using" />
 
         <Button
@@ -79,6 +84,7 @@
             android:layout_width="wrap_content"
             android:layout_height="0dp"
             android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"
             android:gravity="center_horizontal|bottom"
             android:text="@string/copyright_notice"
             app:layout_constraintBottom_toBottomOf="parent"
