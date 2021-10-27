@@ -1,5 +1,6 @@
 package app.timetoremind.mobile
 
+import android.animation.LayoutTransition
 import android.animation.ValueAnimator
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -8,11 +9,13 @@ import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.view.View
+import android.view.ViewGroup
 import android.widget.Button
 import androidx.activity.addCallback
 import androidx.activity.viewModels
 import androidx.annotation.IdRes
 import androidx.appcompat.widget.Toolbar
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.animation.doOnEnd
 import androidx.core.graphics.ColorUtils
 import androidx.navigation.NavController
@@ -50,6 +53,10 @@ class MainActivity : SettingsActivity(), RemindersSortDialogFragment.DialogListe
     private val toolbar: Toolbar by lazy {
         requireNotNull(findViewById(R.id.top_app_bar))
     }
+    private val bottomNavConstraintLayout: ConstraintLayout by lazy {
+        requireNotNull(findViewById(R.id.bottomNav_constraintLayout))
+    }
+
     private lateinit var bottomNavigationController: BottomNavigationController
     private lateinit var navController: NavController
 
@@ -128,22 +135,24 @@ class MainActivity : SettingsActivity(), RemindersSortDialogFragment.DialogListe
             )
         setupActionBarWithNavController(navController, appBarConfiguration)
         navController.addOnDestinationChangedListener { _, destination, _ ->
-            if (destination.id == R.id.fragment_reminders) {
-                showFab()
-            } else {
-                hideFab()
-            }
-
+            Timber.d("Navigation destination is ${destination.label}")
             when (destination.id) {
+                R.id.fragment_reminders -> {
+                    toolbar.visibility = View.VISIBLE
+                    showFab()
+                }
                 R.id.fragment_calendar -> {
                     toolbar.visibility = View.GONE
+                    hideFab()
                 }
                 R.id.fragment_welcome -> {
                     toolbar.visibility = View.GONE
+                    hideFab()
                     bottomAppBar.visibility = View.GONE
                 }
                 else -> {
                     toolbar.visibility = View.VISIBLE
+                    hideFab()
                     bottomAppBar.visibility = View.VISIBLE
                 }
             }
@@ -152,15 +161,39 @@ class MainActivity : SettingsActivity(), RemindersSortDialogFragment.DialogListe
     }
 
     private fun showFab() {
-        if (remindersFab.isOrWillBeHidden) {
-            remindersFab.show()
-            bottomNavEmptyItem.visibility = View.VISIBLE
-            bottomAppBar.invalidate()
-        }
+        // Listen for the transition caused by adding the empty item
+        bottomNavConstraintLayout.layoutTransition.addTransitionListener(object :
+            LayoutTransition.TransitionListener {
+            override fun startTransition(
+                transition: LayoutTransition?,
+                container: ViewGroup?,
+                view: View?,
+                transitionType: Int
+            ) = Unit
+
+            override fun endTransition(
+                transition: LayoutTransition?,
+                container: ViewGroup?,
+                view: View?,
+                transitionType: Int
+            ) {
+                if (bottomNavEmptyItem.visibility == View.VISIBLE && remindersFab.isOrWillBeHidden) {
+                    // Show once the empty item is added
+                    Timber.d("Showing FAB")
+                    remindersFab.show()
+                }
+                bottomNavConstraintLayout.layoutTransition.removeTransitionListener(this)
+            }
+        })
+
+        bottomAppBar.visibility = View.VISIBLE
+        bottomNavEmptyItem.visibility = View.VISIBLE
+        bottomAppBar.invalidate()
     }
 
     private fun hideFab() {
         if (remindersFab.isOrWillBeShown) {
+            Timber.d("Hiding FAB")
             remindersFab.hide()
             bottomNavEmptyItem.visibility = View.GONE
             bottomAppBar.invalidate()

@@ -17,7 +17,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="24dp"
-            android:layout_marginTop="32dp"
+            android:layout_marginTop="16dp"
             android:layout_marginEnd="24dp"
             android:gravity="center"
             android:text="@string/welcome"
@@ -31,7 +31,7 @@
             android:id="@+id/image_welcome_appIcon"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="64dp"
+            android:layout_marginTop="8dp"
             android:padding="0dp"
             app:layout_constraintBottom_toTopOf="@+id/text_welcome_heading"
             app:layout_constraintEnd_toEndOf="parent"
@@ -48,58 +48,44 @@
         <TextView
             android:id="@+id/text_welcome_content"
             style="@style/TextAppearance.MaterialComponents.Body2"
-            android:lineSpacingMultiplier="1.3"
             android:layout_width="0dp"
-            android:layout_height="0dp"
+            android:layout_height="wrap_content"
             android:layout_marginStart="24dp"
             android:layout_marginTop="16dp"
             android:layout_marginEnd="24dp"
             android:gravity="center"
-            app:layout_constraintBottom_toTopOf="@+id/constraint_welcome_bottom"
+            android:lineSpacingMultiplier="1.3"
+            app:layout_constraintBottom_toTopOf="@+id/button_welcome_accept"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHeight_min="wrap"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/text_welcome_heading"
             app:layout_constraintWidth_percent="0.75"
             tools:text="@string/by_using" />
 
-        <LinearLayout
-            android:id="@+id/constraint_welcome_bottom"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:layout_marginStart="24dp"
-            android:layout_marginEnd="24dp"
-            android:gravity="center_horizontal"
-            android:orientation="vertical"
-            android:paddingVertical="8dp"
+        <Button
+            android:id="@+id/button_welcome_accept"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="@string/accept_continue"
             app:layout_constraintBottom_toTopOf="@id/text_welcome_copyright"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHeight_min="wrap"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/text_welcome_content"
-            app:layout_constraintWidth_percent="0.75">
-
-            <Button
-                android:id="@+id/button_welcome_accept"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/accept_continue" />
-        </LinearLayout>
-
+            app:layout_constraintTop_toBottomOf="@id/text_welcome_content" />
 
         <TextView
             android:id="@+id/text_welcome_copyright"
             style="@style/TextAppearance.MaterialComponents.Caption"
             android:layout_width="wrap_content"
             android:layout_height="0dp"
+            android:layout_marginTop="8dp"
             android:gravity="center_horizontal|bottom"
-            android:paddingVertical="8dp"
             android:text="@string/copyright_notice"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHeight_min="wrap"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/constraint_welcome_bottom" />
+            app:layout_constraintTop_toBottomOf="@id/button_welcome_accept" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
