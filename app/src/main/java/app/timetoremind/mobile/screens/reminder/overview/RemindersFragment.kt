@@ -38,6 +38,9 @@ class RemindersFragment : Fragment() {
                 Timber.d("User accepted terms: $acceptedTerms")
                 if (!acceptedTerms) {
                     navController.navigate(R.id.fragment_welcome)
+                } else {
+                    // User has accepted terms
+                    doFirstTimeSetup()
                 }
             })
     }
@@ -63,9 +66,6 @@ class RemindersFragment : Fragment() {
             // Make user accept terms
             findNavController().navigate(R.id.fragment_welcome)
         } else {
-            // User has accepted terms
-            doFirstTimeSetup()
-
             viewModel.navigateToEditor.asLiveData().observe(viewLifecycleOwner) { event ->
                 event.value?.let { reminder ->
                     Timber.d("navigateToEditor received reminder: $reminder")
