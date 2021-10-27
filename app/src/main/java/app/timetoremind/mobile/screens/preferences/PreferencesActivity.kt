@@ -40,6 +40,13 @@ class PreferencesActivity : AppCompatActivity(),
         appBarConfiguration = AppBarConfiguration(navController.graph)
         setupActionBarWithNavController(navController, appBarConfiguration)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
+
+        navController.addOnDestinationChangedListener { _, destination, _ ->
+            if (destination.id == navController.graph.startDestination) {
+                supportActionBar?.setDisplayHomeAsUpEnabled(true)
+                supportActionBar?.setDisplayShowHomeEnabled(true)
+            }
+        }
     }
 
     override fun onResume() {
