@@ -14,6 +14,7 @@ import app.timetoremind.mobile.databinding.FragmentRemindersBinding
 import app.timetoremind.mobile.screens.reminder.getLayoutSpanCount
 import app.timetoremind.mobile.screens.reminder.overview.dialog.RemindersFilterDialogFragment
 import app.timetoremind.mobile.screens.reminder.overview.dialog.RemindersSortDialogFragment
+import app.timetoremind.mobile.work.AlarmSchedulingWorker
 import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
 
@@ -33,8 +34,9 @@ class RemindersFragment : Fragment() {
         val currentBackStackEntry = navController.currentBackStackEntry!!
         val savedStateHandle = currentBackStackEntry.savedStateHandle
         savedStateHandle.getLiveData<Boolean>(acceptedTermsKey).observe(currentBackStackEntry,
-            { acceptedEula ->
-                if (!acceptedEula) {
+            { acceptedTerms ->
+                Timber.d("User accepted terms: $acceptedTerms")
+                if (!acceptedTerms) {
                     navController.navigate(R.id.fragment_welcome)
                 }
             })
@@ -56,10 +58,14 @@ class RemindersFragment : Fragment() {
         setupFab()
 
         val preferences = PreferenceManager.getDefaultSharedPreferences(requireContext())
-        val acceptedEula = preferences.getBoolean(acceptedTermsKey, false)
-        if (!acceptedEula && !BuildConfig.DEBUG) {
+        val acceptedTerms = preferences.getBoolean(acceptedTermsKey, false)
+        if (!acceptedTerms && !BuildConfig.DEBUG) {
+            // Make user accept terms
             findNavController().navigate(R.id.fragment_welcome)
         } else {
+            // User has accepted terms
+            doFirstTimeSetup()
+
             viewModel.navigateToEditor.asLiveData().observe(viewLifecycleOwner) { event ->
                 event.value?.let { reminder ->
                     Timber.d("navigateToEditor received reminder: $reminder")
@@ -164,6 +170,29 @@ class RemindersFragment : Fragment() {
                     Timber.d("User cancelled clear reminders")
                 }
             }.create()
+        }
+    }
+
+    private fun doFirstTimeSetup() {
+        val preferences = PreferenceManager.getDefaultSharedPreferences(requireContext())
+        val firstStartupKey = getString(R.string.preference_key_first_startup)
+        val isFirstStartup = preferences.getBoolean(firstStartupKey, true)
+
+        if (isFirstStartup) {
+            Timber.d("Performing first time setup")
+
+            with(preferences.edit()) {
+                putBoolean(firstStartupKey, false)
+                apply()
+            }
+
+            val scheduleInterval =
+                preferences
+                    .getInt(getString(R.string.preference_key_schedule_interval), 30)
+                    .toLong()
+
+            // Start unique periodic work request for the first time
+            AlarmSchedulingWorker.enqueue(requireContext(), scheduleInterval)
         }
     }
 }

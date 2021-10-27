@@ -39,7 +39,7 @@ class ReminderApplication : Application(), androidx.work.Configuration.Provider 
             Timber.plant(Timber.DebugTree())
         }
 
-        doFirstTimeSetup()
+        doSetup()
     }
 
     override fun getWorkManagerConfiguration() =
@@ -47,32 +47,30 @@ class ReminderApplication : Application(), androidx.work.Configuration.Provider 
             .setWorkerFactory(workerFactory)
             .build()
 
-    private fun doFirstTimeSetup() {
+    private fun doSetup() {
+        val acceptedTermsKey = getString(R.string.preference_key_accepted_terms)
         val preferences = PreferenceManager.getDefaultSharedPreferences(this)
-        val key = getString(R.string.preference_key_first_startup)
-        val isFirstStartup = preferences.getBoolean(key, true)
+        val acceptedTerms = preferences.getBoolean(acceptedTermsKey, false)
 
-        if (isFirstStartup) {
-            Timber.d("Performing first time setup")
-
-            // On first startup, do not reschedule reminders immediately
-            with(preferences.edit()) {
-                putBoolean(key, false)
-                apply()
-            }
-
-            val scheduleInterval =
-                preferences
-                    .getInt(getString(R.string.preference_key_schedule_interval), 30)
-                    .toLong()
-            // Start periodic work requests
-            AlarmSchedulingWorker.enqueue(this, scheduleInterval)
-        } else {
-            // On next startups, try to reschedule each reminder which may be necessary due to a force stop
-            AlarmSchedulingService.startRescheduleAll(applicationContext)
+        // Don't start using app functionality if user hasn't accepted terms
+        if (!acceptedTerms) {
+            return
         }
-    }
 
+        // User has accepted terms, so do app functionality
+
+        val scheduleInterval =
+            preferences
+                .getInt(getString(R.string.preference_key_schedule_interval), 30)
+                .toLong()
+
+        // Start unique periodic work request which may not be started due to system
+        // killing background processes
+        AlarmSchedulingWorker.enqueue(this, scheduleInterval)
+
+        // Do a reschedule now which may be necessary due to a force stop
+        AlarmSchedulingService.startRescheduleAll(this)
+    }
     /**
      * Sets the default theme preferences.
      */
