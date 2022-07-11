@@ -3,13 +3,14 @@ package app.timetoremind.mobile.data.local
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.test.filters.SmallTest
 import app.timetoremind.mobile.util.*
+import app.timetoremind.sharedtest.MainCoroutineRule
 import com.google.common.truth.Truth.assertThat
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.test.runBlockingTest
+import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -31,21 +32,27 @@ class AlarmDaoTest {
     }
 
     @get:Rule(order = 0)
-    var hiltAndroidRule = HiltAndroidRule(this)
+    val mainCoroutineRule = MainCoroutineRule()
 
     @get:Rule(order = 1)
-    var instantTaskExecutorRule = InstantTaskExecutorRule()
+    var hiltAndroidRule = HiltAndroidRule(this)
 
     @get:Rule(order = 2)
+    var instantTaskExecutorRule = InstantTaskExecutorRule()
+
+    @get:Rule(order = 3)
     var inMemoryDatabaseRule = InMemoryDatabaseRule()
 
     @Before
-    fun setup() = runBlocking {
+    fun setup() {
         alarmDao = inMemoryDatabaseRule.db.alarmDao()
         val reminderDao = inMemoryDatabaseRule.db.reminderDao()
         hiltAndroidRule.inject()
-        reminders.forEach {
-            reminderDao.insert(it)
+        
+        runBlocking {
+            reminders.forEach {
+                reminderDao.insert(it)
+            }
         }
     }
 
@@ -55,7 +62,7 @@ class AlarmDaoTest {
     }
 
     @Test
-    fun getAll_returnsInsertedAlarms() = runBlockingTest {
+    fun getAll_returnsInsertedAlarms() = runTest {
         alarms.forEach { alarmDao.insert(it) }
 
         val dbAlarms = alarmDao.getAll().first()
@@ -66,7 +73,7 @@ class AlarmDaoTest {
     }
 
     @Test
-    fun findById_returnsInsertedAlarm() = runBlockingTest {
+    fun findById_returnsInsertedAlarm() = runTest {
         val id = alarmDao.insert(alarms[0])
 
         val dbAlarm = alarmDao.findById(id)
@@ -75,7 +82,7 @@ class AlarmDaoTest {
     }
 
     @Test
-    fun findByReminderId_returnsAlarmWithReminderId() = runBlockingTest {
+    fun findByReminderId_returnsAlarmWithReminderId() = runTest {
         val id = alarmDao.insert(alarms[0])
 
         val dbAlarm = alarmDao.findByReminderId(alarms[0].reminderId)
@@ -85,17 +92,17 @@ class AlarmDaoTest {
 
 
     @Test
-    fun findById_emptyDb_returnsNull() = runBlockingTest {
+    fun findById_emptyDb_returnsNull() = runTest {
         assertThat(alarmDao.findById(1)).isNull()
     }
 
     @Test
-    fun findByReminderId_emptyDb_returnsNull() = runBlockingTest {
+    fun findByReminderId_emptyDb_returnsNull() = runTest {
         assertThat(alarmDao.findByReminderId("")).isNull()
     }
 
     @Test
-    fun clearTable_deletesAllAlarms() = runBlockingTest {
+    fun clearTable_deletesAllAlarms() = runTest {
         alarmDao.insert(alarms[0])
 
         assertThat(alarmDao.findById(1)).isEqualTo(alarms[0].copy(id = 1))
@@ -106,7 +113,7 @@ class AlarmDaoTest {
     }
 
     @Test
-    fun getFirstByTimeAscending_returnsFirstByTime() = runBlockingTest {
+    fun getFirstByTimeAscending_returnsFirstByTime() = runTest {
         val times = run {
             val temp = mutableSetOf<LocalDateTime>()
             while (temp.size < 10) temp.add(
@@ -130,9 +137,9 @@ class AlarmDaoTest {
     }
 
     @Test
-    fun getFirstScheduledAlarm_noneScheduled_returnsNull() = runBlockingTest {
+    fun getFirstScheduledAlarm_noneScheduled_returnsNull() = runTest {
         val now = currentLocalDateTime()
-        val alarms = (1..3L).map { i ->
+        (1..3L).map { i ->
             Alarm(
                 id = i,
                 reminderId = reminders[i.toInt() - 1].id,
@@ -146,7 +153,7 @@ class AlarmDaoTest {
     }
 
     @Test
-    fun getFirstScheduledAlarm_multipleScheduled_returnsFirst() = runBlockingTest {
+    fun getFirstScheduledAlarm_multipleScheduled_returnsFirst() = runTest {
         val now = currentLocalDateTime()
         val alarms = (1..6L).map { i ->
             Alarm(
@@ -163,7 +170,7 @@ class AlarmDaoTest {
     }
 
     @Test
-    fun deleteAllInPast_deletesOnlyAlarmsBeforeTime() = runBlockingTest {
+    fun deleteAllInPast_deletesOnlyAlarmsBeforeTime() = runTest {
         val now = currentLocalDateTime()
 
         val alarms = (1..5).map { i ->
@@ -185,7 +192,7 @@ class AlarmDaoTest {
     }
 
     @Test
-    fun clearScheduled_setsAllScheduledNull() = runBlockingTest {
+    fun clearScheduled_setsAllScheduledNull() = runTest {
         val now = currentLocalDateTime()
         (1..5L).map { i ->
             Alarm(
@@ -204,7 +211,7 @@ class AlarmDaoTest {
     }
 
     @Test
-    fun setScheduled_changesValue() = runBlockingTest {
+    fun setScheduled_changesValue() = runTest {
         val alarm = Alarm(id = 1, reminderId = reminders[0].id, triggerAt = currentLocalDateTime())
         alarmDao.insert(alarm)
 

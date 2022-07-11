@@ -23,4 +23,4 @@ class NestedScrollToAction(
     )
 }
 
-fun nestedScrollTo() = ViewActions.actionWithAssertions(NestedScrollToAction())
+fun nestedScrollTo(): ViewAction = ViewActions.actionWithAssertions(NestedScrollToAction())

@@ -3,7 +3,6 @@ package app.timetoremind.mobile.service
 import app.timetoremind.mobile.util.EventFlow
 import app.timetoremind.mobile.util.MutableEventFlow
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import timber.log.Timber

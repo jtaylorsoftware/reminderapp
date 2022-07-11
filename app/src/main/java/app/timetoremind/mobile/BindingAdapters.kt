@@ -6,7 +6,6 @@ import androidx.core.content.ContextCompat
 import androidx.core.widget.ImageViewCompat
 import androidx.databinding.BindingAdapter
 import androidx.recyclerview.widget.RecyclerView
-import app.timetoremind.mobile.R
 import app.timetoremind.mobile.data.domain.History
 import app.timetoremind.mobile.data.domain.ReminderAndHistory
 import app.timetoremind.mobile.data.domain.ReminderStatus
@@ -50,7 +49,7 @@ fun bindReminderStatusIcon(imageView: ImageView, history: History?) {
             ReminderStatus.SKIPPED -> R.drawable.ic_notification_skip to R.color.status_skip
             ReminderStatus.COMPLETED -> R.drawable.ic_notification_complete to R.color.status_complete
         }
-    } ?: R.drawable.ic_notification_pending to R.color.status_pending
+    } ?: (R.drawable.ic_notification_pending to R.color.status_pending)
     imageView.setImageResource(resId)
     imageView.tag = resId
     ImageViewCompat.setImageTintList(

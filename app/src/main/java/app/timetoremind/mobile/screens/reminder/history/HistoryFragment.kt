@@ -1,11 +1,13 @@
 package app.timetoremind.mobile.screens.reminder.history
 
 import android.app.AlertDialog
-import android.content.res.Configuration
 import android.os.Bundle
 import android.view.*
+import androidx.core.view.MenuHost
+import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
 import androidx.recyclerview.widget.GridLayoutManager
 import app.timetoremind.mobile.R
 import app.timetoremind.mobile.databinding.FragmentHistoryBinding
@@ -17,22 +19,35 @@ import timber.log.Timber
 class HistoryFragment : Fragment(R.layout.fragment_history) {
     private val viewModel: HistoryViewModel by viewModels()
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
-        super.setHasOptionsMenu(true)
-        return super.onCreateView(inflater, container, savedInstanceState)
-    }
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         setupBinding(view)
+        setupMenu()
     }
 
-    private fun setupBinding(view: View){
+    private fun setupMenu() {
+        val menuHost: MenuHost = requireActivity()
+        menuHost.addMenuProvider(object : MenuProvider {
+            override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
+                menuInflater.inflate(R.menu.history_menu, menu)
+            }
+
+            override fun onMenuItemSelected(menuItem: MenuItem): Boolean = when (menuItem.itemId) {
+                R.id.item_history_clear -> {
+                    buildClearDialog().also {
+                        if (it == null) {
+                            Timber.e("AlertDialog was null")
+                        }
+                    }?.show()
+                    true
+                }
+                else -> false
+            }
+        }, viewLifecycleOwner, Lifecycle.State.RESUMED)
+    }
+
+    private fun setupBinding(view: View) {
         FragmentHistoryBinding.bind(view).apply {
             lifecycleOwner = viewLifecycleOwner
             model = viewModel
@@ -41,23 +56,6 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
             recyclerHistoryList.layoutManager = GridLayoutManager(requireContext(), spanCount)
             recyclerHistoryList.adapter = HistoryListAdapter(spanCount)
         }
-    }
-
-    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
-        super.onCreateOptionsMenu(menu, inflater)
-        inflater.inflate(R.menu.history_menu, menu)
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean = when (item.itemId) {
-        R.id.item_history_clear -> {
-            buildClearDialog().also {
-                if (it == null) {
-                    Timber.e("AlertDialog was null")
-                }
-            }?.show()
-            true
-        }
-        else -> super.onOptionsItemSelected(item)
     }
 
     private fun buildClearDialog(): AlertDialog? {

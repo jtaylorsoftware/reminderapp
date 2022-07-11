@@ -26,7 +26,7 @@ class PreferencesFragment : PreferenceFragmentCompat() {
         super.onViewCreated(view, savedInstanceState)
         val themeKey = getString(R.string.preference_key_theme)
         preferenceScreen.findPreference<ListPreference>(themeKey)?.let {
-            val previousValue = preferenceManager.sharedPreferences.getString(
+            val previousValue = preferenceManager.sharedPreferences?.getString(
                 themeKey,
                 ThemeSetting.defaultValue().toString()
             )

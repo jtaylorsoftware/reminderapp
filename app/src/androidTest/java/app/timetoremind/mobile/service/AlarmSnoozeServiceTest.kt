@@ -7,7 +7,6 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.filters.MediumTest
 import androidx.test.filters.SdkSuppress
 import androidx.test.rule.ServiceTestRule
-import app.timetoremind.mobile.MainCoroutineRule
 import app.timetoremind.mobile.broadcast.ACTION_ALARM_SNOOZE
 import app.timetoremind.mobile.broadcast.EXTRA_REMINDER
 import app.timetoremind.mobile.broadcast.showSkipNotification
@@ -17,13 +16,18 @@ import app.timetoremind.mobile.data.ReminderRepository
 import app.timetoremind.mobile.data.domain.*
 import app.timetoremind.mobile.data.domain.parcel.ReminderParcel
 import app.timetoremind.mobile.util.currentLocalDateTime
+import app.timetoremind.sharedtest.MainCoroutineRule
 import com.google.common.truth.Truth.assertThat
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
-import io.mockk.*
+import io.mockk.justRun
+import io.mockk.mockkObject
+import io.mockk.mockkStatic
+import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.test.runBlockingTest
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -36,6 +40,9 @@ import kotlin.properties.Delegates
 @SdkSuppress(minSdkVersion = 28)
 class AlarmSnoozeServiceTest {
     @get:Rule
+    val mainCoroutineRule = MainCoroutineRule(UnconfinedTestDispatcher())
+
+    @get:Rule
     val hiltRule = HiltAndroidRule(this)
 
     @get:Rule
@@ -46,9 +53,6 @@ class AlarmSnoozeServiceTest {
 
     @Inject
     lateinit var alarmRepository: AlarmRepository
-
-    @Inject
-    lateinit var testScope: MainCoroutineRule
 
     val context: Context = ApplicationProvider.getApplicationContext()
 
@@ -78,7 +82,7 @@ class AlarmSnoozeServiceTest {
     }
 
     @Test
-    fun ifAlarmCanSnooze_savesNewAlarmWithNewTime() = testScope.runBlockingTest {
+    fun ifAlarmCanSnooze_savesNewAlarmWithNewTime() = runTest {
         mockkStatic(::showSnoozeNotification)
         justRun { showSnoozeNotification(any(), any(), any()) }
 
@@ -105,7 +109,7 @@ class AlarmSnoozeServiceTest {
     }
 
     @Test
-    fun ifAlarmCantSnooze_savesSkipHistoryAndNoAlarm() = testScope.runBlockingTest {
+    fun ifAlarmCantSnooze_savesSkipHistoryAndNoAlarm() = runTest {
         mockkStatic(::showSnoozeNotification, ::showSkipNotification)
         justRun { showSnoozeNotification(any(), any(), any()) }
         justRun { showSkipNotification(any(), any(), any()) }
@@ -140,7 +144,7 @@ class AlarmSnoozeServiceTest {
     }
 
     @Test
-    fun ifNonRepeatingReminderCantSnooze_deletesReminder() = testScope.runBlockingTest {
+    fun ifNonRepeatingReminderCantSnooze_deletesReminder() = runTest {
         mockkStatic(::showSnoozeNotification, ::showSkipNotification)
         justRun { showSnoozeNotification(any(), any(), any()) }
         justRun { showSkipNotification(any(), any(), any()) }
@@ -166,7 +170,7 @@ class AlarmSnoozeServiceTest {
     }
 
     @Test
-    fun multipleStarts_allGetResolved() = testScope.runBlockingTest {
+    fun multipleStarts_allGetResolved() = runTest {
         mockkStatic(::showSnoozeNotification)
         justRun { showSnoozeNotification(any(), any(), any()) }
 

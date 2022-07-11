@@ -6,7 +6,6 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.work.OneTimeWorkRequest
 import androidx.work.Operation
 import androidx.work.WorkManager
-import app.timetoremind.mobile.MainCoroutineRule
 import app.timetoremind.mobile.ReminderApplication
 import app.timetoremind.mobile.broadcast.EXTRA_REMINDER_ID
 import app.timetoremind.mobile.broadcast.EXTRA_REMINDER_START_DATE
@@ -18,11 +17,14 @@ import app.timetoremind.mobile.data.domain.Reminder
 import app.timetoremind.mobile.data.domain.SchedulingRules
 import app.timetoremind.mobile.service.AlarmMediaService
 import app.timetoremind.mobile.service.AlarmSchedulingService
+import app.timetoremind.sharedtest.MainCoroutineRule
 import com.google.common.truth.Truth.assertThat
 import io.mockk.*
 import io.mockk.impl.annotations.MockK
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.runBlockingTest
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -45,13 +47,13 @@ class ReminderEditorViewModelTest {
     @MockK
     lateinit var mockSavedState: SavedStateHandle
 
-    lateinit var viewModel: ReminderEditorViewModel
-
-    @get:Rule
-    var mainCoroutineRule = MainCoroutineRule()
+    private lateinit var viewModel: ReminderEditorViewModel
 
     @get:Rule
     var instantExecutorRule = InstantTaskExecutorRule()
+
+    @get:Rule
+    val mainCoroutineRule = MainCoroutineRule(UnconfinedTestDispatcher())
 
     // Helper method to create VM after unique test setup
     private fun createViewModel() {
@@ -60,7 +62,7 @@ class ReminderEditorViewModelTest {
             mockReminderRepo,
             mockAlarmRepo,
             mockSavedState,
-            mainCoroutineRule
+            CoroutineScope(mainCoroutineRule.dispatcher)
         )
     }
 
@@ -84,7 +86,7 @@ class ReminderEditorViewModelTest {
     }
 
     @Test
-    fun isEditing_withNoId_IsFalse() = mainCoroutineRule.runBlockingTest {
+    fun isEditing_withNoId_IsFalse() = runTest {
         every { mockSavedState.get<String>(EXTRA_REMINDER_ID) } returns ""
 
         createViewModel()
@@ -93,7 +95,7 @@ class ReminderEditorViewModelTest {
     }
 
     @Test
-    fun isEditing_withId_IsTrue() = mainCoroutineRule.runBlockingTest {
+    fun isEditing_withId_IsTrue() = runTest {
         // Open with existing Reminder
         val reminder = Reminder("My Reminder")
         coEvery { mockReminderRepo.findById(reminder.id) } returns reminder
@@ -105,7 +107,7 @@ class ReminderEditorViewModelTest {
     }
 
     @Test
-    fun reminderLiveData_isInitializedToEmptyReminder() = mainCoroutineRule.runBlockingTest {
+    fun reminderLiveData_isInitializedToEmptyReminder() = runTest {
         // Simulate that the editor is opened with a value of 0L for reminderId argument
         every { mockSavedState.get<String>(EXTRA_REMINDER_ID) } returns ""
 
@@ -120,7 +122,7 @@ class ReminderEditorViewModelTest {
     }
 
     @Test
-    fun reminderLiveData_withReminderId_loadsReminder() = mainCoroutineRule.runBlockingTest {
+    fun reminderLiveData_withReminderId_loadsReminder() = runTest {
         // Simulate a reminder that has already been persisted so it can be found later
         val reminder = Reminder("My Reminder")
         coEvery { mockReminderRepo.findById(reminder.id) } returns reminder
@@ -134,7 +136,7 @@ class ReminderEditorViewModelTest {
     }
 
     @Test
-    fun saveReminder_savesToRepository_schedulesAlarm() = mainCoroutineRule.runBlockingTest {
+    fun saveReminder_savesToRepository_schedulesAlarm() = runTest {
         val reminder =
             Reminder(
                 description = "Test",
@@ -178,7 +180,7 @@ class ReminderEditorViewModelTest {
     }
 
     @Test
-    fun saveReminder_emitsNavigateToReminders() = mainCoroutineRule.runBlockingTest {
+    fun saveReminder_emitsNavigateToReminders() = runTest {
         val reminder =
             Reminder(
                 description = "Test",
@@ -204,7 +206,7 @@ class ReminderEditorViewModelTest {
     }
 
     @Test
-    fun deleteReminder_notEditing_returns() = mainCoroutineRule.runBlockingTest {
+    fun deleteReminder_notEditing_returns() = runTest {
         every { mockSavedState.get<String>(EXTRA_REMINDER_ID) } returns ""
         coEvery { mockReminderRepo.delete(any()) } returns Unit
 
@@ -218,7 +220,7 @@ class ReminderEditorViewModelTest {
 
     @Test
     fun deleteReminder_cancelsAlarms_andEmitsNavigateToReminders() =
-        mainCoroutineRule.runBlockingTest {
+        runTest {
             val reminder = Reminder()
             val alarm = Alarm(id = 1, reminderId = reminder.id, scheduled = true)
 

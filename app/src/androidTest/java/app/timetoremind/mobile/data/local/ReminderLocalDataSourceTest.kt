@@ -4,12 +4,13 @@ import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.test.filters.MediumTest
 import app.timetoremind.mobile.data.domain.Reminder
 import app.timetoremind.mobile.util.InMemoryDatabaseRule
+import app.timetoremind.sharedtest.MainCoroutineRule
 import com.google.common.truth.Truth.assertThat
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.test.runBlockingTest
+import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -21,12 +22,15 @@ class ReminderLocalDataSourceTest {
     private lateinit var localDataSource: ReminderLocalDataSource
 
     @get:Rule(order = 0)
-    var hiltAndroidRule = HiltAndroidRule(this)
+    val mainCoroutineRule = MainCoroutineRule()
 
     @get:Rule(order = 1)
-    var instantTaskExecutorRule = InstantTaskExecutorRule()
+    var hiltAndroidRule = HiltAndroidRule(this)
 
     @get:Rule(order = 2)
+    var instantTaskExecutorRule = InstantTaskExecutorRule()
+
+    @get:Rule(order = 3)
     var inMemoryDatabaseRule = InMemoryDatabaseRule()
 
     @Before
@@ -37,7 +41,7 @@ class ReminderLocalDataSourceTest {
     }
 
     @Test
-    fun getAll_returnsSavedReminders() = runBlockingTest {
+    fun getAll_returnsSavedReminders() = runTest {
         val reminders = (1..3).map { i ->
             Reminder(
                 "Reminder $i",
@@ -53,7 +57,7 @@ class ReminderLocalDataSourceTest {
     }
 
     @Test
-    fun findById_returnsSavedReminder() = runBlockingTest{
+    fun findById_returnsSavedReminder() = runTest{
         val reminder = Reminder("My reminder")
 
         localDataSource.save(reminder)
@@ -63,7 +67,7 @@ class ReminderLocalDataSourceTest {
     }
 
     @Test
-    fun delete_then_findReturnsNull() = runBlockingTest {
+    fun delete_then_findReturnsNull() = runTest {
         val reminder = Reminder("My reminder")
 
         localDataSource.save(reminder)

@@ -6,7 +6,6 @@ import android.content.Context
 import android.os.Bundle
 import android.text.InputFilter
 import android.text.Spanned
-import android.view.LayoutInflater
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.viewModels
@@ -14,8 +13,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.asLiveData
 import app.timetoremind.mobile.R
-import app.timetoremind.mobile.databinding.DialogSnoozeOptionsBinding
 import app.timetoremind.mobile.data.domain.SnoozeRules
+import app.timetoremind.mobile.databinding.DialogSnoozeOptionsBinding
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
@@ -29,7 +28,7 @@ class SnoozeOptionsDialogFragment() :
     private lateinit var listener: DialogListener
     private lateinit var binding: DialogSnoozeOptionsBinding
     private var previousRules = SnoozeRules()
-    private val viewModel: SnoozeOptionsViewModel by viewModels() {
+    private val viewModel: SnoozeOptionsViewModel by viewModels {
         SnoozeOptionsViewModel.Factory(previousRules)
     }
 
@@ -50,8 +49,7 @@ class SnoozeOptionsDialogFragment() :
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val builder = AlertDialog.Builder(requireContext())
-        val inflater = LayoutInflater.from(context)
-        binding = DialogSnoozeOptionsBinding.inflate(inflater)
+        binding = DialogSnoozeOptionsBinding.inflate(layoutInflater)
 
         return builder.apply {
             setView(binding.root)
@@ -154,7 +152,7 @@ class SnoozeOptionsViewModel(previousRules: SnoozeRules) : ViewModel() {
     class Factory(private val previousRules: SnoozeRules) :
         ViewModelProvider.NewInstanceFactory() {
         @Suppress("UNCHECKED_CAST")
-        override fun <T : ViewModel?> create(modelClass: Class<T>): T =
+        override fun <T : ViewModel> create(modelClass: Class<T>): T =
             SnoozeOptionsViewModel(previousRules) as T
     }
 }

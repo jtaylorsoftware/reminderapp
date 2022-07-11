@@ -20,7 +20,7 @@
  *
  */
 
-package app.timetoremind.mobile
+package app.timetoremind.mobile.util
 
 import android.content.ComponentName
 import android.content.Intent
@@ -28,8 +28,11 @@ import android.os.Bundle
 import androidx.annotation.StyleRes
 import androidx.core.util.Preconditions
 import androidx.fragment.app.Fragment
+import androidx.navigation.NavController
+import androidx.navigation.Navigation
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
+import app.timetoremind.mobile.HiltTestActivity
 import app.timetoremind.mobile.R
 
 /**
@@ -44,6 +47,7 @@ import app.timetoremind.mobile.R
 inline fun <reified T : Fragment> launchFragmentInHiltContainer(
     fragmentArgs: Bundle? = null,
     @StyleRes themeResId: Int = R.style.FragmentScenarioEmptyFragmentActivityTheme,
+    navController: NavController? = null,
     crossinline action: Fragment.() -> Unit = {}
 ) {
     val startActivityIntent = Intent.makeMainActivity(
@@ -62,6 +66,18 @@ inline fun <reified T : Fragment> launchFragmentInHiltContainer(
             T::class.java.name
         )
         fragment.arguments = fragmentArgs
+
+        // https://developer.android.com/guide/navigation/navigation-testing#test_navigationui_with_fragmentscenario
+        // https://github.com/android/architecture-samples/pull/752
+        // Note - doesn't fix conditional navigation use case where navController is used
+        // inside of onCreate.
+        fragment.viewLifecycleOwnerLiveData.observeForever { viewLifecycleOwner ->
+            if (viewLifecycleOwner != null) {
+                navController?.let {
+                    Navigation.setViewNavController(fragment.requireView(), it)
+                }
+            }
+        }
         activity.supportFragmentManager
             .beginTransaction()
             .add(android.R.id.content, fragment, "")

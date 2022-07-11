@@ -2,16 +2,21 @@ package app.timetoremind.mobile.data
 
 import app.timetoremind.mobile.data.domain.Alarm
 import app.timetoremind.mobile.data.domain.Reminder
-import app.timetoremind.mobile.data.local.FakeReminderLocalDataSource
+import app.timetoremind.sharedtest.MainCoroutineRule
+import app.timetoremind.sharedtest.data.local.FakeReminderLocalDataSource
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.test.runBlockingTest
+import kotlinx.coroutines.test.runTest
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 
 @ExperimentalCoroutinesApi
 class ReminderRepositoryTest {
+    @get:Rule
+    val mainCoroutineRule = MainCoroutineRule()
+
     private lateinit var repository: ReminderRepository
     private lateinit var fakeLocalDataSource: ReminderDataSource
 
@@ -33,14 +38,14 @@ class ReminderRepositoryTest {
     }
 
     @Test
-    fun getAll_returnsRemindersFromLocalDataSource() = runBlockingTest {
+    fun getAll_returnsRemindersFromLocalDataSource() = runTest {
         val repoReminders = repository.getAll().first()
 
         assertThat(repoReminders).containsExactlyElementsIn(localReminders)
     }
 
     @Test
-    fun findById_returnsReminderInLocalDataSource() = runBlockingTest {
+    fun findById_returnsReminderInLocalDataSource() = runTest {
         val reminder = localReminders[1]
         val foundReminder = repository.findById(reminder.id)
 
@@ -48,7 +53,7 @@ class ReminderRepositoryTest {
     }
 
     @Test
-    fun save_addsReminderToLocalDataSource() = runBlockingTest {
+    fun save_addsReminderToLocalDataSource() = runTest {
         val reminder = Reminder("Reminder 3")
 
         repository.save(reminder)
@@ -59,14 +64,14 @@ class ReminderRepositoryTest {
     }
 
     @Test
-    fun getReminderAndAlarm_returnsReminderWithAlarm() = runBlockingTest {
+    fun getReminderAndAlarm_returnsReminderWithAlarm() = runTest {
         val (reminder, alarm) = repository.getReminderAndAlarm(localReminders[0].id)!!
         assertThat(reminder).isEqualTo(localReminders[0])
         assertThat(alarm).isEqualTo(alarms[0])
     }
 
     @Test
-    fun delete_removesReminder() = runBlockingTest {
+    fun delete_removesReminder() = runTest {
         val reminder = localReminders[0]
 
         repository.delete(reminder)

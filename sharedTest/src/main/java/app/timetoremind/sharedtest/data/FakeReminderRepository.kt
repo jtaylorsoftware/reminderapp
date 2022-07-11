@@ -1,7 +1,7 @@
-package app.timetoremind.mobile.data
+package app.timetoremind.sharedtest.data
 
 import app.timetoremind.mobile.data.domain.*
-import app.timetoremind.mobile.data.local.FakeReminderLocalDataSource
+import app.timetoremind.sharedtest.data.local.FakeReminderLocalDataSource
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
 import javax.inject.Inject
@@ -13,7 +13,7 @@ class FakeReminderRepository @Inject constructor(
     alarmCache: MutableList<Alarm>,
     historyCache: MutableList<History>
 ) :
-    ReminderRepository {
+    app.timetoremind.mobile.data.ReminderRepository {
     private val fakeLocalDataSource = FakeReminderLocalDataSource(cache, alarmCache, historyCache)
 
     override fun getAll(): Flow<List<Reminder>> = fakeLocalDataSource.getAll()

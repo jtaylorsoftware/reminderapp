@@ -4,7 +4,6 @@ import android.app.AlertDialog
 import android.app.Dialog
 import android.content.Context
 import android.os.Bundle
-import android.view.LayoutInflater
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.ViewModel
@@ -48,8 +47,7 @@ class RemindersSortDialogFragment() : DialogFragment() {
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val builder = AlertDialog.Builder(requireContext())
-        val inflater = LayoutInflater.from(context)
-        binding = DialogSortRemindersBinding.inflate(inflater)
+        binding = DialogSortRemindersBinding.inflate(layoutInflater)
 
         return builder.apply {
             setView(binding.root)
@@ -158,7 +156,7 @@ class ReminderSortViewModel constructor(previousSortRules: ReminderSortRules) : 
     class Factory(private val previousSortRules: ReminderSortRules) :
         ViewModelProvider.NewInstanceFactory() {
         @Suppress("UNCHECKED_CAST")
-        override fun <T : ViewModel?> create(modelClass: Class<T>): T =
+        override fun <T : ViewModel> create(modelClass: Class<T>): T =
             ReminderSortViewModel(previousSortRules) as T
     }
 }

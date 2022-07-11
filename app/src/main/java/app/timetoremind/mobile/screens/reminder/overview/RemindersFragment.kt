@@ -3,8 +3,11 @@ package app.timetoremind.mobile.screens.reminder.overview
 import android.app.AlertDialog
 import android.os.Bundle
 import android.view.*
+import androidx.core.view.MenuHost
+import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.Lifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.GridLayoutManager
@@ -30,11 +33,15 @@ class RemindersFragment : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // https://developer.android.com/guide/navigation/navigation-conditional
+        // Ensure user accepts EULA by using conditional navigation - observe changes to
+        // a SavedStateHandle containing the ACCEPTED flag. On first launch, it will be false,
+        // so user gets navigated to EULA screen. Otherwise, no navigation happens.
         val navController = findNavController()
         val currentBackStackEntry = navController.currentBackStackEntry!!
         val savedStateHandle = currentBackStackEntry.savedStateHandle
-        savedStateHandle.getLiveData<Boolean>(acceptedTermsKey).observe(currentBackStackEntry,
-            { acceptedTerms ->
+        savedStateHandle.getLiveData<Boolean>(acceptedTermsKey)
+            .observe(currentBackStackEntry) { acceptedTerms ->
                 Timber.d("User accepted terms: $acceptedTerms")
                 if (!acceptedTerms) {
                     navController.navigate(R.id.fragment_welcome)
@@ -42,7 +49,7 @@ class RemindersFragment : Fragment() {
                     // User has accepted terms
                     doFirstTimeSetup()
                 }
-            })
+            }
     }
 
     override fun onCreateView(
@@ -50,7 +57,6 @@ class RemindersFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        setHasOptionsMenu(true)
         return inflater.inflate(R.layout.fragment_reminders, container, false)
     }
 
@@ -59,6 +65,7 @@ class RemindersFragment : Fragment() {
 
         setupBinding(view)
         setupFab()
+        setupMenu()
 
         val preferences = PreferenceManager.getDefaultSharedPreferences(requireContext())
         val acceptedTerms = preferences.getBoolean(acceptedTermsKey, false)
@@ -77,6 +84,33 @@ class RemindersFragment : Fragment() {
                 }
             }
         }
+    }
+
+    private fun setupMenu() {
+        val menuHost: MenuHost = requireActivity()
+        menuHost.addMenuProvider(object : MenuProvider {
+            override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
+                menuInflater.inflate(R.menu.reminders_menu, menu)
+            }
+
+            override fun onMenuItemSelected(menuItem: MenuItem): Boolean = when (menuItem.itemId) {
+                R.id.item_reminders_sort -> {
+                    val dialog = RemindersSortDialogFragment(viewModel.reminderSortRules)
+                    dialog.show(childFragmentManager, "dialogReminderSort")
+                    true
+                }
+                R.id.item_reminders_filter -> {
+                    val dialog = RemindersFilterDialogFragment(viewModel.reminderFilterRules)
+                    dialog.show(childFragmentManager, "dialogReminderFilter")
+                    true
+                }
+                R.id.item_reminders_clear -> {
+                    buildClearDialog()?.show()
+                    true
+                }
+                else -> false
+            }
+        }, viewLifecycleOwner, Lifecycle.State.RESUMED)
     }
 
     private fun setupBinding(view: View) {
@@ -132,29 +166,6 @@ class RemindersFragment : Fragment() {
             true
         }
         else -> super.onContextItemSelected(item)
-    }
-
-    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
-        super.onCreateOptionsMenu(menu, inflater)
-        inflater.inflate(R.menu.reminders_menu, menu)
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean = when (item.itemId) {
-        R.id.item_reminders_sort -> {
-            val dialog = RemindersSortDialogFragment(viewModel.reminderSortRules)
-            dialog.show(childFragmentManager, "dialogReminderSort")
-            true
-        }
-        R.id.item_reminders_filter -> {
-            val dialog = RemindersFilterDialogFragment(viewModel.reminderFilterRules)
-            dialog.show(childFragmentManager, "dialogReminderFilter")
-            true
-        }
-        R.id.item_reminders_clear -> {
-            buildClearDialog()?.show()
-            true
-        }
-        else -> super.onOptionsItemSelected(item)
     }
 
     private fun buildClearDialog(): AlertDialog? {

@@ -1,18 +1,25 @@
 package app.timetoremind.mobile.data
 
 
-import app.timetoremind.mobile.data.local.AlarmEntity as Alarm
 import app.timetoremind.mobile.data.local.AlarmDao
 import app.timetoremind.mobile.util.currentLocalDateTime
 import app.timetoremind.mobile.util.uuid
+import app.timetoremind.sharedtest.MainCoroutineRule
 import io.mockk.*
 import io.mockk.impl.annotations.MockK
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
+import app.timetoremind.mobile.data.local.AlarmEntity as Alarm
 
+@ExperimentalCoroutinesApi
 class AlarmRepositoryTest {
+    @get:Rule
+    val mainCoroutineRule = MainCoroutineRule()
+
     @MockK
     lateinit var mockAlarmDao: AlarmDao
 
@@ -22,7 +29,7 @@ class AlarmRepositoryTest {
         Alarm(1, uuid(), currentLocalDateTime().plusMinutes(1)),
         Alarm(2, uuid(), currentLocalDateTime().plusMinutes(2)),
     )
-
+    
     @Before
     fun setup() {
         MockKAnnotations.init(this)
@@ -40,7 +47,7 @@ class AlarmRepositoryTest {
     }
 
     @Test
-    fun save_savesToDao() = runBlocking {
+    fun save_savesToDao() = runTest {
         val alarm = alarms[0]
 
         coEvery { mockAlarmDao.insert(alarm) } returns alarm.id
@@ -54,7 +61,7 @@ class AlarmRepositoryTest {
 
 
     @Test
-    fun findById_usesDaoFindById() = runBlocking {
+    fun findById_usesDaoFindById() = runTest {
         val alarm = alarms[0]
 
         coEvery { mockAlarmDao.findById(alarm.id) } returns alarm
@@ -67,7 +74,7 @@ class AlarmRepositoryTest {
     }
 
     @Test
-    fun findByReminderId_usesDaoFindByReminderId() = runBlocking {
+    fun findByReminderId_usesDaoFindByReminderId() = runTest {
         val alarm = alarms[0]
 
         coEvery { mockAlarmDao.findByReminderId(alarm.reminderId) } returns alarm
@@ -80,7 +87,7 @@ class AlarmRepositoryTest {
     }
 
     @Test
-    fun deleteAll_usesDaoClearTable() = runBlocking {
+    fun deleteAll_usesDaoClearTable() = runTest {
         coEvery { mockAlarmDao.clearTable() } returns Unit
         repository = AlarmRepositoryImpl(mockAlarmDao)
 

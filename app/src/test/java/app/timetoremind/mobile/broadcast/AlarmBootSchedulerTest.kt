@@ -4,15 +4,16 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import androidx.test.core.app.ApplicationProvider
-import app.timetoremind.mobile.MainCoroutineRule
 import app.timetoremind.mobile.data.AlarmRepository
 import app.timetoremind.mobile.data.ReminderRepository
 import app.timetoremind.mobile.service.AlarmSchedulingService
+import app.timetoremind.sharedtest.MainCoroutineRule
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import io.mockk.*
 import io.mockk.impl.annotations.MockK
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.junit.Before
 import org.junit.Rule
@@ -30,9 +31,9 @@ class AlarmBootSchedulerTest {
     var hiltRule = HiltAndroidRule(this)
 
     @get:Rule
-    var mainCoroutineRule = MainCoroutineRule()
+    val mainCoroutineRule = MainCoroutineRule()
 
-    lateinit var receiver: AlarmBootScheduler
+    private lateinit var receiver: AlarmBootScheduler
 
     @MockK
     lateinit var mockReminderRepository: ReminderRepository
@@ -40,7 +41,7 @@ class AlarmBootSchedulerTest {
     @MockK
     lateinit var mockAlarmRepository: AlarmRepository
 
-    val context = ApplicationProvider.getApplicationContext<Context>()
+    private val context: Context = ApplicationProvider.getApplicationContext()
 
     @Before
     fun setup() {
@@ -51,7 +52,7 @@ class AlarmBootSchedulerTest {
         justRun { AlarmSchedulingService.startRescheduleAll(any()) }
 
         receiver = spyk(AlarmBootScheduler().apply {
-            applicationScope = mainCoroutineRule
+            applicationScope = CoroutineScope(mainCoroutineRule.dispatcher)
             alarmRepository = mockAlarmRepository
             reminderRepository = mockReminderRepository
         })

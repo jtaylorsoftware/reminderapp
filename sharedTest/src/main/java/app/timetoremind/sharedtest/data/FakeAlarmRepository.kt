@@ -1,4 +1,4 @@
-package app.timetoremind.mobile.data
+package app.timetoremind.sharedtest.data
 
 
 import app.timetoremind.mobile.data.domain.Alarm
@@ -11,7 +11,7 @@ import javax.inject.Singleton
 
 @Singleton
 class FakeAlarmRepository @Inject constructor(private val cache: MutableList<Alarm>) :
-    AlarmRepository {
+    app.timetoremind.mobile.data.AlarmRepository {
     private val id = AtomicLong(0)
 
     override fun getAll(): Flow<List<Alarm>> = flow {

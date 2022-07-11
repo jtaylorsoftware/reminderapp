@@ -1,12 +1,14 @@
 package app.timetoremind.mobile.screens.reminder.editor
 
 import android.content.Intent
+import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.fragment.app.add
 import androidx.fragment.app.commitNow
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.Espresso.onView
-import androidx.test.espresso.action.ViewActions.*
+import androidx.test.espresso.action.ViewActions.click
+import androidx.test.espresso.action.ViewActions.replaceText
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.RootMatchers.isDialog
 import androidx.test.espresso.matcher.ViewMatchers.*
@@ -14,20 +16,22 @@ import androidx.test.filters.MediumTest
 import androidx.test.platform.app.InstrumentationRegistry
 import app.timetoremind.mobile.R
 import app.timetoremind.mobile.broadcast.EXTRA_REMINDER_ID
-import app.timetoremind.mobile.data.*
+import app.timetoremind.mobile.data.AlarmRepository
+import app.timetoremind.mobile.data.ReminderRepository
 import app.timetoremind.mobile.data.domain.Alarm
 import app.timetoremind.mobile.data.domain.Reminder
 import app.timetoremind.mobile.data.domain.SchedulingRules
 import app.timetoremind.mobile.util.currentLocalDateTime
 import app.timetoremind.mobile.util.nestedScrollTo
 import app.timetoremind.mobile.util.uuid
+import app.timetoremind.sharedtest.MainCoroutineRule
 import com.google.common.truth.Truth.assertThat
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.test.runBlockingTest
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import org.hamcrest.Matchers.not
 import org.junit.Before
 import org.junit.Rule
@@ -39,6 +43,7 @@ import javax.inject.Inject
 
 @HiltAndroidTest
 @MediumTest
+@ExperimentalCoroutinesApi
 class ReminderEditorFragmentTest {
 
     private fun launchEditorFragmentWithReminder(
@@ -68,6 +73,12 @@ class ReminderEditorFragmentTest {
 
     @get:Rule
     var hiltRule = HiltAndroidRule(this)
+
+    @get:Rule
+    val mainCoroutineRule = MainCoroutineRule(UnconfinedTestDispatcher())
+
+    @get:Rule
+    val instantExecutorRule = InstantTaskExecutorRule()
 
     @Inject
     lateinit var reminderRepository: ReminderRepository
@@ -108,7 +119,6 @@ class ReminderEditorFragmentTest {
     @Test
     fun withNoId_displaysEmptyReminder() {
         launchEditorFragmentWithReminder("")
-
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val hintString = context.getString(R.string.edit_reminder)
         onView(withId(R.id.textinput_editor_description)).check(matches(withHint(hintString)))
@@ -145,7 +155,7 @@ class ReminderEditorFragmentTest {
 
     @ExperimentalCoroutinesApi
     @Test
-    fun save_navigatesUp() = runBlockingTest {
+    fun save_navigatesUp() {
         launchEditorFragmentWithReminder(reminders[2].id) {
             fragmentVM = this.viewModel
         }
@@ -199,15 +209,18 @@ class ReminderEditorFragmentTest {
     @Test
     fun deleteButton_notEditing_isNotVisible() {
         launchEditorFragmentWithReminder("")
+
         onView(withText("Delete")).check(matches(not(isDisplayed())))
     }
 
     @Test
-    fun deleteButton_editing_deletesReminderAndAlarm() = runBlocking {
+    fun deleteButton_editing_deletesReminderAndAlarm() {
         val reminder = Reminder()
-        reminderRepository.save(reminder)
-        val alarm = Alarm(id = 1, reminderId = reminder.id, triggerAt = currentLocalDateTime())
-        alarmRepository.save(alarm)
+        runBlocking {
+            reminderRepository.save(reminder)
+            val alarm = Alarm(id = 1, reminderId = reminder.id, triggerAt = currentLocalDateTime())
+            alarmRepository.save(alarm)
+        }
 
         launchEditorFragmentWithReminder(reminder.id)
 
@@ -215,7 +228,9 @@ class ReminderEditorFragmentTest {
         onView(withId(R.id.button_editor_delete)).perform(nestedScrollTo(), click())
         onView(withText("OK")).inRoot(isDialog()).check(matches(isDisplayed())).perform(click())
 
-        assertThat(reminderRepository.findById(reminder.id)).isNull()
-        assertThat(alarmRepository.findByReminderId(reminder.id)).isNull()
+        runBlocking {
+            assertThat(reminderRepository.findById(reminder.id)).isNull()
+            assertThat(alarmRepository.findByReminderId(reminder.id)).isNull()
+        }
     }
 }

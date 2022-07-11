@@ -4,7 +4,6 @@ import android.app.AlertDialog
 import android.app.Dialog
 import android.content.Context
 import android.os.Bundle
-import android.view.LayoutInflater
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.ViewModel
@@ -45,8 +44,7 @@ class DayOfWeekDialogFragment() :
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val builder = AlertDialog.Builder(requireContext())
-        val inflater = LayoutInflater.from(context)
-        binding = DialogDayBinding.inflate(inflater)
+        binding = DialogDayBinding.inflate(layoutInflater)
 
         return builder.apply {
             setView(binding.root)
@@ -141,7 +139,7 @@ class DialogDayViewModel constructor(daysOfWeek: SortedSet<DayOfWeek>) : ViewMod
     class Factory(private val previousDaysOfWeek: SortedSet<DayOfWeek>) :
         ViewModelProvider.NewInstanceFactory() {
         @Suppress("UNCHECKED_CAST")
-        override fun <T : ViewModel?> create(modelClass: Class<T>): T =
+        override fun <T : ViewModel> create(modelClass: Class<T>): T =
             (DialogDayViewModel(previousDaysOfWeek) as T)
     }
 }

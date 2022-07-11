@@ -7,8 +7,8 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.work.CoroutineWorker
 import androidx.work.Data
 import androidx.work.testing.TestListenableWorkerBuilder
-import app.timetoremind.mobile.R
 import app.timetoremind.mobile.HiltTestActivity
+import app.timetoremind.mobile.R
 import app.timetoremind.mobile.data.AlarmRepository
 import app.timetoremind.mobile.data.HistoryRepository
 import app.timetoremind.mobile.data.ReminderRepository
@@ -20,9 +20,9 @@ import kotlinx.coroutines.test.runBlockingTest
  * worker factory that will correctly construct workers using supplied dependencies.
  */
 class WorkTestCoordinator(
-     alarmRepository: AlarmRepository,
-     reminderRepository: ReminderRepository,
-     historyRepository: HistoryRepository
+    alarmRepository: AlarmRepository,
+    reminderRepository: ReminderRepository,
+    historyRepository: HistoryRepository
 ) {
     val factory = TestWorkerFactory(alarmRepository, reminderRepository, historyRepository)
 

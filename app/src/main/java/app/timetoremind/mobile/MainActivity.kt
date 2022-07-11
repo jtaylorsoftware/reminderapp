@@ -23,11 +23,12 @@ import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupActionBarWithNavController
 import app.timetoremind.mobile.broadcast.NOTIFICATION_LED_ARGB
-import app.timetoremind.mobile.screens.reminder.overview.*
+import app.timetoremind.mobile.screens.reminder.overview.ReminderFilterRules
+import app.timetoremind.mobile.screens.reminder.overview.ReminderSortRules
+import app.timetoremind.mobile.screens.reminder.overview.RemindersViewModel
 import app.timetoremind.mobile.screens.reminder.overview.dialog.RemindersFilterDialogFragment
 import app.timetoremind.mobile.screens.reminder.overview.dialog.RemindersSortDialogFragment
 import app.timetoremind.mobile.settings.SettingsActivity
-import app.timetoremind.mobile.util.*
 import com.google.android.material.bottomappbar.BottomAppBar
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.color.MaterialColors

@@ -9,7 +9,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import androidx.preference.PreferenceManager
-import app.timetoremind.mobile.broadcast.*
+import app.timetoremind.mobile.broadcast.cancelAlarmIntentsForReminder
 import app.timetoremind.mobile.data.AlarmRepository
 import app.timetoremind.mobile.data.ReminderRepository
 import app.timetoremind.mobile.data.domain.Reminder
@@ -350,7 +350,8 @@ class RemindersViewModel @Inject constructor(
                 filterRules.checkWithinDaysOfWeek(it.reminder.schedulingRules)
             // does the filter include the reminder's status?
             val status =
-                it.history?.completionStatus ?: ReminderStatus.PENDING in filterRules.reminderStatuses
+                (it.history?.completionStatus
+                    ?: ReminderStatus.PENDING) in filterRules.reminderStatuses
 
             // include reminder if the date or time is included and its status is included
             withinDateRange && withinDayOfWeek && status

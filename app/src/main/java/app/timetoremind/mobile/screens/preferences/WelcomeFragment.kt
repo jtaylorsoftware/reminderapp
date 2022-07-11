@@ -27,6 +27,10 @@ class WelcomeFragment : Fragment(R.layout.fragment_welcome) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        // https://developer.android.com/guide/navigation/navigation-conditional
+        // Ensure user accepts EULA by using conditional navigation - on first launch, this screen
+        // is shown. Once user presses ACCEPT, it sets a flag in SharedPreferences so the screen
+        // is popped immediately.
         val navController = findNavController()
         savedStateHandle = requireNotNull(navController.previousBackStackEntry).savedStateHandle
         savedStateHandle.set(acceptedTermsKey, false)

@@ -8,7 +8,6 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.filters.MediumTest
 import androidx.test.filters.SdkSuppress
 import androidx.test.rule.ServiceTestRule
-import app.timetoremind.mobile.MainCoroutineRule
 import app.timetoremind.mobile.broadcast.*
 import app.timetoremind.mobile.data.AlarmRepository
 import app.timetoremind.mobile.data.HistoryRepository
@@ -17,6 +16,7 @@ import app.timetoremind.mobile.data.domain.*
 import app.timetoremind.mobile.data.domain.parcel.ReminderParcel
 import app.timetoremind.mobile.util.currentEpochMilli
 import app.timetoremind.mobile.util.currentLocalDateTime
+import app.timetoremind.sharedtest.MainCoroutineRule
 import com.google.common.truth.Truth.assertThat
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -24,7 +24,8 @@ import io.mockk.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.test.runBlockingTest
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -40,6 +41,9 @@ import kotlin.properties.Delegates
 @SdkSuppress(minSdkVersion = 28)
 class AlarmSchedulingServiceTest {
     @get:Rule
+    val mainCoroutineRule = MainCoroutineRule(UnconfinedTestDispatcher())
+
+    @get:Rule
     val hiltRule = HiltAndroidRule(this)
 
     @get:Rule
@@ -53,9 +57,6 @@ class AlarmSchedulingServiceTest {
 
     @Inject
     lateinit var historyRepository: HistoryRepository
-
-    @Inject
-    lateinit var testScope: MainCoroutineRule
 
     private lateinit var reminders: List<Reminder>
 
@@ -137,90 +138,91 @@ class AlarmSchedulingServiceTest {
     }
 
     @Test
-    fun saveNewAlarm_noHistoryToday_createsAlarmWithTimeToday() =
-        testScope.runBlockingTest {
-            val reminder =
-                Reminder(schedulingRules = SchedulingRules(time = LocalTime.now().plusMinutes(10)))
-            reminderRepository.save(reminder)
-            val alarm = Alarm(
+    fun saveNewAlarm_noHistoryToday_createsAlarmWithTimeToday() = runTest {
+        val reminder =
+            Reminder(schedulingRules = SchedulingRules(time = LocalTime.now().plusMinutes(10)))
+        reminderRepository.save(reminder)
+        val alarm = Alarm(
+            reminderId = reminder.id,
+            snoozeCount = 0,
+            triggerAt = currentLocalDateTime(),
+            snoozeDuration = 5
+        )
+        // save an old alarm to be deleted
+        alarmRepository.save(alarm)
+
+        val service = createService()
+        service.doScheduleNewAlarm(reminder)
+
+        val savedAlarm = alarmRepository.findByReminderId(reminder.id)
+        assertThat(savedAlarm!!.id).isNotEqualTo(alarm.id)
+        assertThat(savedAlarm.triggerAt.toLocalDate()).isEqualTo(LocalDate.now())
+        assertThat(savedAlarm.triggerAt).isEqualTo(
+            reminder.schedulingRules.getNextTimeForAlarm(
+                currentLocalDateTime(),
+                nextTimeOptions = SchedulingRules.NextTimeOptions.ALLOW_ALL
+            )
+        )
+    }
+
+    @Test
+    fun saveNewAlarm_hasHistoryForToday_createsAlarmWithNextScheduledTime() = runTest {
+        val reminder = Reminder(
+            schedulingRules = SchedulingRules(
+                type = SchedulingType.REPEATING,
+                endDate = LocalDate.now().plusDays(7),
+                daysOfWeek = sortedSetOf(
+                    DayOfWeek.MONDAY,
+                    DayOfWeek.WEDNESDAY,
+                    DayOfWeek.FRIDAY
+                ),
+                time = LocalTime.now().plusMinutes(10)
+            )
+        )
+        reminderRepository.save(reminder)
+        val alarm = Alarm(
+            reminderId = reminder.id,
+            snoozeCount = 0,
+            triggerAt = currentLocalDateTime(),
+            snoozeDuration = 5
+        )
+        // save an old alarm to be deleted
+        alarmRepository.save(alarm)
+
+        // save a history entry
+        historyRepository.save(
+            History(
                 reminderId = reminder.id,
-                snoozeCount = 0,
-                triggerAt = currentLocalDateTime(),
-                snoozeDuration = 5
+                completedAt = currentEpochMilli(),
+                completionStatus = ReminderStatus.COMPLETED
             )
-            // save an old alarm to be deleted
-            alarmRepository.save(alarm)
+        )
 
-            val service = createService()
-            service.doScheduleNewAlarm(reminder)
+        val service = createService()
+        service.doScheduleNewAlarm(reminder)
 
-            val savedAlarm = alarmRepository.findByReminderId(reminder.id)
-            assertThat(savedAlarm!!.id).isNotEqualTo(alarm.id)
-            assertThat(savedAlarm.triggerAt.toLocalDate()).isEqualTo(LocalDate.now())
-            assertThat(savedAlarm.triggerAt).isEqualTo(
-                reminder.schedulingRules.getNextTimeForAlarm(
-                    currentLocalDateTime(),
-                    nextTimeOptions = SchedulingRules.NextTimeOptions.ALLOW_ALL
-                )
-            )
-        }
+        // should not be scheduled for today
+        val savedAlarm = alarmRepository.findByReminderId(reminder.id)
+        assertThat(savedAlarm!!.id).isNotEqualTo(alarm.id)
+        assertThat(savedAlarm.triggerAt.toLocalDate()).isNotEqualTo(LocalDate.now())
+    }
 
     @Test
-    fun saveNewAlarm_hasHistoryForToday_createsAlarmWithNextScheduledTime() =
-        testScope.runBlockingTest {
-            val reminder = Reminder(
-                schedulingRules = SchedulingRules(
-                    type = SchedulingType.REPEATING,
-                    endDate = LocalDate.now().plusDays(7),
-                    daysOfWeek = sortedSetOf(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY, DayOfWeek.FRIDAY),
-                    time = LocalTime.now().plusMinutes(10)
-                )
-            )
-            reminderRepository.save(reminder)
-            val alarm = Alarm(
-                reminderId = reminder.id,
-                snoozeCount = 0,
-                triggerAt = currentLocalDateTime(),
-                snoozeDuration = 5
-            )
-            // save an old alarm to be deleted
-            alarmRepository.save(alarm)
+    fun saveNewAlarm_alsoCallsScheduleNext() = runTest {
+        val reminder =
+            Reminder(schedulingRules = SchedulingRules(time = LocalTime.now().plusMinutes(10)))
+        reminderRepository.save(reminder)
 
-            // save a history entry
-            historyRepository.save(
-                History(
-                    reminderId = reminder.id,
-                    completedAt = currentEpochMilli(),
-                    completionStatus = ReminderStatus.COMPLETED
-                )
-            )
+        val service = createService()
+        service.doScheduleNewAlarm(reminder)
 
-            val service = createService()
-            service.doScheduleNewAlarm(reminder)
-
-            // should not be scheduled for today
-            val savedAlarm = alarmRepository.findByReminderId(reminder.id)
-            assertThat(savedAlarm!!.id).isNotEqualTo(alarm.id)
-            assertThat(savedAlarm.triggerAt.toLocalDate()).isNotEqualTo(LocalDate.now())
+        verify {
+            AlarmSchedulingService.startScheduleNext(any())
         }
+    }
 
     @Test
-    fun saveNewAlarm_alsoCallsScheduleNext() =
-        testScope.runBlockingTest {
-            val reminder =
-                Reminder(schedulingRules = SchedulingRules(time = LocalTime.now().plusMinutes(10)))
-            reminderRepository.save(reminder)
-
-            val service = createService()
-            service.doScheduleNewAlarm(reminder)
-
-            verify {
-                AlarmSchedulingService.startScheduleNext(any())
-            }
-        }
-
-    @Test
-    fun scheduleNext_noPreviousScheduled_setsOneAlarmAsScheduled() = testScope.runBlockingTest {
+    fun scheduleNext_noPreviousScheduled_setsOneAlarmAsScheduled() = runTest {
         reminders.forEach {
             alarmRepository.save(
                 Alarm(
@@ -249,7 +251,7 @@ class AlarmSchedulingServiceTest {
     }
 
     @Test
-    fun scheduleNext_alarmAlreadyScheduledNotInPast_doesNothing() = testScope.runBlockingTest {
+    fun scheduleNext_alarmAlreadyScheduledNotInPast_doesNothing() = runTest {
         reminders.forEachIndexed { i, reminder ->
             alarmRepository.save(
                 Alarm(
@@ -273,7 +275,7 @@ class AlarmSchedulingServiceTest {
     }
 
     @Test
-    fun scheduleNext_alarmAlreadyScheduledTimeIsInPast_reschedules() = testScope.runBlockingTest {
+    fun scheduleNext_alarmAlreadyScheduledTimeIsInPast_reschedules() = runTest {
         reminders.forEachIndexed { i, reminder ->
             alarmRepository.save(
                 Alarm(
@@ -307,7 +309,7 @@ class AlarmSchedulingServiceTest {
     }
 
     @Test
-    fun scheduleNext_scheduledAlarmNotSameAsSoonest_reschedules() = testScope.runBlockingTest {
+    fun scheduleNext_scheduledAlarmNotSameAsSoonest_reschedules() = runTest {
         reminders.forEachIndexed { i, reminder ->
             alarmRepository.save(
                 Alarm(
@@ -338,10 +340,10 @@ class AlarmSchedulingServiceTest {
     }
 
     @Test
-    fun scheduleNext_handlesMultipleStarts() = testScope.runBlockingTest {
+    fun scheduleNext_handlesMultipleStarts() = runTest {
         val service = createService()
 
-        reminders.forEach {
+        reminders.forEach { _ ->
             service.doScheduleNext()
         }
 
@@ -355,7 +357,7 @@ class AlarmSchedulingServiceTest {
     }
 
     @Test
-    fun reschedule_callsUtilRescheduleAll() = testScope.runBlockingTest {
+    fun reschedule_callsUtilRescheduleAll() = runTest {
         val service = createService()
         service.doRescheduleAll()
 

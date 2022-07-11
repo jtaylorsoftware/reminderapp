@@ -10,10 +10,10 @@ import android.widget.TimePicker
 var TimePicker.time: Pair<Int, Int>
     get() {
         @Suppress("DEPRECATION")
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            return Pair(this.hour, this.minute)
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            Pair(this.hour, this.minute)
         } else {
-            return Pair(this.currentHour, this.currentMinute)
+            Pair(this.currentHour, this.currentMinute)
         }
     }
     set(value) {

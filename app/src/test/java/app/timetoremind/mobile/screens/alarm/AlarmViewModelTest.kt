@@ -3,9 +3,9 @@ package app.timetoremind.mobile.screens.alarm
 import android.content.Context
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.lifecycle.SavedStateHandle
-import app.timetoremind.mobile.MainCoroutineRule
 import app.timetoremind.mobile.ReminderApplication
-import app.timetoremind.mobile.broadcast.*
+import app.timetoremind.mobile.broadcast.EXTRA_REMINDER_ID
+import app.timetoremind.mobile.broadcast.showToast
 import app.timetoremind.mobile.data.ReminderRepository
 import app.timetoremind.mobile.data.domain.*
 import app.timetoremind.mobile.getOrAwaitValue
@@ -13,11 +13,13 @@ import app.timetoremind.mobile.service.*
 import app.timetoremind.mobile.util.EventFlow
 import app.timetoremind.mobile.util.currentLocalDateTime
 import app.timetoremind.mobile.util.getShortLocalTimeDisplay
+import app.timetoremind.sharedtest.MainCoroutineRule
 import com.google.common.truth.Truth.assertThat
 import io.mockk.*
 import io.mockk.impl.annotations.MockK
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.runBlockingTest
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -43,7 +45,7 @@ class AlarmViewModelTest {
     private lateinit var fakeBinder: AlarmMediaService.AlarmServiceBinder
 
     @get:Rule
-    var mainCoroutineRule = MainCoroutineRule()
+    val mainCoroutineRule = MainCoroutineRule(UnconfinedTestDispatcher())
 
     @get:Rule
     var instantExecutorRule = InstantTaskExecutorRule()
@@ -95,7 +97,7 @@ class AlarmViewModelTest {
     }
 
     @Test
-    fun loadReminderData_loadsReminderAndAlarm() = mainCoroutineRule.runBlockingTest {
+    fun loadReminderData_loadsReminderAndAlarm() = runTest {
         every { mockSavedStateHandle.get<String>(EXTRA_REMINDER_ID) } returns reminder.id
         coEvery { mockTimerManager.startTimer(any(), any(), any()) } returns true
 
@@ -108,7 +110,7 @@ class AlarmViewModelTest {
     }
 
     @Test
-    fun liveData_matchesLoadedReminderData() = mainCoroutineRule.runBlockingTest {
+    fun liveData_matchesLoadedReminderData() = runTest {
         every { mockSavedStateHandle.get<String>(EXTRA_REMINDER_ID) } returns reminder.id
         coEvery { mockTimerManager.startTimer(any(), any(), any()) } returns true
 
@@ -122,7 +124,7 @@ class AlarmViewModelTest {
     }
 
     @Test
-    fun snooze_startsServiceForSnooze() = mainCoroutineRule.runBlockingTest {
+    fun snooze_startsServiceForSnooze() = runTest {
         every { mockSavedStateHandle.get<String>(EXTRA_REMINDER_ID) } returns reminder.id
         viewModel =
             AlarmViewModel(mockApplication, mockReminderRepo, mockSavedStateHandle, timerManager)
@@ -135,7 +137,7 @@ class AlarmViewModelTest {
     }
 
     @Test
-    fun skip_startsServiceForSkip() = mainCoroutineRule.runBlockingTest {
+    fun skip_startsServiceForSkip() = runTest {
         every { mockSavedStateHandle.get<String>(EXTRA_REMINDER_ID) } returns reminder.id
         viewModel =
             AlarmViewModel(mockApplication, mockReminderRepo, mockSavedStateHandle, timerManager)
@@ -149,7 +151,7 @@ class AlarmViewModelTest {
     }
 
     @Test
-    fun complete_startsServiceForComplete() = mainCoroutineRule.runBlockingTest {
+    fun complete_startsServiceForComplete() = runTest {
         every { mockSavedStateHandle.get<String>(EXTRA_REMINDER_ID) } returns reminder.id
         viewModel =
             AlarmViewModel(mockApplication, mockReminderRepo, mockSavedStateHandle, timerManager)

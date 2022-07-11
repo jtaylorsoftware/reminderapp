@@ -4,12 +4,13 @@ import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.test.filters.SmallTest
 import app.timetoremind.mobile.data.domain.*
 import app.timetoremind.mobile.util.*
+import app.timetoremind.sharedtest.MainCoroutineRule
 import com.google.common.truth.Truth.assertThat
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.test.runBlockingTest
+import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -25,12 +26,15 @@ class ReminderDaoTest {
     private lateinit var historyDao: HistoryDao
 
     @get:Rule(order = 0)
-    var hiltAndroidRule = HiltAndroidRule(this)
+    val mainCoroutineRule = MainCoroutineRule()
 
     @get:Rule(order = 1)
-    var instantTaskExecutorRule = InstantTaskExecutorRule()
+    var hiltAndroidRule = HiltAndroidRule(this)
 
     @get:Rule(order = 2)
+    var instantTaskExecutorRule = InstantTaskExecutorRule()
+
+    @get:Rule(order = 3)
     var inMemoryDatabaseRule = InMemoryDatabaseRule()
 
     @Before
@@ -42,7 +46,7 @@ class ReminderDaoTest {
     }
 
     @Test
-    fun getAllWithHistory_returnsAllRemindersWithLatestHistory() = runBlockingTest {
+    fun getAllWithHistory_returnsAllRemindersWithLatestHistory() = runTest {
         val reminders = (1..5).map { i ->
             Reminder(
                 "Reminder $i",
@@ -76,7 +80,7 @@ class ReminderDaoTest {
     }
 
     @Test
-    fun getAllInRangeWithHistoryOnDate_returnsOnlyRemindersInDateRange() = runBlockingTest {
+    fun getAllInRangeWithHistoryOnDate_returnsOnlyRemindersInDateRange() = runTest {
         // Beginning of expected date range
         val startDate = LocalDate.now().minusDays(3)
         // End of exected date range
@@ -119,7 +123,7 @@ class ReminderDaoTest {
     }
 
     @Test
-    fun getAllInRangeWithHistoryOnDate_returnsOnlyHistoryOnGivenDate() = runBlockingTest {
+    fun getAllInRangeWithHistoryOnDate_returnsOnlyHistoryOnGivenDate() = runTest {
         // Beginning of expected date range
         val startDate = LocalDate.now().minusDays(3)
         // End of exected date range
@@ -185,7 +189,7 @@ class ReminderDaoTest {
 
 
     @Test
-    fun getAll_returnsAllReminders() = runBlockingTest {
+    fun getAll_returnsAllReminders() = runTest {
         val reminders = (1..5).map { i ->
             Reminder(
                 "Reminder $i",
@@ -202,7 +206,7 @@ class ReminderDaoTest {
     }
 
     @Test
-    fun findById_returnsInsertedReminder() = runBlockingTest {
+    fun findById_returnsInsertedReminder() = runTest {
         val reminder = Reminder("Reminder 1").asDataModel()
 
         reminderDao.insert(reminder)
@@ -213,14 +217,14 @@ class ReminderDaoTest {
     }
 
     @Test
-    fun findById_emptyDb_returnsNull() = runBlockingTest {
+    fun findById_emptyDb_returnsNull() = runTest {
         val dbReminder = reminderDao.findById(uuid())
 
         assertThat(dbReminder).isNull()
     }
 
     @Test
-    fun delete_then_findReturnsNull() = runBlockingTest {
+    fun delete_then_findReturnsNull() = runTest {
         val reminder = Reminder().asDataModel()
         reminderDao.insert(reminder)
 
@@ -232,7 +236,7 @@ class ReminderDaoTest {
     }
 
     @Test
-    fun getReminderAndAlarm_bothInserted_returnsValue() = runBlockingTest {
+    fun getReminderAndAlarm_bothInserted_returnsValue() = runTest {
         val reminder = Reminder().asDataModel()
         reminderDao.insert(reminder)
 
@@ -250,7 +254,7 @@ class ReminderDaoTest {
     }
 
     @Test
-    fun getReminderAndAlarm_noAlarm_returnsNullAlarm() = runBlockingTest {
+    fun getReminderAndAlarm_noAlarm_returnsNullAlarm() = runTest {
         val reminder = Reminder().asDataModel()
         reminderDao.insert(reminder)
 

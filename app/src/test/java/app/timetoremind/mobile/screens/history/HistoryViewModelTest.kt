@@ -1,18 +1,20 @@
 package app.timetoremind.mobile.screens.history
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
-import app.timetoremind.mobile.MainCoroutineRule
-import app.timetoremind.mobile.data.FakeHistoryRepository
 import app.timetoremind.mobile.data.HistoryRepository
 import app.timetoremind.mobile.data.domain.History
-import app.timetoremind.mobile.data.local.FakeHistoryLocalDataSource
 import app.timetoremind.mobile.getOrAwaitValue
 import app.timetoremind.mobile.screens.reminder.history.HistoryViewModel
-import com.google.common.truth.Truth.*
+import app.timetoremind.sharedtest.MainCoroutineRule
+import app.timetoremind.sharedtest.data.FakeHistoryRepository
+import app.timetoremind.sharedtest.data.local.FakeHistoryLocalDataSource
+import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.test.runBlockingTest
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -20,16 +22,16 @@ import org.junit.Test
 @ExperimentalCoroutinesApi
 class HistoryViewModelTest {
     @get:Rule
-    val mainCoroutineRule = MainCoroutineRule()
+    val instantTaskExecutorRule = InstantTaskExecutorRule()
 
     @get:Rule
-    val instantTaskExecutorRule = InstantTaskExecutorRule()
+    val mainCoroutineRule = MainCoroutineRule(UnconfinedTestDispatcher())
 
     private lateinit var repository: HistoryRepository
     private lateinit var viewModel: HistoryViewModel
 
     private val historyEntries = mutableListOf(
-        History(),History(),History()
+        History(), History(), History()
     )
 
     @Before
@@ -39,11 +41,11 @@ class HistoryViewModelTest {
         runBlocking {
             repository.saveAll(historyEntries)
         }
-        viewModel = HistoryViewModel(repository, mainCoroutineRule)
+        viewModel = HistoryViewModel(repository, CoroutineScope(mainCoroutineRule.dispatcher), mainCoroutineRule.dispatcher)
     }
 
     @Test
-    fun historyEntries_returnsRepoEntriesLiveData() = mainCoroutineRule.runBlockingTest {
+    fun historyEntries_returnsRepoEntriesLiveData() = runTest {
         assertThat(viewModel.historyEntries.getOrAwaitValue()).containsExactlyElementsIn(
             repository.getAll().first()
         )

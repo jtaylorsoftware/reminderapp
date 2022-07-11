@@ -9,7 +9,6 @@ import android.content.Intent
 import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Bundle
-import android.view.LayoutInflater
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.launch
 import androidx.activity.result.registerForActivityResult
@@ -68,8 +67,7 @@ class SoundPickerDialogFragment() :
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val builder = AlertDialog.Builder(requireContext())
-        val inflater = LayoutInflater.from(context)
-        binding = DialogSoundOptionsBinding.inflate(inflater)
+        binding = DialogSoundOptionsBinding.inflate(layoutInflater)
 
         return builder.apply {
             setView(binding.root)
@@ -154,7 +152,7 @@ class SoundPickerViewModel(application: Application, vibrate: Boolean, soundUri:
     ) :
         ViewModelProvider.NewInstanceFactory() {
         @Suppress("UNCHECKED_CAST")
-        override fun <T : ViewModel?> create(modelClass: Class<T>): T =
+        override fun <T : ViewModel> create(modelClass: Class<T>): T =
             SoundPickerViewModel(application, previousVibrate, previousSoundUri) as T
     }
 }

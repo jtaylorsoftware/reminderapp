@@ -42,7 +42,7 @@ class PreferencesActivity : AppCompatActivity(),
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         navController.addOnDestinationChangedListener { _, destination, _ ->
-            if (destination.id == navController.graph.startDestination) {
+            if (destination.id == navController.graph.startDestinationId) {
                 supportActionBar?.setDisplayHomeAsUpEnabled(true)
                 supportActionBar?.setDisplayShowHomeEnabled(true)
             }

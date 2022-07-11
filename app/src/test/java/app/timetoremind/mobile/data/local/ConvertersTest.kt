@@ -1,6 +1,6 @@
 package app.timetoremind.mobile.data.local
 
-import com.google.common.truth.Truth.*
+import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import java.time.DayOfWeek
 

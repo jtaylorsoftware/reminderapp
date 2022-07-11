@@ -5,7 +5,6 @@ import android.app.Dialog
 import android.content.Context
 import android.os.Bundle
 import android.view.ContextMenu
-import android.view.LayoutInflater
 import android.view.Menu
 import android.view.View
 import androidx.fragment.app.DialogFragment
@@ -14,8 +13,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.asLiveData
 import app.timetoremind.mobile.R
-import app.timetoremind.mobile.databinding.DialogFilterRemindersBinding
 import app.timetoremind.mobile.data.domain.ReminderStatus
+import app.timetoremind.mobile.databinding.DialogFilterRemindersBinding
 import app.timetoremind.mobile.screens.reminder.overview.ReminderFilterRules
 import app.timetoremind.mobile.util.getShortLocalDateDisplay
 import app.timetoremind.mobile.util.toEpochMilli
@@ -61,8 +60,7 @@ class RemindersFilterDialogFragment() : DialogFragment() {
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val builder = AlertDialog.Builder(requireContext())
-        val inflater = LayoutInflater.from(context)
-        binding = DialogFilterRemindersBinding.inflate(inflater)
+        binding = DialogFilterRemindersBinding.inflate(layoutInflater)
 
         return builder.apply {
             setView(binding.root)
@@ -287,7 +285,7 @@ class ReminderFilterViewModel constructor(previousFilterRules: ReminderFilterRul
     class Factory(private val previousFilterRules: ReminderFilterRules) :
         ViewModelProvider.NewInstanceFactory() {
         @Suppress("UNCHECKED_CAST")
-        override fun <T : ViewModel?> create(modelClass: Class<T>): T =
+        override fun <T : ViewModel> create(modelClass: Class<T>): T =
             ReminderFilterViewModel(previousFilterRules) as T
     }
 }

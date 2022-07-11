@@ -4,17 +4,19 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import androidx.test.core.app.ApplicationProvider
-import app.timetoremind.mobile.MainCoroutineRule
 import app.timetoremind.mobile.data.ReminderRepository
 import app.timetoremind.mobile.data.domain.Reminder
 import app.timetoremind.mobile.data.domain.ReminderStatus
 import app.timetoremind.mobile.service.*
+import app.timetoremind.sharedtest.MainCoroutineRule
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import io.mockk.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.runBlockingTest
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -29,10 +31,10 @@ import javax.inject.Inject
 @RunWith(RobolectricTestRunner::class)
 class AlarmActionReceiverTest {
     @get:Rule
-    var hiltRule = HiltAndroidRule(this)
+    val mainCoroutineRule = MainCoroutineRule()
 
-    @Inject
-    lateinit var mainCoroutineRule: MainCoroutineRule
+    @get:Rule
+    var hiltRule = HiltAndroidRule(this)
 
     @Inject
     lateinit var timerManager: AlarmTimerManager
@@ -42,14 +44,13 @@ class AlarmActionReceiverTest {
 
     lateinit var receiver: AlarmActionReceiver
 
-    val context: Context = ApplicationProvider.getApplicationContext()
+    private val context: Context = ApplicationProvider.getApplicationContext()
 
     lateinit var mockTimer: AlarmTimer
 
     @Before
     fun setup() {
         hiltRule.inject()
-
         mockkObject(AlarmMediaService.Companion)
         justRun { AlarmMediaService.requestStop(any()) }
         justRun { AlarmMediaService.start(any(), any()) }
@@ -74,7 +75,7 @@ class AlarmActionReceiverTest {
     }
 
     @Test
-    fun intentAction_null_returns() = mainCoroutineRule.runBlockingTest {
+    fun intentAction_null_returns() = runTest {
         val intent = mockk<Intent>()
         every { intent.action } returns null
 
@@ -86,7 +87,7 @@ class AlarmActionReceiverTest {
     }
 
     @Test
-    fun intentAction_notExpected_returns() = mainCoroutineRule.runBlockingTest {
+    fun intentAction_notExpected_returns() = runTest {
         val intent = mockk<Intent>()
         every { intent.action } returns ACTION_ALARM_START
 
@@ -98,7 +99,7 @@ class AlarmActionReceiverTest {
     }
 
     @Test
-    fun stopsAlarmMediaService() = mainCoroutineRule.runBlockingTest {
+    fun stopsAlarmMediaService() = runTest {
         val reminder = Reminder()
         reminderRepository.save(reminder)
 
@@ -118,7 +119,7 @@ class AlarmActionReceiverTest {
     }
 
     @Test
-    fun actionSnooze_startsSnoozeService() = mainCoroutineRule.runBlockingTest {
+    fun actionSnooze_startsSnoozeService() = runTest {
         val reminder = Reminder()
         reminderRepository.save(reminder)
 
@@ -131,14 +132,14 @@ class AlarmActionReceiverTest {
         every { mockTimer.stop() } returns true
 
         receiver.onReceive(context, intent)
-
+        advanceUntilIdle()
         verify {
             AlarmSnoozeService.start(any(), any())
         }
     }
 
     @Test
-    fun actionSkip_startsHistoryAndSchedulingService() = mainCoroutineRule.runBlockingTest {
+    fun actionSkip_startsHistoryAndSchedulingService() = runTest(UnconfinedTestDispatcher()) {
         val reminder = Reminder()
         reminderRepository.save(reminder)
 
@@ -151,7 +152,7 @@ class AlarmActionReceiverTest {
         every { mockTimer.stop() } returns true
 
         receiver.onReceive(context, intent)
-
+        advanceUntilIdle()
         verify {
             AlarmHistoryService.start(any(), reminder, ReminderStatus.SKIPPED)
             AlarmSchedulingService.startScheduleNewAlarm(any(), reminder)
@@ -159,7 +160,7 @@ class AlarmActionReceiverTest {
     }
 
     @Test
-    fun actionComplete_startsHistoryAndSchedulingService() = mainCoroutineRule.runBlockingTest {
+    fun actionComplete_startsHistoryAndSchedulingService() = runTest {
         val reminder = Reminder()
         reminderRepository.save(reminder)
 
@@ -171,7 +172,7 @@ class AlarmActionReceiverTest {
         every { mockTimer.stop() } returns true
 
         receiver.onReceive(context, intent)
-
+        advanceUntilIdle()
         verify {
             AlarmHistoryService.start(any(), any(), ReminderStatus.COMPLETED)
             AlarmSchedulingService.startScheduleNewAlarm(any(), reminder)
@@ -179,7 +180,7 @@ class AlarmActionReceiverTest {
     }
 
     @Test
-    fun stopsAlarmManagerTimerInstance() = mainCoroutineRule.runBlockingTest {
+    fun stopsAlarmManagerTimerInstance() = runTest {
         val reminder = Reminder()
         reminderRepository.save(reminder)
 
@@ -191,7 +192,7 @@ class AlarmActionReceiverTest {
 
         every { mockTimer.stop() } returns true
         receiver.onReceive(context, intent)
-
+        advanceUntilIdle()
         verify {
             mockTimer.stop()
             AlarmMediaService.requestStop(context)
@@ -200,7 +201,7 @@ class AlarmActionReceiverTest {
     }
 
     @Test
-    fun whenTimerStopFalse_returnsWithoutAction() = mainCoroutineRule.runBlockingTest {
+    fun whenTimerStopFalse_returnsWithoutAction() = runTest {
         val reminder = Reminder()
         reminderRepository.save(reminder)
 

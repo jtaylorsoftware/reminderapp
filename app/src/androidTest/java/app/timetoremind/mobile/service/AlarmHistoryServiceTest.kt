@@ -6,7 +6,6 @@ import android.os.IBinder
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.filters.MediumTest
 import androidx.test.rule.ServiceTestRule
-import app.timetoremind.mobile.MainCoroutineRule
 import app.timetoremind.mobile.broadcast.ACTION_ALARM_COMPLETE
 import app.timetoremind.mobile.broadcast.ACTION_ALARM_SKIP
 import app.timetoremind.mobile.broadcast.EXTRA_REMINDER
@@ -16,12 +15,14 @@ import app.timetoremind.mobile.data.domain.History
 import app.timetoremind.mobile.data.domain.Reminder
 import app.timetoremind.mobile.data.domain.ReminderStatus
 import app.timetoremind.mobile.data.domain.parcel.ReminderParcel
+import app.timetoremind.sharedtest.MainCoroutineRule
 import com.google.common.truth.Truth.assertThat
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.test.runBlockingTest
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -34,6 +35,9 @@ import kotlin.properties.Delegates
 @MediumTest
 class AlarmHistoryServiceTest {
     @get:Rule
+    val mainCoroutineRule = MainCoroutineRule(UnconfinedTestDispatcher())
+
+    @get:Rule
     val hiltRule = HiltAndroidRule(this)
 
     @get:Rule
@@ -44,9 +48,6 @@ class AlarmHistoryServiceTest {
 
     @Inject
     lateinit var historyRepository: HistoryRepository
-
-    @Inject
-    lateinit var testScope: MainCoroutineRule
 
     val context: Context = ApplicationProvider.getApplicationContext()
 
@@ -79,7 +80,7 @@ class AlarmHistoryServiceTest {
     }
 
     @Test
-    fun actionSkip_createsSkipHistory() = testScope.runBlockingTest {
+    fun actionSkip_createsSkipHistory() = runTest {
         val reminder = Reminder()
         reminderRepository.save(reminder)
 
@@ -100,7 +101,7 @@ class AlarmHistoryServiceTest {
     }
 
     @Test
-    fun actionComplete_createsCompleteHistory() = testScope.runBlockingTest {
+    fun actionComplete_createsCompleteHistory() = runTest {
         val reminder = Reminder()
         reminderRepository.save(reminder)
 
@@ -121,7 +122,7 @@ class AlarmHistoryServiceTest {
     }
 
     @Test
-    fun handlesMultipleStarts() = testScope.runBlockingTest {
+    fun handlesMultipleStarts() = runTest {
         val reminders = listOf(Reminder(), Reminder(), Reminder())
         reminderRepository.saveAll(reminders)
 

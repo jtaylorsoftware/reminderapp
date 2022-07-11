@@ -13,7 +13,6 @@ import androidx.test.espresso.matcher.RootMatchers
 import androidx.test.espresso.matcher.ViewMatchers.*
 import androidx.test.filters.LargeTest
 import androidx.test.platform.app.InstrumentationRegistry
-import app.timetoremind.mobile.R
 import app.timetoremind.mobile.data.AlarmRepository
 import app.timetoremind.mobile.data.ReminderRepository
 import app.timetoremind.mobile.data.domain.Reminder

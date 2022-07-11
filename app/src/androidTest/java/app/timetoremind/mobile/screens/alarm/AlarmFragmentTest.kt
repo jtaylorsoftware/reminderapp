@@ -2,6 +2,7 @@ package app.timetoremind.mobile.screens.alarm
 
 import android.content.Context
 import android.content.Intent
+import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.fragment.app.add
 import androidx.fragment.app.commit
 import androidx.test.core.app.ActivityScenario
@@ -13,7 +14,9 @@ import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.filters.MediumTest
 import androidx.test.filters.SdkSuppress
 import app.timetoremind.mobile.broadcast.EXTRA_REMINDER_ID
-import app.timetoremind.mobile.data.*
+import app.timetoremind.mobile.data.AlarmRepository
+import app.timetoremind.mobile.data.HistoryRepository
+import app.timetoremind.mobile.data.ReminderRepository
 import app.timetoremind.mobile.data.domain.Alarm
 import app.timetoremind.mobile.data.domain.Reminder
 import app.timetoremind.mobile.data.domain.SchedulingRules
@@ -22,6 +25,7 @@ import app.timetoremind.mobile.service.AlarmTimerManager
 import app.timetoremind.mobile.util.MutableEventFlow
 import app.timetoremind.mobile.util.currentLocalDateTime
 import app.timetoremind.mobile.util.getShortLocalTimeDisplay
+import app.timetoremind.sharedtest.MainCoroutineRule
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import io.mockk.coEvery
@@ -29,6 +33,7 @@ import io.mockk.every
 import io.mockk.mockkClass
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -41,9 +46,14 @@ import javax.inject.Inject
 @ExperimentalCoroutinesApi
 @SdkSuppress(minSdkVersion = 28)
 class AlarmFragmentTest {
-
     @get:Rule
     val hiltRule = HiltAndroidRule(this)
+
+    @get:Rule
+    val mainCoroutineRule = MainCoroutineRule(UnconfinedTestDispatcher())
+
+    @get:Rule
+    val instantExecutorRule = InstantTaskExecutorRule()
 
     @Inject
     lateinit var reminderRepository: ReminderRepository

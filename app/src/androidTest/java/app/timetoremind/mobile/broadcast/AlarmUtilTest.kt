@@ -6,11 +6,14 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.filters.SdkSuppress
 import androidx.test.filters.SmallTest
-import app.timetoremind.mobile.data.*
+import app.timetoremind.mobile.data.AlarmRepository
+import app.timetoremind.mobile.data.HistoryRepository
+import app.timetoremind.mobile.data.ReminderRepository
 import app.timetoremind.mobile.data.domain.*
 import app.timetoremind.mobile.service.AlarmSchedulingService
 import app.timetoremind.mobile.util.currentEpochMilli
 import app.timetoremind.mobile.util.currentLocalTime
+import app.timetoremind.sharedtest.MainCoroutineRule
 import com.google.common.truth.Truth.assertThat
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -19,7 +22,7 @@ import io.mockk.mockkObject
 import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.test.runBlockingTest
+import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -36,6 +39,9 @@ import javax.inject.Inject
 class AlarmUtilTest {
     @get:Rule
     var hiltAndroidRule = HiltAndroidRule(this)
+
+    @get:Rule
+    val mainCoroutineRule = MainCoroutineRule()
 
     lateinit var context: Context
 
@@ -67,7 +73,7 @@ class AlarmUtilTest {
     }
 
     @Test
-    fun rescheduleAlarms_savesNewAlarms_schedulesNext() = runBlockingTest {
+    fun rescheduleAlarms_savesNewAlarms_schedulesNext() = runTest {
         val reminders = (1L..4).map {
             Reminder(
                 schedulingRules = SchedulingRules(
@@ -78,7 +84,8 @@ class AlarmUtilTest {
 
         reminderRepository.saveAll(reminders)
 
-        val numRescheduled = rescheduleReminders(context, reminderRepository, alarmRepo, historyRepository)
+        val numRescheduled =
+            rescheduleReminders(context, reminderRepository, alarmRepo, historyRepository)
 
         val alarms = alarmRepo.getAll().first()
         assertThat(alarms).hasSize(reminders.size)
@@ -89,7 +96,7 @@ class AlarmUtilTest {
     }
 
     @Test
-    fun rescheduleAlarms_savesExpiredSingleReminders() = runBlockingTest {
+    fun rescheduleAlarms_savesExpiredSingleReminders() = runTest {
         // the base time for the test
         val t0 = currentLocalTime()
         val reminders = (1L..4).map {
@@ -103,7 +110,8 @@ class AlarmUtilTest {
 
         reminderRepository.saveAll(reminders)
 
-        val numRescheduled = rescheduleReminders(context, reminderRepository, alarmRepo, historyRepository)
+        val numRescheduled =
+            rescheduleReminders(context, reminderRepository, alarmRepo, historyRepository)
 
         // Should save all the reminders
         val alarms = alarmRepo.getAll().first()
@@ -129,7 +137,7 @@ class AlarmUtilTest {
     }
 
     @Test
-    fun rescheduleAlarms_doesNotSaveRemindersWithHistoryOnSameDay() = runBlockingTest {
+    fun rescheduleAlarms_doesNotSaveRemindersWithHistoryOnSameDay() = runTest {
         val reminders = (1L..4).map {
             Reminder(
                 schedulingRules = SchedulingRules(
@@ -157,7 +165,8 @@ class AlarmUtilTest {
 
         reminderRepository.saveAll(reminders)
 
-        val numRescheduled = rescheduleReminders(context, reminderRepository, alarmRepo, historyRepository)
+        val numRescheduled =
+            rescheduleReminders(context, reminderRepository, alarmRepo, historyRepository)
 
         val alarms = alarmRepo.getAll().first()
         assertThat(alarms).hasSize(reminders.size)
@@ -181,7 +190,7 @@ class AlarmUtilTest {
     }
 
     @Test
-    fun rescheduleAlarms_doesNotSaveAlarmsInPast_ifHasHistory() = runBlockingTest {
+    fun rescheduleAlarms_doesNotSaveAlarmsInPast_ifHasHistory() = runTest {
         val reminders = (1L..4).map {
             Reminder(
                 schedulingRules = SchedulingRules(
@@ -212,7 +221,8 @@ class AlarmUtilTest {
 
         reminderRepository.saveAll(reminders)
 
-        val numRescheduled = rescheduleReminders(context, reminderRepository, alarmRepo, historyRepository)
+        val numRescheduled =
+            rescheduleReminders(context, reminderRepository, alarmRepo, historyRepository)
 
         val alarms = alarmRepo.getAll().first()
 
@@ -225,7 +235,7 @@ class AlarmUtilTest {
 
 
     @Test
-    fun rescheduleAlarms_doesSaveAlarmsInPast_ifNoHistory() = runBlockingTest {
+    fun rescheduleAlarms_doesSaveAlarmsInPast_ifNoHistory() = runTest {
         // save a bunch of single in past
         val reminders = (1L..4).map {
             Reminder(
@@ -237,7 +247,8 @@ class AlarmUtilTest {
         }.toMutableList()
         reminderRepository.saveAll(reminders)
 
-        val numRescheduled = rescheduleReminders(context, reminderRepository, alarmRepo, historyRepository)
+        val numRescheduled =
+            rescheduleReminders(context, reminderRepository, alarmRepo, historyRepository)
 
         val alarms = alarmRepo.getAll().first()
 

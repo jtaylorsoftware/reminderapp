@@ -1,12 +1,17 @@
 package app.timetoremind.mobile
 
-import app.timetoremind.mobile.data.*
+import app.timetoremind.mobile.data.AlarmRepository
+import app.timetoremind.mobile.data.HistoryRepository
+import app.timetoremind.mobile.data.ReminderRepository
 import app.timetoremind.mobile.data.domain.Alarm
 import app.timetoremind.mobile.data.domain.History
 import app.timetoremind.mobile.data.domain.Reminder
-import app.timetoremind.mobile.data.local.FakeHistoryLocalDataSource
 import app.timetoremind.mobile.di.*
 import app.timetoremind.mobile.service.AlarmTimerManager
+import app.timetoremind.sharedtest.data.FakeAlarmRepository
+import app.timetoremind.sharedtest.data.FakeHistoryRepository
+import app.timetoremind.sharedtest.data.FakeReminderRepository
+import app.timetoremind.sharedtest.data.local.FakeHistoryLocalDataSource
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.components.SingletonComponent
@@ -14,6 +19,7 @@ import dagger.hilt.testing.TestInstallIn
 import io.mockk.mockkClass
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import javax.inject.Singleton
 
@@ -31,7 +37,6 @@ object TestDataModule {
     @Singleton
     fun provideReminderRepository(): ReminderRepository =
         FakeReminderRepository(reminderCache, alarmCache, historyCache)
-
 
     @Provides
     @Singleton
@@ -57,25 +62,18 @@ object TestTimerModule {
 @TestInstallIn(components = [SingletonComponent::class], replaces = [DispatcherModule::class])
 @ExperimentalCoroutinesApi
 object TestDispatcherModule {
-    @Provides
-    @Singleton
-    fun provideMainCoroutineRule(): MainCoroutineRule = MainCoroutineRule()
-
     @DefaultDispatcher
     @Provides
     @Singleton
-    fun provideDefaultDispatcher(mainCoroutineRule: MainCoroutineRule): CoroutineDispatcher =
-        mainCoroutineRule.dispatcher
+    fun provideDefaultDispatcher(): CoroutineDispatcher = Dispatchers.Main
 
     @AppCoroutineScope
     @Provides
     @Singleton
-    fun provideApplicationScope(mainCoroutineRule: MainCoroutineRule): CoroutineScope =
-        mainCoroutineRule
+    fun provideApplicationScope(): CoroutineScope = CoroutineScope(Dispatchers.Main)
 
     @IoDispatcher
     @Provides
     @Singleton
-    fun provideIoDispatcher(mainCoroutineRule: MainCoroutineRule): CoroutineDispatcher =
-        mainCoroutineRule.dispatcher
+    fun provideIoDispatcher(): CoroutineDispatcher = Dispatchers.Main
 }

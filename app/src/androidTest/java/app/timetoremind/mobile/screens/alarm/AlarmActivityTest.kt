@@ -2,8 +2,9 @@ package app.timetoremind.mobile.screens.alarm
 
 import android.content.Context
 import android.content.Intent
-import androidx.test.core.app.ActivityScenario
+import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.test.core.app.ApplicationProvider
+import androidx.test.core.app.launchActivity
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
@@ -20,13 +21,17 @@ import app.timetoremind.mobile.data.local.AppDatabase
 import app.timetoremind.mobile.di.AlarmTimerModule
 import app.timetoremind.mobile.service.AlarmTimerManager
 import app.timetoremind.mobile.util.currentLocalDateTime
+import app.timetoremind.sharedtest.MainCoroutineRule
 import dagger.hilt.android.testing.BindValue
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.UninstallModules
+import io.mockk.coEvery
+import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.test.runBlockingTest
+import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -34,12 +39,19 @@ import org.junit.Test
 import java.time.LocalDateTime
 import javax.inject.Inject
 
+@ExperimentalCoroutinesApi
 @LargeTest
 @HiltAndroidTest
 @UninstallModules(AlarmTimerModule::class, AndroidTestTimerModule::class)
 class AlarmActivityTest {
     @get:Rule
     val hiltRule = HiltAndroidRule(this)
+
+    @get:Rule
+    val mainCoroutineRule = MainCoroutineRule()
+
+    @get:Rule
+    val instantExecutorRule = InstantTaskExecutorRule()
 
     @Inject
     lateinit var reminderRepository: ReminderRepository
@@ -51,7 +63,7 @@ class AlarmActivityTest {
     lateinit var database: AppDatabase
 
     @BindValue
-    val timerManager = AlarmTimerManager()
+    val timerManager = mockk<AlarmTimerManager>(relaxed = true)
 
     val time: LocalDateTime = currentLocalDateTime().plusHours(2)
     val reminder = Reminder(
@@ -68,6 +80,8 @@ class AlarmActivityTest {
             reminderRepository.save(reminder)
             alarmRepository.save(alarm)
         }
+
+        coEvery { timerManager.timer } returns mockk(relaxed = true)
     }
 
     @After
@@ -79,17 +93,16 @@ class AlarmActivityTest {
         }
     }
 
-    @ExperimentalCoroutinesApi
     @Test
-    fun activity_withReminderIdExtra_displaysAlarm() = runBlockingTest {
+    fun activity_withReminderIdExtra_displaysAlarm() = runTest {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val intent = Intent(context, AlarmActivity::class.java).apply {
             putExtra(EXTRA_REMINDER_ID, reminder.id)
         }
 
-        timerManager.startTimer(this, delay = 3000) {}
-        ActivityScenario.launch<AlarmActivity>(intent)
-
-        onView(withText(reminder.description)).check(matches(isDisplayed()))
+        launchActivity<AlarmActivity>(intent).use {
+            runCurrent()
+            onView(withText(reminder.description)).check(matches(isDisplayed()))
+        }
     }
 }

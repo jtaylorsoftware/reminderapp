@@ -7,12 +7,14 @@ import app.timetoremind.mobile.data.domain.ReminderStatus
 import app.timetoremind.mobile.util.InMemoryDatabaseRule
 import app.timetoremind.mobile.util.currentLocalDateTime
 import app.timetoremind.mobile.util.toEpochMilli
+import app.timetoremind.sharedtest.MainCoroutineRule
 import com.google.common.truth.Truth.assertThat
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.test.runBlockingTest
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -25,12 +27,15 @@ import app.timetoremind.mobile.data.local.HistoryEntity as History
 @SmallTest
 class HistoryDaoTest {
     @get:Rule(order = 0)
-    var hiltAndroidRule = HiltAndroidRule(this)
+    val mainCoroutineRule = MainCoroutineRule()
 
     @get:Rule(order = 1)
-    val instantTaskExecutorRule = InstantTaskExecutorRule()
+    var hiltAndroidRule = HiltAndroidRule(this)
 
     @get:Rule(order = 2)
+    val instantTaskExecutorRule = InstantTaskExecutorRule()
+
+    @get:Rule(order = 3)
     val inMemoryDb = InMemoryDatabaseRule()
 
     private lateinit var historyDao: HistoryDao
@@ -43,19 +48,22 @@ class HistoryDaoTest {
         reminders.map { History(reminderId = it.id) } + listOf(History(reminderId = reminders[1].id))
 
     @Before
-    fun setup() = runBlockingTest {
+    fun setup() {
         historyDao = inMemoryDb.db.historyDao()
         hiltAndroidRule.inject()
-        historyDao.insertAll(historyEntries)
+
+        runBlocking {
+            historyDao.insertAll(historyEntries)
+        }
     }
 
     @Test
-    fun getAll_returnsAllHistory() = runBlockingTest {
+    fun getAll_returnsAllHistory() = runTest {
         assertThat(historyDao.getAll().first()).containsExactlyElementsIn(historyEntries)
     }
 
     @Test
-    fun getLatestForReminder_returnsSingleLatestHistory() = runBlockingTest {
+    fun getLatestForReminder_returnsSingleLatestHistory() = runTest {
         val histories = (0..4).map {
             History(
                 reminderId = "id",
@@ -63,35 +71,37 @@ class HistoryDaoTest {
             )
         }
         historyDao.insertAll(histories)
-        assertThat(historyDao.getLatestForReminder("id", LocalDate.now().toString())!!).isEqualTo(histories.last())
+        assertThat(historyDao.getLatestForReminder("id", LocalDate.now().toString())!!).isEqualTo(
+            histories.last()
+        )
     }
 
     @Test
-    fun findById_emptyId_returnsNull() = runBlockingTest {
+    fun findById_emptyId_returnsNull() = runTest {
         assertThat(historyDao.findById("")).isNull()
     }
 
     @Test
-    fun findById_matchingId_returnsEntity() = runBlockingTest {
+    fun findById_matchingId_returnsEntity() = runTest {
         assertThat(historyDao.findById(historyEntries[0].id)).isEqualTo(historyEntries[0])
     }
 
     @Test
-    fun findByReminderId_returnsAllMatchingEntities() = runBlockingTest {
+    fun findByReminderId_returnsAllMatchingEntities() = runTest {
         assertThat(historyDao.findByReminderId(reminders[1].id).first()).containsExactlyElementsIn(
             historyEntries.filter { it.reminderId == reminders[1].id }
         )
     }
 
     @Test
-    fun insert_existingId_updatesHistoryEntity() = runBlockingTest {
+    fun insert_existingId_updatesHistoryEntity() = runTest {
         val updated = historyEntries[0].copy(completionStatus = ReminderStatus.SKIPPED.name)
         historyDao.insert(updated)
         assertThat(historyDao.findById(historyEntries[0].id)).isEqualTo(updated)
     }
 
     @Test
-    fun clearTable_removesAllEntities() = runBlockingTest {
+    fun clearTable_removesAllEntities() = runTest {
         historyDao.clearTable()
         assertThat(historyDao.getAll().first()).hasSize(0)
     }

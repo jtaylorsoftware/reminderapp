@@ -1,14 +1,14 @@
-package app.timetoremind.mobile.data
+package app.timetoremind.sharedtest.data
 
 import app.timetoremind.mobile.data.domain.History
-import app.timetoremind.mobile.data.local.FakeHistoryLocalDataSource
+import app.timetoremind.sharedtest.data.local.FakeHistoryLocalDataSource
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
 import javax.inject.Singleton
 
 @Singleton
 class FakeHistoryRepository(private val localDataSource: FakeHistoryLocalDataSource) :
-    HistoryRepository {
+    app.timetoremind.mobile.data.HistoryRepository {
     override fun getAll(): Flow<List<History>> = localDataSource.getAll()
 
     override fun findByReminderId(reminderId: String): Flow<List<History>> =
